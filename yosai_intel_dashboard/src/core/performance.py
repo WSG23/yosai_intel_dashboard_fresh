@@ -3,8 +3,11 @@
 Performance optimization and monitoring system
 Inspired by Apple's Instruments and performance measurement tools
 """
+from __future__ import annotations
+
 import functools
 import logging
+import math
 import threading
 import time
 from collections import defaultdict, deque
@@ -26,10 +29,16 @@ from typing import (
 import pandas as pd
 import psutil
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+from monitoring.request_metrics import async_task_duration
+
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
-    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import ModelMetrics
+    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
+        ModelMetrics,
+    )
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
@@ -283,6 +292,32 @@ class PerformanceMonitor:
                 counts[metric.name] += 1
         return dict(counts)
 
+    def get_profiler_report(self, session_name: str) -> Dict[str, Any]:
+        """Aggregate profiler metrics for a session."""
+        prefix = f"profiler.{session_name}."
+        report: Dict[str, Any] = {"session": session_name, "functions": {}}
+        total_time = 0.0
+
+        with self._lock:
+            for metric_name, values in self.aggregated_metrics.items():
+                if metric_name.startswith(prefix):
+                    func_name = metric_name[len(prefix) :]
+                    total = sum(values)
+                    total_time += total
+                    report["functions"][func_name] = {
+                        "calls": len(values),
+                        "total_time": total,
+                        "average_time": total / len(values),
+                        "min_time": min(values),
+                        "max_time": max(values),
+                    }
+
+        report["total_time"] = total_time
+        report["function_count"] = sum(
+            metrics["calls"] for metrics in report["functions"].values()
+        )
+        return report
+
     # ------------------------------------------------------------------
     def detect_model_drift(
         self,
@@ -481,55 +516,48 @@ class PerformanceProfiler(BaseModel):
 
     def start_profiling(self, session_name: str) -> None:
         """Start a profiling session"""
+        if not dynamic_config.performance.profiling_enabled:
+            return
         self.active_profiles[session_name] = time.time()
 
     def end_profiling(self, session_name: str) -> Optional[float]:
         """End profiling session and return duration"""
-        if session_name not in self.active_profiles:
+        if (
+            not dynamic_config.performance.profiling_enabled
+            or session_name not in self.active_profiles
+        ):
             return None
 
         duration = time.time() - self.active_profiles.pop(session_name)
         self.profile_data[session_name].append(("session", duration))
+        get_performance_monitor().record_metric(
+            f"profiler.{session_name}.session",
+            duration,
+            MetricType.EXECUTION_TIME,
+            tags={"session": session_name},
+        )
         return duration
 
     def profile_function(
         self, session_name: str, func_name: str, duration: float
     ) -> None:
         """Record function profiling data"""
+        if not dynamic_config.performance.profiling_enabled:
+            return
         self.profile_data[session_name].append((func_name, duration))
+        get_performance_monitor().record_metric(
+            f"profiler.{session_name}.{func_name}",
+            duration,
+            MetricType.EXECUTION_TIME,
+            tags={"session": session_name, "function": func_name},
+        )
+main
 
     def get_profile_report(self, session_name: str) -> Dict[str, Any]:
         """Get profiling report for session"""
-        if session_name not in self.profile_data:
+        if not dynamic_config.performance.profiling_enabled:
             return {}
-
-        data = self.profile_data[session_name]
-        total_time = sum(duration for _, duration in data)
-
-        function_stats = defaultdict(list)
-        for func_name, duration in data:
-            function_stats[func_name].append(duration)
-
-        report = {
-            "session": session_name,
-            "total_time": total_time,
-            "function_count": len(data),
-            "functions": {},
-        }
-
-        for func_name, durations in function_stats.items():
-            report["functions"][func_name] = {
-                "calls": len(durations),
-                "total_time": sum(durations),
-                "average_time": sum(durations) / len(durations),
-                "min_time": min(durations),
-                "max_time": max(durations),
-                "percentage": (
-                    (sum(durations) / total_time) * 100 if total_time > 0 else 0
-                ),
-            }
-
-        return report
+        return get_performance_monitor().get_profiler_report(session_name)
 
     def record_n_plus_one(
         self, endpoint: str, query: str, stacks: List[str]
@@ -622,6 +650,8 @@ class DatabaseQueryMonitor(BaseModel):
         super().__init__(config, db, logger)
         self.slow_queries: List[Dict[str, Any]] = []
         self.query_stats: Dict[str, List[float]] = defaultdict(list)
+        # Query optimizer used for explain plans and N+1 detection
+        self.optimizer = QueryOptimizer(self.db)
 
     def record_query(
         self,
@@ -635,6 +665,14 @@ class DatabaseQueryMonitor(BaseModel):
         normalized_query = self._normalize_query(query)
 
         self.query_stats[normalized_query].append(duration)
+        # Track for N+1 issues
+        if self.optimizer.track_query(query):
+            get_performance_monitor().record_metric(
+                "database.query.n_plus_one",
+                1,
+                MetricType.DATABASE_QUERY,
+                metadata={"query": query[:200], "database": database},
+            )
 
         # Record as performance metric
         get_performance_monitor().record_metric(
@@ -650,6 +688,7 @@ class DatabaseQueryMonitor(BaseModel):
 
         # Track slow queries
         if duration > PerformanceThresholds.SLOW_QUERY_SECONDS:
+            analysis = self.optimizer.analyze_query(query)
             self.slow_queries.append(
                 {
                     "query": query,
@@ -657,6 +696,8 @@ class DatabaseQueryMonitor(BaseModel):
                     "timestamp": datetime.now(),
                     "rows_affected": rows_affected,
                     "database": database,
+                    "plan": analysis.get("plan"),
+                    "recommendations": analysis.get("recommendations"),
                 }
             )
 

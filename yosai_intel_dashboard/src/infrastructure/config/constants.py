@@ -98,6 +98,7 @@ class PerformanceConstants:
     db_pool_size: int = 10
     ai_confidence_threshold: int = 75
     memory_usage_threshold_mb: int = 1024
+    profiling_enabled: bool = False
 
 
 @dataclass

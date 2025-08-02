@@ -9,6 +9,7 @@ from typing import Any
 import joblib
 import pandas as pd
 import redis.asyncio as aioredis
+import uuid
 from fastapi import (
     APIRouter,
     Depends,
@@ -48,6 +49,7 @@ from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.models.ml import ModelRegistry
+from yosai_intel_dashboard.src.services.explainability_service import ExplainabilityService
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
@@ -498,12 +500,27 @@ async def predict(
         result = model_obj.predict(req.data)
     except Exception as exc:
         raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+
+    prediction_id = str(uuid.uuid4())
     try:
         df = pd.DataFrame(req.data)
         svc.model_registry.log_features(name, df)
     except Exception:
+        df = pd.DataFrame(req.data)
+    try:
+        explainer = ExplainabilityService()
+        explainer.register_model(name, model_obj, background_data=df)
+        shap_vals = explainer.shap_values(name, df)
+        if svc.model_registry:
+            svc.model_registry.log_explanation(
+                prediction_id,
+                name,
+                record.version,
+                {"shap_values": shap_vals.tolist()},
+            )
+    except Exception:
         pass
-    return {"predictions": result}
+    return {"prediction_id": prediction_id, "predictions": result}
 
 
 @models_router.get("/{name}/drift", responses=ERROR_RESPONSES)

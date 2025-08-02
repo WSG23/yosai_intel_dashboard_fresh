@@ -4,8 +4,16 @@ import asyncio
 import time
 from typing import Any, Awaitable, Callable, Optional
 
+import psutil
+
+from yosai_intel_dashboard.src.core.performance import (
+    MetricType,
+    get_performance_monitor,
+)
+
 
 _circuit_breaker_state = None
+_profiler = PerformanceProfiler()
 
 
 def _get_circuit_breaker_state():
@@ -99,14 +107,42 @@ class CircuitBreaker:
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             if not await cb.allows_request():
                 raise CircuitBreakerOpen("circuit breaker is open")
+            monitor = get_performance_monitor()
+            tags = {"queue": "circuit", "task_type": cb._name}
+            start_time = time.time()
+            start_mem = monitor.memory_usage_mb()
+            start_cpu = psutil.cpu_percent()
             try:
-                result = await func(*args, **kwargs)
+                async with _profiler.track_task(cb._name):
+                    result = await func(*args, **kwargs)
             except Exception:
                 await cb.record_failure()
                 raise
             else:
                 await cb.record_success()
                 return result
+            finally:
+                duration = time.time() - start_time
+                end_mem = monitor.memory_usage_mb()
+                end_cpu = psutil.cpu_percent()
+                monitor.record_metric(
+                    "circuit_breaker",
+                    duration,
+                    MetricType.EXECUTION_TIME,
+                    tags=tags,
+                )
+                monitor.record_metric(
+                    "circuit_breaker.memory_mb",
+                    end_mem - start_mem,
+                    MetricType.MEMORY_USAGE,
+                    tags=tags,
+                )
+                monitor.record_metric(
+                    "circuit_breaker.cpu_percent",
+                    end_cpu - start_cpu,
+                    MetricType.CPU_USAGE,
+                    tags=tags,
+                )
 
         return wrapper
 

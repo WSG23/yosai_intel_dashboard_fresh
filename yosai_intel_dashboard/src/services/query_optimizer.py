@@ -10,6 +10,7 @@ from typing import Dict, List
 
 from yosai_intel_dashboard.src.core.performance import profiler
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,4 +73,3 @@ __all__ = [
     "track_query",
     "end_request_tracking",
 ]
-

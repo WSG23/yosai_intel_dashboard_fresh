@@ -1,0 +1,58 @@
+{
+  "uid": "service-perf",
+  "title": "Service Performance",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "API Latency (p50/p95/p99)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(api_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(api_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "CPU Usage",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(process_cpu_seconds_total[1m]))",
+          "legendFormat": "cpu"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Memory Usage",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes",
+          "legendFormat": "memory"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Async Task Duration (p95)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(async_task_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "async p95"
+        }
+      ]
+    }
+  ]
+}

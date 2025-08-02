@@ -38,6 +38,9 @@ class ModelMonitor:
         self.registry = registry
         self.monitor = get_model_performance_monitor()
         self._monitoring_service = ModelMonitoringService()
+        self.performance_threshold = getattr(
+            cfg, "model_performance_threshold", 0.0
+        )
         self._thread: Optional[threading.Thread] = None
         self._stop = threading.Event()
 
@@ -116,6 +119,13 @@ class ModelMonitor:
                 recall=metrics_dict.get("recall", 0.0),
             )
             update_model_metrics(metrics)
+            if self.performance_threshold and (
+                metrics.accuracy < self.performance_threshold
+                or metrics.precision < self.performance_threshold
+                or metrics.recall < self.performance_threshold
+            ):
+                self.registry.rollback_to_previous(rec.name)
+                continue
             drift = self.monitor.detect_drift(metrics)
             status = "drift" if drift else "ok"
             for name, value in metrics.__dict__.items():
