@@ -1,5 +1,8 @@
 replicaCount: 2
 
+# Base environment name; overridden by values-<env>.yaml overlays
+environment: dev
+
 image:
   repository: yosai-intel-dashboard
   tag: latest
@@ -52,3 +55,18 @@ verticalPodAutoscaler:
 networkPolicy:
   enabled: false
   allowNamespace: ""
+
+# Optional dependencies for shared infrastructure components
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
+
+kafka:
+  enabled: false
+
+# Settings for running database migrations via Helm hooks
+migrations:
+  enabled: true
+  command: ["python", "database.py", "upgrade"]

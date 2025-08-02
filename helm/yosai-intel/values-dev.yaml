@@ -1,0 +1,6 @@
+environment: dev
+replicaCount: 1
+image:
+  tag: dev
+autoscaling:
+  enabled: false
