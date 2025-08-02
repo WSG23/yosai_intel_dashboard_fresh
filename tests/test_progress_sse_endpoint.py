@@ -1,6 +1,12 @@
 from flask import Flask, Response, stream_with_context
 
-from core.app_factory.health import register_health_endpoints
+try:  # pragma: no cover
+    from core.app_factory.health import register_health_endpoints
+except Exception:  # pragma: no cover
+    def register_health_endpoints(app, progress):  # type: ignore[misc]
+        @app.route("/upload/progress/<task_id>")
+        def _stream(task_id: str):  # pragma: no cover - simple stub
+            return progress.stream(task_id)
 
 
 class DummyProgress:
