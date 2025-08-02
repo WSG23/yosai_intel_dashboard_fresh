@@ -1,97 +1,92 @@
 from __future__ import annotations
 
-"""Track model metrics, latency, and feature importance with drift detection."""
+"""Utilities for comparing model versions and triggering rollbacks."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Sequence
+from typing import Callable, Dict, List, Optional, Tuple
 
-import numpy as np
-import pandas as pd
+from packaging.version import Version
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from yosai_intel_dashboard.src.services.monitoring.drift import detect_drift
+from yosai_intel_dashboard.src.services.timescale.models import ModelVersionMetric
 
 
 @dataclass
-class MetricSnapshot:
-    """Persisted metrics for a batch of predictions."""
-
-    accuracy: float
-    precision: float
-    recall: float
-    f1: float
-    latency: float
-    throughput: float
-    timestamp: datetime = field(default_factory=datetime.utcnow)
-
-
 class ModelPerformanceTracker:
-    """Collect model metrics and feature importance over time."""
+    """Persist and compare model metrics across versions."""
 
-    def __init__(self, *, drift_threshold: float = 0.1) -> None:
-        self.drift_threshold = drift_threshold
-        self.metrics_history: List[MetricSnapshot] = []
-        self.feature_importance_history: List[Dict[str, float]] = []
-        self.baseline_importance: Optional[Dict[str, float]] = None
+    session: Session
+    rollback_hook: Optional[Callable[[str, str], None]] = None
+    canary_hook: Optional[Callable[[str, str], None]] = None
 
     # ------------------------------------------------------------------
-    def record_batch(
-        self, y_true: Sequence[int], y_pred: Sequence[int], *, latency: float
-    ) -> MetricSnapshot:
-        """Record metrics for a batch of predictions."""
-        y_true_arr = np.asarray(y_true)
-        y_pred_arr = np.asarray(y_pred)
-        if y_true_arr.size == 0:
-            raise ValueError("y_true cannot be empty")
-        tp = int(np.logical_and(y_true_arr == 1, y_pred_arr == 1).sum())
-        tn = int(np.logical_and(y_true_arr == 0, y_pred_arr == 0).sum())
-        fp = int(np.logical_and(y_true_arr == 0, y_pred_arr == 1).sum())
-        fn = int(np.logical_and(y_true_arr == 1, y_pred_arr == 0).sum())
+    def record_metrics(self, model_name: str, version: str, metrics: Dict[str, float]) -> None:
+        """Store ``metrics`` for ``model_name`` and ``version``."""
+        now = datetime.utcnow()
+        for metric, value in metrics.items():
+            self.session.add(
+                ModelVersionMetric(
+                    time=now,
+                    model_name=model_name,
+                    version=version,
+                    metric=metric,
+                    value=value,
+                )
+            )
+        self.session.commit()
 
-        precision = tp / (tp + fp) if (tp + fp) else 0.0
-        recall = tp / (tp + fn) if (tp + fn) else 0.0
-        accuracy = (tp + tn) / y_true_arr.size
-        f1 = (
-            2 * precision * recall / (precision + recall)
-            if (precision + recall)
-            else 0.0
+    # ------------------------------------------------------------------
+    def _available_versions(self, model_name: str) -> List[str]:
+        stmt = select(ModelVersionMetric.version).where(
+            ModelVersionMetric.model_name == model_name
+        ).distinct()
+        return [row[0] for row in self.session.execute(stmt)]
+
+    def _metrics_for(self, model_name: str, version: str) -> Dict[str, float]:
+        stmt = select(ModelVersionMetric.metric, ModelVersionMetric.value).where(
+            ModelVersionMetric.model_name == model_name,
+            ModelVersionMetric.version == version,
         )
-        throughput = y_pred_arr.size / latency if latency > 0 else 0.0
+        return {metric: value for metric, value in self.session.execute(stmt)}
 
-        snapshot = MetricSnapshot(
-            accuracy=accuracy,
-            precision=precision,
-            recall=recall,
-            f1=f1,
-            latency=latency,
-            throughput=throughput,
-        )
-        self.metrics_history.append(snapshot)
-        return snapshot
-
-    # ------------------------------------------------------------------
-    def calculate_drift(
-        self, baseline: pd.DataFrame, current: pd.DataFrame
-    ) -> Dict[str, Dict[str, float]]:
-        """Return drift metrics for ``current`` compared to ``baseline``."""
-        return detect_drift(baseline, current)
+    def compare(
+        self, model_name: str, current_version: str
+    ) -> Optional[Tuple[Dict[str, float], Dict[str, float], str]]:
+        """Return metrics for ``current_version`` and its previous version."""
+        versions = [Version(v) for v in self._available_versions(model_name)]
+        prev_versions = [v for v in versions if v < Version(current_version)]
+        if not prev_versions:
+            return None
+        prev_version = max(prev_versions).public
+        current_metrics = self._metrics_for(model_name, current_version)
+        previous_metrics = self._metrics_for(model_name, prev_version)
+        return current_metrics, previous_metrics, prev_version
 
     # ------------------------------------------------------------------
-    def update_feature_importance(self, importances: Dict[str, float]) -> bool:
-        """Persist feature importances and detect drift from the baseline."""
-        self.feature_importance_history.append(importances.copy())
-        if self.baseline_importance is None:
-            self.baseline_importance = importances.copy()
+    def evaluate(
+        self, model_name: str, current_version: str, *, threshold: float = 0.0
+    ) -> bool:
+        """Compare metrics and trigger hooks.
+
+        Returns ``True`` if a rollback was triggered, ``False`` otherwise."""
+        comparison = self.compare(model_name, current_version)
+        if comparison is None:
+            if self.canary_hook:
+                self.canary_hook(model_name, current_version)
             return False
-        for feature, base_value in self.baseline_importance.items():
-            current_value = importances.get(feature, 0.0)
-            if base_value == 0.0:
-                diff = abs(current_value - base_value)
-            else:
-                diff = abs(current_value - base_value) / base_value
-            if diff > self.drift_threshold:
+        current, previous, prev_version = comparison
+        for metric, cur_value in current.items():
+            prev_value = previous.get(metric)
+            if prev_value is not None and cur_value + threshold < prev_value:
+                if self.rollback_hook:
+                    self.rollback_hook(model_name, prev_version)
                 return True
+        if self.canary_hook:
+            self.canary_hook(model_name, current_version)
         return False
 
 
-__all__ = ["ModelPerformanceTracker", "MetricSnapshot"]
+__all__ = ["ModelPerformanceTracker"]
+
