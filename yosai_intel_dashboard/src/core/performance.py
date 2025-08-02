@@ -14,6 +14,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -26,23 +27,84 @@ from typing import (
     Tuple,
 )
 
+import numpy as np
 import pandas as pd
 import psutil
+import yaml
+from prometheus_client import REGISTRY, Counter
+from prometheus_client.core import CollectorRegistry
 
 from monitoring.request_metrics import async_task_duration
-
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
+
+try:  # pragma: no cover - optional dependency
+    from yosai_intel_dashboard.src.services.query_optimizer import QueryOptimizer
+except Exception:  # pragma: no cover - optional dependency
+    QueryOptimizer = None  # type: ignore
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
     from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
         ModelMetrics,
     )
+    from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+        AlertDispatcher,
+    )
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
 from .memory_manager import MemoryManager
+
+if "performance_budget_violation_total" not in REGISTRY._names_to_collectors:
+    performance_budget_violation_total = Counter(
+        "performance_budget_violation_total",
+        "Total performance budget violations",
+    )
+else:  # pragma: no cover - defensive in tests
+    performance_budget_violation_total = Counter(
+        "performance_budget_violation_total",
+        "Total performance budget violations",
+        registry=CollectorRegistry(),
+    )
+
+
+def _load_budgets(path: Optional[str]) -> Dict[str, float]:
+    """Return performance budgets defined in YAML ``path``.
+
+    Missing files yield an empty mapping.
+    """
+    if not path:
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except FileNotFoundError:
+        return {}
+
+    budgets: Dict[str, float] = {}
+    for key, value in data.items():
+        try:
+            budgets[key] = float(np.asarray(value, dtype=float))
+        except (TypeError, ValueError):
+            continue
+    return budgets
+
+
+def _check_budget(
+    name: str,
+    value: float,
+    budgets: Mapping[str, float],
+    dispatcher: Optional[AlertDispatcher] = None,
+) -> None:
+    """Increment violation counter and alert if ``value`` exceeds budget."""
+    threshold = budgets.get(name)
+    if threshold is not None and value > threshold:
+        performance_budget_violation_total.inc()
+        if dispatcher is not None:
+            dispatcher.send_alert(
+                f"{name} exceeded budget: {value:.2f} > {threshold:.2f}"
+            )
 
 
 class PerformanceThresholds:
@@ -110,6 +172,10 @@ class PerformanceMonitor:
         self.cpu = CPUOptimizer()
         self.memory = MemoryManager(self.memory_threshold_mb)
 
+        budget_file = getattr(dynamic_config.performance, "budget_file", None)
+        self.budgets = _load_budgets(budget_file)
+        self.dispatcher: Optional[AlertDispatcher] = None
+
         # Start background monitoring
         self._monitoring_active = True
         self._monitor_thread = threading.Thread(
@@ -144,6 +210,9 @@ class PerformanceMonitor:
             # Keep only recent aggregated metrics
             if len(self.aggregated_metrics[name]) > 1000:
                 self.aggregated_metrics[name] = self.aggregated_metrics[name][-1000:]
+
+            if self.budgets:
+                _check_budget(name.split(".")[0], value, self.budgets, self.dispatcher)
 
     def start_timer(self, name: str) -> None:
         """Start a named timer"""
@@ -551,7 +620,6 @@ class PerformanceProfiler(BaseModel):
             MetricType.EXECUTION_TIME,
             tags={"session": session_name, "function": func_name},
         )
-main
 
     def get_profile_report(self, session_name: str) -> Dict[str, Any]:
         """Get profiling report for session"""
@@ -559,9 +627,7 @@ main
             return {}
         return get_performance_monitor().get_profiler_report(session_name)
 
-    def record_n_plus_one(
-        self, endpoint: str, query: str, stacks: List[str]
-    ) -> None:
+    def record_n_plus_one(self, endpoint: str, query: str, stacks: List[str]) -> None:
         """Record an N+1 query occurrence for an endpoint."""
         self.n_plus_one_queries[endpoint].append(
             {"query": query, "stacks": stacks, "timestamp": datetime.now()}
@@ -651,7 +717,13 @@ class DatabaseQueryMonitor(BaseModel):
         self.slow_queries: List[Dict[str, Any]] = []
         self.query_stats: Dict[str, List[float]] = defaultdict(list)
         # Query optimizer used for explain plans and N+1 detection
-        self.optimizer = QueryOptimizer(self.db)
+        if QueryOptimizer is not None:
+            self.optimizer = QueryOptimizer(self.db)
+        else:  # pragma: no cover - fallback for tests
+            self.optimizer = SimpleNamespace(
+                track_query=lambda *_, **__: False,
+                analyze_query=lambda *_, **__: {},
+            )
 
     def record_query(
         self,
