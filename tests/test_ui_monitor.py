@@ -1,8 +1,8 @@
 import importlib.util
 import sys
 
-from core import performance
-from core.performance import PerformanceMonitor
+from yosai_intel_dashboard.src.core import performance
+from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
 
 spec = importlib.util.spec_from_file_location(
     "monitoring.ui_monitor", "monitoring/ui_monitor.py"

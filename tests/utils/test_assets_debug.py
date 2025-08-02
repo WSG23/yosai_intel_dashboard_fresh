@@ -15,7 +15,7 @@ except Exception:  # pragma: no cover
         return results
 
 try:  # pragma: no cover - prefer real implementation
-    from core.app_factory import create_app
+    from yosai_intel_dashboard.src.core.app_factory import create_app
 except Exception:  # pragma: no cover - fallback stub
     def create_app(*_args, **_kwargs):  # type: ignore[misc]
         server = SimpleNamespace(

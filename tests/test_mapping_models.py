@@ -3,9 +3,9 @@ import tempfile
 import pandas as pd
 import yaml
 
-from core.performance import PerformanceMonitor
-from services.mapping.models import RuleBasedModel, load_model
-from services.mapping.models.base import MappingModel
+from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
+from yosai_intel_dashboard.src.services.mapping.models import RuleBasedModel, load_model
+from yosai_intel_dashboard.src.services.mapping.models.base import MappingModel
 
 
 def test_load_model_from_yaml(tmp_path):
@@ -25,7 +25,7 @@ def test_load_model_from_yaml(tmp_path):
 
 def test_model_caching_and_metrics(monkeypatch):
     monitor = PerformanceMonitor(max_metrics=10)
-    from core import performance as perf_module
+    from yosai_intel_dashboard.src.core import performance as perf_module
 
     monkeypatch.setattr(perf_module, "_performance_monitor", monitor)
     model = RuleBasedModel({"A": "timestamp"})

@@ -12,14 +12,14 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict
 
-# Add project root to path so we can import services
+# Add project root to path so we can import yosai_intel_dashboard.src.services as services
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from config import create_config_manager
 from yosai_intel_dashboard.src.services.upload.service_registration import register_upload_services
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from services.file_processor_service import FileProcessorService
+from yosai_intel_dashboard.src.services.file_processor_service import FileProcessorService
 
 
 def setup_logging(verbose: bool = False) -> None:

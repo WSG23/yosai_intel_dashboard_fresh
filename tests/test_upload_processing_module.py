@@ -7,7 +7,7 @@ from validation.security_validator import SecurityValidator
 def _make_processor():
     from flask import Flask
 
-    from core.cache import cache
+    from yosai_intel_dashboard.src.core.cache import cache
 
     cache.init_app(Flask(__name__))
 

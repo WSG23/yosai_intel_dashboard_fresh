@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from services import get_analytics_service  # type: ignore
+from yosai_intel_dashboard.src.services import get_analytics_service  # type: ignore
 
 try:
     from yosai_intel_dashboard.src.services.ai_suggestions import generate_column_suggestions

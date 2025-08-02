@@ -27,7 +27,7 @@ sys.modules[spec.name] = chunk_mod
 spec.loader.exec_module(chunk_mod)
 
 analyze_with_chunking = chunk_mod.analyze_with_chunking
-from services.analytics.chunked_analytics_controller import ChunkedAnalyticsController
+from yosai_intel_dashboard.src.services.analytics.chunked_analytics_controller import ChunkedAnalyticsController
 from validation.security_validator import SecurityValidator
 
 

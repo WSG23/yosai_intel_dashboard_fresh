@@ -8,7 +8,7 @@ An AI-powered modular security intelligence dashboard for physical access contro
 
 ## Migration Status
 
-The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. Legacy import paths remain available via a compatibility layer but will be removed in **v2.0**.
+The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
 
 ## Clean Architecture Structure
 
@@ -33,22 +33,21 @@ yosai_intel_dashboard/
 
 This separation improves testability, maintainability, and deployment flexibility.
 
-### Backward Compatibility Layer
+### Migration Notes
 
-Legacy imports continue to work via symlinks:
+Top-level packages such as `core` and `services` have been removed in favor of the unified `yosai_intel_dashboard/src` hierarchy. Update any legacy imports like:
 
-- `./api` → `yosai_intel_dashboard/src/adapters/api`
-- `./components` → `yosai_intel_dashboard/src/adapters/ui/components`
-- `./config` → `yosai_intel_dashboard/src/infrastructure/config`
-- `./core` → `yosai_intel_dashboard/src/core`
-- `./models` → `yosai_intel_dashboard/src/core/domain/entities`
-- `./monitoring` → `yosai_intel_dashboard/src/infrastructure/monitoring`
-- `./pages` → `yosai_intel_dashboard/src/adapters/ui/pages`
-- `./security` → `yosai_intel_dashboard/src/infrastructure/security`
-- `./services` → `yosai_intel_dashboard/src/services`
-- `./validation` → `yosai_intel_dashboard/src/infrastructure/validation`
+```python
+from core.performance import PerformanceMonitor
+```
 
-Please migrate to the new paths; this compatibility layer will be removed in v2.0.
+to:
+
+```python
+from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
+```
+
+This consolidation reduces duplication and ensures a single canonical import path.
 
 ## Architecture Overview
 

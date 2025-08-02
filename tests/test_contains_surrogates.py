@@ -1,6 +1,6 @@
 import pytest
 
-from core.unicode import contains_surrogates
+from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 
 
 def test_contains_surrogates_detects_unpaired_high():

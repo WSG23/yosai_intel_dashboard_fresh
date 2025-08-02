@@ -1,4 +1,4 @@
-from services.analytics.core.utils.results_display import _extract_enhanced_security_details
+from yosai_intel_dashboard.src.services.analytics.core.utils.results_display import _extract_enhanced_security_details
 
 
 def test_extract_enhanced_security_details_basic():

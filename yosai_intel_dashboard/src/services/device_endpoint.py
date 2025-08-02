@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from pydantic import BaseModel
 
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 from utils.pydantic_decorators import validate_input, validate_output
 
 

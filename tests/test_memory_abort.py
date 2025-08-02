@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from core.performance_file_processor import PerformanceFileProcessor
+from yosai_intel_dashboard.src.core.performance_file_processor import PerformanceFileProcessor
 
 
 class FakeProcess:

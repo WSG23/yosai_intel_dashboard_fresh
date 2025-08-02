@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 import pytest
 from dash import Input, Output, dcc, html
 
-from core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
+from yosai_intel_dashboard.src.core.theme_manager import DEFAULT_THEME, apply_theme_settings, sanitize_theme
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 

@@ -1,5 +1,5 @@
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
-from services.database.intelligent_connection_pool import IntelligentConnectionPool
+from yosai_intel_dashboard.src.services.database.intelligent_connection_pool import IntelligentConnectionPool
 
 
 def factory():

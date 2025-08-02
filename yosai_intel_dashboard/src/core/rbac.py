@@ -3,6 +3,7 @@ from __future__ import annotations
 """Simple RBAC service and decorators."""
 
 import asyncio
+import inspect
 import logging
 import os
 from functools import wraps
@@ -112,21 +113,47 @@ def _fail_response() -> tuple[str, int]:
         return "Forbidden", 403
 
 
+def _run_sync(coro: asyncio.Future) -> any:
+    """Execute *coro* in a new event loop and return the result."""
+
+    loop = asyncio.new_event_loop()
+    try:
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+    finally:
+        asyncio.set_event_loop(None)
+        loop.close()
+
+
 def require_role(role: str) -> Callable[[Callable[..., any]], Callable[..., any]]:
     """Ensure the current user has *role* before calling the function."""
 
     def decorator(func: Callable[..., any]) -> Callable[..., any]:
+        if inspect.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                service: RBACService | None = current_app.config.get("RBAC_SERVICE")
+                if service is None:
+                    return await func(*args, **kwargs)
+                user_id = session.get("user_id")
+                if not user_id or not await service.has_role(user_id, role):
+                    return _fail_response()
+                return await func(*args, **kwargs)
+
+            return async_wrapper
+
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs):
             service: RBACService | None = current_app.config.get("RBAC_SERVICE")
             if service is None:
                 return func(*args, **kwargs)
             user_id = session.get("user_id")
-            if not user_id or not asyncio.run(service.has_role(user_id, role)):
+            if not user_id or not _run_sync(service.has_role(user_id, role)):
                 return _fail_response()
             return func(*args, **kwargs)
 
-        return wrapper
+        return sync_wrapper
 
     return decorator
 
@@ -137,19 +164,33 @@ def require_permission(
     """Ensure the current user has *permission* before calling the function."""
 
     def decorator(func: Callable[..., any]) -> Callable[..., any]:
+        if inspect.iscoroutinefunction(func):
+
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                service: RBACService | None = current_app.config.get("RBAC_SERVICE")
+                if service is None:
+                    return await func(*args, **kwargs)
+                user_id = session.get("user_id")
+                if not user_id or not await service.has_permission(user_id, permission):
+                    return _fail_response()
+                return await func(*args, **kwargs)
+
+            return async_wrapper
+
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs):
             service: RBACService | None = current_app.config.get("RBAC_SERVICE")
             if service is None:
                 return func(*args, **kwargs)
             user_id = session.get("user_id")
-            if not user_id or not asyncio.run(
+            if not user_id or not _run_sync(
                 service.has_permission(user_id, permission)
             ):
                 return _fail_response()
             return func(*args, **kwargs)
 
-        return wrapper
+        return sync_wrapper
 
     return decorator
 

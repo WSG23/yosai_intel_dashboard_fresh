@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Union
 
-from core.unicode import UnicodeProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 
 _processor = UnicodeProcessor()
 

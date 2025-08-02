@@ -5,9 +5,9 @@ import sys
 import pytest
 
 from config import create_config_manager
-from core.plugins.dependency_resolver import PluginDependencyResolver
-from core.plugins.manager import PluginManager
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.plugins.dependency_resolver import PluginDependencyResolver
+from yosai_intel_dashboard.src.core.plugins.manager import PluginManager
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
@@ -72,7 +72,7 @@ def test_manager_cycle_logging(tmp_path, caplog, mock_auth_env):
     pkg = _create_pkg(tmp_path, "cyclepkg")
     (pkg / "plug_a.py").write_text(
         """
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 
 class PlugA:
     metadata = PluginMetadata(
@@ -99,7 +99,7 @@ def create_plugin():
     )
     (pkg / "plug_b.py").write_text(
         """
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 
 class PlugB:
     metadata = PluginMetadata(
@@ -147,7 +147,7 @@ def test_manager_unknown_dependency_logging(tmp_path, caplog, mock_auth_env):
     pkg = _create_pkg(tmp_path, "unkpkg")
     (pkg / "plug_a.py").write_text(
         """
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 
 class PlugA:
     metadata = PluginMetadata(

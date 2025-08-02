@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import importlib.util
 import warnings
+import pytest
+
+import pytest
 
 pytest_plugins = ["tests.config"]
 

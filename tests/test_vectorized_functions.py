@@ -1,7 +1,7 @@
 import pandas as pd
 
-from services.analytics.anomaly_detection import AnomalyDetector
-from services.analytics.security_patterns import SecurityPatternsAnalyzer
+from yosai_intel_dashboard.src.services.analytics.anomaly_detection import AnomalyDetector
+from yosai_intel_dashboard.src.services.analytics.security_patterns import SecurityPatternsAnalyzer
 
 
 def test_extract_failure_patterns_vectorized():

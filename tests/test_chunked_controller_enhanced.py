@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.analytics.chunked_analytics_controller import ChunkedAnalyticsController
+from yosai_intel_dashboard.src.services.analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
 
 def test_process_chunk_flexible_detection():

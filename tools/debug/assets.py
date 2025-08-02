@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 from typing import Iterable
 
-from core.app_factory import create_app
-from core.env_validation import validate_env
+from yosai_intel_dashboard.src.core.app_factory import create_app
+from yosai_intel_dashboard.src.core.env_validation import validate_env
 from yosai_intel_dashboard.src.utils.assets_debug import check_navbar_assets, debug_dash_asset_serving
 from yosai_intel_dashboard.src.utils.assets_utils import get_nav_icon
 

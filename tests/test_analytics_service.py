@@ -97,7 +97,7 @@ def test_get_real_uploaded_data_no_files(monkeypatch):
 def test_service_receives_config(monkeypatch):
     """Provided config should be stored on the service instance."""
 
-    import services.analytics_service as mod
+    import yosai_intel_dashboard.src.services as services.analytics_service as mod
 
     # ensure a fresh global instance
     mod._analytics_service = None

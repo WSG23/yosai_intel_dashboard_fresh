@@ -1,4 +1,4 @@
-from services import AnalyticsService
+from yosai_intel_dashboard.src.services import AnalyticsService
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 

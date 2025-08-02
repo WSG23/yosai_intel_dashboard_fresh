@@ -1,11 +1,11 @@
-from services.analytics.file_processing_utils import (
+from yosai_intel_dashboard.src.services.analytics.file_processing_utils import (
     aggregate_counts,
     calculate_date_range,
     stream_uploaded_file,
     update_counts,
     update_timestamp_range,
 )
-from services import AnalyticsService
+from yosai_intel_dashboard.src.services import AnalyticsService
 from tests.fakes import FakeUploadDataService, FakeUploadStore
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
