@@ -780,9 +780,9 @@ def update_compliance_metrics(n):
         consents = data.get('metrics_by_category', {}).get('consent_management', {}).get('active_consents', {}).get('value', 0)
         dsars = data.get('metrics_by_category', {}).get('data_subject_rights', {}).get('pending_dsars_due_soon', {}).get('value', 0)
         alerts = data.get('alerts_summary', {}).get('total_alerts', 0)
-        
+
         return f"{score}%", str(consents), str(dsars), str(alerts)
-        
+
     except Exception as e:
         return "Error", "Error", "Error", "Error"
 
@@ -825,9 +825,53 @@ def demo_dpia_workflow():
     return report
 
 
+# -----------------------------------------------------------------------------
+# Wire the dashboard into the main application
+# -----------------------------------------------------------------------------
+
+from flask_login import login_required, current_user
+
+def register_compliance_dashboard(app, container):
+    """Attach the compliance dashboard to the Flask app"""
+    dashboard_app = dash.Dash(
+        __name__,
+        server=app,
+        url_base_pathname="/compliance/",
+    )
+    dashboard_app.layout = create_compliance_dashboard_layout()
+
+    @app.route("/compliance/")
+    @login_required
+    def compliance_dashboard_view():
+        if "compliance_admin" not in getattr(current_user, "roles", []):
+            return "Forbidden", 403
+        return dashboard_app.index()
+
+    app.config["compliance_dashboard"] = dashboard_app
+
+register_compliance_dashboard(app, container)
+
+# Sample environment variables:
+#   YOSAI_ENV=production
+#   YOSAI_PORT=8050
+#   COMPLIANCE_DASHBOARD_ROUTE=/compliance/
+#   DASHBOARD_ALLOWED_ROLES=compliance_admin,security_team
+
+# Example NGINX routing:
+#   location /compliance/ {
+#       proxy_pass http://dashboard:8050/compliance/;
+#       proxy_set_header Host $host;
+#       proxy_set_header X-Forwarded-Proto $scheme;
+#   }
+
+
 # =============================================================================
 # STEP 6: Deployment configuration
 # =============================================================================
+
+# WSGI/Gunicorn deployment:
+#   gunicorn wsgi:server --config gunicorn.conf.py
+# The default gunicorn.conf.py binds to port 8050 and uses gevent workers.
 
 # Update your production configuration:
 
