@@ -213,19 +213,29 @@ async def _startup() -> None:
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    """Health check endpoint."""
+    """Basic service health indicator.
+
+    Returns a simple payload showing the service is reachable and running.
+    """
     return {"status": "ok"}
 
 
 @app.get("/health/live")
 async def health_live() -> dict[str, str]:
-    """Liveness probe."""
+    """Liveness probe.
+
+    Indicates whether the process is alive by inspecting ``app.state.live``.
+    """
     return {"status": "ok" if app.state.live else "shutdown"}
 
 
 @app.get("/health/startup")
 async def health_startup() -> dict[str, str]:
-    """Startup probe."""
+    """Startup probe.
+
+    Verifies the application finished initializing by checking
+    ``app.state.startup_complete`` and returns appropriate status.
+    """
     if app.state.startup_complete:
         return {"status": "complete"}
     raise http_error(
@@ -237,7 +247,11 @@ async def health_startup() -> dict[str, str]:
 
 @app.get("/health/ready")
 async def health_ready() -> dict[str, str]:
-    """Readiness probe."""
+    """Readiness probe.
+
+    Confirms external dependencies are available by consulting ``app.state.ready``.
+    Returns 503 while the service is still warming up.
+    """
     if app.state.ready:
         return {"status": "ready"}
     raise http_error(
@@ -261,6 +275,11 @@ async def dashboard_summary(
     _: None = Depends(verify_token),
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
+    """Return overall dashboard metrics.
+
+    Retrieves summary analytics, caches the result in Redis and reuses the cached
+    value on subsequent requests.
+    """
     cache_key = "dashboard_summary"
     cached = await svc.redis.get(cache_key)
     if cached:
@@ -277,6 +296,12 @@ async def access_patterns(
     _: None = Depends(verify_token),
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
+    """Retrieve access pattern analytics.
+
+    Parameters:
+    - **days**: Number of days to include when computing access trends.
+    Caches responses in Redis keyed by the day window.
+    """
     cache_key = f"access:{days}"
 
     cached = await svc.redis.get(cache_key)
@@ -294,7 +319,11 @@ async def threat_assessment(
     file: UploadFile | None = File(None),
     _: None = Depends(verify_token),
 ):
-    """Run threat assessment on raw intel data."""
+    """Run threat assessment on raw intel data.
+
+    Accepts either a JSON body or an uploaded file containing event records and
+    computes anomaly detection and security pattern scores.
+    """
     try:
         if file is not None:
             raw_bytes = await file.read()
@@ -344,6 +373,11 @@ async def register_model(
     _: None = Depends(verify_token),
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
+    """Register a new ML model version.
+
+    Saves the uploaded artifact, records it in the model registry and loads the
+    model into memory if possible.
+    """
     dest_dir = svc.model_dir / name / version
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / file.filename
@@ -375,6 +409,10 @@ async def list_versions(
     _: None = Depends(verify_token),
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
+    """List model versions.
+
+    Returns all registered versions for the model along with the active one.
+    """
     records = svc.model_registry.list_models(name)
     if not records:
         raise http_error(ErrorCode.NOT_FOUND, "model not found", 404)
@@ -392,6 +430,10 @@ async def rollback(
     _: None = Depends(verify_token),
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
+    """Rollback to a previous model version.
+
+    Activates the specified ``version`` and reloads model artifacts into memory.
+    """
     records = svc.model_registry.list_models(name)
     if not records or version not in [r.version for r in records]:
         raise http_error(ErrorCode.NOT_FOUND, "version not found", 404)
@@ -412,6 +454,11 @@ async def predict(
     _: None = Depends(verify_token),
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
+    """Generate predictions using an active model.
+
+    Downloads the model artifact if necessary and logs input features before
+    returning the model's predictions.
+    """
     record = svc.model_registry.get_model(name, active_only=True)
     if record is None:
         raise http_error(ErrorCode.NOT_FOUND, "no active version", 404)
@@ -451,6 +498,11 @@ async def get_drift(
     _: None = Depends(verify_token),
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
+    """Retrieve data drift metrics for a model.
+
+    Returns drift statistics recorded in the model registry or a 404 if none
+    exist.
+    """
     metrics = svc.model_registry.get_drift_metrics(name)
     if not metrics:
         raise http_error(ErrorCode.NOT_FOUND, "no drift data", 404)
