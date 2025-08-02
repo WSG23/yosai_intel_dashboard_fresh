@@ -22,3 +22,16 @@ test('handles multiple selection', () => {
   });
   expect(onChange).toHaveBeenCalledWith(['a', 'b']);
 });
+
+test('filters options and selects via keyboard', () => {
+  const onChange = jest.fn();
+  render(
+    <Select value="" onChange={onChange} options={options} searchable placeholder="Search" />
+  );
+  const input = screen.getByRole('combobox');
+  fireEvent.change(input, { target: { value: 'b' } });
+  expect(screen.getByRole('option')).toHaveTextContent('B');
+  fireEvent.keyDown(input, { key: 'ArrowDown' });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(onChange).toHaveBeenCalledWith('b');
+});
