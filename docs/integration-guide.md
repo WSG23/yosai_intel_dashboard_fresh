@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 # COMPLETE COMPLIANCE FRAMEWORK INTEGRATION GUIDE
 """
 Complete step-by-step integration guide for GDPR/APPI compliance framework
@@ -12,13 +14,13 @@ into your existing Yōsai Intel application
 
 from flask import Flask
 from flask_login import login_required
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 from yosai_intel_dashboard.src.core.error_handlers import register_error_handlers
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from database.connection import create_database_connection
 
 # Import all compliance components
-from config.compliance_setup import (
+from yosai_intel_dashboard.src.infrastructure.config.compliance_setup import (
     setup_compliance_services,
     ensure_compliance_schema,
     register_compliance_middleware,

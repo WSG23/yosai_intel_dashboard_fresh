@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 YŌSAI INTEL DASHBOARD - MODELS SECTION GUIDE
 =====================================================
 
@@ -153,7 +155,7 @@ def process_access_log_csv(csv_data):
 
 # In anomaly detection - creating anomaly records
 from yosai_intel_dashboard.src.models.events import AnomalyDetection
-from models.enums import AnomalyType, SeverityLevel
+from yosai_intel_dashboard.src.core.domain.entities.enums import AnomalyType, SeverityLevel
 
 def flag_odd_time_access(access_event):
     anomaly = AnomalyDetection(
@@ -168,8 +170,8 @@ def flag_odd_time_access(access_event):
     return anomaly
 
 # In incident management - creating tickets
-from models.events import IncidentTicket
-from models.enums import TicketStatus
+from yosai_intel_dashboard.src.core.domain.entities.events import IncidentTicket
+from yosai_intel_dashboard.src.core.domain.entities.enums import TicketStatus
 
 def create_security_ticket(anomaly, threat_level):
     ticket = IncidentTicket(
@@ -193,7 +195,7 @@ CONTAINS:
 HOW OTHER MODULES USE IT:
 ```python
 # When creating new data models - inherit from BaseDataModel
-from models.base import BaseDataModel
+from yosai_intel_dashboard.src.core.domain.entities.base import BaseDataModel
 
 class PersonModel(BaseDataModel):
     def get_data(self, filters=None):
@@ -230,7 +232,7 @@ their badge, this model helps you find, filter, and analyze that data.
 HOW OTHER MODULES USE IT:
 ```python
 # In dashboard - getting recent activity
-from models.access_event import AccessEventModel
+from yosai_intel_dashboard.src.core.domain.entities.access_event import AccessEventModel
 
 def update_live_feed(db_connection):
     access_model = AccessEventModel(db_connection)
@@ -282,7 +284,7 @@ Tracks suspicious activity and anomalies detected by AI. The model lives in
 HOW OTHER MODULES USE IT:
 ```python
 # In dashboard - showing current threats
-from models import AnomalyDetectionModel
+from yosai_intel_dashboard.src.core.domain.entities import AnomalyDetectionModel
 
 def get_active_threats(db_connection, events):
     anomaly_model = AnomalyDetectionModel(db_connection)

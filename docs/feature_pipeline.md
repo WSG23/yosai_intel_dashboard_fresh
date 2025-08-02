@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 # Feature Pipeline
 
 `FeaturePipeline` orchestrates feature extraction and transformation using the
@@ -6,7 +8,7 @@ existing `FeastFeatureStore` and `ModelRegistry` utilities.
 ## Loading Definitions
 
 ```python
-from models.ml.feature_pipeline import FeaturePipeline
+from yosai_intel_dashboard.src.models.ml.feature_pipeline import FeaturePipeline
 pipe = FeaturePipeline("defs.yaml")
 pipe.load_definitions()
 ```

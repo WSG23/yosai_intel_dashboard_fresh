@@ -69,3 +69,29 @@ make proto-all      # run both
 ```
 
 Commit the resulting generated files so CI can verify they are up to date.
+
+## Clean Architecture Structure
+
+This project follows Clean Architecture principles. When contributing:
+
+### Directory Structure
+- `yosai_intel_dashboard/src/core/` - Business logic (no external dependencies)
+- `yosai_intel_dashboard/src/adapters/` - Interface adapters (API, UI)
+- `yosai_intel_dashboard/src/infrastructure/` - Frameworks and tools
+- `yosai_intel_dashboard/src/services/` - Application services
+
+### Import Guidelines
+Use the new import paths:
+```python
+# Old (deprecated)
+from models.user import User
+from services.analytics import AnalyticsService
+from config.settings import Settings
+
+# New (correct)
+from yosai_intel_dashboard.src.core.domain.entities.user import User
+from yosai_intel_dashboard.src.services.analytics import AnalyticsService
+from yosai_intel_dashboard.src.infrastructure.config.settings import Settings
+```
+
+Run `isort .` to automatically sort imports before committing changes.

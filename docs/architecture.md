@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 # Application Architecture
 
 The dashboard is organized around a small core that wires together services and database models through a dependency injection (DI) container. The entry point is an application factory which creates the Dash/Flask app and registers all services.
@@ -51,7 +53,7 @@ container. Register them during application startup and retrieve them where
 needed:
 
 ```python
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
 
@@ -68,7 +70,7 @@ analytics_service = container.get("analytics")  # AnalyticsServiceProtocol
 
 
 ```python
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 config = create_config_manager()
 db_cfg = config.get_database_config()

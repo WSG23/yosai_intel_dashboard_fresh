@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 # Secret Management
 
 This guide covers how secrets are handled in the Yōsai Intel Dashboard.
@@ -134,7 +136,7 @@ security:
 Create the manager with:
 
 ```python
-from config import SecureConfigManager
+from yosai_intel_dashboard.src.infrastructure.config import SecureConfigManager
 
 cfg = SecureConfigManager()
 ```
