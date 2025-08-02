@@ -1,0 +1,29 @@
+{
+  "title": "Service Metrics",
+  "schemaVersion": 16,
+  "timezone": "browser",
+  "version": 1,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "CPU Usage",
+      "targets": [
+        {"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\"}[5m]))"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Memory Usage",
+      "targets": [
+        {"expr": "sum(container_memory_usage_bytes{namespace=\"$namespace\"})"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate",
+      "targets": [
+        {"expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))"}
+      ]
+    }
+  ]
+}
