@@ -1,195 +1,73 @@
 {
-  "components": {
-    "responses": {
-      "BadRequest": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        },
-        "description": "Bad request"
-      },
-      "NotFound": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        },
-        "description": "Resource not found"
-      }
-    },
-    "schemas": {
-      "AccessEvent": {
-        "properties": {
-          "door_id": {
-            "type": "string"
-          },
-          "event_id": {
-            "type": "string"
-          },
-          "person_id": {
-            "type": "string"
-          },
-          "result": {
-            "enum": [
-              "granted",
-              "denied",
-              "tailgating",
-              "forced"
-            ],
-            "type": "string"
-          },
-          "timestamp": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "person_id",
-          "door_id",
-          "timestamp"
-        ],
-        "type": "object"
-      },
-      "AnalyticsUpdate": {
-        "additionalProperties": true,
-        "description": "Generic analytics update broadcast over WebSocket.",
-        "type": "object"
-      },
-      "Error": {
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "details": {
-            "additionalProperties": true,
-            "type": "object"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code",
-          "message"
-        ],
-        "type": "object"
-      },
-      "EventListResponse": {
-        "properties": {
-          "events": {
-            "items": {
-              "$ref": "#/components/schemas/AccessEvent"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "WebhookAlertPayload": {
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "type": "object"
-      }
-    },
-    "securitySchemes": {
-      "csrfToken": {
-        "description": "Anti-CSRF token required for mutating operations",
-        "in": "header",
-        "name": "X-CSRF-Token",
-        "type": "apiKey"
-      },
-      "jwtAuth": {
-        "bearerFormat": "JWT",
-        "description": "Signed JWT present in the Authorization header",
-        "scheme": "bearer",
-        "type": "http"
-      }
-    }
-  },
+  "openapi": "3.1.0",
   "info": {
-    "contact": {
-      "email": "api-support@yosai.com"
-    },
-    "description": "Physical security intelligence and access control API.\n\n# Authentication\nUse Bearer token (JWT) for inter-service communication and require an\n`X-CSRF-Token` header on state-changing requests.\n\n# Versioning\nAPI version is included in the URL path (e.g., /v2/events).\n",
-    "license": {
-      "name": "Apache 2.0",
-      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
-    },
-    "termsOfService": "https://yosai.com/terms",
-    "title": "Yōsai Intel Dashboard API",
-    "version": "2.0.0"
+    "title": "Yosai Dashboard API",
+    "version": "1.0.0"
   },
-  "openapi": "3.0.3",
   "paths": {
-    "/events": {
+    "/health": {
       "get": {
-        "operationId": "listAccessEvents",
+        "summary": " Health",
+        "operationId": "_health_health_get",
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EventListResponse"
-                }
+                "schema": {}
               }
-            },
-            "description": "Successful response"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
+            }
           }
-        },
-        "summary": "List access events",
-        "tags": [
-          "Events"
-        ]
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "summary": " Health Live",
+        "operationId": "_health_live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": " Health Ready",
+        "operationId": "_health_ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/startup": {
+      "get": {
+        "summary": " Health Startup",
+        "operationId": "_health_startup_health_startup_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
       }
     }
-  },
-  "security": [
-    {
-      "jwtAuth": []
-    },
-    {
-      "csrfToken": []
-    }
-  ],
-  "servers": [
-    {
-      "description": "Production",
-      "url": "https://api.yosai.com/v2"
-    },
-    {
-      "description": "Staging",
-      "url": "https://staging-api.yosai.com/v2"
-    },
-    {
-      "description": "Development",
-      "url": "http://localhost:8080/v2"
-    }
-  ],
-  "tags": [
-    {
-      "description": "Access control events",
-      "name": "Events"
-    },
-    {
-      "description": "Analytics and reporting",
-      "name": "Analytics"
-    }
-  ]
+  }
 }

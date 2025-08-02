@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 
 from fastapi import Depends, HTTPException, status
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
@@ -52,6 +54,14 @@ def create_api_app() -> "FastAPI":
     """Create API app registered on a BaseService."""
     validate_all_secrets()
     service = BaseService("api", "")
+    service.app = FastAPI(
+        title="Yosai Dashboard API",
+        version="1.0.0",
+        openapi_url="/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc",
+    )
+    service._add_health_routes()
     service.start()
     service.app.add_middleware(TimingMiddleware)
     build_dir = os.path.abspath(
@@ -147,6 +157,7 @@ def create_api_app() -> "FastAPI":
         return schema
 
     service.app.openapi = custom_openapi
+
     return service.app
 
 

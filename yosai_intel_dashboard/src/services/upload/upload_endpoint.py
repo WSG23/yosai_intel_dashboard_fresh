@@ -4,7 +4,7 @@ import base64
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from error_handling import ErrorCategory, ErrorHandler, api_error_response
 
@@ -16,9 +16,30 @@ class UploadRequestSchema(BaseModel):
     contents: list[str] | None = None
     filenames: list[str] | None = None
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "contents": [
+                        "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="
+                    ],
+                    "filenames": ["hello.txt"],
+                }
+            ]
+        }
+    )
+
 
 class UploadResponseSchema(BaseModel):
     job_id: str
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"job_id": "123e4567-e89b-12d3-a456-426614174000"}
+            ]
+        }
+    )
 
 
 class StatusSchema(BaseModel):
@@ -45,7 +66,11 @@ def create_upload_blueprint(
     @validate_input(UploadRequestSchema)
     @validate_output(UploadResponseSchema)
     def upload_files(payload: UploadRequestSchema):
-        """Handle file upload and return expected structure for React frontend"""
+        """Process an uploaded file.
+
+        Validates the incoming data or multipart upload, stores the contents for
+        background processing and returns a job identifier.
+        """
         try:
             token = (
                 request.headers.get("X-CSRFToken")
@@ -119,7 +144,11 @@ def create_upload_blueprint(
     )
     @validate_output(StatusSchema)
     def upload_status(job_id: str):
-        """Return background processing status for ``job_id``."""
+        """Fetch upload processing status.
+
+        Looks up the current state for the provided ``job_id`` and returns the
+        processing metadata.
+        """
         status = file_processor.get_job_status(job_id)
         return status
 
