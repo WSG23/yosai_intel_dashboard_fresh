@@ -64,3 +64,6 @@ def register_error_handlers(app: Flask) -> None:
     def _handle_generic(error: Exception):  # type: ignore[missing-return-type]
         error_handler.handle_error(error, severity=ErrorSeverity.HIGH)
         return _json_body(ErrorCode.INTERNAL, str(error)), 500
+
+
+__all__ = ["register_error_handlers"]

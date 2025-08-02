@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import * as XLSX from 'xlsx';
+import { read, utils } from 'xlsx';
 
 export interface ParsedData {
   rows: any[];
@@ -44,9 +44,9 @@ const parseJSON = (content: string): ParsedData => {
 
 const parseXLSX = async (file: File): Promise<ParsedData> => {
   const data = await file.arrayBuffer();
-  const workbook = XLSX.read(data, { type: 'array' });
+  const workbook = read(data, { type: 'array' });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows: any[] = XLSX.utils.sheet_to_json(sheet);
+  const rows: any[] = utils.sheet_to_json(sheet);
   const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
   const deviceColumn = columns.find(h => h.toLowerCase().includes('door') || h.toLowerCase().includes('device'));
   const devices = deviceColumn ? Array.from(new Set(rows.map(r => r[deviceColumn]))) : [];

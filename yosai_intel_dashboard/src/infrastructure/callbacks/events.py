@@ -29,3 +29,6 @@ class CallbackEvent(Enum):
     ANOMALY_DETECTED = auto()
     SCORE_CALCULATED = auto()
     VALIDATION_FAILED = auto()
+
+
+__all__ = ["CallbackEvent"]
