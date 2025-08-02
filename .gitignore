@@ -84,6 +84,7 @@ coverage/
 # Documentation
 docs/_build/
 docs/portal/
+docs/api/*.pdf
 # Mac
 .DS_Store
 # Windows
