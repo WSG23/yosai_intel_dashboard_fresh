@@ -31,7 +31,10 @@ from .callback_modules import CallbackModule, CallbackModuleRegistry
 from .cpu_optimizer import CPUOptimizer
 from .di_decorators import inject, injectable
 from .env_validation import validate_env
-from .hierarchical_cache_manager import HierarchicalCacheManager
+from .hierarchical_cache_manager import (
+    HierarchicalCacheConfig,
+    HierarchicalCacheManager,
+)
 from .intelligent_multilevel_cache import (
     IntelligentMultiLevelCache,
     create_intelligent_cache_manager,
@@ -54,6 +57,7 @@ __all__ = [
     "cache_with_lock",
     "AdvancedQueryOptimizer",
     "HierarchicalCacheManager",
+    "HierarchicalCacheConfig",
     "IntelligentCacheWarmer",
     "MemoryManager",
     "CPUOptimizer",
