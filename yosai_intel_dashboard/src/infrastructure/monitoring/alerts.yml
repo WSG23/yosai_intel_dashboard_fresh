@@ -2,15 +2,25 @@
 # Trigger when replication lag exceeds 60 seconds
 ---
 groups:
-- name: timescale
-  rules:
-  - alert: TimescaleReplicationLag
-    expr: replication_lag_seconds > 60
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: Replication lag to TimescaleDB exceeds 60 seconds
-      channels:
-        - performance-alerts
+  - name: timescale
+    rules:
+      - alert: TimescaleReplicationLag
+        expr: replication_lag_seconds > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Replication lag to TimescaleDB exceeds 60 seconds
+          channels: performance-alerts
+
+  - name: performance-budgets
+    rules:
+      - alert: PerformanceBudgetExceeded
+        expr: performance_budget_exceeded_total > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: A performance budget was exceeded
+          channels: performance-alerts
 
