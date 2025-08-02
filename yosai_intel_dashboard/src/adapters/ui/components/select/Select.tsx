@@ -1,21 +1,22 @@
 import React from 'react';
 
-interface Option {
-  value: string;
+export interface Option<T extends string> {
+  value: T;
   label: string;
 }
 
-export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
-  value: string | string[];
-  onChange: (value: string | string[]) => void;
-  options: Option[];
+export interface SelectProps<T extends string = string>
+  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
+  value: T | T[];
+  onChange: (value: T | T[]) => void;
+  options: Option<T>[];
   multiple?: boolean;
   placeholder?: string;
   className?: string;
   searchable?: boolean;
 }
 
-export const Select: React.FC<SelectProps> = ({
+export const Select = <T extends string,>({
   value,
   onChange,
   options,
@@ -24,64 +25,14 @@ export const Select: React.FC<SelectProps> = ({
   className = '',
   searchable = false,
   ...rest
-}) => {
-  if (!searchable) {
-    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      if (multiple) {
-        const selected = Array.from(e.target.selectedOptions).map(o => o.value);
-        onChange(selected);
-      } else {
-        onChange(e.target.value);
-      }
-    };
-
-    return (
-      <select
-        multiple={multiple}
-        value={value}
-        onChange={handleChange}
-        className={`border rounded-md px-2 py-1 ${className}`}
-        {...rest}
-      >
-        {!multiple && placeholder && <option value="">{placeholder}</option>}
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    );
-  }
-
-  const [query, setQuery] = React.useState('');
-  const [activeIndex, setActiveIndex] = React.useState(0);
-
-  const filtered = React.useMemo(
-    () =>
-      options.filter(o =>
-        o.label.toLowerCase().includes(query.toLowerCase())
-      ),
-    [options, query]
-  );
-
-  React.useEffect(() => {
-    if (activeIndex > filtered.length - 1) {
-      setActiveIndex(filtered.length - 1);
-    }
-  }, [filtered.length, activeIndex]);
-
-  const selectOption = (index: number) => {
-    const opt = filtered[index];
-    if (!opt) return;
+}: SelectProps<T>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (multiple) {
-      const current = Array.isArray(value) ? value : [];
-      const exists = current.includes(opt.value);
-      const next = exists
-        ? current.filter(v => v !== opt.value)
-        : [...current, opt.value];
-      onChange(next);
+      const selected = Array.from(e.target.selectedOptions).map(o => o.value as T);
+      onChange(selected as T[]);
     } else {
-      onChange(opt.value);
+      onChange(e.target.value as T);
+
     }
   };
 
