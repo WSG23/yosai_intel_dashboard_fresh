@@ -3,10 +3,10 @@ from datetime import datetime
 
 import pandas as pd
 
-import services.upload.helpers as upload_helpers
-from services.analytics.db_interface import AnalyticsDataAccessor
-from services.learning.src.api.consolidated_service import ConsolidatedLearningService
-from services.upload import save_ai_training_data
+import yosai_intel_dashboard.src.services as services.upload.helpers as upload_helpers
+from yosai_intel_dashboard.src.services.analytics.db_interface import AnalyticsDataAccessor
+from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import ConsolidatedLearningService
+from yosai_intel_dashboard.src.services.upload import save_ai_training_data
 
 
 def test_consolidated_learning_unicode(tmp_path):

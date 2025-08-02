@@ -3,7 +3,7 @@ import json
 import pytest
 from flask import Flask
 
-from core.secret_manager import SecretsManager
+from yosai_intel_dashboard.src.core.secret_manager import SecretsManager
 from security.secrets_validator import SecretsValidator, register_health_endpoint
 
 

@@ -1,7 +1,7 @@
 from flask import Flask, Response, stream_with_context
 
 try:  # pragma: no cover
-    from core.app_factory.health import register_health_endpoints
+    from yosai_intel_dashboard.src.core.app_factory.health import register_health_endpoints
 except Exception:  # pragma: no cover
     def register_health_endpoints(app, progress):  # type: ignore[misc]
         @app.route("/upload/progress/<task_id>")

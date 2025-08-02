@@ -248,7 +248,7 @@ def register_migration_services(container: MigrationContainer) -> None:
 
     if container._migration_flags["use_timescaledb"]:
         try:
-            from yosai_intel_dashboard.src.services.timescale import models as timescale_models  # noqa:F401
+            from yosai_intel_dashboard.src.services.timescale import yosai_intel_dashboard.src.core.domain.entities as models as timescale_models  # noqa:F401
             from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
         except Exception:  # pragma: no cover - optional dependency
             pass

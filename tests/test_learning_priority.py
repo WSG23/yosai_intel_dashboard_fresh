@@ -1,8 +1,8 @@
 import pytest
 
-from services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
-from services.ai_mapping_store import ai_mapping_store
-from services.upload import analyze_device_name_with_ai
+from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator, DeviceAttributes
+from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
+from yosai_intel_dashboard.src.services.upload import analyze_device_name_with_ai
 
 
 class DummyAttrs:

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.summary_report_generator import SummaryReportGenerator
+from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
 
 
 def _make_df():

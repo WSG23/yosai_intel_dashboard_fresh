@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from config import ConfigManager
-from core.secrets_validator import validate_all_secrets
+from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
 from database.connection import create_database_connection
 from database.secure_exec import execute_command
 

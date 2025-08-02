@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 
-from core.env_validation import validate_required_env
+from yosai_intel_dashboard.src.core.env_validation import validate_required_env
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import Flask app directly from adapter
 from api.adapter import create_api_app
-from core.di.bootstrap import bootstrap_container
+from yosai_intel_dashboard.src.core.di.bootstrap import bootstrap_container
 
 # Import Dash app factory from the package
 from yosai_intel_dashboard.src.core.app_factory import create_app

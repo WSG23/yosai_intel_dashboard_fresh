@@ -13,7 +13,7 @@ from tests.import_helpers import safe_import, import_optional
 safe_import('yosai_intel_dashboard', types.ModuleType("yosai_intel_dashboard"))
 sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
 
-from error_handling import ErrorHandler
+from yosai_intel_dashboard.src.error_handling import ErrorHandler
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 

@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from core.container import Container
+from yosai_intel_dashboard.src.core.container import Container
 from yosai_intel_dashboard.src.infrastructure.di.service_container import DependencyInjectionError
 
 

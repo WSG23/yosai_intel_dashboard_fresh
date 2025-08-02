@@ -5,7 +5,7 @@ import pytest
 from cryptography.fernet import Fernet
 
 from yosai_intel_dashboard.src.infrastructure.config.secure_config_manager import SecureConfigManager
-from core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 
 def test_vault_secret_resolution(monkeypatch, tmp_path):

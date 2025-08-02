@@ -6,7 +6,7 @@ from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
 from pydantic import BaseModel, ConfigDict
 
-from error_handling import ErrorCategory, ErrorHandler, api_error_response
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output

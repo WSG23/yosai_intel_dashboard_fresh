@@ -1,9 +1,9 @@
 import pytest
 
-from core import performance
-from core.async_utils.async_batch import async_batch
-from core.async_utils.async_retry import async_retry
-from core.performance import PerformanceMonitor
+from yosai_intel_dashboard.src.core import performance
+from yosai_intel_dashboard.src.core.async_utils.async_batch import async_batch
+from yosai_intel_dashboard.src.core.async_utils.async_retry import async_retry
+from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
 from yosai_intel_dashboard.src.core import performance as perf_src
 
 

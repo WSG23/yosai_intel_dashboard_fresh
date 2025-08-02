@@ -50,8 +50,8 @@ class PluginPackageBuilder(AbstractContextManager):
         (self._pkg_path / "__init__.py").write_text("")
         plugin_code = f"""
 from dash import Output, Input
-from core.protocols.plugin import PluginMetadata
-from core.plugins.callback_unifier import CallbackUnifier
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.plugins.callback_unifier import CallbackUnifier
 
 class AutoPlugin:
     metadata = PluginMetadata(

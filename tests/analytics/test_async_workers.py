@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from services.analytics import async_workers as workers
+from yosai_intel_dashboard.src.services.analytics import async_workers as workers
 
 
 class StubManager:

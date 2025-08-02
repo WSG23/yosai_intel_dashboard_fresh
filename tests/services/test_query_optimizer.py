@@ -1,4 +1,4 @@
-from services.query_optimizer import (
+from yosai_intel_dashboard.src.services.query_optimizer import (
     end_request_tracking,
     start_request_tracking,
     track_query,

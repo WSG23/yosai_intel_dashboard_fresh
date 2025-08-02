@@ -6,8 +6,8 @@ import types
 from pathlib import Path
 
 from config import create_config_manager
-from core.plugins.manager import ThreadSafePluginManager as PluginManager
-from core.protocols.plugin import PluginMetadata, PluginStatus
+from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata, PluginStatus
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 
@@ -113,7 +113,7 @@ def test_load_all_plugins(tmp_path, monkeypatch):
     plugin_module = pkg_dir / "plugin_a.py"
     plugin_module.write_text(
         """
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 
 class Plugin:
     metadata = PluginMetadata(

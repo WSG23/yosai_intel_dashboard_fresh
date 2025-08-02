@@ -1,6 +1,6 @@
 import pandas as pd
 
-from core.unicode import UnicodeProcessor, UnicodeSQLProcessor, sanitize_dataframe
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor, UnicodeSQLProcessor, sanitize_dataframe
 
 
 def test_processor_basic():

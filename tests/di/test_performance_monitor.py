@@ -1,6 +1,6 @@
 import time
 
-from core.performance_monitor import DIPerformanceMonitor
+from yosai_intel_dashboard.src.core.performance_monitor import DIPerformanceMonitor
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 

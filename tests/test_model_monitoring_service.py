@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 import pytest
 
-from services import model_monitoring_service as mms
+from yosai_intel_dashboard.src.services import model_monitoring_service as mms
 
 
 class DummyDispatcher:

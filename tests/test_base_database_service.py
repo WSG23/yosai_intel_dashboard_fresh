@@ -4,7 +4,7 @@ import types
 import pytest
 
 from config import DatabaseSettings
-from core.base_database_service import BaseDatabaseService
+from yosai_intel_dashboard.src.core.base_database_service import BaseDatabaseService
 from tests.import_helpers import safe_import, import_optional
 
 

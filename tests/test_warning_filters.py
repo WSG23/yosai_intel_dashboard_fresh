@@ -2,10 +2,10 @@ import warnings
 
 import pandas as pd
 
-from services.analytics.access_trends import AccessTrendsAnalyzer
-from services.analytics.anomaly_detection import AnomalyDetector
-from services.analytics.security_patterns import PaginatedAnalyzer
-from services.analytics.user_behavior import UserBehaviorAnalyzer
+from yosai_intel_dashboard.src.services.analytics.access_trends import AccessTrendsAnalyzer
+from yosai_intel_dashboard.src.services.analytics.anomaly_detection import AnomalyDetector
+from yosai_intel_dashboard.src.services.analytics.security_patterns import PaginatedAnalyzer
+from yosai_intel_dashboard.src.services.analytics.user_behavior import UserBehaviorAnalyzer
 
 
 def _sample_df(rows: int = 20) -> pd.DataFrame:

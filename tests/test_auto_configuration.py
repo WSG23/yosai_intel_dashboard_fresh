@@ -7,11 +7,11 @@ import pytest
 from dash import Dash, Input, Output
 
 from config import create_config_manager
-from core.json_serialization_plugin import JsonSerializationPlugin
-from core.plugins.auto_config import setup_plugins
-from core.plugins.callback_unifier import CallbackUnifier
-from core.plugins.decorators import safe_callback
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.json_serialization_plugin import JsonSerializationPlugin
+from yosai_intel_dashboard.src.core.plugins.auto_config import setup_plugins
+from yosai_intel_dashboard.src.core.plugins.callback_unifier import CallbackUnifier
+from yosai_intel_dashboard.src.core.plugins.decorators import safe_callback
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
@@ -37,8 +37,8 @@ def _create_package(tmp_path):
     (pkg / "__init__.py").write_text("")
     plugin_code = """
 from dash import Output, Input
-from core.protocols.plugin import PluginMetadata
-from core.plugins.callback_unifier import CallbackUnifier
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.plugins.callback_unifier import CallbackUnifier
 
 class AutoPlugin:
     metadata = PluginMetadata(

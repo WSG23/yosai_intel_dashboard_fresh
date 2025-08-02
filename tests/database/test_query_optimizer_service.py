@@ -1,4 +1,4 @@
-from services.query_optimizer import QueryOptimizer
+from yosai_intel_dashboard.src.services.query_optimizer import QueryOptimizer
 
 
 class FakeConn:

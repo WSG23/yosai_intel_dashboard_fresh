@@ -4,7 +4,7 @@ import base64
 import os
 from typing import Dict, List
 
-from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
 from .security_validator import SecurityValidator
 

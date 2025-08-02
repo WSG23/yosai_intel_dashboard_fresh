@@ -9,7 +9,7 @@ class Analytics:
 
 
 from yosai_intel_dashboard.src.infrastructure.config.utils import get_ai_confidence_threshold, get_upload_chunk_size
-from core.config import get_max_parallel_uploads, get_validator_rules
+from yosai_intel_dashboard.src.core.config import get_max_parallel_uploads, get_validator_rules
 
 
 class DynamicConfigManager:

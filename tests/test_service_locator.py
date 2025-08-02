@@ -1,6 +1,6 @@
 import types
 
-from core.plugins import service_locator
+from yosai_intel_dashboard.src.core.plugins import service_locator
 
 
 def test_service_locator_returns_set_plugin():

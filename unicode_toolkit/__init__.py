@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import (
     UnicodeProcessor,
     UnicodeSQLProcessor,
     clean_unicode_surrogates,

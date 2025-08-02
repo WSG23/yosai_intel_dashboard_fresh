@@ -12,7 +12,7 @@ safe_import('config.dynamic_config', SimpleNamespace()
     dynamic_config=stub_dynamic_config
 )
 
-from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
 
 

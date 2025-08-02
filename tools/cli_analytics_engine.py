@@ -24,7 +24,7 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
 
         from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
         from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
-        from services.device_learning_service import DeviceLearningService
+        from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
 
         parquet_path = (
             Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
@@ -134,7 +134,7 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
                 # Test analytics functions from data_processing.analytics_engine
                 print("\n--- Testing analytics engine functions ---")
                 try:
-                    from services import get_analytics_service
+                    from yosai_intel_dashboard.src.services import get_analytics_service
 
                     analytics_func = get_analytics_service()
                     result["analytics_engine_functions"] = {
