@@ -1,5 +1,7 @@
 from enum import Enum
 
+from pydantic import BaseModel
+
 
 class ErrorCode(str, Enum):
     """Common error codes returned by services."""
@@ -9,3 +11,10 @@ class ErrorCode(str, Enum):
     NOT_FOUND = "not_found"
     INTERNAL = "internal"
     UNAVAILABLE = "unavailable"
+
+
+class ErrorResponse(BaseModel):
+    """Standard error response model."""
+
+    code: ErrorCode | None = None
+    detail: str
