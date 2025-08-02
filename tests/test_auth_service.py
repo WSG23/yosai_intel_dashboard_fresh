@@ -2,12 +2,13 @@ import sys
 from types import SimpleNamespace
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 stub_dynamic_config = SimpleNamespace(
     security=SimpleNamespace(max_upload_mb=10),
     upload=SimpleNamespace(allowed_file_types=[".csv", ".json", ".xlsx", ".xls"]),
 )
-sys.modules["config.dynamic_config"] = SimpleNamespace(
+safe_import('config.dynamic_config', SimpleNamespace()
     dynamic_config=stub_dynamic_config
 )
 

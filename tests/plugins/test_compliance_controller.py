@@ -4,6 +4,7 @@ from enum import Enum
 from types import ModuleType, SimpleNamespace
 
 from flask import Flask
+from tests.import_helpers import safe_import, import_optional
 
 
 def _create_client(monkeypatch):
@@ -36,7 +37,7 @@ def _create_client(monkeypatch):
             return [{"uid": uid, "days": days}]
 
     audit_mod.ComplianceAuditLogger = DummyAuditLogger
-    monkeypatch.setitem(sys.modules, "core.audit_logger", audit_mod)
+    safe_import('core.audit_logger', audit_mod)
 
     cont_mod = ModuleType("core.container")
 
@@ -45,8 +46,8 @@ def _create_client(monkeypatch):
             return None
 
     cont_mod.Container = lambda: DummyContainer()
-    monkeypatch.setitem(sys.modules, "core.container", cont_mod)
-    monkeypatch.setitem(sys.modules, "core.rbac", ModuleType("core.rbac"))
+    safe_import('core.container', cont_mod)
+    safe_import('core.rbac', ModuleType("core.rbac"))
     sys.modules["core.rbac"].require_role = lambda role: (lambda f: f)
     monkeypatch.setitem(
         sys.modules, "services.security", ModuleType("services.security")
@@ -54,7 +55,7 @@ def _create_client(monkeypatch):
     sys.modules["services.security"].require_role = lambda role: (lambda f: f)
     exec_mod = ModuleType("services.database.secure_exec")
     exec_mod.execute_query = lambda *a, **k: []
-    monkeypatch.setitem(sys.modules, "services.database.secure_exec", exec_mod)
+    safe_import('services.database.secure_exec', exec_mod)
 
     err_mod = ModuleType("error_handling")
     err_mod.ErrorCategory = type("ErrorCategory", (), {"INTERNAL": 1})
@@ -64,11 +65,11 @@ def _create_client(monkeypatch):
             return SimpleNamespace(to_dict=lambda: {"error": str(e)})
 
     err_mod.ErrorHandler = ErrorHandler
-    monkeypatch.setitem(sys.modules, "error_handling", err_mod)
+    safe_import('error_handling', err_mod)
 
     consent_mod = ModuleType("svc.c")
     consent_mod.ConsentService = type("ConsentService", (), {})
-    monkeypatch.setitem(sys.modules, "services.compliance.consent_service", consent_mod)
+    safe_import('services.compliance.consent_service', consent_mod)
     dsar_mod = ModuleType("svc.dsar")
 
     class DSARService:
@@ -76,11 +77,11 @@ def _create_client(monkeypatch):
             return [{"due": days}]
 
     dsar_mod.DSARService = DSARService
-    monkeypatch.setitem(sys.modules, "services.compliance.dsar_service", dsar_mod)
+    safe_import('services.compliance.dsar_service', dsar_mod)
 
     shared_mod = ModuleType("shared.errors.types")
     shared_mod.ErrorCode = type("ErrorCode", (), {"INTERNAL": 1})
-    monkeypatch.setitem(sys.modules, "shared.errors.types", shared_mod)
+    safe_import('shared.errors.types', shared_mod)
 
     val_mod = ModuleType("validation.security_validator")
 
@@ -89,16 +90,16 @@ def _create_client(monkeypatch):
             return {"valid": True, "sanitized": value}
 
     val_mod.SecurityValidator = SecurityValidator
-    monkeypatch.setitem(sys.modules, "validation.security_validator", val_mod)
+    safe_import('validation.security_validator', val_mod)
 
     yosai_mod = ModuleType("yosai_framework.errors")
     yosai_mod.CODE_TO_STATUS = {1: 500}
-    monkeypatch.setitem(sys.modules, "yosai_framework.errors", yosai_mod)
+    safe_import('yosai_framework.errors', yosai_mod)
 
     login_mod = ModuleType("flask_login")
     login_mod.current_user = SimpleNamespace(id="user1", is_authenticated=True)
     login_mod.login_required = lambda f: f
-    monkeypatch.setitem(sys.modules, "flask_login", login_mod)
+    safe_import('flask_login', login_mod)
 
     spec = importlib.util.spec_from_file_location(
         "plugins.compliance_plugin.compliance_controller",

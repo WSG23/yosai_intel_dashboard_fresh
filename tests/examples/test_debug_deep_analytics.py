@@ -1,4 +1,5 @@
 from examples.debug_deep_analytics import (
+from tests.import_helpers import safe_import, import_optional
     check_upload_store,
     create_test_dataset,
     find_hardcoded_values,
@@ -32,7 +33,7 @@ def test_check_upload_store(tmp_path, monkeypatch):
     dummy_store = DummyStore()
     dummy_module.UploadedDataStore = DummyStore
     dummy_module.uploaded_data_store = dummy_store
-    monkeypatch.setitem(sys.modules, "utils.upload_store", dummy_module)
+    safe_import('utils.upload_store', dummy_module)
 
     df = create_test_dataset(5)
     stored = check_upload_store(df)

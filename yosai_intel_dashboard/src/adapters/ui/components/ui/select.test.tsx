@@ -1,15 +1,9 @@
-import { render } from '@testing-library/react';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './select';
+import { render, screen } from '@testing-library/react';
+import { Select } from '../select/Select';
 
-test('renders select components', () => {
-  render(
-    <Select value="" onValueChange={() => {}}>
-      <SelectTrigger>
-        <SelectValue placeholder="choose" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="1">One</SelectItem>
-      </SelectContent>
-    </Select>
-  );
+const options = [{ value: '1', label: 'One' }];
+
+test('renders unified select', () => {
+  render(<Select value="" onChange={() => {}} options={options} />);
+  expect(screen.getByRole('combobox')).toBeInTheDocument();
 });

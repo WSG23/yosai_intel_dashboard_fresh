@@ -3,6 +3,7 @@ import sys
 import types
 from pathlib import Path
 from unittest.mock import MagicMock
+from tests.import_helpers import safe_import, import_optional
 
 
 def _install_core_stub(monkeypatch):
@@ -21,9 +22,9 @@ def _install_core_stub(monkeypatch):
     plugin_pkg.PluginMetadata = PluginMetadata
     protocols_pkg.plugin = plugin_pkg
     core_pkg.protocols = protocols_pkg
-    monkeypatch.setitem(sys.modules, "core", core_pkg)
-    monkeypatch.setitem(sys.modules, "core.protocols", protocols_pkg)
-    monkeypatch.setitem(sys.modules, "core.protocols.plugin", plugin_pkg)
+    safe_import('core', core_pkg)
+    safe_import('core.protocols', protocols_pkg)
+    safe_import('core.protocols.plugin', plugin_pkg)
 
 
 def _load_ai_plugin(monkeypatch, repo_success=True):
@@ -43,7 +44,7 @@ def _load_ai_plugin(monkeypatch, repo_success=True):
     repo.initialize.return_value = repo_success
     repo_mod = types.ModuleType("plugins.ai_classification.database.csv_storage")
     repo_mod.CSVStorageRepository = lambda p: repo
-    sys.modules["plugins.ai_classification.database.csv_storage"] = repo_mod
+    safe_import('plugins.ai_classification.database.csv_storage', repo_mod)
 
     service_names = {
         "column_mapper": "ColumnMappingService",
@@ -64,7 +65,7 @@ def _load_ai_plugin(monkeypatch, repo_success=True):
 def test_start_initializes_services(monkeypatch, mock_auth_env):
     stub_preview = types.ModuleType("utils.preview_utils")
     stub_preview.serialize_dataframe_preview = lambda df: []
-    monkeypatch.setitem(sys.modules, "utils.preview_utils", stub_preview)
+    safe_import('utils.preview_utils', stub_preview)
     AIClassificationPlugin, repo = _load_ai_plugin(monkeypatch, repo_success=True)
     monkeypatch.setattr(
         "plugins.ai_classification.plugin.JapaneseTextHandler", lambda cfg: "japan"
@@ -109,7 +110,7 @@ def test_start_initializes_services(monkeypatch, mock_auth_env):
 def test_start_failure_logs_error(monkeypatch, caplog, mock_auth_env):
     stub_preview = types.ModuleType("utils.preview_utils")
     stub_preview.serialize_dataframe_preview = lambda df: []
-    monkeypatch.setitem(sys.modules, "utils.preview_utils", stub_preview)
+    safe_import('utils.preview_utils', stub_preview)
     AIClassificationPlugin, repo = _load_ai_plugin(monkeypatch, repo_success=False)
 
     plugin = AIClassificationPlugin()

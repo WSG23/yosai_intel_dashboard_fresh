@@ -2,8 +2,9 @@ import base64
 
 import pandas as pd
 
-from tests.fake_configuration import FakeConfiguration
+from tests.config import FakeConfiguration
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+from tests.import_helpers import safe_import, import_optional
 
 fake_cfg = FakeConfiguration()
 from services.data_enhancer.mapping_utils import (

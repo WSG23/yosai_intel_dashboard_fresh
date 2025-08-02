@@ -3,6 +3,7 @@ import types
 from pathlib import Path
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 try:
     import flask  # noqa: F401
@@ -11,7 +12,7 @@ except Exception:
 
 services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "services")]
-sys.modules["services"] = services_stub
+safe_import('services', services_stub)
 
 import pandas as pd
 

@@ -6,6 +6,7 @@ import time
 import types
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
@@ -19,19 +20,19 @@ def load_jwt_service(monkeypatch, secret: str | None = None):
     services_mod = sys.modules.get("services")
     if services_mod is None:
         services_mod = types.ModuleType("services")
-        sys.modules["services"] = services_mod
+        safe_import('services', services_mod)
     services_mod.__path__ = [str(SERVICES_PATH)]
 
     security_mod = sys.modules.get("services.security")
     if security_mod is None:
         security_mod = types.ModuleType("services.security")
-        sys.modules["services.security"] = security_mod
+        safe_import('services.security', security_mod)
     security_mod.__path__ = [str(SERVICES_PATH / "security")]
 
     secrets_mod = types.ModuleType("services.common.secrets")
     secrets_mod.get_secret = lambda key: secret
     secrets_mod.invalidate_secret = lambda key=None: None
-    monkeypatch.setitem(sys.modules, "services.common.secrets", secrets_mod)
+    safe_import('services.common.secrets', secrets_mod)
 
     module_name = "services.security.jwt_service"
     if module_name in sys.modules:

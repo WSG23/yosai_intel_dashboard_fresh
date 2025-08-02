@@ -8,6 +8,7 @@ import types
 import pytest
 from fastapi.testclient import TestClient
 from jose import jwt
+from tests.import_helpers import safe_import, import_optional
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
@@ -15,13 +16,13 @@ SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 def load_app():
     services_stub = types.ModuleType("services")
     services_stub.__path__ = [str(SERVICES_PATH)]
-    sys.modules.setdefault("services", services_stub)
+    safe_import('services', services_stub)
 
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
     otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
         instrument_app=lambda *a, **k: None
     )
-    sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
+    safe_import('opentelemetry.instrumentation.fastapi', otel_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
 
@@ -33,7 +34,7 @@ def load_app():
             return self
 
     prom_stub.Instrumentator = lambda: DummyInstr()
-    sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+    safe_import('prometheus_fastapi_instrumentator', prom_stub)
 
     class DummyAnalytics:
         def __init__(self):
@@ -51,11 +52,11 @@ def load_app():
     analytics_stub = types.ModuleType("services.analytics_service")
     dummy = DummyAnalytics()
     analytics_stub.create_analytics_service = lambda: dummy
-    sys.modules["services.analytics_service"] = analytics_stub
+    safe_import('services.analytics_service', analytics_stub)
 
     tracing_stub = types.ModuleType("tracing")
     tracing_stub.init_tracing = lambda name: None
-    sys.modules["tracing"] = tracing_stub
+    safe_import('tracing', tracing_stub)
 
     spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",
@@ -85,8 +86,8 @@ def app_fixture(monkeypatch):
     secrets_stub.get_secret = lambda key: vault.secret
     secrets_stub.invalidate_secret = lambda key=None: None
     common_stub.secrets = secrets_stub
-    monkeypatch.setitem(sys.modules, "services.common", common_stub)
-    monkeypatch.setitem(sys.modules, "services.common.secrets", secrets_stub)
+    safe_import('services.common', common_stub)
+    safe_import('services.common.secrets', secrets_stub)
     module, dummy = load_app()
     client = TestClient(module.app)
     return client, dummy, vault.secret

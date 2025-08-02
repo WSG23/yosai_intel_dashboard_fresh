@@ -1,5 +1,6 @@
 import sys
 from types import ModuleType, SimpleNamespace
+from tests.import_helpers import safe_import, import_optional
 
 # minimal config stub
 cfg_mod = ModuleType("config")
@@ -14,15 +15,15 @@ cfg_mod.DatabaseSettings = DatabaseSettings
 cfg_mod.dynamic_config = SimpleNamespace(
     performance=SimpleNamespace(memory_usage_threshold_mb=1024)
 )
-sys.modules["config"] = cfg_mod
-sys.modules["config.dynamic_config"] = cfg_mod
+safe_import('config', cfg_mod)
+safe_import('config.dynamic_config', cfg_mod)
 
 import importlib.util
 from pathlib import Path
 
 core_pkg = ModuleType("core")
 core_pkg.__path__ = [str(Path(__file__).resolve().parents[1] / "core")]
-sys.modules.setdefault("core", core_pkg)
+safe_import('core', core_pkg)
 
 spec = importlib.util.spec_from_file_location(
     "core.performance", Path(__file__).resolve().parents[1] / "core" / "performance.py"
