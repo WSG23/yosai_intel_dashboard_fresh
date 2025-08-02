@@ -476,6 +476,8 @@ class PerformanceProfiler(BaseModel):
         super().__init__(config, db, logger)
         self.profile_data: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
         self.active_profiles: Dict[str, float] = {}
+        # Track N+1 query occurrences keyed by endpoint
+        self.n_plus_one_queries: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
     def start_profiling(self, session_name: str) -> None:
         """Start a profiling session"""
@@ -528,6 +530,18 @@ class PerformanceProfiler(BaseModel):
             }
 
         return report
+
+    def record_n_plus_one(
+        self, endpoint: str, query: str, stacks: List[str]
+    ) -> None:
+        """Record an N+1 query occurrence for an endpoint."""
+        self.n_plus_one_queries[endpoint].append(
+            {"query": query, "stacks": stacks, "timestamp": datetime.now()}
+        )
+
+    def get_n_plus_one_queries(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Return recorded N+1 query occurrences."""
+        return self.n_plus_one_queries
 
 
 class CacheMonitor(BaseModel):
