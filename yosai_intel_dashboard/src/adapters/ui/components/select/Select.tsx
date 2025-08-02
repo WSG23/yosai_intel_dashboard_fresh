@@ -1,11 +1,12 @@
 import React from 'react';
 
-interface Option {
-  value: string;
+export interface Option<T extends string> {
+  value: T;
   label: string;
 }
 
-export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
+export interface SelectProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | string[];
   onChange: (value: string | string[]) => void;
   options: Option[];
@@ -15,10 +16,11 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   /**
    * Enables an internal search box that filters the available options.
    */
+
   searchable?: boolean;
 }
 
-export const Select: React.FC<SelectProps> = ({
+export const Select = <T extends string,>({
   value,
   onChange,
   options,
@@ -36,11 +38,22 @@ export const Select: React.FC<SelectProps> = ({
   }, [options, query]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+
     if (multiple) {
-      const selected = Array.from(e.target.selectedOptions).map(o => o.value);
-      onChange(selected);
+      const current = Array.isArray(value) ? [...value] : [];
+      const index = current.indexOf(val);
+      if (index > -1) {
+        current.splice(index, 1);
+      } else {
+        current.push(val);
+      }
+      onChange(current);
+      setSearch('');
     } else {
-      onChange(e.target.value);
+      onChange(val);
+      const selectedOpt = options.find(o => o.value === val);
+      setSearch(selectedOpt ? selectedOpt.label : '');
+      setIsOpen(false);
     }
   };
 
@@ -59,6 +72,7 @@ export const Select: React.FC<SelectProps> = ({
         </option>
       ))}
     </select>
+
   );
 
   if (!searchable) {
@@ -81,3 +95,4 @@ export const Select: React.FC<SelectProps> = ({
 };
 
 export default Select;
+

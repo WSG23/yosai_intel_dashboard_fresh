@@ -1,14 +1,14 @@
 # Select
 
-The `Select` component is a styled wrapper around the native `<select>` element. It supports single and multiple selection while remaining accessible and keyboard friendly.
+The `Select` component is a styled wrapper around the native `<select>` element. It supports single and multiple selection while remaining accessible and keyboard friendly. The component is generic (`Select<T extends string>`) and exports an `Option<T>` type for strongly typed option values.
 
 ## Props
 
 | Prop | Type | Description |
 | ---- | ---- | ----------- |
-| `value` | `string | string[]` | The current selection. |
-| `onChange` | `(value: any) => void` | Callback fired when the selection changes. |
-| `options` | `{ value: string; label: string }[]` | Available choices. |
+| `value` | `T | T[]` | The current selection. |
+| `onChange` | `(value: T | T[]) => void` | Callback fired when the selection changes. |
+| `options` | `Option<T>[]` | Available choices. |
 | `multiple` | `boolean` | Enables multi-select mode. |
 | `placeholder` | `string` | Placeholder text for single select. |
 | `className` | `string` | Additional CSS classes. |
