@@ -12,6 +12,7 @@ __all__ = [
     "record_avro_failure",
     "record_compatibility_failure",
     "ModelPerformanceMonitor",
+    "ModelMonitoringService",
     "ModelMetrics",
     "get_model_performance_monitor",
     "RealTimeUIMonitor",
@@ -66,6 +67,10 @@ def __getattr__(name: str):
         )
 
         return locals()[name]
+    if name == "ModelMonitoringService":
+        from .model_monitoring_service import ModelMonitoringService
+
+        return ModelMonitoringService
     if name in {"RealTimeUIMonitor", "get_ui_monitor"}:
         from .ui_monitor import RealTimeUIMonitor, get_ui_monitor
 
