@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib
 import os
 import pathlib
@@ -6,7 +8,8 @@ import time
 import types
 
 import pytest
-from tests.import_helpers import safe_import, import_optional
+
+from tests.import_helpers import import_optional, safe_import
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
@@ -20,19 +23,19 @@ def load_jwt_service(monkeypatch, secret: str | None = None):
     services_mod = sys.modules.get("services")
     if services_mod is None:
         services_mod = types.ModuleType("services")
-        safe_import('services', services_mod)
+        safe_import("services", services_mod)
     services_mod.__path__ = [str(SERVICES_PATH)]
 
     security_mod = sys.modules.get("services.security")
     if security_mod is None:
         security_mod = types.ModuleType("services.security")
-        safe_import('services.security', security_mod)
+        safe_import("services.security", security_mod)
     security_mod.__path__ = [str(SERVICES_PATH / "security")]
 
     secrets_mod = types.ModuleType("services.common.secrets")
     secrets_mod.get_secret = lambda key: secret
     secrets_mod.invalidate_secret = lambda key=None: None
-    safe_import('services.common.secrets', secrets_mod)
+    safe_import("services.common.secrets", secrets_mod)
 
     module_name = "services.security.jwt_service"
     if module_name in sys.modules:
@@ -68,6 +71,7 @@ def test_invalid_signature_returns_none(monkeypatch):
     # Change the secret used for verification
     secrets_mod = sys.modules["services.common.secrets"]
     secrets_mod.get_secret = lambda key: "secret-two"
+    svc.invalidate_jwt_secret_cache()
     assert svc.verify_service_jwt(token) is None
 
 
@@ -89,3 +93,18 @@ def test_refresh_token_flow(monkeypatch):
     assert new_access is not None
     claims = svc.verify_service_jwt(new_access)
     assert claims["iss"] == "svc"
+
+
+def test_secret_cached_until_invalidated(monkeypatch):
+    secret_one = os.urandom(16).hex()
+    svc = load_jwt_service(monkeypatch, secret_one)
+    assert svc.jwt_secret() == secret_one
+
+    secrets_mod = sys.modules["services.common.secrets"]
+    secret_two = os.urandom(16).hex()
+    secrets_mod.get_secret = lambda key: secret_two
+    # Still returns cached secret
+    assert svc.jwt_secret() == secret_one
+
+    svc.invalidate_jwt_secret_cache()
+    assert svc.jwt_secret() == secret_two

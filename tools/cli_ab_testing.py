@@ -3,7 +3,7 @@
 import argparse
 from typing import Dict
 
-from services.ab_testing import ModelABTester
+from yosai_intel_dashboard.src.services.ab_testing import ModelABTester
 from yosai_intel_dashboard.models.ml import ModelRegistry
 
 

@@ -5,7 +5,7 @@ import os
 import re
 from typing import Iterable
 
-from core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 # Import dynamically inside methods to avoid circular imports during module init
 
 from .core import ValidationResult

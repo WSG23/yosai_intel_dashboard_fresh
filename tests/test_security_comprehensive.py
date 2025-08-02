@@ -5,7 +5,7 @@ class TestSecurityVulnerabilities:
         """Test SQL injection attack patterns."""
         import pytest
 
-        from core.exceptions import ValidationError
+        from yosai_intel_dashboard.src.core.exceptions import ValidationError
         from validation.security_validator import SecurityValidator
 
         malicious_inputs = [
@@ -21,7 +21,7 @@ class TestSecurityVulnerabilities:
 
     def test_unicode_surrogate_handling(self):
         """Test Unicode surrogate character handling."""
-        from core.unicode import sanitize_unicode_input
+        from yosai_intel_dashboard.src.core.unicode import sanitize_unicode_input
 
         # Test lone surrogates
         lone_surrogate = "\ud800\ud801"  # Invalid surrogate pair
@@ -32,7 +32,7 @@ class TestSecurityVulnerabilities:
 
     def test_sanitize_unicode_input_ascii_fallback(self):
         """Ensure ASCII-safe text is returned on failure."""
-        from core.unicode import sanitize_unicode_input
+        from yosai_intel_dashboard.src.core.unicode import sanitize_unicode_input
 
         class BadStr:
             def __str__(self) -> str:

@@ -5,7 +5,7 @@ import pytest
 # These imports reference modules that were removed from the trimmed codebase.
 # Fall back to lightweight stand-ins when they are unavailable.
 try:  # pragma: no cover
-    from core.app_factory import create_app
+    from yosai_intel_dashboard.src.core.app_factory import create_app
 except Exception:  # pragma: no cover
     def create_app(*_args, **_kwargs):  # type: ignore[misc]
         server = SimpleNamespace(
@@ -24,7 +24,7 @@ except Exception:  # pragma: no cover
         )
 
 try:  # pragma: no cover
-    from core.callback_registry import _callback_registry
+    from yosai_intel_dashboard.src.core.callback_registry import _callback_registry
 except Exception:  # pragma: no cover
     class _StubRegistry:  # type: ignore[misc]
         def __init__(self) -> None:
@@ -36,7 +36,7 @@ except Exception:  # pragma: no cover
     _callback_registry = _StubRegistry()
 
 try:  # pragma: no cover
-    from core.unicode import safe_decode_bytes, safe_encode_text
+    from yosai_intel_dashboard.src.core.unicode import safe_decode_bytes, safe_encode_text
 except Exception:  # pragma: no cover
     def safe_encode_text(text: str) -> str:  # type: ignore[misc]
         return text.encode("utf-8", errors="ignore").decode("utf-8")

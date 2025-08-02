@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 import pandas as pd
 
-from core.unicode import sanitize_dataframe as _sanitize_dataframe
+from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe as _sanitize_dataframe
 
 
 def sanitize_dataframe(

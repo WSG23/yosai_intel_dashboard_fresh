@@ -30,7 +30,7 @@ def apply_both_fixes():
 
     # Step 2: Missing methods fix
     try:
-        from services.upload_processing import UploadAnalyticsProcessor
+        from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
 
         # Add missing methods if they don't exist
         if not hasattr(UploadAnalyticsProcessor, "get_analytics_from_uploaded_data"):

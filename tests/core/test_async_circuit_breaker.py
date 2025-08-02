@@ -4,9 +4,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from core import performance
-from core.async_utils.async_circuit_breaker import CircuitBreaker, CircuitBreakerOpen
-from core.performance import PerformanceMonitor
+from yosai_intel_dashboard.src.core import performance
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
 from yosai_intel_dashboard.src.core import performance as perf_src
 
 

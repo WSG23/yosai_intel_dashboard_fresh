@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
-from core.cache_warmer import IntelligentCacheWarmer, UsagePatternAnalyzer
-from core.hierarchical_cache_manager import HierarchicalCacheManager
+from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer, UsagePatternAnalyzer
+from yosai_intel_dashboard.src.core.hierarchical_cache_manager import HierarchicalCacheManager
 
 
 def _loader(key: str) -> str:

@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import pytest
 
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import (
     contains_surrogates,
     safe_decode_bytes,
     safe_encode_text,

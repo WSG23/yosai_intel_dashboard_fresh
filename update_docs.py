@@ -12,14 +12,14 @@ replacements = [
     (r"from config\.", "from yosai_intel_dashboard.src.infrastructure.config."),
     # models imports
     (
-        r"from models import",
+        r"from yosai_intel_dashboard.src.core.domain.entities import",
         "from yosai_intel_dashboard.src.core.domain.entities import",
     ),
-    (r"from models\.ml\.", "from yosai_intel_dashboard.src.models.ml."),
-    (r"from models\.", "from yosai_intel_dashboard.src.core.domain.entities."),
+    (r"from yosai_intel_dashboard.src.core.domain.entities\.ml\.", "from yosai_intel_dashboard.src.models.ml."),
+    (r"from yosai_intel_dashboard.src.core.domain.entities\.", "from yosai_intel_dashboard.src.core.domain.entities."),
     # services imports
-    (r"from services import", "from yosai_intel_dashboard.src.services import"),
-    (r"from services\.", "from yosai_intel_dashboard.src.services."),
+    (r"from yosai_intel_dashboard.src.services import", "from yosai_intel_dashboard.src.services import"),
+    (r"from yosai_intel_dashboard.src.services\.", "from yosai_intel_dashboard.src.services."),
 ]
 
 # Files to update

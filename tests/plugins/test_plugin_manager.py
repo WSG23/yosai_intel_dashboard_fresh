@@ -82,7 +82,7 @@ def test_thread_stops_after_atexit(monkeypatch):
 
     monkeypatch.setattr(atexit, "register", fake_register)
 
-    from core.plugins.manager import ThreadSafePluginManager as PluginManager
+    from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
 
     mgr = PluginManager(
         ServiceContainer(), create_config_manager(), health_check_interval=1

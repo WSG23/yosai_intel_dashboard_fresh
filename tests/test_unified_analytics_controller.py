@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from services.analytics.controllers.unified_controller import UnifiedAnalyticsController
+from yosai_intel_dashboard.src.services.analytics.controllers.unified_controller import UnifiedAnalyticsController
 
 
 def test_async_security_and_error_logging(caplog):

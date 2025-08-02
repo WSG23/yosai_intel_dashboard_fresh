@@ -8,12 +8,12 @@ import sys
 import warnings
 from pathlib import Path
 
-from core.unicode import UnicodeProcessor
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import (
     clean_unicode_text,
     safe_encode_text,
     sanitize_dataframe,

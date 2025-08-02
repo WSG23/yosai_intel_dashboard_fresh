@@ -3,8 +3,8 @@ from __future__ import annotations
 import dash
 from dash import Output
 
-from core.dash_callback_middleware import wrap_callback
-from core.error_handling import error_handler
+from yosai_intel_dashboard.src.core.dash_callback_middleware import wrap_callback
+from yosai_intel_dashboard.src.core.error_handling import error_handler
 from validation.security_validator import SecurityValidator
 
 

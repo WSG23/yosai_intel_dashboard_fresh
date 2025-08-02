@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from services.analytics.unique_patterns_analyzer import UniquePatternAnalyzer
+from yosai_intel_dashboard.src.services.analytics.unique_patterns_analyzer import UniquePatternAnalyzer
 
 
 def sample_df():

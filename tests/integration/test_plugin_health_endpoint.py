@@ -37,8 +37,8 @@ import pytest
 from flask import Flask
 
 from config import create_config_manager
-from core.plugins.manager import PluginManager
-from core.protocols.plugin import PluginMetadata
+from yosai_intel_dashboard.src.core.plugins.manager import PluginManager
+from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 
 

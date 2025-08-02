@@ -1,6 +1,6 @@
 import pandas as pd
 
-from core.unicode import safe_unicode_encode
+from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
 from security.unicode_security_handler import UnicodeSecurityHandler
 
 

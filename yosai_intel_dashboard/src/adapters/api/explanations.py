@@ -8,7 +8,9 @@ from yosai_intel_dashboard.src.services.analytics.analytics_service import (
     get_analytics_service,
 )
 
-router = APIRouter(prefix="/api/v1/explanations", tags=["explanations"])
+# Use an unversioned prefix so the adapter can mount the router under /v1 and
+# also expose deprecated legacy paths without duplication here.
+router = APIRouter(prefix="/explanations", tags=["explanations"])
 
 
 @router.get("/{prediction_id}")

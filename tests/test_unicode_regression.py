@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_unicode_input
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor, sanitize_dataframe, sanitize_unicode_input
 
 
 def test_sanitize_unicode_input_normalizes_and_replaces():

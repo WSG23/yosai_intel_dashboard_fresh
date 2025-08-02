@@ -1,7 +1,7 @@
 import base64
 import importlib
 
-from services.data_processing import file_processor as upload_module
+from yosai_intel_dashboard.src.services.data_processing import file_processor as upload_module
 from tests.config import FakeConfiguration
 from tests.import_helpers import safe_import, import_optional
 

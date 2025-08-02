@@ -36,6 +36,25 @@ class SecretsValidator:
             except Exception:
                 value = None
             if not value:
+                if key == "SECRET_KEY":
+                    try:
+                        from yosai_intel_dashboard.src.infrastructure.config import (
+                            get_security_config,
+                        )
+
+                        value = getattr(get_security_config(), "secret_key", None)
+                    except Exception:  # pragma: no cover - best effort
+                        value = None
+                if not value:
+                    try:  # pragma: no cover - best effort
+                        from yosai_intel_dashboard.src.services.common.secrets import (
+                            get_secret,
+                        )
+
+                        value = get_secret(key)
+                    except Exception:
+                        value = None
+            if not value:
                 missing.append(key)
             else:
                 secrets[key] = value

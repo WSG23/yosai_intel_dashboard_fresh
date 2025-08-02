@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from services.analytics.user_behavior import UserBehaviorAnalyzer
+from yosai_intel_dashboard.src.services.analytics.user_behavior import UserBehaviorAnalyzer
 
 
 def create_analyzer(df):

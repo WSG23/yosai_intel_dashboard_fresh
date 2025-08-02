@@ -21,7 +21,7 @@ finally:
         sys.path.insert(0, stub_path)
 
 from config import create_config_manager
-from core.plugins.manager import PluginManager
+from yosai_intel_dashboard.src.core.plugins.manager import PluginManager
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from tests.utils.plugin_package_builder import PluginPackageBuilder

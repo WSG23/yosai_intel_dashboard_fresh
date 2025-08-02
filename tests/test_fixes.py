@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
 
-from core.performance_file_processor import (
+from yosai_intel_dashboard.src.core.performance_file_processor import (
     PerformanceFileProcessor as UnlimitedFileProcessor,
 )
-from core.unicode import safe_format_number, sanitize_unicode_input
+from yosai_intel_dashboard.src.core.unicode import safe_format_number, sanitize_unicode_input
 
 
 @pytest.mark.performance

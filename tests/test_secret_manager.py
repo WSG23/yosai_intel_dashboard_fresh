@@ -4,7 +4,7 @@ import types
 
 import pytest
 
-from core.secret_manager import SecretManager, validate_secrets
+from yosai_intel_dashboard.src.core.secret_manager import SecretManager, validate_secrets
 
 
 def test_get_env_secret(monkeypatch):

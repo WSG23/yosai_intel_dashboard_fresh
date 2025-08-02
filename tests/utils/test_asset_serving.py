@@ -8,7 +8,7 @@ except Exception:  # pragma: no cover
         return True
 
 try:  # pragma: no cover
-    from core.app_factory import create_app
+    from yosai_intel_dashboard.src.core.app_factory import create_app
 except Exception:  # pragma: no cover
     def create_app(*_args, **_kwargs):  # type: ignore[misc]
         server = SimpleNamespace(

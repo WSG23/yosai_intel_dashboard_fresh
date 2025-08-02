@@ -4,7 +4,7 @@ import pytest
 from dash import Dash, html
 
 from config import create_config_manager
-from core.plugins.auto_config import setup_plugins
+from yosai_intel_dashboard.src.core.plugins.auto_config import setup_plugins
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from tests.test_auto_configuration import _set_env
 from tests.utils.plugin_package_builder import PluginPackageBuilder

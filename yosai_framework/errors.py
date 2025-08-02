@@ -36,7 +36,7 @@ def from_exception(exc: Exception) -> "ServiceError":
     if isinstance(exc, ServiceError):
         return exc
     try:
-        from core.exceptions import YosaiBaseException
+        from yosai_intel_dashboard.src.core.exceptions import YosaiBaseException
     except Exception:
         YosaiBaseException = Exception  # type: ignore
     if isinstance(exc, YosaiBaseException):

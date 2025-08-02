@@ -17,7 +17,7 @@ sys.path.insert(0, str(project_root))
 
 def main():
     try:
-        from services.device_learning_service import DeviceLearningService
+        from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
 
         device_service = DeviceLearningService()
 

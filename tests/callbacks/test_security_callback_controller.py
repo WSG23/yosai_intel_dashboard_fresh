@@ -1,6 +1,6 @@
 import pandas as pd
 
-from services.analytics.security_patterns import (
+from yosai_intel_dashboard.src.services.analytics.security_patterns import (
     SecurityEvent,
     SecurityPatternsAnalyzer,
     setup_isolated_security_testing,

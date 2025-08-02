@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
-from core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 
 try:
     from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
@@ -78,12 +78,12 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
         return get_upload_chunk_size()
 
     def get_max_parallel_uploads(self) -> int:
-        from core.config import get_max_parallel_uploads
+        from yosai_intel_dashboard.src.core.config import get_max_parallel_uploads
 
         return get_max_parallel_uploads()
 
     def get_validator_rules(self) -> dict:
-        from core.config import get_validator_rules
+        from yosai_intel_dashboard.src.core.config import get_validator_rules
 
         return get_validator_rules()
 
