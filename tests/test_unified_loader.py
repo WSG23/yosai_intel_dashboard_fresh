@@ -1,16 +1,4 @@
 import os
-import sys
-import types
-
-
-def _stub_optional_modules():
-    """Provide minimal stubs for optional heavy dependencies."""
-    sys.modules.setdefault("boto3", types.ModuleType("boto3"))
-    sys.modules.setdefault("hvac", types.ModuleType("hvac"))
-    sys.modules.setdefault("cryptography", types.ModuleType("cryptography"))
-    sys.modules.setdefault("confluent_kafka", types.ModuleType("confluent_kafka"))
-
-
 def test_environment_processor_applied(monkeypatch, tmp_path):
     secret = os.urandom(16).hex()
     cfg_text = f"""
@@ -30,7 +18,6 @@ security:
     env_secret = os.urandom(16).hex()
     monkeypatch.setenv("SECRET_KEY", env_secret)
 
-    _stub_optional_modules()
     from yosai_intel_dashboard.src.infrastructure.config.unified_loader import UnifiedLoader
 
     loader = UnifiedLoader(str(path))

@@ -15,11 +15,16 @@ from typing import Any, Dict, Iterable
 
 import numpy as np
 import pandas as pd
-import shap
 from fairlearn.metrics import MetricFrame, selection_rate
-from lime.lime_tabular import LimeTabularExplainer
+from optional_dependencies import import_optional
 from sklearn.base import BaseEstimator
 from sklearn.metrics import accuracy_score
+
+shap = import_optional("shap")
+LimeTabularExplainer = import_optional("lime.lime_tabular.LimeTabularExplainer")
+
+HAS_SHAP = shap is not None
+HAS_LIME = LimeTabularExplainer is not None
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +35,7 @@ class RegisteredModel:
 
     model: BaseEstimator
     background: pd.DataFrame
-    explainer: shap.Explainer
+    explainer: Any
 
 
 class ExplainabilityService:
@@ -38,12 +43,16 @@ class ExplainabilityService:
 
     def __init__(self) -> None:
         self._models: dict[str, RegisteredModel] = {}
+        if not HAS_SHAP:
+            logger.warning("SHAP not installed; explainability features limited")
 
     # ------------------------------------------------------------------
     def register_model(
         self, name: str, model: BaseEstimator, *, background_data: pd.DataFrame
     ) -> None:
         """Register ``model`` with optional background data for SHAP."""
+        if not HAS_SHAP:
+            raise RuntimeError("SHAP is required for explainability features")
         explainer = shap.Explainer(model, background_data)
         self._models[name] = RegisteredModel(model, background_data, explainer)
         logger.info("registered model %s", name)
@@ -56,6 +65,8 @@ class ExplainabilityService:
     # ------------------------------------------------------------------
     def shap_values(self, name: str, data: pd.DataFrame) -> np.ndarray:
         """Return SHAP values for ``data`` using the registered model."""
+        if not HAS_SHAP:
+            raise RuntimeError("SHAP is required for explainability features")
         record = self._get(name)
         shap_values = record.explainer(data)
         return shap_values.values
@@ -64,6 +75,8 @@ class ExplainabilityService:
         self, name: str, data: pd.DataFrame, row: int
     ) -> Dict[str, float]:
         """Generate a LIME explanation for ``data.iloc[row]``."""
+        if not HAS_LIME:
+            raise RuntimeError("LIME is not available")
         record = self._get(name)
         instance = data.iloc[row]
         explainer = LimeTabularExplainer(
@@ -86,8 +99,12 @@ class ExplainabilityService:
             scores = np.asarray(model.feature_importances_)
         elif hasattr(model, "coef_"):
             scores = np.abs(np.asarray(model.coef_)).reshape(-1)
-        else:
+        elif HAS_SHAP:
             scores = np.abs(self.shap_values(name, data)).mean(axis=0)
+        else:
+            raise RuntimeError(
+                "Feature importance requires SHAP or model coefficients"
+            )
         return dict(zip(data.columns, scores))
 
     def counterfactual(
@@ -106,6 +123,8 @@ class ExplainabilityService:
         prediction is close to ``desired``.  It works for demonstration
         purposes but is not optimized for performance.
         """
+        if not HAS_SHAP:
+            raise RuntimeError("SHAP is required for counterfactual generation")
         record = self._get(name)
         target = float(np.squeeze(desired))
         x = data.iloc[row].to_numpy().astype(float)
@@ -121,6 +140,8 @@ class ExplainabilityService:
 
     def visualize_model(self, name: str, data: pd.DataFrame, path: Path) -> Path:
         """Save a SHAP summary plot to ``path``."""
+        if not HAS_SHAP:
+            raise RuntimeError("SHAP is required for visualisation")
         record = self._get(name)
         shap_values = record.explainer(data)
         shap.summary_plot(shap_values, data, show=False)

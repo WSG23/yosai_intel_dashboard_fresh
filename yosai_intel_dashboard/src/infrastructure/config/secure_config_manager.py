@@ -7,13 +7,13 @@ import os
 from dataclasses import is_dataclass
 from typing import Any, Dict, Optional
 
-import boto3
-try:  # pragma: no cover - optional dependency for tests
-    import hvac  # type: ignore
-except Exception:  # pragma: no cover
-    hvac = None
 from botocore.exceptions import ClientError
-from cryptography.fernet import Fernet
+from optional_dependencies import import_optional
+
+boto3 = import_optional("boto3")
+hvac = import_optional("hvac")
+fernet_mod = import_optional("cryptography.fernet")
+Fernet = getattr(fernet_mod, "Fernet", None)
 from pydantic import BaseModel
 
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
@@ -49,7 +49,7 @@ class SecureConfigManager(ConfigManager):
                 raise ConfigurationError("Unable to initialise Vault client") from exc
 
         self.aws_client = None
-        if self.aws_region:
+        if self.aws_region and boto3:
             try:
                 self.aws_client = boto3.client(
                     "secretsmanager", region_name=self.aws_region
@@ -59,7 +59,7 @@ class SecureConfigManager(ConfigManager):
                 raise ConfigurationError("Unable to initialise AWS client") from exc
 
         self.fernet = None
-        if self.fernet_key:
+        if self.fernet_key and Fernet:
             try:
                 self.fernet = Fernet(self.fernet_key)
             except Exception as exc:  # pragma: no cover - defensive
