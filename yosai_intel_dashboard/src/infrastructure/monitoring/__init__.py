@@ -24,6 +24,7 @@ __all__ = [
     "start_deprecation_metrics_server",
     "InferenceDriftJob",
     "request_duration",
+    "AlertManager",
 ]
 
 
@@ -100,4 +101,8 @@ def __getattr__(name: str):
         from .request_metrics import request_duration
 
         return request_duration
+    if name == "AlertManager":
+        from .alerts import AlertManager
+
+        return AlertManager
     raise AttributeError(name)
