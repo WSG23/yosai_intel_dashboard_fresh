@@ -35,6 +35,8 @@ tags:
     description: Access control events
   - name: Analytics
     description: Analytics and reporting
+  - name: ModelMonitoring
+    description: Model performance and drift metrics
 
 paths:
   /events:
@@ -121,14 +123,31 @@ paths:
           description: Successful response
         '500':
           $ref: '#/components/responses/ServerError'
-    put:
-      summary: Update user settings
-      tags: [Analytics]
+  /model-monitoring/{model_name}:
+    get:
+      summary: Get model monitoring events
+      tags: [ModelMonitoring]
+      parameters:
+        - in: path
+          name: model_name
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: end
+          required: false
+          schema:
+            type: string
+            format: date-time
       responses:
         '200':
           description: Successful response
-        '500':
-          $ref: '#/components/responses/ServerError'
   /token/refresh:
     post:
       summary: Refresh access token
