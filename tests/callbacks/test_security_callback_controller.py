@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from analytics.security_patterns import (
+from services.analytics.security_patterns import (
     SecurityEvent,
     SecurityPatternsAnalyzer,
     setup_isolated_security_testing,

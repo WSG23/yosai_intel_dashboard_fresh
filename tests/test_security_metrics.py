@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from analytics.security_metrics import SecurityMetrics
-from analytics.security_patterns import SecurityPatternsAnalyzer
+from services.analytics.security_metrics import SecurityMetrics
+from services.analytics.security_patterns import SecurityPatternsAnalyzer
 
 
 def test_security_metrics_validation():

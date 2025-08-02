@@ -1,6 +1,6 @@
 import pandas as pd
 
-from analytics.chunked_analytics_controller import ChunkedAnalyticsController
+from services.analytics.chunked_analytics_controller import ChunkedAnalyticsController
 
 
 def test_chunked_controller_handles_bad_timestamps():

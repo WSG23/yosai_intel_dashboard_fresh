@@ -1,4 +1,4 @@
-from analytics.file_processing_utils import (
+from services.analytics.file_processing_utils import (
     aggregate_counts,
     calculate_date_range,
     stream_uploaded_file,
