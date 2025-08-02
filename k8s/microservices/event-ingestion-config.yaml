@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: event-ingestion-config
+  labels:
+    app.kubernetes.io/name: event-ingestion
+    app.kubernetes.io/part-of: yosai-microservices
+    app.kubernetes.io/component: ingestion
+data:
+  LOG_LEVEL: "INFO"
+  INGESTION_WORKERS: "2"

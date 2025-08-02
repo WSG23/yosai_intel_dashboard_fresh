@@ -3,16 +3,20 @@ kind: Deployment
 metadata:
   name: analytics-service
   labels:
-    app: analytics-service
+    app.kubernetes.io/name: analytics-service
+    app.kubernetes.io/part-of: yosai-microservices
+    app.kubernetes.io/component: analytics
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: analytics-service
+      app.kubernetes.io/name: analytics-service
   template:
     metadata:
       labels:
-        app: analytics-service
+        app.kubernetes.io/name: analytics-service
+        app.kubernetes.io/part-of: yosai-microservices
+        app.kubernetes.io/component: analytics
     spec:
       containers:
         - name: analytics-service
@@ -26,11 +30,9 @@ spec:
             - containerPort: 8001
           envFrom:
             - configMapRef:
-                name: yosai-config
-            - configMapRef:
-                name: vault-config
+                name: analytics-service-config
             - secretRef:
-                name: vault-secret
+                name: analytics-service-secret
           readinessProbe:
             httpGet:
               path: /health
