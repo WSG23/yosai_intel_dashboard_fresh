@@ -45,13 +45,15 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, ErrorBo
   handleReport() {
     const { error, errorInfo } = this.state;
     if (!error) return;
+    const comments = window.prompt('Please describe what happened (optional):') || '';
     fetch('/api/error-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: error.message,
         stack: error.stack,
-        componentStack: errorInfo?.componentStack
+        componentStack: errorInfo?.componentStack,
+        comments
       })
     }).catch((err) => console.error('Failed to report error', err));
   }
