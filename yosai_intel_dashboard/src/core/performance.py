@@ -3,8 +3,11 @@
 Performance optimization and monitoring system
 Inspired by Apple's Instruments and performance measurement tools
 """
+from __future__ import annotations
+
 import functools
 import logging
+import math
 import threading
 import time
 from collections import defaultdict, deque
@@ -26,10 +29,15 @@ from typing import (
 import pandas as pd
 import psutil
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+from monitoring.request_metrics import async_task_duration
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
-    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import ModelMetrics
+    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
+        ModelMetrics,
+    )
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
@@ -495,6 +503,7 @@ class PerformanceProfiler(BaseModel):
     ) -> None:
         """Record function profiling data"""
         self.profile_data[session_name].append((func_name, duration))
+        async_task_duration.observe(duration)
 
     def get_profile_report(self, session_name: str) -> Dict[str, Any]:
         """Get profiling report for session"""
@@ -516,15 +525,29 @@ class PerformanceProfiler(BaseModel):
         }
 
         for func_name, durations in function_stats.items():
+            durations_sorted = sorted(durations)
+
+            def _percentile(p: float) -> float:
+                if not durations_sorted:
+                    return 0.0
+                k = (len(durations_sorted) - 1) * p
+                f = math.floor(k)
+                c = math.ceil(k)
+                if f == c:
+                    return durations_sorted[int(k)]
+                return durations_sorted[f] * (c - k) + durations_sorted[c] * (k - f)
+
+            total = sum(durations)
             report["functions"][func_name] = {
                 "calls": len(durations),
-                "total_time": sum(durations),
-                "average_time": sum(durations) / len(durations),
-                "min_time": min(durations),
-                "max_time": max(durations),
-                "percentage": (
-                    (sum(durations) / total_time) * 100 if total_time > 0 else 0
-                ),
+                "total_time": total,
+                "average_time": total / len(durations),
+                "min_time": durations_sorted[0],
+                "max_time": durations_sorted[-1],
+                "p50": _percentile(0.50),
+                "p95": _percentile(0.95),
+                "p99": _percentile(0.99),
+                "percentage": (total / total_time * 100 if total_time > 0 else 0),
             }
 
         return report
