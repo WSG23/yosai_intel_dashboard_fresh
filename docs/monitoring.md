@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 # Model Performance Monitoring
 
 `ModelPerformanceMonitor` tracks accuracy, precision and recall for ML models.
@@ -5,7 +7,7 @@ Metrics are forwarded to the global `PerformanceMonitor` and exposed via
 Prometheus gauges.
 
 ```python
-from monitoring.model_performance_monitor import (
+from yosai_intel_dashboard.src.services.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
@@ -32,7 +34,7 @@ if pm.detect_model_drift(metrics.__dict__, baseline):
 To expose the metrics for Prometheus scraping start the server:
 
 ```python
-from monitoring.prometheus.model_metrics import start_model_metrics_server
+from yosai_intel_dashboard.src.services.monitoring.prometheus.model_metrics import start_model_metrics_server
 start_model_metrics_server(port=9104)
 ```
 
@@ -48,8 +50,8 @@ During each run metrics are checked for drift using `ModelPerformanceMonitor.det
 When drift is detected a warning is emitted and the baseline metrics are updated.
 
 ```python
-from monitoring.model_monitor import ModelMonitor
-from models.ml.model_registry import ModelRegistry
+from yosai_intel_dashboard.src.services.monitoring.model_monitor import ModelMonitor
+from yosai_intel_dashboard.src.models.ml.model_registry import ModelRegistry
 
 registry = ModelRegistry(database_url="sqlite:///models.db", bucket="models")
 monitor = ModelMonitor(registry)

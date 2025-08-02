@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 # Training Pipeline
 
 `TrainingPipeline` automates cross validation, hyper-parameter tuning and model registration.
@@ -21,8 +23,8 @@ mlflow ui --backend-store-uri ./mlruns
 Create a small driver script or use the Python prompt to execute the pipeline:
 
 ```python
-from models.ml.model_registry import ModelRegistry
-from models.ml.training.pipeline import TrainingPipeline
+from yosai_intel_dashboard.src.models.ml.model_registry import ModelRegistry
+from yosai_intel_dashboard.src.models.ml.training.pipeline import TrainingPipeline
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 

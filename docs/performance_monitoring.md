@@ -1,3 +1,5 @@
+> **Note**: Import paths updated for clean architecture. Legacy imports are deprecated.
+
 # Performance Monitoring
 
 The dashboard collects runtime metrics through the `core.performance` module. A global
@@ -247,7 +249,7 @@ layer. The manager promotes entries between levels automatically and exposes a
 `report()` method for basic statistics.
 
 ```python
-from config.cache_manager import get_cache_manager
+from yosai_intel_dashboard.src.infrastructure.config.cache_manager import get_cache_manager
 
 cache = get_cache_manager()
 cache.start()
