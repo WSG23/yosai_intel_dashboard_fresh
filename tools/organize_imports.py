@@ -4,28 +4,53 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Set
 
 
 class ImportOrganizer:
     """Apply import conventions to a Python file."""
 
     FUTURE_LINE = "from __future__ import annotations"
+    TYPING_NAMES = {
+        "Any",
+        "Dict",
+        "Iterable",
+        "List",
+        "Optional",
+        "Set",
+        "Tuple",
+    }
 
     def organize_file(self, path: Path) -> bool:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        lines = text.splitlines()
+        original = path.read_text(encoding="utf-8", errors="ignore")
+        lines = original.splitlines()
         changed = False
-        if path.name != "__init__.py" and self.FUTURE_LINE not in text:
+
+        if path.name != "__init__.py" and self.FUTURE_LINE not in original:
             insert_at = self._future_insert_index(lines)
             lines.insert(insert_at, self.FUTURE_LINE)
             changed = True
+
+        needs_typing = self._needed_typing_imports(original)
+        has_typing = "from typing import" in original or "import typing" in original
+        if needs_typing and not has_typing:
+            insert_at = self._future_insert_index(lines)
+            if self.FUTURE_LINE in lines:
+                insert_at = lines.index(self.FUTURE_LINE) + 1
+            lines.insert(
+                insert_at,
+                f"from typing import {', '.join(sorted(needs_typing))}",
+            )
+            changed = True
+
         if changed:
-            if lines and not lines[-1].endswith("\n"):
-                new_text = "\n".join(lines) + "\n"
-            else:
-                new_text = "\n".join(lines)
+            new_text = "\n".join(lines)
+            if lines and not new_text.endswith("\n"):
+                new_text += "\n"
+            backup_path = path.with_suffix(path.suffix + ".bak")
+            backup_path.write_text(original)
             path.write_text(new_text)
         return changed
 
@@ -47,6 +72,9 @@ class ImportOrganizer:
         while i < len(lines) and not lines[i].strip():
             i += 1
         return i
+
+    def _needed_typing_imports(self, text: str) -> Set[str]:
+        return {name for name in self.TYPING_NAMES if re.search(rf"\b{name}\b", text)}
 
 
 class ImportStyleChecker:
