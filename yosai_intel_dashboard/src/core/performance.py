@@ -292,6 +292,32 @@ class PerformanceMonitor:
                 counts[metric.name] += 1
         return dict(counts)
 
+    def get_profiler_report(self, session_name: str) -> Dict[str, Any]:
+        """Aggregate profiler metrics for a session."""
+        prefix = f"profiler.{session_name}."
+        report: Dict[str, Any] = {"session": session_name, "functions": {}}
+        total_time = 0.0
+
+        with self._lock:
+            for metric_name, values in self.aggregated_metrics.items():
+                if metric_name.startswith(prefix):
+                    func_name = metric_name[len(prefix) :]
+                    total = sum(values)
+                    total_time += total
+                    report["functions"][func_name] = {
+                        "calls": len(values),
+                        "total_time": total,
+                        "average_time": total / len(values),
+                        "min_time": min(values),
+                        "max_time": max(values),
+                    }
+
+        report["total_time"] = total_time
+        report["function_count"] = sum(
+            metrics["calls"] for metrics in report["functions"].values()
+        )
+        return report
+
     # ------------------------------------------------------------------
     def detect_model_drift(
         self,
@@ -488,70 +514,48 @@ class PerformanceProfiler(BaseModel):
 
     def start_profiling(self, session_name: str) -> None:
         """Start a profiling session"""
+        if not dynamic_config.performance.profiling_enabled:
+            return
         self.active_profiles[session_name] = time.time()
 
     def end_profiling(self, session_name: str) -> Optional[float]:
         """End profiling session and return duration"""
-        if session_name not in self.active_profiles:
+        if (
+            not dynamic_config.performance.profiling_enabled
+            or session_name not in self.active_profiles
+        ):
             return None
 
         duration = time.time() - self.active_profiles.pop(session_name)
         self.profile_data[session_name].append(("session", duration))
+        get_performance_monitor().record_metric(
+            f"profiler.{session_name}.session",
+            duration,
+            MetricType.EXECUTION_TIME,
+            tags={"session": session_name},
+        )
         return duration
 
     def profile_function(
         self, session_name: str, func_name: str, duration: float
     ) -> None:
         """Record function profiling data"""
+        if not dynamic_config.performance.profiling_enabled:
+            return
         self.profile_data[session_name].append((func_name, duration))
-        async_task_duration.observe(duration)
+        get_performance_monitor().record_metric(
+            f"profiler.{session_name}.{func_name}",
+            duration,
+            MetricType.EXECUTION_TIME,
+            tags={"session": session_name, "function": func_name},
+        )
+main
 
     def get_profile_report(self, session_name: str) -> Dict[str, Any]:
         """Get profiling report for session"""
-        if session_name not in self.profile_data:
+        if not dynamic_config.performance.profiling_enabled:
             return {}
-
-        data = self.profile_data[session_name]
-        total_time = sum(duration for _, duration in data)
-
-        function_stats = defaultdict(list)
-        for func_name, duration in data:
-            function_stats[func_name].append(duration)
-
-        report = {
-            "session": session_name,
-            "total_time": total_time,
-            "function_count": len(data),
-            "functions": {},
-        }
-
-        for func_name, durations in function_stats.items():
-            durations_sorted = sorted(durations)
-
-            def _percentile(p: float) -> float:
-                if not durations_sorted:
-                    return 0.0
-                k = (len(durations_sorted) - 1) * p
-                f = math.floor(k)
-                c = math.ceil(k)
-                if f == c:
-                    return durations_sorted[int(k)]
-                return durations_sorted[f] * (c - k) + durations_sorted[c] * (k - f)
-
-            total = sum(durations)
-            report["functions"][func_name] = {
-                "calls": len(durations),
-                "total_time": total,
-                "average_time": total / len(durations),
-                "min_time": durations_sorted[0],
-                "max_time": durations_sorted[-1],
-                "p50": _percentile(0.50),
-                "p95": _percentile(0.95),
-                "p99": _percentile(0.99),
-                "percentage": (total / total_time * 100 if total_time > 0 else 0),
-            }
-
-        return report
+        return get_performance_monitor().get_profiler_report(session_name)
 
 
 class CacheMonitor(BaseModel):
