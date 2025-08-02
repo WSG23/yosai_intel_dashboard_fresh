@@ -5,8 +5,6 @@ import importlib.util
 import warnings
 import pytest
 
-import pytest
-
 pytest_plugins = ["tests.config"]
 
 
