@@ -118,6 +118,9 @@ class CacheModel(BaseModel):
     use_memory_cache: bool = True
     use_redis: bool = False
     prefix: str = "yosai_"
+    warm_keys: List[str] = Field(
+        default_factory=list, json_schema_extra={"env": "CACHE_WARM_KEYS"}
+    )
     host: str = Field(
         default=DEFAULT_CACHE_HOST, json_schema_extra={"env": "CACHE_HOST"}
     )

@@ -723,10 +723,16 @@ warmer.record_usage("recent_events")
 warmer.record_usage("top_users")
 
 await warmer.warm()
+
+# Manually warm specific keys at startup
+await cache.warm(["recent_events", "top_users"], load_from_db)
 ```
 
 Calling `ServiceContainer.warm_caches()` runs the warmer automatically if it is
 registered with the container.
+
+Set the `CACHE_WARM_KEYS` environment variable with a comma separated list of
+keys to have the application pre-warm them during startup.
 
 ### Redis Cache Layer
 

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 """Simple hierarchical cache with two levels."""
 
+import asyncio
+import inspect
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .base_model import BaseModel
 
@@ -36,6 +38,24 @@ class HierarchicalCacheManager(BaseModel):
     def clear(self) -> None:
         self._level1.clear()
         self._level2.clear()
+
+    async def warm(self, keys: list[str], loader: Callable[[str], Any]) -> None:
+        """Pre-populate all cache tiers for the specified *keys*.
+
+        The *loader* callable is used to retrieve the value for each key. It can
+        be either a synchronous function or an async coroutine. Values are stored
+        in both cache levels.
+        """
+
+        async def _populate(key: str) -> None:
+            if inspect.iscoroutinefunction(loader):
+                value = await loader(key)
+            else:
+                value = await asyncio.to_thread(loader, key)
+            self.set(key, value, level=1)
+            self.set(key, value, level=2)
+
+        await asyncio.gather(*(_populate(k) for k in keys))
 
 
 __all__ = ["HierarchicalCacheManager"]
