@@ -154,6 +154,11 @@ class MonitoringSettings(BaseModel):
     drift_threshold_wasserstein: float = 0.1
 
 
+class RetrainingSettings(BaseModel):
+    schedule_interval_minutes: int = 60
+    min_rows: int = 1000
+
+
 class DataQualityThresholds(BaseModel):
     max_missing_ratio: float = 0.1
     max_outlier_ratio: float = 0.01
@@ -176,6 +181,7 @@ class ConfigSchema(BaseModel):
     data_quality: DataQualityThresholds = Field(default_factory=DataQualityThresholds)
     cache: CacheConfig = Field(default_factory=CacheConfig)
     uploads: UploadConfig = Field(default_factory=UploadConfig)
+    retraining: RetrainingSettings = Field(default_factory=RetrainingSettings)
     secret_validation: SecretValidationSettings = Field(
         default_factory=SecretValidationSettings
     )
@@ -194,6 +200,7 @@ __all__ = [
     "SampleFilesSettings",
     "AnalyticsSettings",
     "MonitoringSettings",
+    "RetrainingSettings",
     "DataQualityThresholds",
     "SecretValidationSettings",
     "ConfigSchema",

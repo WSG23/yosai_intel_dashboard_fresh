@@ -5,7 +5,11 @@ import random
 from functools import wraps
 from typing import Any, Awaitable, Callable, TypeVar
 
+from monitoring.performance_profiler import PerformanceProfiler
+
 T = TypeVar("T")
+
+_profiler = PerformanceProfiler()
 
 
 async def _run_with_retry(
@@ -17,19 +21,20 @@ async def _run_with_retry(
     max_delay: float = 60.0,
     jitter: bool = True,
 ) -> T:
-    attempt = 1
-    while True:
-        try:
-            return await func()
-        except Exception:
-            if attempt >= max_attempts:
-                raise
-            delay = base_delay * (backoff_factor ** (attempt - 1))
-            if jitter:
-                delay += random.uniform(0, base_delay)
-            delay = min(delay, max_delay)
-            await asyncio.sleep(delay)
-            attempt += 1
+    async with _profiler.track_task("async_retry"):
+        attempt = 1
+        while True:
+            try:
+                return await func()
+            except Exception:
+                if attempt >= max_attempts:
+                    raise
+                delay = base_delay * (backoff_factor ** (attempt - 1))
+                if jitter:
+                    delay += random.uniform(0, base_delay)
+                delay = min(delay, max_delay)
+                await asyncio.sleep(delay)
+                attempt += 1
 
 
 def async_retry(
@@ -50,7 +55,8 @@ def async_retry(
         @wraps(fn)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             async def call() -> T:
-                return await fn(*args, **kwargs)
+                async with _profiler.track_task(fn.__name__):
+                    return await fn(*args, **kwargs)
 
             return await _run_with_retry(
                 call,

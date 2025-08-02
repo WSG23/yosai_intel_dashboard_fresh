@@ -4,7 +4,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from .app_config import UploadConfig
-from .base import Config
+from .base import Config, RetrainingConfig
 from .config_manager import ConfigManager, get_config, reload_config
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
@@ -23,6 +23,7 @@ from .schema import (
     ConfigSchema,
     DatabaseSettings,
     SecuritySettings,
+    RetrainingSettings,
 )
 from .secure_config_manager import SecureConfigManager
 from .secure_db import execute_secure_query
@@ -99,6 +100,7 @@ __all__ = [
     "AppSettings",
     "DatabaseSettings",
     "SecuritySettings",
+    "RetrainingSettings",
     "UploadConfig",
     "ConfigManager",
     "SecureConfigManager",
@@ -128,6 +130,7 @@ __all__ = [
     "SecurityConstants",
     "PerformanceConstants",
     "CSSConstants",
+    "RetrainingConfig",
     "execute_secure_query",
     "UnicodeHandler",
 ]
