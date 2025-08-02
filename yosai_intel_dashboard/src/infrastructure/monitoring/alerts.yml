@@ -11,38 +11,6 @@ groups:
       severity: warning
     annotations:
       summary: Replication lag to TimescaleDB exceeds 60 seconds
-- name: performance
-  rules:
-  - alert: HighRequestLatency
-    expr: histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[5m])) by (le)) > 1
-    for: 5m
-    labels:
-      severity: warning
-      notify: slack
-    annotations:
-      summary: API p95 latency above 1s
-      description: Investigate upstream dependencies
-  - alert: HighCPUUsage
-    expr: sum(rate(process_cpu_seconds_total[1m])) > 0.8
-    for: 5m
-    labels:
-      severity: warning
-      notify: slack
-    annotations:
-      summary: CPU usage over 80%
-  - alert: HighMemoryUsage
-    expr: process_resident_memory_bytes / 1024 / 1024 > 500
-    for: 5m
-    labels:
-      severity: warning
-      notify: slack
-    annotations:
-      summary: Memory usage above 500MB
-  - alert: SlowAsyncTasks
-    expr: histogram_quantile(0.95, sum(rate(async_task_duration_seconds_bucket[5m])) by (le)) > 5
-    for: 5m
-    labels:
-      severity: warning
-      notify: slack
-    annotations:
-      summary: Async task p95 duration exceeds 5s
+      channels:
+        - performance-alerts
+
