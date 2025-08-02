@@ -19,11 +19,19 @@ podAnnotations:
 
 resources:
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 1
+    memory: 1Gi
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 250m
+    memory: 512Mi
+
+pythonPath: "/app:/app/yosai_intel_dashboard/src"
+modulePath: "yosai_intel_dashboard.src.services.main"
+enableLegacyImports: "true"
+probes:
+  liveness: "/health/live"
+  readiness: "/health/ready"
+  startup: "/health/startup"
 
 autoscaling:
   enabled: true
