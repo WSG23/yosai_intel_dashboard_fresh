@@ -3,6 +3,7 @@ version: '3.8'
 x-shared-env: &shared-env
   JAEGER_ENDPOINT: http://jaeger:14268/api/traces
   REPLICATION_METRICS_PORT: 8004
+  PYTHONPATH: /app:/app/yosai_intel_dashboard/src
 
 services:
   service-registry:
@@ -88,13 +89,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    command: ["python", "-m", "uvicorn", "yosai_intel_dashboard.src.services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    volumes:
+      - .:/app
     environment:
       <<: *shared-env
       YOSAI_ENV: development
       SERVICE_REGISTRY_URL: http://service-registry:8500
     depends_on:
       - service-registry
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   api-gateway:
@@ -113,12 +122,20 @@ services:
     depends_on:
       - analytics-service
       - service-registry
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   event-ingestion:
     build:
-      context: ./services/event-ingestion/
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/event-ingestion/Dockerfile
+    volumes:
+      - .:/app
     environment:
       <<: *shared-env
       KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094
