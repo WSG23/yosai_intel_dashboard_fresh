@@ -2,10 +2,17 @@ from __future__ import annotations
 
 import asyncio
 import random
+import time
 from functools import wraps
 from typing import Any, Awaitable, Callable, TypeVar
 
-from monitoring.performance_profiler import PerformanceProfiler
+import psutil
+
+from yosai_intel_dashboard.src.core.performance import (
+    MetricType,
+    get_performance_monitor,
+)
+
 
 T = TypeVar("T")
 
@@ -20,9 +27,17 @@ async def _run_with_retry(
     backoff_factor: float = 2.0,
     max_delay: float = 60.0,
     jitter: bool = True,
+    queue_name: str = "default",
+    task_type: str = "async_retry",
 ) -> T:
-    async with _profiler.track_task("async_retry"):
-        attempt = 1
+    monitor = get_performance_monitor()
+    tags = {"queue": queue_name, "task_type": task_type}
+    start_time = time.time()
+    start_mem = monitor.memory_usage_mb()
+    start_cpu = psutil.cpu_percent()
+    attempt = 1
+    try:
+
         while True:
             try:
                 return await func()
@@ -35,6 +50,28 @@ async def _run_with_retry(
                 delay = min(delay, max_delay)
                 await asyncio.sleep(delay)
                 attempt += 1
+    finally:
+        duration = time.time() - start_time
+        end_mem = monitor.memory_usage_mb()
+        end_cpu = psutil.cpu_percent()
+        monitor.record_metric(
+            "async_retry",
+            duration,
+            MetricType.EXECUTION_TIME,
+            tags=tags,
+        )
+        monitor.record_metric(
+            "async_retry.memory_mb",
+            end_mem - start_mem,
+            MetricType.MEMORY_USAGE,
+            tags=tags,
+        )
+        monitor.record_metric(
+            "async_retry.cpu_percent",
+            end_cpu - start_cpu,
+            MetricType.CPU_USAGE,
+            tags=tags,
+        )
 
 
 def async_retry(
@@ -45,6 +82,8 @@ def async_retry(
     backoff_factor: float = 2.0,
     max_delay: float = 60.0,
     jitter: bool = True,
+    queue_name: str = "default",
+    task_type: str | None = None,
 ) -> (
     Callable[..., Awaitable[T]]
     | Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]
@@ -65,6 +104,8 @@ def async_retry(
                 backoff_factor=backoff_factor,
                 max_delay=max_delay,
                 jitter=jitter,
+                queue_name=queue_name,
+                task_type=task_type or fn.__name__,
             )
 
         return wrapper
