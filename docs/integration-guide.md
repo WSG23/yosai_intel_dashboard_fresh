@@ -331,6 +331,62 @@ document.getElementById('delete-my-data').onclick = function() {
 """
 
 
+# DSAR request endpoints
+
+The compliance plugin exposes a single Flask endpoint for creating Data Subject Access
+Requests (DSARs):
+
+```
+POST /v1/compliance/dsar/request
+```
+
+Specify the request type in the JSON body to create different DSAR requests:
+
+- **Access**
+  ```bash
+  curl -X POST /v1/compliance/dsar/request \
+       -H 'Content-Type: application/json' \
+       -d '{"request_type": "access", "email": "user@example.com"}'
+  ```
+- **Erasure**
+  ```bash
+  curl -X POST /v1/compliance/dsar/request \
+       -H 'Content-Type: application/json' \
+       -d '{"request_type": "erasure", "email": "user@example.com"}'
+  ```
+- **Portability**
+  ```bash
+  curl -X POST /v1/compliance/dsar/request \
+       -H 'Content-Type: application/json' \
+       -d '{"request_type": "portability", "email": "user@example.com"}'
+  ```
+
+### dsar_service workflow
+
+```python
+from yosai_intel_dashboard.src.services.compliance.dsar_service import (
+    DSARService, DSARRequestType
+)
+
+dsar_service: DSARService = container.get("dsar_service")
+
+# Queue a DSAR
+request_id = dsar_service.create_request(
+    user_id="123", request_type=DSARRequestType.ACCESS, email="user@example.com"
+)
+
+# Fulfill the request
+dsar_service.process_request(request_id, processed_by="admin-1")
+
+# Audit the request
+logs = dsar_service.audit_logger.get_actions(
+    resource_type="dsar_request", resource_id=request_id
+)
+```
+
+The example above queues a DSAR, processes it once fulfilled, and retrieves the
+audit trail for review.
+
 # =============================================================================
 # STEP 5: Compliance monitoring dashboard integration
 # =============================================================================
