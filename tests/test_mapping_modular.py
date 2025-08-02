@@ -1,11 +1,11 @@
 import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from mapping.models import MappingModel
-from mapping.processors.ai_processor import AIColumnMapperAdapter
-from mapping.processors.column_processor import ColumnProcessor
-from mapping.processors.device_processor import DeviceProcessor
-from mapping.storage.base import MemoryStorage
+from services.mapping.models import MappingModel
+from services.mapping.processors.ai_processor import AIColumnMapperAdapter
+from services.mapping.processors.column_processor import ColumnProcessor
+from services.mapping.processors.device_processor import DeviceProcessor
+from services.mapping.storage.base import MemoryStorage
 
 
 class DummyAdapter:

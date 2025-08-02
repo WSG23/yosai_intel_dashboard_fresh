@@ -1,8 +1,8 @@
 import pandas as pd
 
-from analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
-from analytics.security_patterns.pattern_detection import detect_critical_door_risks
-from database.connection import create_database_connection
+from services.analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
+from services.analytics.security_patterns.pattern_detection import detect_critical_door_risks
+from services.database.connection import create_database_connection
 
 
 def test_analyze_failed_access_returns_expected_keys(monkeypatch):
@@ -17,7 +17,7 @@ def test_analyze_failed_access_returns_expected_keys(monkeypatch):
             return True
 
     monkeypatch.setattr(
-        "database.baseline_metrics.create_database_connection", lambda: DummyConn()
+        "services.database.baseline_metrics.create_database_connection", lambda: DummyConn()
     )
     analyzer = SecurityPatternsAnalyzer()
     df = pd.DataFrame(
@@ -73,12 +73,12 @@ def test_detect_odd_time_zero_variance(monkeypatch):
             pass
 
     monkeypatch.setattr(
-        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        "services.analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
         lambda: DummyBaseline(),
     )
 
     df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 10]})
-    from analytics.security_patterns.odd_time_detection import detect_odd_time
+    from services.analytics.security_patterns.odd_time_detection import detect_odd_time
 
     threats = detect_odd_time(df)
     assert threats == []
@@ -93,12 +93,12 @@ def test_detect_odd_time_zero_baseline_std(monkeypatch):
             pass
 
     monkeypatch.setattr(
-        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        "services.analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
         lambda: DummyBaseline(),
     )
 
     df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 12]})
-    from analytics.security_patterns.odd_time_detection import detect_odd_time
+    from services.analytics.security_patterns.odd_time_detection import detect_odd_time
 
     threats = detect_odd_time(df)
     assert len(threats) == 1
