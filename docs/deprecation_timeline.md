@@ -9,7 +9,9 @@ This document summarizes features scheduled for removal and links to their migra
 | legacy-auth | 1.2.0 | 2.0.0 | [Legacy Auth Migration](migration/legacy-auth.md) |
 | old-dashboard | 1.5.0 | 2.1.0 | [New Dashboard Migration](migration/new-dashboard.md) |
 
-## Visual Timeline
+- [Legacy Auth Migration](migration/legacy-auth.md)
+- [New Dashboard Migration](migration/new-dashboard.md)
+
 
 ```mermaid
 timeline
