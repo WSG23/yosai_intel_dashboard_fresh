@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yosai-intel-staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-org/yosai_intel_dashboard_fresh.git
+    targetRevision: HEAD
+    path: helm/yosai-intel
+    helm:
+      valueFiles:
+        - ../../environments/staging/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: yosai-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

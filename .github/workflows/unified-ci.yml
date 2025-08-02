@@ -211,28 +211,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - run: pip install -r requirements.lock
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-      - name: Configure kubeconfig
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
-      - name: Deploy canary
-        run: |
-          kubectl apply -f k8s/canary
-      - name: Wait for canary rollout
-        run: |
-          kubectl rollout status deployment/yosai-dashboard-canary --timeout=120s
-      - name: Health check canary
-        run: |
-          kubectl wait --for=condition=ready pod -l app=yosai-dashboard,track=canary --timeout=60s
-      - name: Promote canary to production
-        run: |
-          kubectl apply -f k8s/base
-          kubectl apply -f k8s/production
-          kubectl delete -f k8s/canary
+        - uses: actions/checkout@v3
+        - name: Push manifests to GitOps
+          env:
+            GITOPS_USER: github-actions
+            GITOPS_EMAIL: github-actions@github.com
+          run: |
+            git config user.name "$GITOPS_USER"
+            git config user.email "$GITOPS_EMAIL"
+            git add argocd/applications environments
+            git commit -m "Sync manifests to GitOps" || echo "No changes to commit"
+            git push
 
