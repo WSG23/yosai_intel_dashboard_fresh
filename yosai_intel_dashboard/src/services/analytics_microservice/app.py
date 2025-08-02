@@ -43,7 +43,7 @@ from yosai_intel_dashboard.src.services.auth import verify_jwt_token
 from yosai_intel_dashboard.src.services.common import async_db
 from yosai_intel_dashboard.src.services.common.async_db import close_pool, create_pool
 from yosai_intel_dashboard.src.services.common.secrets import get_secret
-from shared.errors.types import ErrorCode
+from shared.errors.types import ErrorCode, ErrorResponse
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
@@ -62,6 +62,13 @@ app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
 rate_limiter = RateLimiter()
+
+ERROR_RESPONSES = {
+    400: {"model": ErrorResponse, "description": "Bad Request"},
+    401: {"model": ErrorResponse, "description": "Unauthorized"},
+    404: {"model": ErrorResponse, "description": "Not Found"},
+    500: {"model": ErrorResponse, "description": "Internal Server Error"},
+}
 
 
 @app.middleware("http")
@@ -277,7 +284,7 @@ async def _shutdown() -> None:
     service.stop()
 
 
-@app.get("/api/v1/analytics/dashboard-summary")
+@app.get("/api/v1/analytics/dashboard-summary", responses=ERROR_RESPONSES)
 @rate_limit_decorator()
 async def dashboard_summary(
     _: None = Depends(verify_token),
@@ -297,7 +304,7 @@ async def dashboard_summary(
     return result
 
 
-@app.get("/api/v1/analytics/access-patterns")
+@app.get("/api/v1/analytics/access-patterns", responses=ERROR_RESPONSES)
 @rate_limit_decorator()
 async def access_patterns(
     days: int = Query(7),
@@ -321,7 +328,7 @@ async def access_patterns(
     return result
 
 
-@app.post("/api/v1/analytics/threat_assessment")
+@app.post("/api/v1/analytics/threat_assessment", responses=ERROR_RESPONSES)
 async def threat_assessment(
     request: Request,
     file: UploadFile | None = File(None),
@@ -372,7 +379,7 @@ async def threat_assessment(
 models_router = APIRouter(prefix="/api/v1/models", tags=["models"])
 
 
-@models_router.post("/register")
+@models_router.post("/register", responses=ERROR_RESPONSES)
 @rate_limit_decorator()
 async def register_model(
     name: str = Form(...),
@@ -410,7 +417,7 @@ async def register_model(
     return {"name": name, "version": record.version}
 
 
-@models_router.get("/{name}")
+@models_router.get("/{name}", responses=ERROR_RESPONSES)
 @rate_limit_decorator()
 async def list_versions(
     name: str,
@@ -431,7 +438,7 @@ async def list_versions(
     }
 
 
-@models_router.post("/{name}/rollback")
+@models_router.post("/{name}/rollback", responses=ERROR_RESPONSES)
 async def rollback(
     name: str,
     version: str = Form(...),
@@ -454,7 +461,7 @@ async def rollback(
     return {"name": name, "active_version": version}
 
 
-@models_router.post("/{name}/predict")
+@models_router.post("/{name}/predict", responses=ERROR_RESPONSES)
 @rate_limit_decorator()
 async def predict(
     name: str,
@@ -499,7 +506,7 @@ async def predict(
     return {"predictions": result}
 
 
-@models_router.get("/{name}/drift")
+@models_router.get("/{name}/drift", responses=ERROR_RESPONSES)
 @rate_limit_decorator()
 async def get_drift(
     name: str,

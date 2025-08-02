@@ -61,7 +61,13 @@ def create_upload_blueprint(
     @doc(
         description="Upload a file",
         tags=["upload"],
-        responses={202: "Accepted", 400: "Invalid CSRF token", 500: "Server Error"},
+        responses={
+            202: "Accepted",
+            400: "Bad Request",
+            401: "Unauthorized",
+            404: "Not Found",
+            500: "Internal Server Error",
+        },
     )
     @validate_input(UploadRequestSchema)
     @validate_output(UploadResponseSchema)
@@ -140,7 +146,13 @@ def create_upload_blueprint(
             }
         },
         tags=["upload"],
-        responses={200: "Success"},
+        responses={
+            200: "Success",
+            400: "Bad Request",
+            401: "Unauthorized",
+            404: "Not Found",
+            500: "Internal Server Error",
+        },
     )
     @validate_output(StatusSchema)
     def upload_status(job_id: str):
