@@ -38,6 +38,28 @@ test('shows fallback UI and posts error report', () => {
   expect(global.fetch).toHaveBeenCalledWith('/api/error-report', expect.any(Object));
 });
 
+test('includes user comments when reporting issue', () => {
+  const ThrowError = () => {
+    throw new Error('boom');
+  };
+
+  render(
+    <ErrorBoundary>
+      <ThrowError />
+    </ErrorBoundary>
+  );
+
+  const originalPrompt = window.prompt;
+  (window as any).prompt = jest.fn().mockReturnValue('It failed after clicking');
+  fireEvent.click(screen.getByText('Report Issue'));
+
+  expect((window as any).prompt).toHaveBeenCalled();
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+  const payload = JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body);
+  expect(payload.comments).toBe('It failed after clicking');
+  window.prompt = originalPrompt;
+});
+
 test('retry resets error boundary', () => {
   let shouldThrow = true;
   const ProblemChild = () => {

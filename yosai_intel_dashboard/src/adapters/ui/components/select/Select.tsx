@@ -1,21 +1,23 @@
 import React from 'react';
 
-interface Option {
-  value: string;
+export interface Option<T extends string> {
+  value: T;
   label: string;
 }
 
-export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
+export interface SelectProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | string[];
   onChange: (value: string | string[]) => void;
   options: Option[];
   multiple?: boolean;
   placeholder?: string;
   className?: string;
+
   searchable?: boolean;
 }
 
-export const Select: React.FC<SelectProps> = ({
+export const Select = <T extends string,>({
   value,
   onChange,
   options,
@@ -157,8 +159,10 @@ export const Select: React.FC<SelectProps> = ({
           );
         })}
       </ul>
+
     </div>
   );
 };
 
 export default Select;
+
