@@ -2,21 +2,11 @@ from __future__ import annotations
 
 """Simple hierarchical cache with three levels and basic metrics."""
 
-
-This implementation coordinates an in-memory L1 cache, a Redis based L2 cache
-and a disk backed L3 cache. Items are automatically promoted and demoted
-between levels based on access frequency and memory pressure.
-"""
-
-import json
+import asyncio
+import inspect
 import logging
-import os
-import shelve
-import threading
-import time
-from collections import OrderedDict, defaultdict
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
+
 
 import redis
 
@@ -222,6 +212,24 @@ class HierarchicalCacheManager(BaseModel):
             },
         }
 
+
+    async def warm(self, keys: list[str], loader: Callable[[str], Any]) -> None:
+        """Pre-populate all cache tiers for the specified *keys*.
+
+        The *loader* callable is used to retrieve the value for each key. It can
+        be either a synchronous function or an async coroutine. Values are stored
+        in both cache levels.
+        """
+
+        async def _populate(key: str) -> None:
+            if inspect.iscoroutinefunction(loader):
+                value = await loader(key)
+            else:
+                value = await asyncio.to_thread(loader, key)
+            self.set(key, value, level=1)
+            self.set(key, value, level=2)
+
+        await asyncio.gather(*(_populate(k) for k in keys))
 
 
 __all__ = ["HierarchicalCacheConfig", "HierarchicalCacheManager"]
