@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Button } from '../shared/Button';
 import { Input } from '../shared/Input';
-import { Select } from '../shared/Select';
+import { Select } from '../select/Select';
 import { Checkbox } from '../shared/Checkbox';
 import { Badge } from '../shared/Badge';
 import Spinner from '../shared/Spinner';
