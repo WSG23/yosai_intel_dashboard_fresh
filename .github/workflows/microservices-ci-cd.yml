@@ -23,24 +23,42 @@ jobs:
             microservices:
               - 'services/**'
               - 'k8s/**'
-              - 'Dockerfile*'
-              - '.github/workflows/microservices-ci-cd.yml'
+              - '**/Dockerfile*'
 
-  test:
+  validate-structure:
     needs: detect-changes
     if: needs.detect-changes.outputs.microservices_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.21'
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.lock') }}
+      - run: pip install -r requirements.lock
+      - run: python scripts/create_symlinks.py
+      - run: python scripts/validate_structure.py
+      - run: ./validate_migration.sh
+
+  test:
+    needs: validate-structure
+    if: needs.detect-changes.outputs.microservices_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
       - run: pip install -r requirements.lock
       - run: pip install -r requirements-test.txt
-      - run: pytest --cov=services.analytics_microservice --cov=services.event-ingestion --cov-report=xml -q --cov-fail-under=80
+      - run: python scripts/create_symlinks.py
+      - run: pytest --cov=services/analytics_microservice --cov=services/event-ingestion --cov-report=xml --cov-fail-under=80 tests tests/migration
       - uses: actions/upload-artifact@v4
         with:
           name: python-microservices-coverage
@@ -69,22 +87,13 @@ jobs:
       - name: Update vulnerability database
         run: trivy --download-db-only
       - name: Dependency and license scan
-        uses: aquasecurity/trivy-action@v0.12.0
-        with:
-          scan-type: fs
-          path: .
-          scanners: vuln,license
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: 1
-          trivyignores: .trivyignore
+        run: trivy fs --scanners vuln,license --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --ignorefile .trivyignore .
       - name: Generate SBOM
-        uses: aquasecurity/trivy-action@v0.12.0
+        uses: anchore/sbom-action@v0
         with:
-          scan-type: fs
-          format: spdx-json
-          output: sbom.json
           path: .
+          format: spdx-json
+          output-file: sbom.json
       - uses: actions/upload-artifact@v4
         with:
           name: sbom
@@ -111,6 +120,10 @@ jobs:
             dockerfile: Dockerfile
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: python scripts/create_symlinks.py
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -162,8 +175,11 @@ jobs:
         run: |
           kubectl wait --for=condition=ready pod -l app=yosai-dashboard,track=canary --timeout=60s
       - name: Promote canary to production
-
         run: |
           kubectl apply -f k8s/base
           kubectl apply -f k8s/production
           kubectl delete -f k8s/canary
+      - name: Rollback on failure
+        if: failure()
+        run: kubectl rollout undo deployment/yosai-dashboard
+
