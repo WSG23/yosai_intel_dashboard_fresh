@@ -4,15 +4,16 @@ import json
 import sys
 import types
 from pathlib import Path
+from tests.import_helpers import safe_import, import_optional
 
 if "services.resilience" not in sys.modules:
-    sys.modules["services.resilience"] = types.ModuleType("services.resilience")
+    safe_import('services.resilience', types.ModuleType("services.resilience"))
 if "services.resilience.metrics" not in sys.modules:
     metrics_stub = types.ModuleType("services.resilience.metrics")
     metrics_stub.circuit_breaker_state = types.SimpleNamespace(
         labels=lambda *a, **k: types.SimpleNamespace(inc=lambda *a, **k: None)
     )
-    sys.modules["services.resilience.metrics"] = metrics_stub
+    safe_import('services.resilience.metrics', metrics_stub)
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression

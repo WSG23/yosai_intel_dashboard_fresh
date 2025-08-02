@@ -1,6 +1,7 @@
 import os
 import sys
 from types import ModuleType, SimpleNamespace
+from tests.import_helpers import safe_import, import_optional
 
 # Stub resilience metrics to avoid optional dependency errors
 metrics_mod = ModuleType("services.resilience.metrics")
@@ -10,9 +11,9 @@ metrics_mod.circuit_breaker_state = SimpleNamespace(
 resilience_pkg = ModuleType("services.resilience")
 resilience_pkg.metrics = metrics_mod
 services_pkg = ModuleType("services")
-sys.modules.setdefault("services", services_pkg)
-sys.modules.setdefault("services.resilience", resilience_pkg)
-sys.modules.setdefault("services.resilience.metrics", metrics_mod)
+safe_import('services', services_pkg)
+safe_import('services.resilience', resilience_pkg)
+safe_import('services.resilience.metrics', metrics_mod)
 
 from monitoring import model_performance_monitor as mpm
 from yosai_intel_dashboard.models.ml.base_model import BaseModel, ModelMetadata

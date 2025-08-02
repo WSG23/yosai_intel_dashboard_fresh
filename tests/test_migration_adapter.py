@@ -6,6 +6,7 @@ import types
 from typing import Any
 
 import pandas as pd
+from tests.import_helpers import safe_import, import_optional
 
 # Provide a lightweight stub for services.interfaces to avoid heavy imports
 stub_pkg = types.ModuleType("services")
@@ -19,7 +20,7 @@ flags_spec = importlib.util.spec_from_file_location(
 flags_module = importlib.util.module_from_spec(flags_spec)
 flags_spec.loader.exec_module(flags_module)
 stub_pkg.feature_flags = flags_module
-sys.modules["services.feature_flags"] = flags_module
+safe_import('services.feature_flags', flags_module)
 
 # Minimal registry stub
 registry_stub = types.ModuleType("services.registry")
@@ -32,7 +33,7 @@ class ServiceDiscovery:
 
 registry_stub.ServiceDiscovery = ServiceDiscovery
 stub_pkg.registry = registry_stub
-sys.modules["services.registry"] = registry_stub
+safe_import('services.registry', registry_stub)
 
 # Minimal resilience.circuit_breaker stub
 resilience_pkg = types.ModuleType("services.resilience")
@@ -52,8 +53,8 @@ cb_module.CircuitBreaker = CircuitBreaker
 cb_module.CircuitBreakerOpen = CircuitBreakerOpen
 resilience_pkg.circuit_breaker = cb_module
 stub_pkg.resilience = resilience_pkg
-sys.modules["services.resilience"] = resilience_pkg
-sys.modules["services.resilience.circuit_breaker"] = cb_module
+safe_import('services.resilience', resilience_pkg)
+safe_import('services.resilience.circuit_breaker', cb_module)
 
 
 class AnalyticsServiceProtocol:
@@ -61,8 +62,8 @@ class AnalyticsServiceProtocol:
 
 
 stub_interfaces.AnalyticsServiceProtocol = AnalyticsServiceProtocol
-sys.modules.setdefault("services", stub_pkg)
-sys.modules["services.interfaces"] = stub_interfaces
+safe_import('services', stub_pkg)
+safe_import('services.interfaces', stub_interfaces)
 
 spec = importlib.util.spec_from_file_location(
     "migration_adapter",

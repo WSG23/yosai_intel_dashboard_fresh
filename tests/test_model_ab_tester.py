@@ -7,12 +7,13 @@ from pathlib import Path
 
 import joblib
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 # Load ModelABTester directly to avoid heavy service imports
 services_path = pathlib.Path(__file__).resolve().parents[1] / "services"
 stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
-sys.modules.setdefault("services", stub_pkg)
+safe_import('services', stub_pkg)
 
 ab_path = services_path / "ab_testing.py"
 spec = importlib.util.spec_from_file_location("services.ab_testing", ab_path)

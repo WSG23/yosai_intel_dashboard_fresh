@@ -3,6 +3,7 @@ import types
 from pathlib import Path
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 try:
     import flask  # noqa: F401
@@ -13,11 +14,11 @@ import pandas as pd
 
 services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "services")]
-sys.modules["services"] = services_stub
-sys.modules.setdefault("opentelemetry", types.ModuleType("opentelemetry"))
-sys.modules.setdefault("opentelemetry.context", types.ModuleType("otel_ctx"))
-sys.modules.setdefault("opentelemetry.propagate", types.ModuleType("otel_prop"))
-sys.modules.setdefault("opentelemetry.trace", types.ModuleType("otel_trace"))
+safe_import('services', services_stub)
+safe_import('opentelemetry', types.ModuleType("opentelemetry"))
+safe_import('opentelemetry.context', types.ModuleType("otel_ctx"))
+safe_import('opentelemetry.propagate', types.ModuleType("otel_prop"))
+safe_import('opentelemetry.trace', types.ModuleType("otel_trace"))
 sys.modules["opentelemetry.trace"].get_current_span = lambda: types.SimpleNamespace(
     get_span_context=lambda: None
 )
@@ -25,15 +26,15 @@ sys.modules.setdefault(
     "opentelemetry.exporter.jaeger.thrift", types.ModuleType("otel_jaeger")
 )
 sys.modules["opentelemetry.exporter.jaeger.thrift"].JaegerExporter = object
-sys.modules.setdefault("opentelemetry.sdk.resources", types.ModuleType("otel_res"))
+safe_import('opentelemetry.sdk.resources', types.ModuleType("otel_res"))
 sys.modules["opentelemetry.sdk.resources"].Resource = object
-sys.modules.setdefault("opentelemetry.sdk.trace", types.ModuleType("otel_tr_sdk"))
+safe_import('opentelemetry.sdk.trace', types.ModuleType("otel_tr_sdk"))
 sys.modules["opentelemetry.sdk.trace"].TracerProvider = object
 sys.modules.setdefault(
     "opentelemetry.sdk.trace.export", types.ModuleType("otel_tr_exp")
 )
 sys.modules["opentelemetry.sdk.trace.export"].BatchSpanProcessor = object
-sys.modules.setdefault("structlog", types.ModuleType("structlog"))
+safe_import('structlog', types.ModuleType("structlog"))
 sys.modules["structlog"].BoundLogger = object
 
 from yosai_intel_dashboard.src.services.analytics.data.loader import DataLoader  # noqa: E402

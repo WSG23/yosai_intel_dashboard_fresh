@@ -4,11 +4,12 @@ import sys
 import types
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 services_path = pathlib.Path(__file__).resolve().parents[2] / "services"
 stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
-sys.modules.setdefault("services", stub_pkg)
+safe_import('services', stub_pkg)
 stub_interfaces = types.ModuleType("services.interfaces")
 
 
@@ -17,8 +18,8 @@ class AnalyticsServiceProtocol:
 
 
 stub_interfaces.AnalyticsServiceProtocol = AnalyticsServiceProtocol
-sys.modules["services.interfaces"] = stub_interfaces
-sys.modules.setdefault("kafka", types.ModuleType("kafka"))
+safe_import('services.interfaces', stub_interfaces)
+safe_import('kafka', types.ModuleType("kafka"))
 setattr(sys.modules["kafka"], "KafkaProducer", object)
 
 circuit_path = services_path / "resilience" / "circuit_breaker.py"

@@ -1,6 +1,7 @@
 import pandas as pd
 
 from monitoring.data_quality_monitor import (
+from tests.import_helpers import safe_import, import_optional
     DataQualityMetrics,
     DataQualityMonitor,
     DataQualityThresholds,
@@ -53,7 +54,7 @@ def test_processor_evaluates_quality(monkeypatch):
                 return {}
 
         module.Processor = Processor
-        sys.modules["services.data_processing.processor"] = module
+        safe_import('services.data_processing.processor', module)
 
     from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 

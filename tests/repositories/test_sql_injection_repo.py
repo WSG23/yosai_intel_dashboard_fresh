@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 # Provide minimal Flask stub required by utility modules
 if "flask" not in sys.modules:
@@ -13,7 +14,7 @@ if "flask" not in sys.modules:
     flask_stub = types.ModuleType("flask")
     flask_stub.request = None
     flask_stub.url_for = lambda *a, **k: ""
-    sys.modules["flask"] = flask_stub
+    safe_import('flask', flask_stub)
 
 # Provide minimal ``utils.unicode_handler`` without importing heavy utils package
 if "utils.unicode_handler" not in sys.modules:
@@ -27,8 +28,8 @@ if "utils.unicode_handler" not in sys.modules:
     spec.loader.exec_module(unicode_mod)
     utils_pkg = util.module_from_spec(machinery.ModuleSpec("utils", None))
     utils_pkg.unicode_handler = unicode_mod
-    sys.modules["utils"] = utils_pkg
-    sys.modules["utils.unicode_handler"] = unicode_mod
+    safe_import('utils', utils_pkg)
+    safe_import('utils.unicode_handler', unicode_mod)
 
 # Map project modules into the expected namespace if they aren't installed
 if "yosai_intel_dashboard.src.core.domain.entities" not in sys.modules:
@@ -44,11 +45,11 @@ if "yosai_intel_dashboard.src.core.domain.entities" not in sys.modules:
     enums_stub = importlib.util.module_from_spec(
         importlib.machinery.ModuleSpec("yosai_intel_dashboard.src.core.domain.value_objects", None)
     )
-    sys.modules["yosai_intel_dashboard.models"] = importlib.util.module_from_spec(
+    safe_import('yosai_intel_dashboard.models', importlib.util.module_from_spec()
         importlib.machinery.ModuleSpec("yosai_intel_dashboard.models", None)
     )
-    sys.modules["yosai_intel_dashboard.src.core.domain.entities"] = entities_stub
-    sys.modules["yosai_intel_dashboard.src.core.domain.value_objects"] = enums_stub
+    safe_import('yosai_intel_dashboard.src.core.domain.entities', entities_stub)
+    safe_import('yosai_intel_dashboard.src.core.domain.value_objects', enums_stub)
 
     class AccessResult(enum.Enum):
         GRANTED = "granted"

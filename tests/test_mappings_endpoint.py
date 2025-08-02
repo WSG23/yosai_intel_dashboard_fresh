@@ -2,8 +2,9 @@ import importlib
 import sys
 import types
 from pathlib import Path
+from tests.import_helpers import safe_import, import_optional
 
-sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+safe_import('yosai_intel_dashboard', types.ModuleType("yosai_intel_dashboard"))
 sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
 
 import pandas as pd
@@ -12,7 +13,7 @@ from flask import Flask
 core_root = Path(__file__).resolve().parents[1] / "core"
 core_pkg = types.ModuleType("core")
 core_pkg.__path__ = [str(core_root)]
-sys.modules.setdefault("core", core_pkg)
+safe_import('core', core_pkg)
 
 spec = importlib.util.spec_from_file_location(
     "core.service_container",
@@ -20,12 +21,12 @@ spec = importlib.util.spec_from_file_location(
 )
 sc_module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
-sys.modules.setdefault("core.service_container", sc_module)
+safe_import('core.service_container', sc_module)
 spec.loader.exec_module(sc_module)
 
 container_mod = types.ModuleType("core.container")
 container_mod.container = sc_module.ServiceContainer()
-sys.modules.setdefault("core.container", container_mod)
+safe_import('core.container', container_mod)
 
 spec_pd = importlib.util.spec_from_file_location(
     "utils.pydantic_decorators",
@@ -45,15 +46,15 @@ fake_errors.CODE_TO_STATUS = {
 }
 fake_pkg = types.ModuleType("yosai_framework")
 fake_pkg.errors = fake_errors
-sys.modules.setdefault("yosai_framework", fake_pkg)
-sys.modules.setdefault("yosai_framework.errors", fake_errors)
+safe_import('yosai_framework', fake_pkg)
+safe_import('yosai_framework.errors', fake_errors)
 
-sys.modules.setdefault("utils.pydantic_decorators", pyd_module)
+safe_import('utils.pydantic_decorators', pyd_module)
 spec_pd.loader.exec_module(pyd_module)
 utils_pkg = types.ModuleType("utils")
 utils_pkg.pydantic_decorators = pyd_module
-sys.modules.setdefault("utils", utils_pkg)
-sys.modules["utils.pydantic_decorators"] = pyd_module
+safe_import('utils', utils_pkg)
+safe_import('utils.pydantic_decorators', pyd_module)
 
 service_reg_stub = types.ModuleType("services.upload.service_registration")
 service_reg_stub.register_upload_services = lambda c: None
@@ -77,12 +78,12 @@ config_pkg.DatabaseSettings = DatabaseSettings
 config_pkg.dynamic_config = types.SimpleNamespace(
     performance=types.SimpleNamespace(memory_usage_threshold_mb=1024)
 )
-sys.modules.setdefault("config", config_pkg)
-sys.modules.setdefault("services.upload.service_registration", service_reg_stub)
-sys.modules.setdefault("config.dynamic_config", config_pkg)
+safe_import('config', config_pkg)
+safe_import('services.upload.service_registration', service_reg_stub)
+safe_import('config.dynamic_config', config_pkg)
 
 if "flask_apispec" not in sys.modules:
-    sys.modules["flask_apispec"] = types.SimpleNamespace(
+    safe_import('flask_apispec', types.SimpleNamespace()
         doc=lambda *a, **k: (lambda f: f)
     )
 
@@ -93,16 +94,16 @@ from yosai_intel_dashboard.src.services import mappings_endpoint
 # Ensure dash stubs are available for service imports
 if "dash" not in sys.modules:
     dash_stub = importlib.import_module("tests.stubs.dash")
-    sys.modules["dash"] = dash_stub
-    sys.modules["dash.dash"] = dash_stub
-    sys.modules.setdefault("dash.html", dash_stub.html)
-    sys.modules.setdefault("dash.dcc", dash_stub.dcc)
-    sys.modules.setdefault("dash.dependencies", dash_stub.dependencies)
-    sys.modules.setdefault("dash._callback", dash_stub._callback)
+    safe_import('dash', dash_stub)
+    safe_import('dash.dash', dash_stub)
+    safe_import('dash.html', dash_stub.html)
+    safe_import('dash.dcc', dash_stub.dcc)
+    safe_import('dash.dependencies', dash_stub.dependencies)
+    safe_import('dash._callback', dash_stub._callback)
 
 if "dash_bootstrap_components" not in sys.modules:
     dbc_stub = importlib.import_module("tests.stubs.dash_bootstrap_components")
-    sys.modules["dash_bootstrap_components"] = dbc_stub
+    safe_import('dash_bootstrap_components', dbc_stub)
 
 # Provide stub for optional heavy dependencies
 if "dask" not in sys.modules:
@@ -111,8 +112,8 @@ if "dask" not in sys.modules:
     dist_stub = types.ModuleType("dask.distributed")
     dist_stub.Client = object
     dist_stub.LocalCluster = object
-    sys.modules["dask"] = dask_stub
-    sys.modules["dask.distributed"] = dist_stub
+    safe_import('dask', dask_stub)
+    safe_import('dask.distributed', dist_stub)
 
 
 class DummyUploadProcessor:

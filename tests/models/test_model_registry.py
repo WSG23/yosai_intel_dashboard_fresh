@@ -3,15 +3,16 @@ import importlib.util
 import sys
 import types
 from pathlib import Path
+from tests.import_helpers import safe_import, import_optional
 
 if "services.resilience" not in sys.modules:
-    sys.modules["services.resilience"] = types.ModuleType("services.resilience")
+    safe_import('services.resilience', types.ModuleType("services.resilience"))
 if "services.resilience.metrics" not in sys.modules:
     metrics_stub = types.ModuleType("services.resilience.metrics")
     metrics_stub.circuit_breaker_state = types.SimpleNamespace(
         labels=lambda *a, **k: types.SimpleNamespace(inc=lambda *a, **k: None)
     )
-    sys.modules["services.resilience.metrics"] = metrics_stub
+    safe_import('services.resilience.metrics', metrics_stub)
 
 import pandas as pd
 import pytest
@@ -210,9 +211,9 @@ def test_log_features_and_drift(monkeypatch, stub_services_registry):
     class Response:  # minimal stub for dependencies
         pass
     stub_req.Response = Response
-    monkeypatch.setitem(sys.modules, "requests", stub_req)
-    monkeypatch.setitem(sys.modules, "requests.adapters", adapters_mod)
-    monkeypatch.setitem(sys.modules, "requests.exceptions", stub_req.exceptions)
+    safe_import('requests', stub_req)
+    safe_import('requests.adapters', adapters_mod)
+    safe_import('requests.exceptions', stub_req.exceptions)
 
     mlflow_stub = types.ModuleType("mlflow")
 
@@ -230,15 +231,15 @@ def test_log_features_and_drift(monkeypatch, stub_services_registry):
     mlflow_stub.log_metric = lambda *a, **k: None
     mlflow_stub.log_artifact = lambda *a, **k: None
     mlflow_stub.set_tracking_uri = lambda *a, **k: None
-    monkeypatch.setitem(sys.modules, "mlflow", mlflow_stub)
+    safe_import('mlflow', mlflow_stub)
 
     services_pkg = types.ModuleType("services")
     services_pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "services")]
     registry_mod = types.ModuleType("services.registry")
     registry_mod.get_service = lambda name: None
     services_pkg.registry = registry_mod
-    monkeypatch.setitem(sys.modules, "services", services_pkg)
-    monkeypatch.setitem(sys.modules, "services.registry", registry_mod)
+    safe_import('services', services_pkg)
+    safe_import('services.registry', registry_mod)
 
     path = (
         Path(__file__).resolve().parents[2]
