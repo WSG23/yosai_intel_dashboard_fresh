@@ -1,9 +1,16 @@
 """Factory classes for creating configuration components"""
 
+from __future__ import annotations
+
 import logging
 from typing import Any, Callable, Dict, List, Type
 
-from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import IntelligentMultiLevelCache
+from yosai_intel_dashboard.src.core.hierarchical_cache_manager import (
+    HierarchicalCacheManager,
+)
+from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import (
+    IntelligentMultiLevelCache,
+)
 
 from .interfaces import ICacheManager, IDatabaseManager
 
@@ -87,6 +94,7 @@ class CacheManagerFactory:
                     "redis": RedisCacheManager,
                     "advanced_redis": AdvancedRedisCacheManager,
                     "intelligent": IntelligentMultiLevelCache,
+                    "hierarchical": HierarchicalCacheManager,
                 }
             )
 

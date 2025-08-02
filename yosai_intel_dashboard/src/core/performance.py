@@ -544,6 +544,7 @@ class CacheMonitor(BaseModel):
             lambda: {"hits": 0, "misses": 0}
         )
         self.cache_sizes: Dict[str, int] = {}
+        self._caches: Dict[str, Any] = {}
 
     def record_cache_hit(self, cache_name: str) -> None:
         """Record cache hit"""
@@ -571,10 +572,19 @@ class CacheMonitor(BaseModel):
         total = stats["hits"] + stats["misses"]
         return (stats["hits"] / total * 100) if total > 0 else 0.0
 
+    def register_cache(self, cache_name: str, cache: Any) -> None:
+        """Register a cache providing a ``stats`` method."""
+        self._caches[cache_name] = cache
+
     def get_all_cache_stats(self) -> Dict[str, Dict[str, Any]]:
         """Get statistics for all caches"""
         result = {}
+        for name, cache in self._caches.items():
+            if hasattr(cache, "stats"):
+                result[name] = cache.stats()
         for cache_name, stats in self.cache_stats.items():
+            if cache_name in result:
+                continue
             total = stats["hits"] + stats["misses"]
             result[cache_name] = {
                 "hits": stats["hits"],
