@@ -4,8 +4,11 @@ import asyncio
 import time
 from typing import Any, Awaitable, Callable, Optional
 
+from monitoring.performance_profiler import PerformanceProfiler
+
 
 _circuit_breaker_state = None
+_profiler = PerformanceProfiler()
 
 
 def _get_circuit_breaker_state():
@@ -100,7 +103,8 @@ class CircuitBreaker:
             if not await cb.allows_request():
                 raise CircuitBreakerOpen("circuit breaker is open")
             try:
-                result = await func(*args, **kwargs)
+                async with _profiler.track_task(cb._name):
+                    result = await func(*args, **kwargs)
             except Exception:
                 await cb.record_failure()
                 raise

@@ -175,6 +175,14 @@ class MonitoringConfig:
 
 
 @dataclass
+class RetrainingConfig:
+    """Configuration for automatic model retraining."""
+
+    schedule_interval_minutes: int = 60
+    min_rows: int = 1000
+
+
+@dataclass
 class DataQualityThresholds:
     """Thresholds for data quality alerts."""
 
@@ -207,6 +215,7 @@ class Config:
     data_quality: DataQualityThresholds = field(default_factory=DataQualityThresholds)
     cache: CacheConfig = field(default_factory=CacheConfig)
     uploads: UploadConfig = field(default_factory=UploadConfig)
+    retraining: RetrainingConfig = field(default_factory=RetrainingConfig)
     secret_validation: SecretValidationConfig = field(
         default_factory=SecretValidationConfig
     )
@@ -224,6 +233,7 @@ __all__ = [
     "DataQualityThresholds",
     "CacheConfig",
     "UploadConfig",
+    "RetrainingConfig",
     "SecretValidationConfig",
     "Config",
 ]

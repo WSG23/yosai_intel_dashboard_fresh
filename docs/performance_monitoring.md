@@ -349,3 +349,30 @@ Two helper scripts under `monitoring/` capture runtime resource usage.
   ```bash
   python -m monitoring.tracemalloc_profile scripts/my_job.py --snapshot allocs.snap
   ```
+
+## Load Testing with Locust
+
+The `load-tests` folder provides utilities for exercising key API endpoints under load.
+
+### Local execution
+
+Install the development requirements and run:
+
+```bash
+./load-tests/run_locust.sh
+```
+
+This script runs Locust in headless mode against `http://localhost:8000` by default and
+writes results to `load-tests/results/`.
+
+### Continuous integration
+
+CI environments should invoke:
+
+```bash
+./load-tests/run_locust_ci.sh
+```
+
+It generates JSON and HTML regression reports comparing the current metrics with the
+baseline (`load-tests/baseline.json`) and validates p50/p95/p99 latency targets defined in
+`load-tests/thresholds.json`.
