@@ -7,9 +7,10 @@ import types
 
 import pandas as pd
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 # Stub heavy optional dependencies before importing the services package
-sys.modules.setdefault("scipy", types.ModuleType("scipy"))
+safe_import('scipy', types.ModuleType("scipy"))
 sys.modules["scipy"].stats = types.SimpleNamespace()
 
 import importlib.util
@@ -20,7 +21,7 @@ module_path = Path(__file__).resolve().parents[2] / "services" / "chunked_analys
 spec = importlib.util.spec_from_file_location("services.chunked_analysis", module_path)
 services_pkg = types.ModuleType("services")
 services_pkg.__path__ = [str(module_path.parent)]
-sys.modules.setdefault("services", services_pkg)
+safe_import('services', services_pkg)
 chunk_mod = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = chunk_mod
 spec.loader.exec_module(chunk_mod)

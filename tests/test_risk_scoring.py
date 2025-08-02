@@ -1,14 +1,15 @@
+from tests.import_helpers import safe_import, import_optional
 # Provide minimal dash stub if dash is unavailable
 import sys
 
 if "dash" not in sys.modules:
     from tests.stubs import dash as dash_stub
 
-    sys.modules["dash"] = dash_stub  # type: ignore
-    sys.modules["dash.html"] = dash_stub.html  # type: ignore
-    sys.modules["dash.dcc"] = dash_stub.dcc  # type: ignore
-    sys.modules["dash.dependencies"] = dash_stub.dependencies  # type: ignore
-    sys.modules["dash._callback"] = dash_stub._callback  # type: ignore
+    safe_import('dash', dash_stub  # type: ignore)
+    safe_import('dash.html', dash_stub.html  # type: ignore)
+    safe_import('dash.dcc', dash_stub.dcc  # type: ignore)
+    safe_import('dash.dependencies', dash_stub.dependencies  # type: ignore)
+    safe_import('dash._callback', dash_stub._callback  # type: ignore)
 
 import importlib.util
 import types
@@ -28,8 +29,8 @@ spec_feat.loader.exec_module(feature_mod)
 analytics_stub = types.ModuleType("analytics")
 analytics_stub.feature_extraction = feature_mod
 analytics_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "analytics")]
-sys.modules.setdefault("analytics", analytics_stub)
-sys.modules.setdefault("services.analytics.feature_extraction", feature_mod)
+safe_import('analytics', analytics_stub)
+safe_import('services.analytics.feature_extraction', feature_mod)
 
 # Stub dependent modules to avoid heavy imports
 anom_types = types.ModuleType("services.analytics.anomaly_detection.types")
@@ -45,7 +46,7 @@ class AnomalyAnalysis:
 
 
 anom_types.AnomalyAnalysis = AnomalyAnalysis
-sys.modules["services.analytics.anomaly_detection.types"] = anom_types
+safe_import('services.analytics.anomaly_detection.types', anom_types)
 
 sec_analyzer = types.ModuleType("services.analytics.security_patterns.analyzer")
 
@@ -61,7 +62,7 @@ class SecurityAssessment:
 
 
 sec_analyzer.SecurityAssessment = SecurityAssessment
-sys.modules["services.analytics.security_patterns.analyzer"] = sec_analyzer
+safe_import('services.analytics.security_patterns.analyzer', sec_analyzer)
 
 behav_mod = types.ModuleType("services.analytics.user_behavior")
 
@@ -76,12 +77,12 @@ class BehaviorAnalysis:
 
 
 behav_mod.BehaviorAnalysis = BehaviorAnalysis
-sys.modules["services.analytics.user_behavior"] = behav_mod
+safe_import('services.analytics.user_behavior', behav_mod)
 
 RISK_PATH = Path(__file__).resolve().parents[1] / "analytics" / "risk_scoring.py"
 spec_risk = importlib.util.spec_from_file_location("services.analytics.risk_scoring", RISK_PATH)
 risk_mod = importlib.util.module_from_spec(spec_risk)
-sys.modules["services.analytics.risk_scoring"] = risk_mod
+safe_import('services.analytics.risk_scoring', risk_mod)
 spec_risk.loader.exec_module(risk_mod)
 
 AnomalyAnalysis = (
@@ -98,11 +99,11 @@ BehaviorAnalysis = risk_mod.BehaviorAnalysis
 if "dash" not in sys.modules:
     from tests.stubs import dash as dash_stub
 
-    sys.modules["dash"] = dash_stub  # type: ignore
-    sys.modules["dash.html"] = dash_stub.html  # type: ignore
-    sys.modules["dash.dcc"] = dash_stub.dcc  # type: ignore
-    sys.modules["dash.dependencies"] = dash_stub.dependencies  # type: ignore
-    sys.modules["dash._callback"] = dash_stub._callback  # type: ignore
+    safe_import('dash', dash_stub  # type: ignore)
+    safe_import('dash.html', dash_stub.html  # type: ignore)
+    safe_import('dash.dcc', dash_stub.dcc  # type: ignore)
+    safe_import('dash.dependencies', dash_stub.dependencies  # type: ignore)
+    safe_import('dash._callback', dash_stub._callback  # type: ignore)
 
 
 def test_calculate_risk_score_numeric():

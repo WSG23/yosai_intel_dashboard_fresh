@@ -3,7 +3,8 @@ import pytest
 from config import DatabaseSettings
 from yosai_intel_dashboard.src.infrastructure.config.connection_pool import DatabaseConnectionPool
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
-from tests.fake_configuration import FakeConfiguration
+from tests.config import FakeConfiguration
+from tests.import_helpers import safe_import, import_optional
 
 
 def factory():

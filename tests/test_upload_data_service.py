@@ -1,25 +1,26 @@
 import sys
 import types
+from tests.import_helpers import safe_import, import_optional
 
-sys.modules.setdefault("flask_caching", types.SimpleNamespace(Cache=object))
+safe_import('flask_caching', types.SimpleNamespace(Cache=object))
 if "dask" not in sys.modules:
     dask_stub = types.ModuleType("dask")
     dask_stub.__path__ = []
     dist_stub = types.ModuleType("dask.distributed")
     dist_stub.Client = object
     dist_stub.LocalCluster = object
-    sys.modules["dask"] = dask_stub
-    sys.modules["dask.distributed"] = dist_stub
+    safe_import('dask', dask_stub)
+    safe_import('dask.distributed', dist_stub)
 if "dash" not in sys.modules:
     dash_stub = types.ModuleType("dash")
-    sys.modules.setdefault("dash", dash_stub)
-    sys.modules.setdefault("dash.dash", dash_stub)
-    sys.modules.setdefault("dash.html", types.ModuleType("dash.html"))
-    sys.modules.setdefault("dash.dcc", types.ModuleType("dash.dcc"))
-    sys.modules.setdefault("dash.dependencies", types.ModuleType("dash.dependencies"))
-    sys.modules.setdefault("dash._callback", types.ModuleType("dash._callback"))
+    safe_import('dash', dash_stub)
+    safe_import('dash.dash', dash_stub)
+    safe_import('dash.html', types.ModuleType("dash.html"))
+    safe_import('dash.dcc', types.ModuleType("dash.dcc"))
+    safe_import('dash.dependencies', types.ModuleType("dash.dependencies"))
+    safe_import('dash._callback', types.ModuleType("dash._callback"))
 if "chardet" not in sys.modules:
-    sys.modules["chardet"] = types.ModuleType("chardet")
+    safe_import('chardet', types.ModuleType("chardet"))
 from unittest.mock import MagicMock
 
 import pandas as pd

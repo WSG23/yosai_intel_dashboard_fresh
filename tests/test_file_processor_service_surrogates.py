@@ -1,7 +1,8 @@
 import importlib.util
 import sys
 
-from tests.fake_configuration import FakeConfiguration
+from tests.config import FakeConfiguration
+from tests.import_helpers import safe_import, import_optional
 
 spec = importlib.util.spec_from_file_location(
     "services.file_processor_service", "services/file_processor_service.py"

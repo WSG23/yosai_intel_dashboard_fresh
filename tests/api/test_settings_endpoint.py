@@ -7,6 +7,7 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 from flask import Flask
+from tests.import_helpers import safe_import, import_optional
 
 
 class DummyLock:
@@ -38,8 +39,8 @@ def test_get_and_update_settings(monkeypatch):
     }
     fake_pkg = ModuleType("yosai_framework")
     fake_pkg.errors = fake_errors
-    monkeypatch.setitem(sys.modules, "yosai_framework", fake_pkg)
-    monkeypatch.setitem(sys.modules, "yosai_framework.errors", fake_errors)
+    safe_import('yosai_framework', fake_pkg)
+    safe_import('yosai_framework.errors', fake_errors)
 
     # Load utils.pydantic_decorators without importing utils package
     spec = importlib.util.spec_from_file_location(
@@ -51,8 +52,8 @@ def test_get_and_update_settings(monkeypatch):
     spec.loader.exec_module(pyd_module)
     utils_pkg = ModuleType("utils")
     utils_pkg.pydantic_decorators = pyd_module
-    monkeypatch.setitem(sys.modules, "utils", utils_pkg)
-    monkeypatch.setitem(sys.modules, "utils.pydantic_decorators", pyd_module)
+    safe_import('utils', utils_pkg)
+    safe_import('utils.pydantic_decorators', pyd_module)
 
     settings_endpoint = importlib.import_module("api.settings_endpoint")
 

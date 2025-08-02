@@ -1,6 +1,7 @@
 import pytest
 
-from tests.fake_configuration import FakeConfiguration
+from tests.config import FakeConfiguration
+from tests.import_helpers import safe_import, import_optional
 
 fake_cfg = FakeConfiguration()
 from validation.security_validator import SecurityValidator
