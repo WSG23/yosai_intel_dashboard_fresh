@@ -1,20 +1,21 @@
 import React from 'react';
 
-interface Option {
-  value: string;
+export interface Option<T extends string> {
+  value: T;
   label: string;
 }
 
-export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
-  value: string | string[];
-  onChange: (value: string | string[]) => void;
-  options: Option[];
+export interface SelectProps<T extends string = string>
+  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
+  value: T | T[];
+  onChange: (value: T | T[]) => void;
+  options: Option<T>[];
   multiple?: boolean;
   placeholder?: string;
   className?: string;
 }
 
-export const Select: React.FC<SelectProps> = ({
+export const Select = <T extends string,>({
   value,
   onChange,
   options,
@@ -22,13 +23,13 @@ export const Select: React.FC<SelectProps> = ({
   placeholder,
   className = '',
   ...rest
-}) => {
+}: SelectProps<T>) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (multiple) {
-      const selected = Array.from(e.target.selectedOptions).map(o => o.value);
-      onChange(selected);
+      const selected = Array.from(e.target.selectedOptions).map(o => o.value as T);
+      onChange(selected as T[]);
     } else {
-      onChange(e.target.value);
+      onChange(e.target.value as T);
     }
   };
 

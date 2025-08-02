@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Select } from './Select';
+import { Select, Option } from './Select';
 
-const options = [
+const options: Option<'a' | 'b'>[] = [
   { value: 'a', label: 'A' },
   { value: 'b', label: 'B' }
 ];
