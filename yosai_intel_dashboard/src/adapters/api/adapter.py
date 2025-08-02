@@ -79,7 +79,32 @@ def create_api_app() -> "FastAPI":
         service.app.state.rbac_service = asyncio.run(create_rbac_service())
     except Exception as exc:  # pragma: no cover - best effort
         service.log.error("Failed to initialize RBAC service: %s", exc)
-        service.app.state.rbac_service = None
+        app.config["RBAC_SERVICE"] = None
+
+    secret_key = os.getenv("SECRET_KEY")
+    if not secret_key:
+        try:  # pragma: no cover - best effort
+            from yosai_intel_dashboard.src.services.common.secrets import get_secret
+
+            secret_key = get_secret("SECRET_KEY")
+        except Exception:
+            secret_key = None
+    if not secret_key:
+        raise RuntimeError(
+            "SECRET_KEY is not set; configure it via environment or Vault"
+        )
+    app.config["SECRET_KEY"] = secret_key
+
+    csrf.init_app(app)
+
+    @app.before_request
+    def enforce_csrf() -> None:
+        if request.method not in {"GET", "HEAD", "OPTIONS"}:
+            csrf.protect()
+
+    settings = get_security_config()
+    CORS(app, origins=settings.cors_origins)
+
 
     # Third-party analytics demo endpoints (FastAPI router)
     service.app.include_router(analytics_router, dependencies=[Depends(verify_token)])
