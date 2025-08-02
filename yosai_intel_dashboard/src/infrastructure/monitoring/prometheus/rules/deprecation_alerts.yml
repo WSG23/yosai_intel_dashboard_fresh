@@ -2,9 +2,17 @@ groups:
 - name: deprecations
   rules:
   - alert: DeprecatedFunctionCalled
-    expr: rate(deprecated_function_calls_total[5m]) > 0
+    expr: rate(deprecation_usage_total[5m]) > 0
     for: 10m
     labels:
       severity: warning
     annotations:
-      summary: Deprecated function invoked recently
+      summary: Deprecated component invoked recently
+
+  - alert: DeprecatedHighUsage
+    expr: sum(rate(deprecation_usage_total[5m])) by (component) > 100
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: High usage of deprecated component; migration required
