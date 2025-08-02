@@ -143,6 +143,66 @@ def create_app(config_name: str = None) -> Flask:
 
 
 # =============================================================================
+# AUDIT LOGGING SETUP
+# =============================================================================
+
+### Creating the audit logger instance
+
+```python
+from plugins.compliance_plugin.services.audit_logger import create_audit_logger
+
+audit_logger = create_audit_logger(db)
+```
+
+### Configuring log destinations (database/file)
+
+Database writes happen automatically via `ComplianceAuditLogger`.  
+To also log to a file:
+
+```python
+import logging
+
+file_handler = logging.FileHandler("logs/compliance_audit.log")
+logging.getLogger("compliance").addHandler(file_handler)
+```
+
+### Creating the `compliance_audit_log` table
+
+```sql
+CREATE TABLE IF NOT EXISTS compliance_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    actor_user_id VARCHAR(50) NOT NULL,
+    target_user_id VARCHAR(50),
+    action_type VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL,
+    resource_id VARCHAR(100),
+    source_ip VARCHAR(45),
+    user_agent TEXT,
+    request_id VARCHAR(100),
+    description TEXT NOT NULL,
+    legal_basis VARCHAR(50),
+    data_categories JSONB,
+    additional_metadata JSONB
+);
+```
+
+### Sample log entries
+
+| timestamp               | actor_user_id | action_type   | resource_type | description                                     | legal_basis          |
+|-------------------------|---------------|---------------|---------------|-------------------------------------------------|----------------------|
+| 2024-05-01T10:00:00Z    | user_1        | LOGIN         | user_profile  | User logged in                                  | legitimate_interests |
+| 2024-05-02T09:00:00Z    | admin_1       | DATA_DELETION | personal_data | Purged inactive account per retention policy    | retention_policy     |
+
+### Retention settings
+
+```python
+from plugins.compliance_plugin.config import ComplianceConfig
+
+config = ComplianceConfig({"audit_retention_days": 365})
+```
+
+# =============================================================================
 # STEP 2: Update existing models to include compliance fields
 # =============================================================================
 
