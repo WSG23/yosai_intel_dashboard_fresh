@@ -174,6 +174,109 @@ def upgrade_existing_people_table():
 
 
 # =============================================================================
+# Additional compliance tables for end-to-end auditability
+# =============================================================================
+
+## consent_log
+Tracks every change to a user's consent status.
+
+```sql
+CREATE TABLE IF NOT EXISTS consent_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    consent_type VARCHAR(100) NOT NULL,
+    granted BOOLEAN NOT NULL,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_consent_log_user_id ON consent_log(user_id);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/004_create_consent_log.sql
+```
+
+---
+
+## dsar_request
+Stores Data Subject Access Requests (DSAR) and their processing state.
+
+```sql
+CREATE TABLE IF NOT EXISTS dsar_request (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    request_type VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    data JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_dsar_request_user_id ON dsar_request(user_id);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/005_create_dsar_request.sql
+```
+
+---
+
+## compliance_audit_log
+Centralized audit trail for all compliance-related actions.
+
+```sql
+CREATE TABLE IF NOT EXISTS compliance_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_type VARCHAR(100) NOT NULL,
+    event_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_id UUID,
+    target_id UUID,
+    event_details JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_compliance_audit_log_event_time
+    ON compliance_audit_log(event_time);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/006_create_compliance_audit_log.sql
+```
+
+---
+
+## cross_border_transfer
+Logs transfers of personal data across national borders.
+
+```sql
+CREATE TABLE IF NOT EXISTS cross_border_transfer (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    destination_country VARCHAR(2) NOT NULL,
+    transfer_mechanism VARCHAR(100) NOT NULL,
+    legal_basis VARCHAR(100) NOT NULL,
+    transfer_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_cross_border_transfer_user_id
+    ON cross_border_transfer(user_id);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/007_create_cross_border_transfer.sql
+```
+
+
+# =============================================================================
 # STEP 3: Enhanced service layer with compliance integration
 # =============================================================================
 
