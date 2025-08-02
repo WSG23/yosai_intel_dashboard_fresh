@@ -2,8 +2,8 @@ from __future__ import annotations
 
 """Scheduled monitoring of active ML models."""
 
+import asyncio
 import threading
-import time
 import warnings
 from typing import Optional
 
@@ -12,8 +12,8 @@ from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monit
     ModelMetrics,
     get_model_performance_monitor,
 )
-from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.model_metrics import update_model_metrics
 from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
+from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
 
 
 class ModelMonitor:
@@ -34,6 +34,7 @@ class ModelMonitor:
         self.interval_minutes = interval_minutes or default_interval
         self.registry = registry
         self.monitor = get_model_performance_monitor()
+        self.db = TimescaleDBManager()
         self._thread: Optional[threading.Thread] = None
         self._stop = threading.Event()
 
@@ -61,19 +62,52 @@ class ModelMonitor:
             self._stop.wait(interval)
 
     # ------------------------------------------------------------------
+    def _calculate_metrics(self, model_name: str) -> ModelMetrics:
+        """Fetch recent predictions and labels and compute metrics.
+
+        If fetching data fails or no data is available, return zeroed metrics.
+        """
+
+        async def _fetch() -> list[tuple[object, object]]:
+            query = (
+                "SELECT prediction, actual FROM model_predictions "
+                "WHERE model_name = $1 ORDER BY timestamp DESC LIMIT 1000"
+            )
+            rows = await self.db.fetch(query, model_name)
+            return [(r["prediction"], r["actual"]) for r in rows]
+
+        try:
+            pairs = asyncio.run(_fetch())
+        except Exception:
+            return ModelMetrics(accuracy=0.0, precision=0.0, recall=0.0)
+
+        if not pairs:
+            return ModelMetrics(accuracy=0.0, precision=0.0, recall=0.0)
+
+        preds, labels = zip(*pairs)
+        total = len(labels)
+        correct = sum(p == t for p, t in zip(preds, labels))
+        accuracy = correct / total
+
+        # Binary classification assumption
+        pos_label = 1
+        tp = sum(1 for p, t in zip(preds, labels) if p == pos_label and t == pos_label)
+        fp = sum(1 for p, t in zip(preds, labels) if p == pos_label and t != pos_label)
+        fn = sum(1 for p, t in zip(preds, labels) if p != pos_label and t == pos_label)
+        precision = tp / (tp + fp) if tp + fp else 0.0
+        recall = tp / (tp + fn) if tp + fn else 0.0
+
+        return ModelMetrics(accuracy=accuracy, precision=precision, recall=recall)
+
+    # ------------------------------------------------------------------
     def evaluate_active_models(self) -> None:
         """Evaluate all active models and record metrics."""
         records = self.registry.list_models()
         for rec in records:
             if not getattr(rec, "is_active", False):
                 continue
-            metrics_dict = rec.metrics or {}
-            metrics = ModelMetrics(
-                accuracy=metrics_dict.get("accuracy", 0.0),
-                precision=metrics_dict.get("precision", 0.0),
-                recall=metrics_dict.get("recall", 0.0),
-            )
-            update_model_metrics(metrics)
+            metrics = self._calculate_metrics(rec.name)
+            self.monitor.log_metrics(metrics)
             if self.monitor.detect_drift(metrics):
                 warnings.warn(
                     f"Model drift detected for {rec.name} {rec.version}",
