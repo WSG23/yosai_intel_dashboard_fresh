@@ -1,7 +1,7 @@
 import React from 'react';
 
-interface Option {
-  value: string;
+export interface Option<T extends string> {
+  value: T;
   label: string;
 }
 
@@ -13,15 +13,17 @@ export interface SelectProps
   multiple?: boolean;
   placeholder?: string;
   className?: string;
+  searchable?: boolean;
 }
 
-export const Select: React.FC<SelectProps> = ({
+export const Select = <T extends string,>({
   value,
   onChange,
   options,
   multiple = false,
   placeholder,
   className = '',
+  searchable = false,
   ...rest
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -136,6 +138,7 @@ export const Select: React.FC<SelectProps> = ({
       <div role="status" aria-live="polite" className="sr-only">
         {`${filteredOptions.length} results available`}
       </div>
+
     </div>
   );
 };
