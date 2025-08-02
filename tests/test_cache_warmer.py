@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 
 from core.cache_warmer import IntelligentCacheWarmer, UsagePatternAnalyzer
@@ -21,3 +23,10 @@ def test_predicted_keys_cached(async_runner):
 
     assert cache.get("a") == "value-a"
     assert cache.get("b") == "value-b"
+
+
+def test_warm_populates_keys(async_runner):
+    cache = HierarchicalCacheManager()
+    async_runner(cache.warm(["x", "y"], _loader))
+    assert cache.get("x") == "value-x"
+    assert cache.get("y") == "value-y"

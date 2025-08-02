@@ -248,6 +248,11 @@ The `IntelligentMultiLevelCache` combines memory, Redis and disk. Enable it with
 layer. The manager promotes entries between levels automatically and exposes a
 `report()` method for basic statistics.
 
+Upstream services can invalidate stale data by calling `invalidate(key)` to purge
+an individual entry from all tiers or `clear(level)` to wipe a specific tier or
+the entire cache. These hooks allow microservices to trigger cache purges when
+underlying datasets change.
+
 ```python
 from yosai_intel_dashboard.src.infrastructure.config.cache_manager import get_cache_manager
 

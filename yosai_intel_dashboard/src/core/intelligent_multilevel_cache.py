@@ -108,6 +108,62 @@ class IntelligentMultiLevelCache:
             logger.warning(f"Disk write failed for {key}: {exc}")
 
     # ------------------------------------------------------------------
+    async def invalidate(self, key: str) -> None:
+        """Remove a key from all cache layers."""
+        self._memory.pop(key, None)
+        if self._redis is not None:
+            try:
+                await self._redis.delete(self._full_key(key))
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.warning(f"Redis DEL failed for {key}: {exc}")
+        try:
+            (self.disk_path / f"{self._full_key(key)}.json").unlink(missing_ok=True)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning(f"Disk delete failed for {key}: {exc}")
+
+    # ------------------------------------------------------------------
+    async def clear(self, level: Optional[int] = None) -> None:
+        """Clear caches. Optionally target a specific tier."""
+        if level is None or level == 1:
+            self._memory.clear()
+        if (level is None or level == 2) and self._redis is not None:
+            try:
+                await self._redis.flushdb()
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.warning(f"Redis FLUSHDB failed: {exc}")
+        if level is None or level == 3:
+            for file in self.disk_path.glob("*.json"):
+                try:
+                    file.unlink(missing_ok=True)
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.warning(f"Disk clear failed for {file}: {exc}")
+
+    # ------------------------------------------------------------------
+    async def demote(self) -> None:
+        """Demote cold or expired entries from higher tiers."""
+        now = time.time()
+        for key, entry in list(self._memory.items()):
+            if entry.expiry and now > entry.expiry:
+                # fully expired
+                self._memory.pop(key, None)
+            elif entry.expiry and (entry.expiry - now) < self.default_ttl / 2:
+                # demote to lower tier by removing from memory
+                self._memory.pop(key, None)
+        if self._redis is not None:
+            try:
+                keys = await self._redis.keys(self._full_key("*"))
+                for k in keys:
+                    raw = await self._redis.get(k)
+                    if not raw:
+                        continue
+                    obj = json.loads(raw.decode("utf-8"))
+                    expiry = obj.get("expiry")
+                    if expiry and now > expiry:
+                        await self._redis.delete(k)
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.warning(f"Redis demotion failed: {exc}")
+
+    # ------------------------------------------------------------------
     async def get(
         self,
         key: str,
@@ -115,6 +171,7 @@ class IntelligentMultiLevelCache:
         ttl: Optional[int] = None,
     ) -> Optional[Any]:
         """Retrieve value from caches, optionally using loader."""
+        await self.demote()
         now = time.time()
         entry = self._memory.get(key)
         if entry:
@@ -132,6 +189,8 @@ class IntelligentMultiLevelCache:
                     if expiry and now > expiry:
                         await self._redis.delete(self._full_key(key))
                     else:
+                        if expiry and (expiry - now) < self.default_ttl / 2:
+                            return obj["value"]
                         self._record_memory(key, obj["value"], expiry)
                         return obj["value"]
             except Exception as exc:  # pragma: no cover - best effort
@@ -145,9 +204,10 @@ class IntelligentMultiLevelCache:
                 if expiry and now > expiry:
                     file.unlink(missing_ok=True)
                 else:
-                    await self.set(
-                        key, obj["value"], ttl=int(expiry - now) if expiry else ttl
-                    )
+                    remaining = int(expiry - now) if expiry else ttl
+                    if expiry and (expiry - now) < self.default_ttl / 2:
+                        return obj["value"]
+                    await self.set(key, obj["value"], ttl=remaining)
                     return obj["value"]
             except Exception as exc:  # pragma: no cover - best effort
                 logger.warning(f"Disk read failed for {key}: {exc}")
