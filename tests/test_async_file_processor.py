@@ -10,15 +10,16 @@ import pandas as pd
 import pytest
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+from tests.import_helpers import safe_import, import_optional
 
 services_root = Path(__file__).resolve().parents[1] / "services"
 services_pkg = types.ModuleType("services")
 services_pkg.__path__ = [str(services_root)]
-sys.modules.setdefault("services", services_pkg)
+safe_import('services', services_pkg)
 
 upload_pkg = types.ModuleType("services.upload")
 upload_pkg.__path__ = [str(services_root / "upload")]
-sys.modules.setdefault("services.upload", upload_pkg)
+safe_import('services.upload', upload_pkg)
 
 spec = importlib.util.spec_from_file_location(
     "services.upload.protocols", services_root / "upload" / "protocols.py"
@@ -26,11 +27,11 @@ spec = importlib.util.spec_from_file_location(
 protocols_mod = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(protocols_mod)
-sys.modules.setdefault("services.upload.protocols", protocols_mod)
+safe_import('services.upload.protocols', protocols_mod)
 
 data_processing_pkg = types.ModuleType("services.data_processing")
 data_processing_pkg.__path__ = [str(services_root / "data_processing")]
-sys.modules.setdefault("services.data_processing", data_processing_pkg)
+safe_import('services.data_processing', data_processing_pkg)
 
 spec = importlib.util.spec_from_file_location(
     "services.task_queue", services_root / "task_queue.py"
@@ -38,7 +39,7 @@ spec = importlib.util.spec_from_file_location(
 task_queue_module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(task_queue_module)
-sys.modules.setdefault("services.task_queue", task_queue_module)
+safe_import('services.task_queue', task_queue_module)
 clear_task = task_queue_module.clear_task
 create_task = task_queue_module.create_task
 get_status = task_queue_module.get_status

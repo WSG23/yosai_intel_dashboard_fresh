@@ -4,6 +4,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
+from tests.import_helpers import safe_import, import_optional
 
 stub_utils = ModuleType("utils")
 stub_utils.__path__ = []
@@ -15,12 +16,12 @@ stub_core.get_upload_chunk_size = lambda: 128
 stub_core_pkg = ModuleType("core")
 stub_core_pkg.__path__ = []
 stub_core_pkg.config = stub_core
-sys.modules["core"] = stub_core_pkg
-sys.modules["core.config"] = stub_core
+safe_import('core', stub_core_pkg)
+safe_import('core.config', stub_core)
 
 stub_config_pkg = ModuleType("config")
 stub_config_pkg.__path__ = []
-sys.modules["config"] = stub_config_pkg
+safe_import('config', stub_config_pkg)
 
 spec_resolvers = importlib.util.spec_from_file_location(
     "utils.config_resolvers",
@@ -29,8 +30,8 @@ spec_resolvers = importlib.util.spec_from_file_location(
 config_resolvers = importlib.util.module_from_spec(spec_resolvers)
 spec_resolvers.loader.exec_module(config_resolvers)
 stub_utils.config_resolvers = config_resolvers
-sys.modules["utils"] = stub_utils
-sys.modules["utils.config_resolvers"] = config_resolvers
+safe_import('utils', stub_utils)
+safe_import('utils.config_resolvers', config_resolvers)
 
 spec_utils = importlib.util.spec_from_file_location(
     "config.utils", Path(__file__).resolve().parents[1] / "config" / "utils.py"

@@ -4,6 +4,7 @@ import sys
 import types
 import logging
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 # Setup minimal environment to load EventServiceAdapter
 services_path = pathlib.Path(__file__).resolve().parents[1] / "yosai_intel_dashboard" / "src" / "services"
@@ -13,17 +14,17 @@ core_pkg.__path__ = []
 service_container_mod = types.ModuleType("core.service_container")
 class ServiceContainer: pass
 service_container_mod.ServiceContainer = ServiceContainer
-sys.modules.setdefault("core", core_pkg)
-sys.modules.setdefault("core.service_container", service_container_mod)
+safe_import('core', core_pkg)
+safe_import('core.service_container', service_container_mod)
 
 stub_services = types.ModuleType("services")
 stub_services.__path__ = [str(services_path)]
-sys.modules.setdefault("services", stub_services)
+safe_import('services', stub_services)
 
 interfaces_mod = types.ModuleType("services.interfaces")
 class AnalyticsServiceProtocol: pass
 interfaces_mod.AnalyticsServiceProtocol = AnalyticsServiceProtocol
-sys.modules.setdefault("services.interfaces", interfaces_mod)
+safe_import('services.interfaces', interfaces_mod)
 
 feat_mod = types.ModuleType("services.feature_flags")
 class FeatureFlags:
@@ -33,7 +34,7 @@ class FeatureFlags:
         return self._flags.get(name, False)
 feat_mod.feature_flags = FeatureFlags()
 stub_services.feature_flags = feat_mod
-sys.modules.setdefault("services.feature_flags", feat_mod)
+safe_import('services.feature_flags', feat_mod)
 
 cb_mod = types.ModuleType("services.resilience.circuit_breaker")
 class CircuitBreakerOpen(Exception):
@@ -47,9 +48,9 @@ class DummyBreaker:
         pass
 cb_mod.CircuitBreaker = DummyBreaker
 cb_mod.CircuitBreakerOpen = CircuitBreakerOpen
-sys.modules.setdefault("services.resilience.circuit_breaker", cb_mod)
+safe_import('services.resilience.circuit_breaker', cb_mod)
 
-sys.modules.setdefault("kafka", types.ModuleType("kafka"))
+safe_import('kafka', types.ModuleType("kafka"))
 setattr(sys.modules["kafka"], "KafkaProducer", object)
 
 spec = importlib.util.spec_from_file_location(

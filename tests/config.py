@@ -177,3 +177,4 @@ def fake_unicode_processor():
     from .fake_unicode_processor import FakeUnicodeProcessor
 
     return FakeUnicodeProcessor()
+

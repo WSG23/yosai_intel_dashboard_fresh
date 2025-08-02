@@ -6,6 +6,7 @@ import sys
 import types
 
 from flask.json.provider import DefaultJSONProvider
+from tests.import_helpers import safe_import, import_optional
 
 # Minimal services stubs
 spec = importlib.util.spec_from_file_location(
@@ -26,11 +27,11 @@ data_proc_mod = types.ModuleType("services.data_processing")
 data_proc_mod.core = core_mod
 services_mod.data_processing = data_proc_mod
 
-sys.modules["services"] = services_mod
-sys.modules["services.registry"] = registry_mod
-sys.modules["services.data_processing"] = data_proc_mod
-sys.modules["services.data_processing.core"] = core_mod
-sys.modules["core.protocols.plugin"] = protocols_mod
+safe_import('services', services_mod)
+safe_import('services.registry', registry_mod)
+safe_import('services.data_processing', data_proc_mod)
+safe_import('services.data_processing.core', core_mod)
+safe_import('core.protocols.plugin', protocols_mod)
 
 import pytest
 from flask import Flask

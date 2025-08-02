@@ -8,12 +8,13 @@ import types
 import pytest
 from fastapi.testclient import TestClient
 from jose import jwt
+from tests.import_helpers import safe_import, import_optional
 
 # Stub lightweight services package for microservice import
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
-sys.modules.setdefault("services", services_stub)
+safe_import('services', services_stub)
 
 # Ensure JWT_SECRET is set for microservice import
 os.environ.setdefault("JWT_SECRET", os.urandom(16).hex())
@@ -22,7 +23,7 @@ otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
 otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
     instrument_app=lambda *a, **k: None
 )
-sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
+safe_import('opentelemetry.instrumentation.fastapi', otel_stub)
 
 prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
 
@@ -40,7 +41,7 @@ class DummyInstr:
 
 
 prom_stub.Instrumentator = lambda: DummyInstr()
-sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+safe_import('prometheus_fastapi_instrumentator', prom_stub)
 
 
 class DummyVault:
@@ -59,8 +60,8 @@ secrets_stub.VaultClient = object
 secrets_stub.get_secret = lambda key: "test"
 secrets_stub.invalidate_secret = lambda key=None: None
 common_stub.secrets = secrets_stub
-sys.modules["services.common"] = common_stub
-sys.modules["services.common.secrets"] = secrets_stub
+safe_import('services.common', common_stub)
+safe_import('services.common.secrets', secrets_stub)
 
 # Stub async database module used by the microservice
 async_db_stub = types.ModuleType("services.common.async_db")
@@ -78,11 +79,11 @@ async def _get_pool() -> DummyPool:
 
 async_db_stub.get_pool = _get_pool
 async_db_stub.close_pool = lambda: None
-sys.modules["services.common.async_db"] = async_db_stub
+safe_import('services.common.async_db', async_db_stub)
 
 tracing_stub = types.ModuleType("tracing")
 tracing_stub.init_tracing = lambda name: None
-sys.modules["tracing"] = tracing_stub
+safe_import('tracing', tracing_stub)
 
 
 class DummyAnalytics:
@@ -95,7 +96,7 @@ class DummyAnalytics:
 
 analytics_stub = types.ModuleType("services.analytics_service")
 analytics_stub.create_analytics_service = lambda: DummyAnalytics()
-sys.modules["services.analytics_service"] = analytics_stub
+safe_import('services.analytics_service', analytics_stub)
 
 # Stub async query functions used by the microservice
 async_queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
@@ -111,7 +112,7 @@ async def _fetch_patterns(pool, days):
 
 async_queries_stub.fetch_dashboard_summary = _fetch_summary
 async_queries_stub.fetch_access_patterns = _fetch_patterns
-sys.modules["services.analytics_microservice.async_queries"] = async_queries_stub
+safe_import('services.analytics_microservice.async_queries', async_queries_stub)
 
 app_spec = importlib.util.spec_from_file_location(
     "services.analytics_microservice.app",

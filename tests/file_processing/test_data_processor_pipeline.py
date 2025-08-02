@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[2]
@@ -43,22 +44,22 @@ class UnsupportedFormatError(Exception):
 
 format_stub.FormatDetector = FormatDetector
 format_stub.UnsupportedFormatError = UnsupportedFormatError
-sys.modules.setdefault("file_processing.format_detector", format_stub)
+safe_import('file_processing.format_detector', format_stub)
 
 readers_stub = types.ModuleType("file_processing.readers")
 for name in ["CSVReader", "ExcelReader", "JSONReader", "FWFReader", "ArchiveReader"]:
     setattr(readers_stub, name, type(name, (), {}))
-sys.modules.setdefault("file_processing.readers", readers_stub)
-sys.modules.setdefault("core.callback_events", cb_events_stub)
-sys.modules.setdefault("core.container", container_stub)
+safe_import('file_processing.readers', readers_stub)
+safe_import('core.callback_events', cb_events_stub)
+safe_import('core.container', container_stub)
 pkg = types.ModuleType("file_processing")
 pkg.__path__ = [str(MODULE_PATH.parent)]
-sys.modules.setdefault("file_processing", pkg)
+safe_import('file_processing', pkg)
 spec = importlib.util.spec_from_file_location(
     "file_processing.data_processor", MODULE_PATH
 )
 dp_mod = importlib.util.module_from_spec(spec)
-sys.modules["file_processing.data_processor"] = dp_mod
+safe_import('file_processing.data_processor', dp_mod)
 assert spec.loader is not None
 spec.loader.exec_module(dp_mod)
 DataProcessor = dp_mod.DataProcessor

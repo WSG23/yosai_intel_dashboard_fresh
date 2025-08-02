@@ -6,17 +6,18 @@ import types
 
 import aiohttp
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 services_path = pathlib.Path(__file__).resolve().parents[2] / "services"
 stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
-sys.modules.setdefault("services", stub_pkg)
+safe_import('services', stub_pkg)
 stub_resilience = types.ModuleType("services.resilience")
 stub_resilience.__path__ = [str(services_path / "resilience")]
-sys.modules.setdefault("services.resilience", stub_resilience)
+safe_import('services.resilience', stub_resilience)
 stub_tracing = types.ModuleType("tracing")
 stub_tracing.propagate_context = lambda headers: None
-sys.modules.setdefault("tracing", stub_tracing)
+safe_import('tracing', stub_tracing)
 
 metrics_path = services_path / "resilience" / "metrics.py"
 metrics_spec = importlib.util.spec_from_file_location(
@@ -24,7 +25,7 @@ metrics_spec = importlib.util.spec_from_file_location(
 )
 metrics_module = importlib.util.module_from_spec(metrics_spec)
 metrics_spec.loader.exec_module(metrics_module)  # type: ignore
-sys.modules["services.resilience.metrics"] = metrics_module
+safe_import('services.resilience.metrics', metrics_module)
 
 cb_path = services_path / "resilience" / "circuit_breaker.py"
 cb_spec = importlib.util.spec_from_file_location(
@@ -32,7 +33,7 @@ cb_spec = importlib.util.spec_from_file_location(
 )
 cb_module = importlib.util.module_from_spec(cb_spec)
 cb_spec.loader.exec_module(cb_module)  # type: ignore
-sys.modules["services.resilience.circuit_breaker"] = cb_module
+safe_import('services.resilience.circuit_breaker', cb_module)
 
 module_path = (
     pathlib.Path(__file__).resolve().parents[2] / "adapters" / "service_client.py"

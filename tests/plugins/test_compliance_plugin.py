@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 
 def _load_compliance_plugin(monkeypatch, db_success=True, services_success=True):
@@ -24,7 +25,7 @@ def _load_compliance_plugin(monkeypatch, db_success=True, services_success=True)
             pass
 
     base_mod.BasePlugin = BasePlugin
-    monkeypatch.setitem(sys.modules, "core.plugins.base", base_mod)
+    safe_import('core.plugins.base', base_mod)
 
     db = MagicMock()
     db.ensure_schema.return_value = db_success

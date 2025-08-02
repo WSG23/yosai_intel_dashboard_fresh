@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Protocol, Tuple, runtime_checkable
 
 import pandas as pd
+from tests.import_helpers import safe_import, import_optional
 
 
 @runtime_checkable
@@ -108,18 +109,18 @@ def _create_engine() -> Tuple[Any, _Store]:
     analytics_proto_mod.AnalyticsServiceProtocol = AnalyticsServiceProtocol
     services_stub.upload = upload_mod
     services_stub.analytics = analytics_mod
-    sys.modules.setdefault("services", services_stub)
-    sys.modules.setdefault("services.upload", upload_mod)
-    sys.modules.setdefault("services.upload.protocols", upload_proto_mod)
-    sys.modules.setdefault("services.analytics", analytics_mod)
-    sys.modules.setdefault("services.analytics.protocols", analytics_proto_mod)
+    safe_import('services', services_stub)
+    safe_import('services.upload', upload_mod)
+    safe_import('services.upload.protocols', upload_proto_mod)
+    safe_import('services.analytics', analytics_mod)
+    safe_import('services.analytics.protocols', analytics_proto_mod)
     import tests.stubs.dash as dash_stub
 
-    sys.modules.setdefault("dash", dash_stub)
-    sys.modules.setdefault("dash.html", dash_stub.html)
-    sys.modules.setdefault("dash.dcc", dash_stub.dcc)
-    sys.modules.setdefault("dash.dependencies", dash_stub.dependencies)
-    sys.modules.setdefault("dash._callback", dash_stub._callback)
+    safe_import('dash', dash_stub)
+    safe_import('dash.html', dash_stub.html)
+    safe_import('dash.dcc', dash_stub.dcc)
+    safe_import('dash.dependencies', dash_stub.dependencies)
+    safe_import('dash._callback', dash_stub._callback)
     dash_stub.no_update = dash_stub._callback.NoUpdate()
     sys.modules.setdefault(
         "dash.exceptions", types.SimpleNamespace(PreventUpdate=Exception)

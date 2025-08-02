@@ -1,8 +1,9 @@
 import sys
 import types
 from pathlib import Path
+from tests.import_helpers import safe_import, import_optional
 
-sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+safe_import('yosai_intel_dashboard', types.ModuleType("yosai_intel_dashboard"))
 sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
 
 import pandas as pd
@@ -18,8 +19,8 @@ service_reg_stub = types.ModuleType("services.upload.service_registration")
 service_reg_stub.register_upload_services = lambda c: c.register_singleton(
     "uploader", object()
 )
-sys.modules.setdefault("core.container", core_container_stub)
-sys.modules.setdefault("services.upload.service_registration", service_reg_stub)
+safe_import('core.container', core_container_stub)
+safe_import('services.upload.service_registration', service_reg_stub)
 
 # Allow importing submodules from the real "services" package
 services_mod = sys.modules.setdefault("services", types.ModuleType("services"))
@@ -100,7 +101,7 @@ def test_build_device_mappings_ai(monkeypatch):
     sdm_stub.generate_ai_device_defaults = lambda df, profile="auto": None
     components_pkg = types.ModuleType("yosai_intel_dashboard.src.components")
     components_pkg.simple_device_mapping = sdm_stub
-    sys.modules["yosai_intel_dashboard.src.components"] = components_pkg
+    safe_import('yosai_intel_dashboard.src.components', components_pkg)
     sys.modules[
         "yosai_intel_dashboard.src.components.simple_device_mapping"
     ] = sdm_stub
@@ -131,7 +132,7 @@ def test_build_ai_device_mappings_helper(monkeypatch):
     sdm_stub.generate_ai_device_defaults = lambda df, profile="auto": None
     components_pkg = types.ModuleType("yosai_intel_dashboard.src.components")
     components_pkg.simple_device_mapping = sdm_stub
-    sys.modules["yosai_intel_dashboard.src.components"] = components_pkg
+    safe_import('yosai_intel_dashboard.src.components', components_pkg)
     sys.modules[
         "yosai_intel_dashboard.src.components.simple_device_mapping"
     ] = sdm_stub

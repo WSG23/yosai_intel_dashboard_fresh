@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from tests.import_helpers import safe_import, import_optional
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -18,7 +19,7 @@ class CallbackEvent(Enum):
     DATA_PROCESSED = auto()
 
 callback_events_stub.CallbackEvent = CallbackEvent
-sys.modules.setdefault("core.callback_events", callback_events_stub)
+safe_import('core.callback_events', callback_events_stub)
 
 
 class DummyManager:

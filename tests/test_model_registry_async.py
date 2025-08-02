@@ -4,11 +4,12 @@ import sys
 import types
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 services_path = pathlib.Path(__file__).resolve().parents[1] / "services"
 stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
-sys.modules["services"] = stub_pkg
+safe_import('services', stub_pkg)
 
 from services.common.model_registry import ModelRegistry
 

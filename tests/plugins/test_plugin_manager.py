@@ -11,6 +11,7 @@ import pytest
 
 from config import create_config_manager
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from tests.import_helpers import safe_import, import_optional
 
 
 def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:
@@ -60,9 +61,9 @@ def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:
     core_pkg = types.ModuleType("services.data_processing.core")
     core_pkg.__path__ = []
 
-    monkeypatch.setitem(sys.modules, "services", services_pkg)
-    monkeypatch.setitem(sys.modules, "services.data_processing", data_processing_pkg)
-    monkeypatch.setitem(sys.modules, "services.data_processing.core", core_pkg)
+    safe_import('services', services_pkg)
+    safe_import('services.data_processing', data_processing_pkg)
+    safe_import('services.data_processing.core', core_pkg)
     monkeypatch.setitem(
         sys.modules,
         "core.protocols.plugin",

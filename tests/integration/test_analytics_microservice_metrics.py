@@ -6,11 +6,12 @@ import types
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.import_helpers import safe_import, import_optional
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
-sys.modules.setdefault("services", services_stub)
+safe_import('services', services_stub)
 
 # Ensure JWT_SECRET for microservice
 os.environ.setdefault("JWT_SECRET", os.urandom(16).hex())
@@ -32,13 +33,13 @@ class DummyInstr:
 
 
 prom_stub.Instrumentator = lambda: DummyInstr()
-sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+safe_import('prometheus_fastapi_instrumentator', prom_stub)
 
 otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
 otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
     instrument_app=lambda *a, **k: None
 )
-sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
+safe_import('opentelemetry.instrumentation.fastapi', otel_stub)
 
 # Stub async database module
 async_db_stub = types.ModuleType("services.common.async_db")
@@ -56,7 +57,7 @@ async def _get_pool() -> DummyPool:
 
 async_db_stub.get_pool = _get_pool
 async_db_stub.close_pool = lambda: None
-sys.modules["services.common.async_db"] = async_db_stub
+safe_import('services.common.async_db', async_db_stub)
 
 
 class DummyAnalytics:
@@ -69,7 +70,7 @@ class DummyAnalytics:
 
 analytics_stub = types.ModuleType("services.analytics_service")
 analytics_stub.create_analytics_service = lambda: DummyAnalytics()
-sys.modules["services.analytics_service"] = analytics_stub
+safe_import('services.analytics_service', analytics_stub)
 
 async_queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
 
@@ -84,7 +85,7 @@ async def _fetch_patterns(pool, days):
 
 async_queries_stub.fetch_dashboard_summary = _fetch_summary
 async_queries_stub.fetch_access_patterns = _fetch_patterns
-sys.modules["services.analytics_microservice.async_queries"] = async_queries_stub
+safe_import('services.analytics_microservice.async_queries', async_queries_stub)
 
 dummy_tracing = types.ModuleType("tracing")
 called = {}
@@ -95,7 +96,7 @@ def fake_init(service_name: str) -> None:
 
 
 dummy_tracing.init_tracing = fake_init
-sys.modules["tracing"] = dummy_tracing
+safe_import('tracing', dummy_tracing)
 
 
 @pytest.mark.integration
