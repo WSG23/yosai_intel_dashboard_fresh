@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import warnings
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional
@@ -14,8 +13,6 @@ from .cache_config import CacheConfig
 from .constants import (
     DEFAULT_APP_HOST,
     DEFAULT_APP_PORT,
-    DEFAULT_CACHE_HOST,
-    DEFAULT_CACHE_PORT,
     DEFAULT_DB_HOST,
     DEFAULT_DB_PORT,
 )
@@ -151,6 +148,10 @@ class MonitoringSettings(BaseModel):
     sentry_dsn: Optional[str] = None
     log_retention_days: int = 30
     model_evaluation_interval: int = 60
+    model_check_interval_minutes: int = 60
+    drift_threshold_ks: float = 0.1
+    drift_threshold_psi: float = 0.1
+    drift_threshold_wasserstein: float = 0.1
 
 
 class DataQualityThresholds(BaseModel):
