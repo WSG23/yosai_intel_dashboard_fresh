@@ -65,3 +65,6 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
 
     def load_uploaded_data(self):  # pragma: no cover - simple stub
         return {}
+
+
+__all__ = ["UploadAnalyticsProcessor"]

@@ -131,3 +131,6 @@ class DatabaseAnalyticsService:
         except Exception as e:  # pragma: no cover - best effort
             logger.error("Database analytics error: %s", e)
             return {"status": "error", "message": str(e)}
+
+
+__all__ = ["DatabaseAnalyticsService"]

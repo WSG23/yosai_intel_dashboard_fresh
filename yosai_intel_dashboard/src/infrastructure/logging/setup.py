@@ -39,3 +39,6 @@ class LoggingService(LoggingProtocol):
 
     def get_log_level(self) -> str:
         return logging.getLevelName(self._logger.level)
+
+
+__all__ = ["LoggingService"]
