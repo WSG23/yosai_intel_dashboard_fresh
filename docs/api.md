@@ -73,7 +73,10 @@ sequenceDiagram
 
 ## API Versioning
 
-All endpoints are prefixed with a version such as `/v1`.
+All routes are grouped under a versioned prefix such as `/v1`.
+Unversioned paths remain temporarily available for backward compatibility but
+return a `Warning` header and are marked as deprecated. Future releases will
+introduce `/v2` endpoints following the same pattern.
 The Go `versioning` module provides `VersionManager` middleware that extracts
 the version from the request path and attaches metadata to the context. The
 manager can mark versions as `active`, `deprecated`, or `sunset` to control
