@@ -1,55 +1,73 @@
 #!/usr/bin/env python3
-"""Generate basic API documentation from OpenAPI spec."""
+"""Generate API documentation for the project.
+
+This script collects OpenAPI specifications from the various services and
+writes them to a versioned directory under ``docs/api/<version>``.
+The version is detected from ``pyproject.toml`` or the Go ``versioning``
+module as a fallback.
+"""
+
 from __future__ import annotations
 
-import json
+import re
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
-OPENAPI_PATH = Path("docs/openapi.json")
-OUTPUT_MD = Path("docs/api_docs.md")
-OUTPUT_PDF = Path("docs/api_docs.pdf")
+try:  # Python 3.11+
+    import tomllib  # type: ignore
+except Exception:  # pragma: no cover
+    tomllib = None  # type: ignore
 
 
-def build_markdown(spec: dict) -> str:
-    lines: list[str] = [
-        "# API Documentation",
-        "",
-        "Generated from OpenAPI specification.",
-        "",
-    ]
-    for path, methods in sorted(spec.get("paths", {}).items()):
-        for method, info in methods.items():
-            summary = info.get("summary", "")
-            lines.append(f"## {method.upper()} {path}")
-            if summary:
-                lines.append(summary)
-            lines.append("")
-    return "\n".join(lines)
+ROOT = Path(__file__).resolve().parents[1]
 
 
-def write_pdf(text: str) -> None:
-    try:
-        from fpdf import FPDF  # type: ignore
-    except Exception as exc:
-        print(f"PDF generation skipped (missing fpdf): {exc}")
-        return
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    for line in text.splitlines():
-        pdf.multi_cell(0, 10, line)
-    pdf.output(str(OUTPUT_PDF))
+def get_project_version() -> str:
+    """Return project version from ``pyproject.toml`` or ``versioning`` module."""
+    pyproject = ROOT / "pyproject.toml"
+    if tomllib and pyproject.exists():
+        data = tomllib.loads(pyproject.read_text())
+        version = (
+            data.get("project", {}).get("version")
+            or data.get("tool", {}).get("poetry", {}).get("version")
+        )
+        if version:
+            return str(version)
+
+    version_file = ROOT / "versioning" / "versioning.go"
+    if version_file.exists():
+        match = re.search(r"currentVersion:\s*\"([^\"]+)\"", version_file.read_text())
+        if match:
+            return match.group(1)
+
+    raise RuntimeError("Unable to determine project version")
 
 
 def main() -> None:
-    if not OPENAPI_PATH.exists():
-        raise FileNotFoundError(f"OpenAPI spec not found at {OPENAPI_PATH}")
-    spec = json.loads(OPENAPI_PATH.read_text())
-    markdown = build_markdown(spec)
-    OUTPUT_MD.write_text(markdown)
-    write_pdf(markdown)
-    print(f"Generated {OUTPUT_MD} and {OUTPUT_PDF}")
+    version = get_project_version()
+    out_dir = ROOT / "docs" / "api" / version
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate specs using existing scripts
+    subprocess.run(["go", "run", "./api/openapi"], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, "scripts/generate_fastapi_openapi.py"], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, "scripts/generate_flask_openapi.py"], cwd=ROOT, check=True)
+
+    # Move generated files into the versioned directory
+    for name in [
+        "openapi.json",
+        "analytics_microservice_openapi.json",
+        "event_ingestion_openapi.json",
+        "flask_openapi.json",
+    ]:
+        src = ROOT / "docs" / name
+        if src.exists():
+            shutil.move(str(src), out_dir / name)
+
+    print(f"API docs written to {out_dir}")
+
 
 
 if __name__ == "__main__":

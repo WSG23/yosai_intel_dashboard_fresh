@@ -9,7 +9,7 @@ converted to JSON with:
 go run ./api/openapi
 ```
 
-This writes `docs/openapi.json`. Once generated, this file can be served
+This writes `docs/api/v2/openapi.json`. Once generated, this file can be served
 by Swagger UI to display the API reference or used to generate client SDKs.
 
 The CI workflow runs this command and uploads the generated `openapi.json` as an
@@ -19,16 +19,17 @@ artifact so the specification is available from workflow runs.
 ### FastAPI microservices
 
 The analytics and event ingestion services are built with FastAPI. Each
-service dumps its own OpenAPI description at startup under the `docs`
-directory. Regenerate these files along with the main spec by running:
+service dumps its own OpenAPI description at startup under the
+`docs/api/v2` directory. Regenerate these files along with the main spec by
+running:
 
 ```bash
 make docs
 ```
 
 This command runs the Go generator and then imports both FastAPI services to
-write `docs/analytics_microservice_openapi.json` and
-`docs/event_ingestion_openapi.json`.
+write `docs/api/v2/analytics_microservice_openapi.json` and
+`docs/api/v2/event_ingestion_openapi.json`.
 
 ## Flask/FastAPI Adapter
 
