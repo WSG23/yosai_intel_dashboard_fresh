@@ -4,9 +4,8 @@ from __future__ import annotations
 import importlib.util
 import warnings
 
-import pytest
+pytest_plugins = ["tests.config"]
 
-from . import config  # load test configuration
 
 _missing_packages = [
     pkg for pkg in ("yaml", "psutil") if importlib.util.find_spec(pkg) is None
