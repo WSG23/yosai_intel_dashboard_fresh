@@ -1,6 +1,6 @@
 import pytest
 
-from database.migrations import MigrationManager
+from services.database.migrations import MigrationManager
 
 
 class Dummy:

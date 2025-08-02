@@ -52,9 +52,9 @@ def _create_client(monkeypatch):
         sys.modules, "services.security", ModuleType("services.security")
     )
     sys.modules["services.security"].require_role = lambda role: (lambda f: f)
-    exec_mod = ModuleType("database.secure_exec")
+    exec_mod = ModuleType("services.database.secure_exec")
     exec_mod.execute_query = lambda *a, **k: []
-    monkeypatch.setitem(sys.modules, "database.secure_exec", exec_mod)
+    monkeypatch.setitem(sys.modules, "services.database.secure_exec", exec_mod)
 
     err_mod = ModuleType("error_handling")
     err_mod.ErrorCategory = type("ErrorCategory", (), {"INTERNAL": 1})

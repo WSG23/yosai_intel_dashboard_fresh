@@ -29,10 +29,10 @@ analytics_stub = types.ModuleType("analytics")
 analytics_stub.feature_extraction = feature_mod
 analytics_stub.__path__ = [str(Path(__file__).resolve().parents[1] / "analytics")]
 sys.modules.setdefault("analytics", analytics_stub)
-sys.modules.setdefault("analytics.feature_extraction", feature_mod)
+sys.modules.setdefault("services.analytics.feature_extraction", feature_mod)
 
 # Stub dependent modules to avoid heavy imports
-anom_types = types.ModuleType("analytics.anomaly_detection.types")
+anom_types = types.ModuleType("services.analytics.anomaly_detection.types")
 
 
 @dataclass
@@ -45,9 +45,9 @@ class AnomalyAnalysis:
 
 
 anom_types.AnomalyAnalysis = AnomalyAnalysis
-sys.modules["analytics.anomaly_detection.types"] = anom_types
+sys.modules["services.analytics.anomaly_detection.types"] = anom_types
 
-sec_analyzer = types.ModuleType("analytics.security_patterns.analyzer")
+sec_analyzer = types.ModuleType("services.analytics.security_patterns.analyzer")
 
 
 @dataclass
@@ -61,9 +61,9 @@ class SecurityAssessment:
 
 
 sec_analyzer.SecurityAssessment = SecurityAssessment
-sys.modules["analytics.security_patterns.analyzer"] = sec_analyzer
+sys.modules["services.analytics.security_patterns.analyzer"] = sec_analyzer
 
-behav_mod = types.ModuleType("analytics.user_behavior")
+behav_mod = types.ModuleType("services.analytics.user_behavior")
 
 
 @dataclass
@@ -76,12 +76,12 @@ class BehaviorAnalysis:
 
 
 behav_mod.BehaviorAnalysis = BehaviorAnalysis
-sys.modules["analytics.user_behavior"] = behav_mod
+sys.modules["services.analytics.user_behavior"] = behav_mod
 
 RISK_PATH = Path(__file__).resolve().parents[1] / "analytics" / "risk_scoring.py"
-spec_risk = importlib.util.spec_from_file_location("analytics.risk_scoring", RISK_PATH)
+spec_risk = importlib.util.spec_from_file_location("services.analytics.risk_scoring", RISK_PATH)
 risk_mod = importlib.util.module_from_spec(spec_risk)
-sys.modules["analytics.risk_scoring"] = risk_mod
+sys.modules["services.analytics.risk_scoring"] = risk_mod
 spec_risk.loader.exec_module(risk_mod)
 
 AnomalyAnalysis = (
