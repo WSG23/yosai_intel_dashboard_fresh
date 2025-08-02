@@ -29,7 +29,10 @@ from yosai_intel_dashboard.src.infrastructure.config.compliance_setup import (
     setup_data_retention_scheduler
 )
 from controllers.compliance_controller import register_compliance_routes
-from plugins.compliance_plugin.services.breach_notification_service import create_breach_notification_service
+from plugins.compliance_plugin.services.breach_notification_service import (
+    create_breach_notification_service,
+    BreachCategory,
+)
 from plugins.compliance_plugin.services.cross_border_transfer_service import create_cross_border_transfer_service
 from plugins.compliance_plugin.services.compliance_dashboard import create_compliance_dashboard
 from plugins.compliance_plugin.services.data_retention_service import create_data_retention_service
@@ -481,96 +484,63 @@ class EnhancedAnalyticsService:
         return analysis_data
 
 
-# Consent management API endpoints
+# Example: Automatic breach notification when anomalies are detected
+def handle_security_anomaly(anomaly_event):
+    """Trigger breach notification workflow for detected anomalies"""
+    container = Container()
+    breach_service = container.get('breach_notification_service')
+    audit_logger = container.get('audit_logger')
 
-from flask import Blueprint, current_app, jsonify, request
-from flask_login import current_user, login_required
-from functools import wraps
-from typing import List
-
-consent_api = Blueprint('consent_api', __name__)
-
-
-@consent_api.route('/v1/compliance/consent', methods=['POST'])
-@login_required
-def grant_consent():
-    """Grant one or more consent types"""
-    data = request.get_json() or {}
-    consent_service = current_app.container.get('consent_service')
-    consent_service.grant_consent(
-        user_id=current_user.id,
-        consents=data.get('consents', []),
-        jurisdiction=data.get('jurisdiction', 'EU')
+    # Report the potential breach
+    breach_id = breach_service.report_breach(
+        breach_description=anomaly_event.description,
+        affected_data_types=anomaly_event.data_types,
+        estimated_affected_individuals=len(anomaly_event.affected_users),
+        detection_timestamp=anomaly_event.detected_at,
+        breach_category=BreachCategory.CONFIDENTIALITY_BREACH,
+        initial_assessment={'identity_theft_risk': True},
+        detected_by='security_monitoring'
     )
-    return jsonify({'status': 'consent granted'})
 
-
-@consent_api.route('/v1/compliance/consent/<consent_type>', methods=['DELETE'])
-@login_required
-def withdraw_consent(consent_type: str):
-    """Withdraw a specific consent type"""
-    consent_service = current_app.container.get('consent_service')
-    consent_service.withdraw_consent(
-        user_id=current_user.id,
-        consent_type=consent_type
+    # Send mandatory notifications
+    breach_service.notify_supervisory_authority(
+        breach_id,
+        {'authority_name': 'EU DPA', 'method': 'online_portal'},
+        notified_by='system'
     )
-    return jsonify({'status': 'consent withdrawn'})
+    breach_service.notify_affected_individuals(
+        breach_id,
+        notification_method='email',
+        affected_user_ids=anomaly_event.affected_users,
+        notification_content='Unauthorized access detected. Please reset your credentials.',
+        notified_by='system'
+    )
+
+    # Record audit entry for full workflow
+    audit_logger.log_action(
+        actor_user_id='system',
+        action_type='BREACH_WORKFLOW_COMPLETED',
+        resource_type='security_event',
+        resource_id=breach_id,
+        description='Breach reported and notifications sent',
+        legal_basis='breach_notification_obligation'
+    )
 
 
-# Consent records and middleware validation
-
-class ConsentService:
-    def grant_consent(self, user_id: str, consents: List[str], jurisdiction: str) -> None:
-        for ctype in consents:
-            self.db.execute(
-                """
-                INSERT INTO consent_log (user_id, consent_type, jurisdiction, granted_at)
-                VALUES (%s, %s, %s, NOW())
-                """,
-                (user_id, ctype, jurisdiction)
-            )
-
-    def withdraw_consent(self, user_id: str, consent_type: str) -> None:
-        self.db.execute(
-            """
-            UPDATE consent_log
-               SET withdrawn_at = NOW()
-             WHERE user_id = %s
-               AND consent_type = %s
-               AND withdrawn_at IS NULL
-            """,
-            (user_id, consent_type)
-        )
-
-    def check_consent(self, user_id: str, consent_type: str, jurisdiction: str) -> bool:
-        result = self.db.query_one(
-            """
-            SELECT 1 FROM consent_log
-             WHERE user_id = %s
-               AND consent_type = %s
-               AND jurisdiction = %s
-               AND withdrawn_at IS NULL
-            """,
-            (user_id, consent_type, jurisdiction)
-        )
-        return bool(result)
+BREACH_AUDIT_LOG_EXAMPLE = """
+2024-05-18T10:15:02Z [BREACH_DETECTED] incident=BREACH-20240518-ABCD1234 actor=system severity=high
+2024-05-18T10:20:15Z [SUPERVISORY_AUTHORITY_NOTIFIED] incident=BREACH-20240518-ABCD1234 authority=EU DPA
+2024-05-18T10:21:03Z [AFFECTED_INDIVIDUALS_NOTIFIED] incident=BREACH-20240518-ABCD1234 users=42
+"""
 
 
-def consent_required(consent_type: str, jurisdiction: str):
-    def decorator(fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            consent_service = current_app.container.get('consent_service')
-            has_consent = consent_service.check_consent(
-                user_id=current_user.id,
-                consent_type=consent_type,
-                jurisdiction=jurisdiction
-            )
-            if not has_consent:
-                return jsonify({'error': 'Consent required'}), 403
-            return fn(*args, **kwargs)
-        return wrapper
-    return decorator
+ESCALATION_PATH = """
+1. Anomaly detected and breach reported via breach_notification_service
+2. Security team reviews incident in compliance dashboard
+3. Notify supervisory authority within 72 hours
+4. Notify affected users without undue delay
+5. Escalate to DPO and legal team if status remains unresolved after 24 hours
+"""
 
 
 # =============================================================================
