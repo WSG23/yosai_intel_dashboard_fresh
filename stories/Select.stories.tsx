@@ -38,22 +38,11 @@ export const Playground: Story = {
   },
   render: (args) => {
     const [value, setValue] = React.useState(args.value as string);
-    const [query, setQuery] = React.useState('');
-    const filtered = (args.options || []).filter(o =>
-      o.label.toLowerCase().includes(query.toLowerCase())
-    );
     return (
       <div>
-        <input
-          aria-label="Search options"
-          placeholder="Search..."
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          className="mb-2 border px-2 py-1"
-        />
         <Select
           {...args}
-          options={filtered}
+          searchable
           value={value}
           onChange={setValue}
           onKeyDown={e => console.log('Key pressed', e.key)}
@@ -65,7 +54,8 @@ export const Playground: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Includes a search field and logs key presses to demonstrate keyboard interaction.'
+        story:
+          'Use arrow keys to navigate options, type in the search box to filter, and press Enter or Space to select.'
       }
     }
   }
@@ -89,7 +79,8 @@ export const MultiSelect: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Use standard keyboard modifiers (Shift, Ctrl/Command) for multi-selection.'
+        story:
+          'Hold Ctrl/Command or Shift while clicking or using arrow keys to select multiple items.'
       }
     }
   }

@@ -137,3 +137,11 @@ test('multi-select keyboard toggling and focus management', () => {
   expect(listbox).not.toHaveFocus();
 
 });
+
+test('filters options when searchable', () => {
+  render(<Select value="" onChange={() => {}} options={options} searchable />);
+  const search = screen.getByRole('textbox', { name: /search options/i });
+  fireEvent.change(search, { target: { value: 'b' } });
+  expect(screen.queryByText('A')).not.toBeInTheDocument();
+  expect(screen.getByText('B')).toBeInTheDocument();
+});

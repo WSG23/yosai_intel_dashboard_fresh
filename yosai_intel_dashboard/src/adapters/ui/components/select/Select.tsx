@@ -13,6 +13,10 @@ export interface SelectProps
   multiple?: boolean;
   placeholder?: string;
   className?: string;
+  /**
+   * Enables an internal search box that filters the available options.
+   */
+
   searchable?: boolean;
 }
 
@@ -26,20 +30,15 @@ export const Select = <T extends string,>({
   searchable = false,
   ...rest
 }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [search, setSearch] = React.useState('');
-  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
-  const listboxId = React.useId();
+  const [query, setQuery] = React.useState('');
+  const filtered = React.useMemo(() => {
+    return options.filter(o =>
+      o.label.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [options, query]);
 
-  const filteredOptions = React.useMemo(
-    () =>
-      options.filter(opt =>
-        opt.label.toLowerCase().includes(search.toLowerCase())
-      ),
-    [options, search]
-  );
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 
-  const selectOption = (val: string) => {
     if (multiple) {
       const current = Array.isArray(value) ? [...value] : [];
       const index = current.indexOf(val);
@@ -58,87 +57,39 @@ export const Select = <T extends string,>({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setIsOpen(true);
-      setActiveIndex(prev => {
-        const next = prev === null ? 0 : Math.min(prev + 1, filteredOptions.length - 1);
-        return next;
-      });
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setIsOpen(true);
-      setActiveIndex(prev => {
-        const next = prev === null ? filteredOptions.length - 1 : Math.max(prev - 1, 0);
-        return next;
-      });
-    } else if (e.key === 'Enter') {
-      if (activeIndex !== null && filteredOptions[activeIndex]) {
-        selectOption(filteredOptions[activeIndex].value);
-      }
-    } else if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
-  };
+  const renderSelect = (
+    <select
+      multiple={multiple}
+      value={value}
+      onChange={handleChange}
+      className={`border rounded-md px-2 py-1 ${className}`}
+      {...rest}
+    >
+      {!multiple && placeholder && <option value="">{placeholder}</option>}
+      {filtered.map(opt => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
 
-  const activeId =
-    activeIndex !== null ? `${listboxId}-option-${activeIndex}` : undefined;
+  );
+
+  if (!searchable) {
+    return renderSelect;
+  }
 
   return (
-    <div className={`relative ${className}`} {...rest}>
+    <div>
       <input
         type="text"
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-controls={listboxId}
-        aria-activedescendant={activeId}
-        placeholder={placeholder}
-        value={search}
-        onChange={e => {
-          setSearch(e.target.value);
-          setIsOpen(true);
-        }}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setIsOpen(true)}
-        className="border rounded-md px-2 py-1 w-full"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        placeholder="Search..."
+        aria-label="Search options"
+        className="mb-2 border px-2 py-1"
       />
-      {isOpen && (
-        <ul
-          role="listbox"
-          id={listboxId}
-          aria-multiselectable={multiple || undefined}
-          className="border rounded-md mt-1 max-h-60 overflow-auto bg-white z-10"
-        >
-          {filteredOptions.map((opt, index) => {
-            const selected = multiple
-              ? Array.isArray(value) && value.includes(opt.value)
-              : value === opt.value;
-            return (
-              <li
-                key={opt.value}
-                role="option"
-                id={`${listboxId}-option-${index}`}
-                aria-selected={selected}
-                className={`px-2 py-1 cursor-pointer hover:bg-gray-100 ${
-                  activeIndex === index ? 'bg-gray-100' : ''
-                }`}
-                onMouseDown={e => {
-                  e.preventDefault();
-                  selectOption(opt.value);
-                }}
-                onMouseEnter={() => setActiveIndex(index)}
-              >
-                {opt.label}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      <div role="status" aria-live="polite" className="sr-only">
-        {`${filteredOptions.length} results available`}
-      </div>
-
+      {renderSelect}
     </div>
   );
 };
