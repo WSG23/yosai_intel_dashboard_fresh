@@ -55,6 +55,20 @@ memory consumption:
 Grafana can visualise these metrics using the dashboard template in
 `monitoring/grafana/dashboards/unified-platform.json`.
 
+An additional service performance dashboard lives in
+`dashboards/performance/service_performance.json`. Import it into Grafana to
+view API latency percentiles, CPU and memory usage, and asynchronous task
+timings sourced from Prometheus.
+
+Alert rules for these metrics are defined in `monitoring/alerts.yml`. They cover
+high latency, CPU and memory saturation, and slow background jobs. Configure
+Alertmanager with a Slack receiver to get notified when thresholds are
+breached.
+
+Prometheus data is persisted by mounting a volume and setting a 30‑day retention
+period in `docker-compose.dev.yml` and `docker-compose.unified.yml`, allowing
+historical trend analysis.
+
 ### Circuit Breaker Metrics
 
 Both the Python and Go services expose circuit breaker transitions using the
