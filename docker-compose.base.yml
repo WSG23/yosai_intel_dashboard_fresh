@@ -17,6 +17,7 @@ services:
     environment:
       YOSAI_ENV: production
       SERVICE_REGISTRY_URL: http://service-registry:8500
+      PERFORMANCE_PROFILING_ENABLED: ${PERFORMANCE_PROFILING_ENABLED:-false}
     depends_on:
       - service-registry
     restart: unless-stopped
@@ -33,6 +34,7 @@ services:
       - "prometheus.path=/metrics"
     environment:
       SERVICE_REGISTRY_URL: http://service-registry:8500
+      PERFORMANCE_PROFILING_ENABLED: ${PERFORMANCE_PROFILING_ENABLED:-false}
     depends_on:
       - analytics-service
       - service-registry

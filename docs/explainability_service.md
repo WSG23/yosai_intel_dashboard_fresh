@@ -29,3 +29,22 @@ svc = ExplainabilityService()
 svc.register_model("demo", model, background_data=X)
 values = svc.shap_values("demo", X)
 ```
+
+## Prediction Audit Trail
+
+During inference the analytics microservice now computes SHAP values for each
+prediction and records them alongside a generated ``prediction_id``.  Each
+record stores the model name, version and timestamp creating an auditable trail
+of explanations.
+
+### API Usage
+
+The ``prediction_id`` is returned from the prediction endpoint.  Use it to
+retrieve the stored explanation via:
+
+```
+GET /api/v1/explanations/{prediction_id}
+```
+
+The route requires standard analytics read permissions and returns the SHAP
+values and metadata for the requested prediction.

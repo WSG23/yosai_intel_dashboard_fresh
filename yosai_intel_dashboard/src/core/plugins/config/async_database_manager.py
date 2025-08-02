@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 import asyncpg
 
+from monitoring.performance_profiler import PerformanceProfiler
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ class AsyncPostgreSQLManager:
     def __init__(self, config: Any):
         self.config = config
         self.pool: Optional[asyncpg.Pool] = None
+        self._profiler = PerformanceProfiler()
 
     async def create_pool(self) -> asyncpg.Pool:
         if self.pool is None:
@@ -36,7 +38,8 @@ class AsyncPostgreSQLManager:
     async def execute(self, query: str, *params: Any) -> Any:
         pool = await self.create_pool()
         async with pool.acquire() as conn:
-            return await conn.fetch(query, *params)
+            async with self._profiler.track_db_query(query):
+                return await conn.fetch(query, *params)
 
     async def health_check(self) -> bool:
         try:

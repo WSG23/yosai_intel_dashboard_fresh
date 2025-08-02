@@ -100,6 +100,7 @@ Prometheus rule files under `monitoring/prometheus/rules/` provide starter
 alert definitions for resource saturation and deprecated function usage.
 Route alerts to your paging system or messaging service for timely action.
 
+
 ### Circuit Breaker Metrics
 
 Both the Python and Go services expose circuit breaker transitions using the
@@ -394,3 +395,4 @@ for memory leaks and ensure the process stays below `MAX_MEMORY`.
 Compare metrics across releases by exporting Prometheus data or running the load
 tests on the previous version. Regressions greater than 10% in latency or memory
 usage should trigger a review before deployment.
+
