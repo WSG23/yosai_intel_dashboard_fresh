@@ -4,6 +4,7 @@ import types
 from pathlib import Path
 
 import pandas as pd
+from tests.import_helpers import safe_import, import_optional
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[2] / "models" / "ml" / "data_processor.py"
@@ -12,14 +13,14 @@ MODULE_PATH = (
 # Provide lightweight stubs to avoid heavy imports during module loading
 constants_mod = types.ModuleType("config.constants")
 constants_mod.DEFAULT_CHUNK_SIZE = 50_000
-sys.modules.setdefault("config.constants", constants_mod)
+safe_import('config.constants', constants_mod)
 
 memory_utils_mod = types.ModuleType("utils.memory_utils")
 memory_utils_mod.check_memory_limit = lambda *a, **k: None
 utils_pkg = types.ModuleType("utils")
 utils_pkg.memory_utils = memory_utils_mod
-sys.modules.setdefault("utils.memory_utils", memory_utils_mod)
-sys.modules.setdefault("utils", utils_pkg)
+safe_import('utils.memory_utils', memory_utils_mod)
+safe_import('utils', utils_pkg)
 
 spec = importlib.util.spec_from_file_location("data_processor", MODULE_PATH)
 dp_mod = importlib.util.module_from_spec(spec)

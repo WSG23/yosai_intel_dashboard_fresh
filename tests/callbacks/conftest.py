@@ -3,6 +3,7 @@ import types
 from pathlib import Path
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -12,11 +13,11 @@ try:
     import dash
 except ModuleNotFoundError:
     dash = types.SimpleNamespace(no_update=None)
-    sys.modules["dash"] = dash
+    safe_import('dash', dash)
 
 # Provide dash.exceptions.PreventUpdate when dash isn't installed
 if "dash.exceptions" not in sys.modules:
-    sys.modules["dash.exceptions"] = types.SimpleNamespace(PreventUpdate=Exception)
+    safe_import('dash.exceptions', types.SimpleNamespace(PreventUpdate=Exception))
 
 # Ensure dash.no_update is defined for tests
 if not hasattr(dash, "no_update"):

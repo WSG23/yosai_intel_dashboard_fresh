@@ -4,6 +4,7 @@ import types
 from pathlib import Path
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 # Dynamically load the ModelRegistry implementation while providing lightweight
 # stubs for heavy optional dependencies. ``tests.conftest`` already injects
@@ -27,9 +28,9 @@ class DummyS3:
 @pytest.fixture
 def cli_module(monkeypatch: pytest.MonkeyPatch):
     path = Path(__file__).resolve().parents[2] / "scripts" / "model_registry_cli.py"
-    monkeypatch.setitem(sys.modules, "models", types.ModuleType("models"))
-    monkeypatch.setitem(sys.modules, "models.ml", types.ModuleType("models.ml"))
-    monkeypatch.setitem(sys.modules, "models.ml.model_registry", mr)
+    safe_import('models', types.ModuleType("models"))
+    safe_import('models.ml', types.ModuleType("models.ml"))
+    safe_import('models.ml.model_registry', mr)
     spec = importlib.util.spec_from_file_location("model_registry_cli", path)
     mod = importlib.util.module_from_spec(spec)
     assert spec.loader

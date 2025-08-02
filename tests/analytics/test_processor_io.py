@@ -8,25 +8,26 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 # Dynamically import AsyncFileProcessor to avoid heavy service deps
 services_root = Path(__file__).resolve().parents[2] / "services"
 services_pkg = types.ModuleType("services")
 services_pkg.__path__ = [str(services_root)]
-sys.modules.setdefault("services", services_pkg)
+safe_import('services', services_pkg)
 
 data_processing_pkg = types.ModuleType("services.data_processing")
 data_processing_pkg.__path__ = [str(services_root / "data_processing")]
-sys.modules.setdefault("services.data_processing", data_processing_pkg)
+safe_import('services.data_processing', data_processing_pkg)
 
 analytics_pkg = types.ModuleType("services.analytics")
 analytics_pkg.__path__ = [str(services_root / "analytics")]
-sys.modules.setdefault("services.analytics", analytics_pkg)
+safe_import('services.analytics', analytics_pkg)
 
 mapping_root = Path(__file__).resolve().parents[2] / "mapping"
 mapping_pkg = types.ModuleType("mapping")
 mapping_pkg.__path__ = [str(mapping_root)]
-sys.modules.setdefault("mapping", mapping_pkg)
+safe_import('mapping', mapping_pkg)
 
 # Provide minimal config.dynamic_config for AsyncFileProcessor
 config_pkg = types.ModuleType("config")
@@ -50,8 +51,8 @@ config_pkg.DatabaseSettings = DatabaseSettings
 
 config_dynamic_pkg = types.ModuleType("config.dynamic_config")
 config_dynamic_pkg.dynamic_config = dynamic
-sys.modules.setdefault("config", config_pkg)
-sys.modules.setdefault("config.dynamic_config", config_dynamic_pkg)
+safe_import('config', config_pkg)
+safe_import('config.dynamic_config', config_dynamic_pkg)
 
 protocols_pkg = types.ModuleType("core.protocols")
 
@@ -64,42 +65,42 @@ class ConfigurationProtocol: ...
 
 protocols_pkg.FileProcessorProtocol = FileProcessorProtocol
 protocols_pkg.ConfigurationProtocol = ConfigurationProtocol
-sys.modules.setdefault("core.protocols", protocols_pkg)
+safe_import('core.protocols', protocols_pkg)
 
 core_pkg = types.ModuleType("core")
 config_mod = types.ModuleType("core.config")
 config_mod.get_max_display_rows = lambda config=None: 5
 core_pkg.config = config_mod
-sys.modules.setdefault("core", core_pkg)
-sys.modules.setdefault("core.config", config_mod)
+safe_import('core', core_pkg)
+safe_import('core.config', config_mod)
 
 perf_mod = types.ModuleType("core.performance")
 perf_mod.get_performance_monitor = lambda: types.SimpleNamespace(
     throttle_if_needed=lambda: None
 )
-sys.modules.setdefault("core.performance", perf_mod)
+safe_import('core.performance', perf_mod)
 
 perf_fp_mod = types.ModuleType("core.performance_file_processor")
 perf_fp_mod.PerformanceFileProcessor = object
-sys.modules.setdefault("core.performance_file_processor", perf_fp_mod)
+safe_import('core.performance_file_processor', perf_fp_mod)
 
 rabbit_pkg = types.ModuleType("services.rabbitmq_client")
 rabbit_pkg.RabbitMQClient = object
-sys.modules.setdefault("services.rabbitmq_client", rabbit_pkg)
+safe_import('services.rabbitmq_client', rabbit_pkg)
 
 memory_pkg = types.ModuleType("utils.memory_utils")
 memory_pkg.check_memory_limit = lambda *a, **k: None
-sys.modules.setdefault("utils.memory_utils", memory_pkg)
+safe_import('utils.memory_utils', memory_pkg)
 
 task_queue_pkg = types.ModuleType("services.task_queue")
 task_queue_pkg.create_task = lambda func: "tid"
 task_queue_pkg.get_status = lambda tid: {"progress": 100, "result": None, "done": True}
 task_queue_pkg.clear_task = lambda tid: None
-sys.modules.setdefault("services.task_queue", task_queue_pkg)
+safe_import('services.task_queue', task_queue_pkg)
 
 chardet_pkg = types.ModuleType("chardet")
 chardet_pkg.detect = lambda b: {"encoding": "utf-8"}
-sys.modules.setdefault("chardet", chardet_pkg)
+safe_import('chardet', chardet_pkg)
 
 spec = importlib.util.spec_from_file_location(
     "services.data_processing.async_file_processor",

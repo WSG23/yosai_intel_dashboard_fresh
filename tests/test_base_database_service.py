@@ -5,6 +5,7 @@ import pytest
 
 from config import DatabaseSettings
 from core.base_database_service import BaseDatabaseService
+from tests.import_helpers import safe_import, import_optional
 
 
 def _install_fake_module(monkeypatch, name, factory_attr):
@@ -31,7 +32,7 @@ def test_mongodb_connection(monkeypatch):
     module = types.ModuleType("pymongo")
     conn = object()
     module.MongoClient = lambda *a, **k: conn
-    monkeypatch.setitem(sys.modules, "pymongo", module)
+    safe_import('pymongo', module)
     service = BaseDatabaseService(DatabaseSettings(type="mongodb"))
     assert service.connection is conn
 
@@ -40,7 +41,7 @@ def test_redis_connection(monkeypatch):
     module = types.ModuleType("redis")
     conn = object()
     module.Redis = lambda *a, **k: conn
-    monkeypatch.setitem(sys.modules, "redis", module)
+    safe_import('redis', module)
     service = BaseDatabaseService(DatabaseSettings(type="redis"))
     assert service.connection is conn
 

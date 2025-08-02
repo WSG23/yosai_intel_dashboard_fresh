@@ -4,16 +4,17 @@ import types
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.import_helpers import safe_import, import_optional
 
 # Provide stubs when optional dependencies are missing
 if "flask_wtf" not in sys.modules:
     fw = importlib.import_module("tests.stubs.flask_wtf")
-    sys.modules["flask_wtf"] = fw
-    sys.modules["flask_wtf.csrf"] = fw
+    safe_import('flask_wtf', fw)
+    safe_import('flask_wtf.csrf', fw)
 if "flask_cors" not in sys.modules:
-    sys.modules["flask_cors"] = importlib.import_module("flask_cors")
+    safe_import('flask_cors', importlib.import_module("flask_cors"))
 if "services" not in sys.modules:
-    sys.modules["services"] = importlib.import_module("tests.stubs.services")
+    safe_import('services', importlib.import_module("tests.stubs.services"))
 
 
 def _create_app(monkeypatch, origins):

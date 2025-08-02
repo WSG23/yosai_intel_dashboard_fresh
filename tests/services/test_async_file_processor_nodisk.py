@@ -8,13 +8,14 @@ import pandas as pd
 import asyncio
 import tempfile
 import os
+from tests.import_helpers import safe_import, import_optional
 
 # Set up minimal stub modules for dependencies
 config_mod = types.SimpleNamespace()
 config_mod.dynamic_config = types.SimpleNamespace(
     analytics=types.SimpleNamespace(chunk_size=2, max_memory_mb=1024)
 )
-sys.modules.setdefault("config.dynamic_config", config_mod)
+safe_import('config.dynamic_config', config_mod)
 sys.modules.setdefault(
     "core.protocols",
     types.SimpleNamespace(FileProcessorProtocol=object),

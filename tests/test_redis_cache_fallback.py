@@ -1,6 +1,7 @@
 import importlib
 import sys
 import types
+from tests.import_helpers import safe_import, import_optional
 
 
 def test_redis_cache_manager_fallback(monkeypatch, fake_dash):
@@ -19,7 +20,7 @@ def test_redis_cache_manager_fallback(monkeypatch, fake_dash):
     redis_mod = sys.modules.get("redis")
     if redis_mod is None:
         redis_mod = types.SimpleNamespace()
-        sys.modules["redis"] = redis_mod
+        safe_import('redis', redis_mod)
     redis_mod.Redis = FakeRedis
     cm = importlib.import_module("core.plugins.config.cache_manager")
     monkeypatch.setattr(cm, "redis", types.SimpleNamespace(Redis=FakeRedis))

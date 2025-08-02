@@ -5,11 +5,12 @@ import sys
 import types
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
-sys.modules.setdefault("services", services_stub)
+safe_import('services', services_stub)
 
 # Stub instrumentation
 prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
@@ -24,31 +25,31 @@ class DummyInstr:
 
 
 prom_stub.Instrumentator = lambda: DummyInstr()
-sys.modules.setdefault("prometheus_fastapi_instrumentator", prom_stub)
+safe_import('prometheus_fastapi_instrumentator', prom_stub)
 
 otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
 otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
     instrument_app=lambda *a, **k: None
 )
-sys.modules.setdefault("opentelemetry.instrumentation.fastapi", otel_stub)
+safe_import('opentelemetry.instrumentation.fastapi', otel_stub)
 
 # Stub async database helpers
 async_db_stub = types.ModuleType("services.common.async_db")
 async_db_stub.create_pool = lambda *a, **k: None
 async_db_stub.get_pool = lambda *a, **k: None
 async_db_stub.close_pool = lambda: None
-sys.modules["services.common.async_db"] = async_db_stub
+safe_import('services.common.async_db', async_db_stub)
 
 # Stub analytics queries
 async_queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
 async_queries_stub.fetch_dashboard_summary = lambda *a, **k: {}
 async_queries_stub.fetch_access_patterns = lambda *a, **k: {}
-sys.modules["services.analytics_microservice.async_queries"] = async_queries_stub
+safe_import('services.analytics_microservice.async_queries', async_queries_stub)
 
 # Stub tracing
 tracing_stub = types.ModuleType("tracing")
 tracing_stub.init_tracing = lambda name: None
-sys.modules["tracing"] = tracing_stub
+safe_import('tracing', tracing_stub)
 
 # Stub config
 config_stub = types.ModuleType("config")
@@ -64,7 +65,7 @@ class DummyCfg:
 
 
 config_stub.get_database_config = lambda: DummyCfg()
-sys.modules["config"] = config_stub
+safe_import('config', config_stub)
 
 
 @pytest.mark.integration
@@ -80,7 +81,7 @@ async def test_startup_requires_jwt_secret(monkeypatch):
     secrets_mod = types.ModuleType("services.common.secrets")
     secrets_mod.get_secret = DummySecrets().get_secret
     secrets_mod.invalidate_secret = lambda key=None: None
-    monkeypatch.setitem(sys.modules, "services.common.secrets", secrets_mod)
+    safe_import('services.common.secrets', secrets_mod)
 
     app_spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",

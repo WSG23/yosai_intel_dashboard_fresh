@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 otel = types.ModuleType("opentelemetry")
 context_mod = types.ModuleType("opentelemetry.context")
@@ -15,54 +16,54 @@ config_mod = types.ModuleType("config")
 config_base = types.ModuleType("config.base")
 core_protocols = types.ModuleType("core.protocols")
 core_protocols.FileProcessorProtocol = object
-sys.modules.setdefault("core.protocols", core_protocols)
+safe_import('core.protocols', core_protocols)
 rabbit_stub = types.ModuleType("services.rabbitmq_client")
 rabbit_stub.RabbitMQClient = lambda *a, **k: None
-sys.modules.setdefault("services.rabbitmq_client", rabbit_stub)
+safe_import('services.rabbitmq_client', rabbit_stub)
 taskq_stub = types.ModuleType("services.task_queue")
 taskq_stub.create_task = lambda *a, **k: "id"
 taskq_stub.get_status = lambda *a, **k: {"progress": 0}
-sys.modules.setdefault("services.task_queue", taskq_stub)
+safe_import('services.task_queue', taskq_stub)
 mem_stub = types.ModuleType("utils.memory_utils")
 mem_stub.check_memory_limit = lambda *a, **k: None
-sys.modules.setdefault("utils.memory_utils", mem_stub)
+safe_import('utils.memory_utils', mem_stub)
 fp_stub = types.ModuleType("services.data_processing.file_processor")
 fp_stub.UnicodeFileProcessor = types.SimpleNamespace(
     sanitize_dataframe_unicode=lambda df: df,
     read_large_csv=lambda path, **k: pd.read_csv(path, **k),
 )
-sys.modules.setdefault("services.data_processing.file_processor", fp_stub)
+safe_import('services.data_processing.file_processor', fp_stub)
 prom = types.ModuleType("prometheus_client")
-sys.modules.setdefault("prometheus_client", prom)
+safe_import('prometheus_client', prom)
 config_base.CacheConfig = object
-sys.modules.setdefault("config.base", config_base)
+safe_import('config.base', config_base)
 dyn = types.SimpleNamespace(
     analytics=types.SimpleNamespace(chunk_size=2, max_memory_mb=1024)
 )
 config_mod.dynamic_config = dyn
 config_mod.DatabaseSettings = lambda *a, **k: None
-sys.modules.setdefault("config", config_mod)
-sys.modules.setdefault("config.dynamic_config", config_mod)
-sys.modules.setdefault("opentelemetry", otel)
-sys.modules.setdefault("opentelemetry.context", context_mod)
+safe_import('config', config_mod)
+safe_import('config.dynamic_config', config_mod)
+safe_import('opentelemetry', otel)
+safe_import('opentelemetry.context', context_mod)
 tracing_stub = types.ModuleType("tracing")
 tracing_stub.propagate_context = lambda *a, **k: None
 tracing_stub.trace_async_operation = lambda name, coro: coro
-sys.modules.setdefault("tracing", tracing_stub)
+safe_import('tracing', tracing_stub)
 
 services_root = Path(__file__).resolve().parents[2] / "services"
 services_pkg = types.ModuleType("services")
 services_pkg.__path__ = [str(services_root)]
-sys.modules.setdefault("services", services_pkg)
+safe_import('services', services_pkg)
 
 upload_pkg = types.ModuleType("services.upload")
 upload_pkg.__path__ = [str(services_root / "upload")]
-sys.modules.setdefault("services.upload", upload_pkg)
+safe_import('services.upload', upload_pkg)
 protocols_mod = types.ModuleType("services.upload.protocols")
-sys.modules.setdefault("services.upload.protocols", protocols_mod)
+safe_import('services.upload.protocols', protocols_mod)
 data_processing_pkg = types.ModuleType("services.data_processing")
 data_processing_pkg.__path__ = [str(services_root / "data_processing")]
-sys.modules.setdefault("services.data_processing", data_processing_pkg)
+safe_import('services.data_processing', data_processing_pkg)
 
 spec = importlib.util.spec_from_file_location(
     "services.task_queue", services_root / "task_queue.py"
@@ -70,7 +71,7 @@ spec = importlib.util.spec_from_file_location(
 tq_mod = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(tq_mod)
-sys.modules.setdefault("services.task_queue", tq_mod)
+safe_import('services.task_queue', tq_mod)
 clear_task = tq_mod.clear_task
 
 spec = importlib.util.spec_from_file_location(

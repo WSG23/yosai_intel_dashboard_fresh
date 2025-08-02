@@ -6,15 +6,16 @@ import types
 from pathlib import Path
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 pkg = types.ModuleType("config")
 pkg.__path__ = [str(Path(__file__).resolve().parents[1] / "config")]
-sys.modules.setdefault("config", pkg)
+safe_import('config', pkg)
 
 _cfg_path = Path(__file__).resolve().parents[1] / "config" / "config_manager.py"
 spec = importlib.util.spec_from_file_location("config.config_manager", _cfg_path)
 _cfg_module = importlib.util.module_from_spec(spec)
-sys.modules["config.config_manager"] = _cfg_module
+safe_import('config.config_manager', _cfg_module)
 spec.loader.exec_module(_cfg_module)  # type: ignore
 create_config_manager = _cfg_module.create_config_manager
 

@@ -1,3 +1,4 @@
+from tests.import_helpers import safe_import, import_optional
 # flake8: noqa: E402
 from __future__ import annotations
 
@@ -25,8 +26,8 @@ for _mod in (
 ):
     sys.modules.setdefault(_mod, types.ModuleType(_mod))
 if "scipy" not in sys.modules:
-    sys.modules["scipy"] = types.ModuleType("scipy")
-sys.modules.setdefault("scipy.stats", types.ModuleType("scipy.stats"))
+    safe_import('scipy', types.ModuleType("scipy"))
+safe_import('scipy.stats', types.ModuleType("scipy.stats"))
 sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 
 from config import create_config_manager

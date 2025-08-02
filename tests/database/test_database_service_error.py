@@ -3,13 +3,14 @@ import importlib.util
 import sys
 import types
 from pathlib import Path
+from tests.import_helpers import safe_import, import_optional
 
 
 def stub_config_and_core():
     pkg = types.ModuleType("config")
     pkg.__path__ = []
-    sys.modules["config"] = pkg
-    sys.modules["config.dynamic_config"] = types.ModuleType("config.dynamic_config")
+    safe_import('config', pkg)
+    safe_import('config.dynamic_config', types.ModuleType("config.dynamic_config"))
     sys.modules["config.dynamic_config"].dynamic_config = types.SimpleNamespace(
         get_db_connection_timeout=lambda: 1,
         get_db_pool_size=lambda: 1,
@@ -83,7 +84,7 @@ def stub_config_and_core():
     cache_mod.InMemoryCacheManager = InMemoryCacheManager
     cache_mod.CacheConfig = CacheConfig
     cache_mod.cache_with_lock = cache_with_lock
-    sys.modules["core.cache_manager"] = cache_mod
+    safe_import('core.cache_manager', cache_mod)
 
 
 stub_config_and_core()
@@ -183,7 +184,7 @@ def test_service_success_with_sqlite(tmp_path):
     dm_path = Path(__file__).resolve().parents[2] / "config" / "database_manager.py"
     spec = importlib.util.spec_from_file_location("config.database_manager", dm_path)
     dm_mod = importlib.util.module_from_spec(spec)
-    sys.modules["config.database_manager"] = dm_mod
+    safe_import('config.database_manager', dm_mod)
     spec.loader.exec_module(dm_mod)
     conn = dm_mod.SQLiteConnection(DS())
     conn.execute_command(

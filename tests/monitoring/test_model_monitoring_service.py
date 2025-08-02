@@ -1,10 +1,11 @@
+from tests.import_helpers import safe_import, import_optional
 # tests need minimal stubs for heavy dependencies
 import sys
 import types
 from dataclasses import dataclass
 
 # Stub out heavy dependencies before importing the service
-sys.modules["yosai_intel_dashboard.src.infrastructure.config"] = types.SimpleNamespace(
+safe_import('yosai_intel_dashboard.src.infrastructure.config', types.SimpleNamespace()
     get_monitoring_config=lambda: {}
 )
 

@@ -5,6 +5,7 @@ import types
 from pathlib import Path
 
 import pytest
+from tests.import_helpers import safe_import, import_optional
 
 
 def load_database_manager():
@@ -18,13 +19,13 @@ def load_database_manager():
                 return str(query)
 
         unicode_mod.UnicodeSQLProcessor = UnicodeSQLProcessor
-        sys.modules["core.unicode"] = unicode_mod
+        safe_import('core.unicode', unicode_mod)
 
     pkg = types.ModuleType("config")
     pkg.__path__ = []
-    sys.modules["config"] = pkg
+    safe_import('config', pkg)
 
-    sys.modules["config.dynamic_config"] = types.ModuleType("config.dynamic_config")
+    safe_import('config.dynamic_config', types.ModuleType("config.dynamic_config"))
     sys.modules["config.dynamic_config"].dynamic_config = types.SimpleNamespace(
         get_db_connection_timeout=lambda: 1,
         get_db_pool_size=lambda: 1,
@@ -45,7 +46,7 @@ def load_database_manager():
 
     schema_mod = types.ModuleType("config.schema")
     schema_mod.DatabaseSettings = DatabaseSettings
-    sys.modules["config.schema"] = schema_mod
+    safe_import('config.schema', schema_mod)
 
     ex_mod = types.ModuleType("config.database_exceptions")
 
@@ -61,7 +62,7 @@ def load_database_manager():
     ex_mod.ConnectionRetryExhausted = ConnectionRetryExhausted
     ex_mod.ConnectionValidationFailed = ConnectionValidationFailed
     ex_mod.DatabaseError = DatabaseError
-    sys.modules["config.database_exceptions"] = ex_mod
+    safe_import('config.database_exceptions', ex_mod)
 
     prot_mod = types.ModuleType("config.protocols")
 
@@ -71,18 +72,18 @@ def load_database_manager():
 
     prot_mod.RetryConfigProtocol = RetryConfigProtocol
     prot_mod.ConnectionRetryManagerProtocol = ConnectionRetryManagerProtocol
-    sys.modules["config.protocols"] = prot_mod
+    safe_import('config.protocols', prot_mod)
 
     retry_path = Path(__file__).resolve().parents[2] / "config" / "connection_retry.py"
     spec = importlib.util.spec_from_file_location("config.connection_retry", retry_path)
     conn_retry_mod = importlib.util.module_from_spec(spec)
-    sys.modules["config.connection_retry"] = conn_retry_mod
+    safe_import('config.connection_retry', conn_retry_mod)
     spec.loader.exec_module(conn_retry_mod)
 
     dm_path = Path(__file__).resolve().parents[2] / "config" / "database_manager.py"
     spec = importlib.util.spec_from_file_location("config.database_manager", dm_path)
     dbm = importlib.util.module_from_spec(spec)
-    sys.modules["config.database_manager"] = dbm
+    safe_import('config.database_manager', dbm)
     spec.loader.exec_module(dbm)
     return dbm
 

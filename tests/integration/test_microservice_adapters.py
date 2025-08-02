@@ -4,6 +4,7 @@ import pathlib
 
 import pytest
 from fastapi.testclient import TestClient
+from tests.import_helpers import safe_import, import_optional
 
 # Use lightweight imports
 os.environ["LIGHTWEIGHT_SERVICES"] = "1"
@@ -36,7 +37,7 @@ analytics_stub = types.ModuleType("services.analytics_service")
 analytics_stub.create_analytics_service = lambda: DummyAnalytics()
 import sys
 
-sys.modules["services.analytics_service"] = analytics_stub
+safe_import('services.analytics_service', analytics_stub)
 
 
 @pytest.mark.integration
