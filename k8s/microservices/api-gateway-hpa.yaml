@@ -2,6 +2,10 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: api-gateway-hpa
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: yosai-microservices
+    app.kubernetes.io/component: gateway
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

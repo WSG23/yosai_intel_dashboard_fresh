@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-networkpolicy
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: yosai-microservices
+    app.kubernetes.io/component: gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: analytics-service
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: event-ingestion

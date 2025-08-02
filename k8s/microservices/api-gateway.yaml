@@ -3,16 +3,20 @@ kind: Deployment
 metadata:
   name: api-gateway
   labels:
-    app: api-gateway
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: yosai-microservices
+    app.kubernetes.io/component: gateway
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-gateway
+      app.kubernetes.io/name: api-gateway
   template:
     metadata:
       labels:
-        app: api-gateway
+        app.kubernetes.io/name: api-gateway
+        app.kubernetes.io/part-of: yosai-microservices
+        app.kubernetes.io/component: gateway
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
@@ -39,6 +43,11 @@ spec:
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
+          envFrom:
+            - configMapRef:
+                name: api-gateway-config
+            - secretRef:
+                name: api-gateway-secret
           resources:
             requests:
               cpu: "100m"

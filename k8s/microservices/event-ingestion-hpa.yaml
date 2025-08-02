@@ -1,16 +1,16 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: analytics-service-hpa
+  name: event-ingestion-hpa
   labels:
-    app.kubernetes.io/name: analytics-service
+    app.kubernetes.io/name: event-ingestion
     app.kubernetes.io/part-of: yosai-microservices
-    app.kubernetes.io/component: analytics
+    app.kubernetes.io/component: ingestion
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: analytics-service
+    name: event-ingestion
   minReplicas: 1
   maxReplicas: 5
   metrics:

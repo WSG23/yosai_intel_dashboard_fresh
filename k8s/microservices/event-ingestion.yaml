@@ -3,16 +3,20 @@ kind: Deployment
 metadata:
   name: event-ingestion
   labels:
-    app: event-ingestion
+    app.kubernetes.io/name: event-ingestion
+    app.kubernetes.io/part-of: yosai-microservices
+    app.kubernetes.io/component: ingestion
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: event-ingestion
+      app.kubernetes.io/name: event-ingestion
   template:
     metadata:
       labels:
-        app: event-ingestion
+        app.kubernetes.io/name: event-ingestion
+        app.kubernetes.io/part-of: yosai-microservices
+        app.kubernetes.io/component: ingestion
     spec:
       containers:
         - name: event-ingestion
@@ -38,11 +42,9 @@ spec:
             periodSeconds: 10
           envFrom:
             - configMapRef:
-                name: yosai-config
-            - configMapRef:
-                name: vault-config
+                name: event-ingestion-config
             - secretRef:
-                name: vault-secret
+                name: event-ingestion-secret
           resources:
             requests:
               cpu: "100m"
