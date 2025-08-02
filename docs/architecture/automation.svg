@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="120">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0,10 3.5,0 7" />
+    </marker>
+  </defs>
+  <rect x="20" y="40" width="80" height="40" fill="#e2f0d9" stroke="#333" />
+  <text x="60" y="65" font-size="12" text-anchor="middle">Git Repo</text>
+  <rect x="160" y="40" width="80" height="40" fill="#e2f0d9" stroke="#333" />
+  <text x="200" y="65" font-size="12" text-anchor="middle">ArgoCD</text>
+  <rect x="300" y="40" width="80" height="40" fill="#e2f0d9" stroke="#333" />
+  <text x="340" y="65" font-size="12" text-anchor="middle">Cluster</text>
+  <line x1="100" y1="60" x2="160" y2="60" stroke="#333" marker-end="url(#arrow)" />
+  <line x1="240" y1="60" x2="300" y2="60" stroke="#333" marker-end="url(#arrow)" />
+</svg>

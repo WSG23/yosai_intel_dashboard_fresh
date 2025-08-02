@@ -88,6 +88,9 @@ This project follows a fully modular design built around a dependency injection 
 - [API Adapter](docs/api.md)
 - [Clean Architecture Guide](docs/developer_guide_clean_arch.md)
 - [Migration Guide](docs/migration_guide.md)
+- [Deployment Guide](docs/deployment_guide.md)
+- [Troubleshooting Runbook](docs/troubleshooting_runbook.md)
+- [Disaster Recovery](docs/disaster_recovery.md)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
