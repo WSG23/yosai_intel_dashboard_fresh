@@ -1,149 +1,175 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+"""Migrate test files to new import conventions.
 
-"""Utility for migrating tests away from ``sys.modules`` stubs.
+This utility performs the following steps:
 
-The script comments out assignments to ``sys.modules`` and instead imports
-protocol test doubles from ``tests.stubs``. The generated code directly
-replaces the stubbed module in ``sys.modules`` so tests run against the
-lightweight doubles without further manual edits.
+1. Walks the ``tests`` directory looking for ``*.py`` files.
+2. Parses each file with :mod:`ast` to inspect import statements.
+3. When an optional dependency is imported, inserts
+   ``pytest.importorskip("<dep>")`` unless it already exists.
+4. Rewrites legacy module paths using :data:`IMPORT_MAP`.
+5. For completely removed modules, injects a ``try/except`` block that provides
+   a stub via :class:`unittest.mock.Mock`.
+6. Writes changes back only when the content differs.  Use ``--dry-run`` to
+   preview modifications without touching the files.
 """
+
+from __future__ import annotations
 
 import argparse
 import ast
-import difflib
+import re
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Set
+
+IMPORT_MAP: Dict[str, str] = {
+    "analytics.": "services.analytics.",
+    "mapping.": "yosai_intel_dashboard.src.mapping.",
+    "database.": "yosai_intel_dashboard.src.database.",
+}
+
+# Map of fully removed modules to stub names used when creating mocks.
+REMOVED_MODULES: Dict[str, str] = {
+    # Example: "old.module": "OldModuleStub",
+}
 
 
-class SysModulesVisitor(ast.NodeVisitor):
-    """Find sys.modules modifications in a file."""
+def load_optional_deps() -> Set[str]:
+    """Return the set of optional dependencies defined for the tests."""
 
-    def __init__(self) -> None:
-        self.patches: List[tuple[int, int, str]] = []
-
-    def visit_Assign(self, node: ast.Assign) -> None:
-        for target in node.targets:
-            mod = self._get_sys_modules_key(target)
-            if mod:
-                end = getattr(node, "end_lineno", node.lineno)
-                self.patches.append((node.lineno, end, mod))
-        self.generic_visit(node)
-
-    def visit_Call(self, node: ast.Call) -> None:
-        # sys.modules.setdefault("foo", value)
-        if isinstance(node.func, ast.Attribute) and self._is_sys_modules(
-            node.func.value
-        ):
-            if node.func.attr in {"setdefault", "pop"} and node.args:
-                mod = self._get_const(node.args[0])
-                if mod:
-                    end = getattr(node, "end_lineno", node.lineno)
-                    self.patches.append((node.lineno, end, mod))
-
-        # monkeypatch.setitem(sys.modules, "foo", value)
-        if (
-            isinstance(node.func, ast.Attribute)
-            and node.func.attr in {"setitem", "delitem"}
-            and isinstance(node.func.value, ast.Name)
-            and node.func.value.id == "monkeypatch"
-            and node.args
-        ):
-            if self._is_sys_modules(node.args[0]):
-                mod = self._get_const(node.args[1]) if len(node.args) > 1 else None
-                if mod:
-                    end = getattr(node, "end_lineno", node.lineno)
-                    self.patches.append((node.lineno, end, mod))
-        self.generic_visit(node)
-
-    # --------------------------------------------------------------
-    def _is_sys_modules(self, node: ast.AST) -> bool:
-        return (
-            isinstance(node, ast.Attribute)
-            and isinstance(node.value, ast.Name)
-            and node.value.id == "sys"
-            and node.attr == "modules"
-        )
-
-    def _get_sys_modules_key(self, node: ast.AST) -> Optional[str]:
-        if isinstance(node, ast.Subscript) and self._is_sys_modules(node.value):
-            return self._get_const(node.slice)
-        return None
-
-    def _get_const(self, node: ast.AST) -> Optional[str]:
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            return node.value
-        return None
+    deps: Set[str] = set()
+    req = Path("tests/requirements-extra.txt")
+    if not req.exists():
+        return deps
+    for line in req.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        dep = re.split(r"[<>=]", line)[0].strip()
+        if dep:
+            deps.add(dep)
+    return deps
 
 
-def find_patches(path: Path) -> List[tuple[int, int, str]]:
-    try:
-        tree = ast.parse(path.read_text())
-    except Exception:
-        return []
-    visitor = SysModulesVisitor()
-    visitor.visit(tree)
-    return visitor.patches
+def imported_modules(tree: ast.AST) -> Set[str]:
+    modules: Set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            modules.add(node.module)
+    return modules
 
 
-def apply_patches(text: str, patches: Iterable[tuple[int, int, str]]) -> str:
-    lines = text.splitlines()
-
-    def _stub_var(mod_name: str) -> str:
-        return mod_name.replace(".", "_") + "_stub"
-
-    for start, end, mod in sorted(patches, key=lambda t: t[0], reverse=True):
-        for i in range(start - 1, end):
-            lines[i] = f"# {lines[i]}"
-
-        stub_var = _stub_var(mod)
-        stub_import = f"import tests.stubs.{mod} as {stub_var}"
-        assign_line = f"sys.modules['{mod}'] = {stub_var}"
-
-        lines.insert(end, stub_import)
-        lines.insert(end + 1, assign_line)
-
-    return "\n".join(lines) + "\n"
+def need_importorskip(text: str, modules: Set[str], optional_deps: Set[str]) -> Set[str]:
+    needed: Set[str] = set()
+    for dep in optional_deps:
+        if any(m == dep or m.startswith(f"{dep}.") for m in modules):
+            if f'pytest.importorskip("{dep}")' not in text:
+                needed.add(dep)
+    return needed
 
 
-def process_file(path: Path, apply: bool, show_diff: bool) -> None:
-    text = path.read_text()
-    patches = find_patches(path)
-    if not patches:
+def insert_importorskip(lines: List[str], deps: Set[str], last_import: int, has_pytest: bool) -> None:
+    if not deps:
         return
-    new_text = apply_patches(text, patches)
-    if show_diff:
-        diff = difflib.unified_diff(
-            text.splitlines(),
-            new_text.splitlines(),
-            fromfile=str(path),
-            tofile=str(path),
-        )
-        print("\n".join(diff))
-    if apply:
-        path.write_text(new_text)
+    if not has_pytest:
+        lines.insert(last_import, "import pytest")
+        last_import += 1
+        has_pytest = True
+    for dep in sorted(deps):
+        lines.insert(last_import, f'pytest.importorskip("{dep}")')
+        last_import += 1
 
 
-def main(argv: list[str]) -> None:
-    parser = argparse.ArgumentParser(
-        description="Rewrite sys.modules stubs to use protocol test doubles"
+def replace_legacy_imports(lines: List[str], tree: ast.AST) -> None:
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                for old, new in IMPORT_MAP.items():
+                    if alias.name.startswith(old):
+                        lineno = node.lineno - 1
+                        new_name = new + alias.name[len(old) :]
+                        lines[lineno] = lines[lineno].replace(alias.name, new_name, 1)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            for old, new in IMPORT_MAP.items():
+                if node.module.startswith(old):
+                    lineno = node.lineno - 1
+                    new_module = new + node.module[len(old) :]
+                    lines[lineno] = lines[lineno].replace(node.module, new_module, 1)
+
+
+def stub_removed_modules(lines: List[str], tree: ast.AST) -> None:
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                name = alias.name
+                if name in REMOVED_MODULES:
+                    target = alias.asname or name.split(".")[-1]
+                    stub_name = REMOVED_MODULES[name]
+                    lineno = node.lineno - 1
+                    block = [
+                        "try:",
+                        f"    import {name} as {target}",
+                        "except ImportError:  # pragma: no cover - removed module",
+                        "    from unittest.mock import Mock",
+                        f"    {target} = Mock(name='{stub_name}')",
+                    ]
+                    lines[lineno : lineno + 1] = block
+        elif isinstance(node, ast.ImportFrom) and node.module in REMOVED_MODULES:
+            lineno = node.lineno - 1
+            imports = ", ".join(
+                f"{n.name} as {n.asname}" if n.asname else n.name for n in node.names
+            )
+            targets = [n.asname or n.name for n in node.names]
+            block = [
+                "try:",
+                f"    from {node.module} import {imports}",
+                "except ImportError:  # pragma: no cover - removed module",
+                "    from unittest.mock import Mock",
+            ]
+            block.extend(f"    {t} = Mock()" for t in targets)
+            lines[lineno : lineno + 1] = block
+
+
+def process_file(path: Path, dry_run: bool) -> None:
+    text = path.read_text()
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return
+
+    modules = imported_modules(tree)
+    optional_deps = load_optional_deps()
+    needed = need_importorskip(text, modules, optional_deps)
+
+    lines = text.splitlines()
+    last_import = max(
+        (node.lineno for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))),
+        default=0,
     )
-    parser.add_argument(
-        "paths", nargs="*", default=["tests"], help="files or directories to scan"
-    )
-    parser.add_argument("--apply", action="store_true", help="write changes to disk")
-    parser.add_argument("--diff", action="store_true", help="show unified diff")
-    args = parser.parse_args(argv[1:])
+    has_pytest = "import pytest" in text
 
-    for p in args.paths:
-        path = Path(p)
-        if path.is_dir():
-            for file in path.rglob("*.py"):
-                process_file(file, args.apply, args.diff)
-        elif path.is_file():
-            process_file(path, args.apply, args.diff)
+    insert_importorskip(lines, needed, last_import, has_pytest)
+    replace_legacy_imports(lines, tree)
+    stub_removed_modules(lines, tree)
+
+    new_text = "\n".join(lines) + "\n"
+    if new_text != text:
+        if dry_run:
+            print(f"Would update {path}")
+        else:
+            path.write_text(new_text)
+            print(f"Updated {path}")
 
 
-if __name__ == "__main__":  # pragma: no cover - manual utility
-    import sys
+def main(dry_run: bool) -> None:
+    for file in Path("tests").rglob("*.py"):
+        process_file(file, dry_run)
 
-    main(sys.argv)
+
+if __name__ == "__main__":  # pragma: no cover - utility script
+    parser = argparse.ArgumentParser(description="Migrate test imports and dependencies")
+    parser.add_argument("--dry-run", action="store_true", help="preview changes without writing")
+    args = parser.parse_args()
+    main(args.dry_run)

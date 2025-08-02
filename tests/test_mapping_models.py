@@ -4,8 +4,8 @@ import pandas as pd
 import yaml
 
 from core.performance import PerformanceMonitor
-from mapping.models import RuleBasedModel, load_model
-from mapping.models.base import MappingModel
+from services.mapping.models import RuleBasedModel, load_model
+from services.mapping.models.base import MappingModel
 
 
 def test_load_model_from_yaml(tmp_path):
@@ -34,5 +34,5 @@ def test_model_caching_and_metrics(monkeypatch):
     model.cached_suggest(df, "x.csv")
     model.cached_suggest(df, "x.csv")
     metrics = [m.name for m in monitor.metrics]
-    assert "mapping.suggest.latency" in metrics
-    assert "mapping.suggest.accuracy" in metrics
+    assert "services.mapping.suggest.latency" in metrics
+    assert "services.mapping.suggest.accuracy" in metrics

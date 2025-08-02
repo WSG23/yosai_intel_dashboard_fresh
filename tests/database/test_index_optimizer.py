@@ -1,4 +1,4 @@
-from database.index_optimizer import IndexOptimizer
+from services.database.index_optimizer import IndexOptimizer
 
 
 def make_sqlite_conn(indexes=None):

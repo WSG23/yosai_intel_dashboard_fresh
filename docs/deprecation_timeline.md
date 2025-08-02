@@ -1,17 +1,17 @@
 # Deprecation Timeline
 
-This file is auto-generated from `deprecation.yml`.
+This document summarizes features scheduled for removal and links to their migration guides. All data is sourced from `deprecation.yml`.
 
-| Component | Deprecated Since | Removal Version |
-|-----------|-----------------|-----------------|
-| legacy-auth | 1.2.0 | 2.0.0 |
-| old-dashboard | 1.5.0 | 2.1.0 |
+## Summary
 
-## Migration Guides
+| Component | Deprecated Since | Removal Version | Migration Guide |
+|-----------|-----------------|-----------------|----------------|
+| legacy-auth | 1.2.0 | 2.0.0 | [Legacy Auth Migration](migration/legacy-auth.md) |
+| old-dashboard | 1.5.0 | 2.1.0 | [New Dashboard Migration](migration/new-dashboard.md) |
 
-Migration instructions for deprecated components will appear here.
+- [Legacy Auth Migration](migration/legacy-auth.md)
+- [New Dashboard Migration](migration/new-dashboard.md)
 
-## Impact Analysis
 
 This section will detail user impact and remediation steps.
 

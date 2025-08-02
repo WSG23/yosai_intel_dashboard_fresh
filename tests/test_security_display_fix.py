@@ -3,7 +3,7 @@ import pytest
 
 # These tests rely on the external 'analytics' package
 pytest.importorskip("analytics")
-from analytics.core.utils.results_display import create_analysis_results_display
+from services.analytics.core.utils.results_display import create_analysis_results_display
 
 pytestmark = pytest.mark.usefixtures("fake_dbc")
 

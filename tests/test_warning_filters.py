@@ -2,10 +2,10 @@ import warnings
 
 import pandas as pd
 
-from analytics.access_trends import AccessTrendsAnalyzer
-from analytics.anomaly_detection import AnomalyDetector
-from analytics.security_patterns import PaginatedAnalyzer
-from analytics.user_behavior import UserBehaviorAnalyzer
+from services.analytics.access_trends import AccessTrendsAnalyzer
+from services.analytics.anomaly_detection import AnomalyDetector
+from services.analytics.security_patterns import PaginatedAnalyzer
+from services.analytics.user_behavior import UserBehaviorAnalyzer
 
 
 def _sample_df(rows: int = 20) -> pd.DataFrame:

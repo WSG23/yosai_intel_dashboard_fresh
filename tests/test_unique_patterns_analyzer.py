@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from analytics.unique_patterns_analyzer import UniquePatternAnalyzer
+from services.analytics.unique_patterns_analyzer import UniquePatternAnalyzer
 
 
 def sample_df():
