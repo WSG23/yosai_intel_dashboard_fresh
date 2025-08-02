@@ -13,7 +13,10 @@ from yosai_intel_dashboard.src.core.performance import (
     get_performance_monitor,
 )
 
+
 T = TypeVar("T")
+
+_profiler = PerformanceProfiler()
 
 
 async def _run_with_retry(
@@ -34,6 +37,7 @@ async def _run_with_retry(
     start_cpu = psutil.cpu_percent()
     attempt = 1
     try:
+
         while True:
             try:
                 return await func()
@@ -90,7 +94,8 @@ def async_retry(
         @wraps(fn)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             async def call() -> T:
-                return await fn(*args, **kwargs)
+                async with _profiler.track_task(fn.__name__):
+                    return await fn(*args, **kwargs)
 
             return await _run_with_retry(
                 call,

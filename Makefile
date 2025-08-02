@@ -5,12 +5,15 @@ DURATION ?= 60
 
 CLI ?= python -m tools.ops_cli
 
-.PHONY: load-test validate build test deploy format lint clean \
+.PHONY: load-test load-tests validate build test deploy format lint clean \
 build-all test-all deploy-all logs deprecation-docs \
 proto-python proto-go proto-all docs
 
 load-test:
-	python tools/load_test.py --brokers $(BROKERS) --prom-url $(PROM_URL) --rate $(RATE) --duration $(DURATION)
+        python tools/load_test.py --brokers $(BROKERS) --prom-url $(PROM_URL) --rate $(RATE) --duration $(DURATION)
+
+load-tests:
+        ./load-tests/run_k6.sh
 
 validate:
 	$(CLI) validate-config

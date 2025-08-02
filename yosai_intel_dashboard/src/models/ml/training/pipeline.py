@@ -13,6 +13,7 @@ import pandas as pd
 from yosai_intel_dashboard.src.utils.hashing import hash_dataframe
 from yosai_intel_dashboard.src.utils.sklearn_compat import optional_import
 from yosai_intel_dashboard.models.ml import ModelRegistry
+from yosai_intel_dashboard.models.ml.feature_store import FeastFeatureStore
 
 # Optional heavy dependencies
 KFold = optional_import("sklearn.model_selection.KFold")
@@ -32,7 +33,6 @@ class ExperimentResult:
     name: str
     metrics: Dict[str, float]
     model_path: Path
-    mlflow_run_id: str
 
 
 class TrainingPipeline:
@@ -115,33 +115,33 @@ class TrainingPipeline:
             optional_import("joblib").dump(best_model, fh)
 
         metrics = {self.scoring: float(getattr(best_model, self.scoring, 0.0))}
-        run_id = ""
         if mlflow:
             with mlflow.start_run() as run:
                 mlflow.log_params(best_model.get_params())
                 mlflow.log_metric(self.scoring, metrics[self.scoring])
                 mlflow.log_artifact(f"{name}.joblib")
                 mlflow.log_text(dataset_hash, "dataset_hash.txt")
-                run_id = run.info.run_id
 
-        record = self.registry.register_model(
-            name,
-            f"{name}.joblib",
-            metrics,
-            dataset_hash,
-        )
-        self.registry.set_active_version(name, record.version)
-
-        return ExperimentResult(name, metrics, Path(f"{name}.joblib"), run_id)
+        return ExperimentResult(name, metrics, Path(f"{name}.joblib"))
 
     # ------------------------------------------------------------------
     def run(
         self,
-        df: pd.DataFrame,
+        entity_df: pd.DataFrame,
         target_column: str,
         models: Dict[str, Tuple[Any, Dict[str, Any]]],
+        *,
+        feature_store: FeastFeatureStore | None = None,
+        feature_service: Any | None = None,
     ) -> ExperimentResult:
         """Run hyperparameter tuning and register the best performing model."""
+        if feature_store:
+            if feature_service is None:
+                raise ValueError("feature_service required when using feature_store")
+            df = feature_store.get_training_dataframe(feature_service, entity_df)
+        else:
+            df = entity_df
+
         if target_column not in df:
             raise ValueError(f"target column '{target_column}' missing")
 
@@ -163,7 +163,25 @@ class TrainingPipeline:
                 or res.metrics[self.scoring] > best_res.metrics[self.scoring]
             ):
                 best_res = res
+
         assert best_res is not None
+
+        active = self.registry.get_model(best_res.name, active_only=True)
+        improved = (
+            active is None
+            or self.registry._metrics_improved(
+                best_res.metrics, active.metrics or {}
+            )
+        )
+        record = self.registry.register_model(
+            best_res.name,
+            str(best_res.model_path),
+            best_res.metrics,
+            dataset_hash,
+        )
+        if improved:
+            self.registry.set_active_version(best_res.name, record.version)
+
         return best_res
 
 

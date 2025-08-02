@@ -11,7 +11,10 @@ from yosai_intel_dashboard.src.core.performance import (
     get_performance_monitor,
 )
 
+
 T = TypeVar("T")
+
+_profiler = PerformanceProfiler()
 
 
 async def async_batch(
@@ -35,6 +38,7 @@ async def async_batch(
 
     batch: List[T] = []
     try:
+
         if isinstance(source, AsyncIterable):
             async for item in source:
                 batch.append(item)

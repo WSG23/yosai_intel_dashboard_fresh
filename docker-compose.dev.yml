@@ -70,6 +70,7 @@ services:
       - "prometheus.path=/metrics"
     environment:
       SERVICE_REGISTRY_URL: http://service-registry:8500
+      ENABLE_PROFILING: "true"
     depends_on:
       - analytics-service
       - service-registry
@@ -122,8 +123,10 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.52.0
+    command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.retention.time=30d
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
     restart: unless-stopped
@@ -197,6 +200,7 @@ volumes:
   timescaledb_data:
   pgadmin_data:
   redis_data:
+  prometheus_data:
 
 secrets:
   db_password:
