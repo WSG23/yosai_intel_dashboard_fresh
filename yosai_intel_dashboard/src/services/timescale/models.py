@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from sqlalchemy import Column, DateTime, Float, Integer, MetaData, String, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.engine import Connection
@@ -26,7 +28,7 @@ class AccessEvent(Base):
 
     __tablename__ = "access_events"
 
-    time = Column(DateTime(timezone=True), primary_key=True)
+    time = Column(DateTime(timezone=True), primary_key=True, default=datetime.utcnow)
     event_id = Column(UUID(as_uuid=True), primary_key=True)
     person_id = Column(String(50), index=True)
     door_id = Column(String(50), index=True)
@@ -69,6 +71,18 @@ class ModelMonitoringEvent(Base):
     value = Column(Float)
     drift_type = Column(String(50))
     status = Column(String(20))
+
+
+class ModelVersionMetric(Base):
+    """Aggregated metrics for each model version."""
+
+    __tablename__ = "model_version_metrics"
+
+    time = Column(DateTime(timezone=True), primary_key=True, default=datetime.utcnow)
+    model_name = Column(String(100), primary_key=True)
+    version = Column(String(50), primary_key=True)
+    metric = Column(String(50), primary_key=True)
+    value = Column(Float)
 
 
 # ---------------------------------------------------------------------------
@@ -118,4 +132,5 @@ __all__ = [
     "AccessEvent5Min",
     "AccessEventHourly",
     "ModelMonitoringEvent",
+    "ModelVersionMetric",
 ]
