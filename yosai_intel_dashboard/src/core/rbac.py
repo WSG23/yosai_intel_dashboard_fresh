@@ -6,6 +6,7 @@ import asyncio
 import inspect
 import logging
 import os
+import threading
 from functools import wraps
 from typing import Callable, List, Optional
 
@@ -113,16 +114,33 @@ def _fail_response() -> tuple[str, int]:
         return "Forbidden", 403
 
 
-def _run_sync(coro: asyncio.Future) -> any:
-    """Execute *coro* in a new event loop and return the result."""
+_rbac_loop: asyncio.AbstractEventLoop | None = None
+_rbac_thread: threading.Thread | None = None
 
-    loop = asyncio.new_event_loop()
+
+def _ensure_loop() -> asyncio.AbstractEventLoop:
+    """Return a long-lived event loop running in a background thread."""
+    global _rbac_loop, _rbac_thread
+    if _rbac_loop is None or _rbac_loop.is_closed():
+        _rbac_loop = asyncio.new_event_loop()
+        _rbac_thread = threading.Thread(
+            target=_rbac_loop.run_forever, name="rbac-loop", daemon=True
+        )
+        _rbac_thread.start()
+    return _rbac_loop
+
+
+def _run_sync(coro: asyncio.Future) -> any:
+    """Execute *coro* using a shared background loop."""
     try:
-        asyncio.set_event_loop(loop)
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = _ensure_loop()
+        return asyncio.run_coroutine_threadsafe(coro, loop).result()
+    else:
+        if loop.is_running():
+            raise RuntimeError("_run_sync cannot be called from a running event loop")
         return loop.run_until_complete(coro)
-    finally:
-        asyncio.set_event_loop(None)
-        loop.close()
 
 
 def require_role(role: str) -> Callable[[Callable[..., any]], Callable[..., any]]:

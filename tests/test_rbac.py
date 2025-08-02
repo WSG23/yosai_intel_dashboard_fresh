@@ -1,12 +1,13 @@
-import importlib.util
-
 import asyncio
+import importlib.util
 
 import pytest
 from flask import Flask, session
 
 # Import core.rbac directly from file to avoid package side effects
-spec = importlib.util.spec_from_file_location("core.rbac", "core/rbac.py")
+spec = importlib.util.spec_from_file_location(
+    "core.rbac", "yosai_intel_dashboard/src/core/rbac.py"
+)
 rbac = importlib.util.module_from_spec(spec)
 assert spec.loader
 spec.loader.exec_module(rbac)
@@ -76,3 +77,59 @@ def test_require_permission_sync_forbidden():
             return "ok"
 
         assert endpoint() == ("Forbidden", 403)
+
+
+def test_require_role_sync_allows():
+    app = Flask(__name__)
+    app.secret_key = "test"
+    app.config["RBAC_SERVICE"] = DummyService()
+    with app.test_request_context():
+        session["user_id"] = "u1"
+
+        @require_role("admin")
+        def endpoint():
+            return "ok"
+
+        assert endpoint() == "ok"
+
+
+def test_require_role_sync_forbidden():
+    app = Flask(__name__)
+    app.secret_key = "test"
+    app.config["RBAC_SERVICE"] = DummyService()
+    with app.test_request_context():
+        session["user_id"] = "u1"
+
+        @require_role("user")
+        def endpoint():
+            return "ok"
+
+        assert endpoint() == ("Forbidden", 403)
+
+
+def test_require_permission_async_allows():
+    app = Flask(__name__)
+    app.secret_key = "test"
+    app.config["RBAC_SERVICE"] = DummyService()
+    with app.test_request_context():
+        session["user_id"] = "u1"
+
+        @require_permission("read")
+        async def endpoint():
+            return "ok"
+
+        assert asyncio.run(endpoint()) == "ok"
+
+
+def test_require_permission_async_forbidden():
+    app = Flask(__name__)
+    app.secret_key = "test"
+    app.config["RBAC_SERVICE"] = DummyService()
+    with app.test_request_context():
+        session["user_id"] = "u1"
+
+        @require_permission("write")
+        async def endpoint():
+            return "ok"
+
+        assert asyncio.run(endpoint()) == ("Forbidden", 403)
