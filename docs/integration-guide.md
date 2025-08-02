@@ -477,8 +477,100 @@ class EnhancedAnalyticsService:
             purpose='security_analytics',
             legal_basis='consent'
         )
-        
+
         return analysis_data
+
+
+# Consent management API endpoints
+
+from flask import Blueprint, current_app, jsonify, request
+from flask_login import current_user, login_required
+from functools import wraps
+from typing import List
+
+consent_api = Blueprint('consent_api', __name__)
+
+
+@consent_api.route('/v1/compliance/consent', methods=['POST'])
+@login_required
+def grant_consent():
+    """Grant one or more consent types"""
+    data = request.get_json() or {}
+    consent_service = current_app.container.get('consent_service')
+    consent_service.grant_consent(
+        user_id=current_user.id,
+        consents=data.get('consents', []),
+        jurisdiction=data.get('jurisdiction', 'EU')
+    )
+    return jsonify({'status': 'consent granted'})
+
+
+@consent_api.route('/v1/compliance/consent/<consent_type>', methods=['DELETE'])
+@login_required
+def withdraw_consent(consent_type: str):
+    """Withdraw a specific consent type"""
+    consent_service = current_app.container.get('consent_service')
+    consent_service.withdraw_consent(
+        user_id=current_user.id,
+        consent_type=consent_type
+    )
+    return jsonify({'status': 'consent withdrawn'})
+
+
+# Consent records and middleware validation
+
+class ConsentService:
+    def grant_consent(self, user_id: str, consents: List[str], jurisdiction: str) -> None:
+        for ctype in consents:
+            self.db.execute(
+                """
+                INSERT INTO consent_log (user_id, consent_type, jurisdiction, granted_at)
+                VALUES (%s, %s, %s, NOW())
+                """,
+                (user_id, ctype, jurisdiction)
+            )
+
+    def withdraw_consent(self, user_id: str, consent_type: str) -> None:
+        self.db.execute(
+            """
+            UPDATE consent_log
+               SET withdrawn_at = NOW()
+             WHERE user_id = %s
+               AND consent_type = %s
+               AND withdrawn_at IS NULL
+            """,
+            (user_id, consent_type)
+        )
+
+    def check_consent(self, user_id: str, consent_type: str, jurisdiction: str) -> bool:
+        result = self.db.query_one(
+            """
+            SELECT 1 FROM consent_log
+             WHERE user_id = %s
+               AND consent_type = %s
+               AND jurisdiction = %s
+               AND withdrawn_at IS NULL
+            """,
+            (user_id, consent_type, jurisdiction)
+        )
+        return bool(result)
+
+
+def consent_required(consent_type: str, jurisdiction: str):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            consent_service = current_app.container.get('consent_service')
+            has_consent = consent_service.check_consent(
+                user_id=current_user.id,
+                consent_type=consent_type,
+                jurisdiction=jurisdiction
+            )
+            if not has_consent:
+                return jsonify({'error': 'Consent required'}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 # =============================================================================
