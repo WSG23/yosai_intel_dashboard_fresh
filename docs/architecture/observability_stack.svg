@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="180">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0,10 3.5,0 7" />
+    </marker>
+  </defs>
+  <rect x="170" y="20" width="80" height="40" fill="#fde9d9" stroke="#333" />
+  <text x="210" y="45" font-size="12" text-anchor="middle">Cluster</text>
+  <rect x="20" y="100" width="80" height="40" fill="#fde9d9" stroke="#333" />
+  <text x="60" y="125" font-size="12" text-anchor="middle">Prometheus</text>
+  <rect x="170" y="100" width="80" height="40" fill="#fde9d9" stroke="#333" />
+  <text x="210" y="125" font-size="12" text-anchor="middle">Loki</text>
+  <rect x="320" y="100" width="80" height="40" fill="#fde9d9" stroke="#333" />
+  <text x="360" y="125" font-size="12" text-anchor="middle">Grafana</text>
+  <line x1="210" y1="60" x2="60" y2="100" stroke="#333" marker-end="url(#arrow)" />
+  <line x1="210" y1="60" x2="210" y2="100" stroke="#333" marker-end="url(#arrow)" />
+  <line x1="210" y1="60" x2="360" y2="100" stroke="#333" marker-end="url(#arrow)" />
+</svg>
