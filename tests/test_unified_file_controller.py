@@ -1,25 +1,29 @@
+from __future__ import annotations
+
 import os
 import sys
+import types
+from enum import Enum, auto
 from pathlib import Path
-from tests.import_helpers import safe_import, import_optional
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
-import pandas as pd
-import types
-from enum import Enum, auto
-from utils.upload_store import UploadedDataStore
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+
+from tests.import_helpers import safe_import  # noqa: E402
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder  # noqa: E402
+from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore  # noqa: E402
 
 callback_events_stub = types.ModuleType("core.callback_events")
+
 
 class CallbackEvent(Enum):
     FILE_UPLOAD_COMPLETE = auto()
     DATA_PROCESSED = auto()
 
+
 callback_events_stub.CallbackEvent = CallbackEvent
-safe_import('core.callback_events', callback_events_stub)
+safe_import("core.callback_events", callback_events_stub)
 
 
 class DummyManager:
@@ -42,7 +46,11 @@ sys.modules.setdefault(
     tuc_stub,
 )
 
-from yosai_intel_dashboard.src.services.unified_file_controller import register_callbacks
+from yosai_intel_dashboard.src.services.unified_file_controller import (  # noqa: E402
+    register_callbacks,
+)
+
+
 def test_register_callbacks_processes_upload(tmp_path):
     manager = DummyManager()
     store = UploadedDataStore(storage_dir=tmp_path)
@@ -57,7 +65,9 @@ def test_register_callbacks_processes_upload(tmp_path):
 
     register_callbacks(manager)
 
-    manager.trigger(CallbackEvent.FILE_UPLOAD_COMPLETE, content, "sample.csv", storage=store)
+    manager.trigger(
+        CallbackEvent.FILE_UPLOAD_COMPLETE, content, "sample.csv", storage=store
+    )
 
     saved = store.load_dataframe("sample.csv")
     assert saved.equals(df)
