@@ -3,12 +3,9 @@ from __future__ import annotations
 """Simple hierarchical cache with three levels and basic metrics."""
 
 import asyncio
-import inspect
 import logging
-from typing import Any, Callable, Dict, Optional
-
-
-import redis
+import time
+from typing import Any, Dict, Optional
 
 from .base_model import BaseModel
 
@@ -40,145 +37,54 @@ class HierarchicalCacheManager(BaseModel):
         logger: Optional[logging.Logger] = None,
     ) -> None:
         super().__init__(config, db, logger)
-        self._level1: Dict[str, Any] = {}
-        self._level2: Dict[str, Any] = {}
-        self._level3: Dict[str, Any] = {}
-        self._hits = {"l1": 0, "l2": 0, "l3": 0}
-        self._misses = {"l1": 0, "l2": 0, "l3": 0}
-        self._evictions = {"l1": 0, "l2": 0, "l3": 0}
+        self._level1: Dict[str, tuple[Any, Optional[float]]] = {}
+        self._level2: Dict[str, tuple[Any, Optional[float]]] = {}
+        self._locks: Dict[str, asyncio.Lock] = {}
 
-
-        # Automatically start so existing usages continue to work
-        self.start()
-
-    # ------------------------------------------------------------------
-    def start(self) -> None:
-        """Initialise Redis connection and disk store."""
-
-        try:
-            self._redis = redis.Redis(
-                host=self.config.l2_host, port=self.config.l2_port
-            )
-            self._redis.ping()
-        except Exception as exc:  # pragma: no cover - Redis optional
-            if self.logger:
-                self.logger.warning(f"Redis unavailable: {exc}")
-            self._redis = None
-
-        os.makedirs(os.path.dirname(self.config.l3_path), exist_ok=True)
-        self._disk = shelve.open(self.config.l3_path)
-
-    # ------------------------------------------------------------------
-    def stop(self) -> None:
-        """Release resources for Redis and disk storage."""
-
-        if self._redis is not None:
-            try:
-                self._redis.close()
-            except Exception:  # pragma: no cover - best effort
-                pass
-            self._redis = None
-        if self._disk is not None:
-            self._disk.close()
-            self._disk = None
-        self.clear()
-
-    # ------------------------------------------------------------------
-    def get_lock(self, key: str) -> threading.Lock:
-        """Return a threading lock for ``key``."""
-
-        lock = self._locks.get(key)
-        if lock is None:
-            lock = threading.Lock()
-            self._locks[key] = lock
-        return lock
-
-    # ------------------------------------------------------------------
-    def get(self, key: str) -> Optional[Any]:
-        if key in self._level1:
-            self._hits["l1"] += 1
-            return self._level1[key]
-        self._misses["l1"] += 1
-
-        if key in self._level2:
-            self._hits["l2"] += 1
-            return self._level2[key]
-        self._misses["l2"] += 1
-
-        if key in self._level3:
-            self._hits["l3"] += 1
-            return self._level3[key]
-        self._misses["l3"] += 1
-        return None
-
-    def set(self, key: str, value: Any, *, level: int = 1) -> None:
-        if level == 1:
-            self._level1[key] = value
-        elif level == 2:
-            self._level2[key] = value
-        else:
-            self._level3[key] = value
-
-
-        value = self._get_l3(key)
-        if value is not None:
-            self._counts[key] += 1
-            if self._counts[key] >= self._PROMOTION_THRESHOLD:
-                self._set_l2(key, value)
-            if self._counts[key] >= self._PROMOTION_THRESHOLD * 2:
-                self._promote_to_l1(key, value)
-            return value
+    async def get(self, key: str) -> Optional[Any]:
+        """Retrieve value from cache, checking level1 then level2."""
+        item = self._level1.get(key)
+        if item is not None:
+            value, expiry = item
+            if expiry is None or time.time() <= expiry:
+                return value
+            del self._level1[key]
+        item = self._level2.get(key)
+        if item is not None:
+            value, expiry = item
+            if expiry is None or time.time() <= expiry:
+                return value
+            del self._level2[key]
 
         return None
 
-    # ------------------------------------------------------------------
-    def set(
+    async def set(
         self,
         key: str,
         value: Any,
         ttl: Optional[int] = None,
         *,
-        level: int | None = None,
+        level: int = 1,
     ) -> None:
-        """Store *value* in selected cache levels.
+        """Store ``value`` at the specified cache ``level``."""
+        expiry = time.time() + ttl if ttl else None
+        if level == 1:
+            self._level1[key] = (value, expiry)
+        else:
+            self._level2[key] = (value, expiry)
 
-        If *level* is ``None`` the value is written to all levels. When a
-        specific level (1, 2 or 3) is provided only that layer is updated.
-        """
-
-        self._counts[key] = 0
-        if level in (None, 1):
-            self._promote_to_l1(key, value)
-        if level in (None, 2):
-            self._set_l2(key, value, ttl or self.config.l2_ttl)
-        if level in (None, 3):
-            self._set_l3(key, value, ttl or self.config.l3_ttl)
-
-    # ------------------------------------------------------------------
-    def delete(self, key: str) -> bool:
-        """Remove *key* from all cache levels."""
-
+    async def delete(self, key: str) -> bool:
+        """Delete ``key`` from any level and return if removed."""
         removed = False
-        if key in self._l1:
-            del self._l1[key]
+        if self._level1.pop(key, None) is not None:
             removed = True
-        if self._redis is not None:
-            try:
-                removed = self._redis.delete(key) > 0 or removed
-            except Exception:  # pragma: no cover - best effort
-                pass
-        if self._disk is not None and key in self._disk:
-            del self._disk[key]
+        if self._level2.pop(key, None) is not None:
             removed = True
-        self._counts.pop(key, None)
-        self._locks.pop(key, None)
         return removed
 
-    # ------------------------------------------------------------------
-    def clear(self) -> None:
-        self._evictions["l1"] += len(self._level1)
-        self._evictions["l2"] += len(self._level2)
-        self._evictions["l3"] += len(self._level3)
+    async def clear(self) -> None:
+        """Clear all cache levels."""
+
         self._level1.clear()
         self._level2.clear()
         self._level3.clear()
@@ -230,6 +136,35 @@ class HierarchicalCacheManager(BaseModel):
             self.set(key, value, level=2)
 
         await asyncio.gather(*(_populate(k) for k in keys))
+
+    def get_lock(self, key: str, timeout: int = 10) -> asyncio.Lock:
+        """Return an asyncio lock for ``key``."""
+        lock = self._locks.get(key)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._locks[key] = lock
+        return lock
+
+    # ------------------------------------------------------------------
+    # Synchronous helpers
+    def get_sync(self, key: str) -> Optional[Any]:
+        """Synchronous wrapper around :meth:`get`."""
+        return asyncio.run(self.get(key))
+
+    def set_sync(
+        self,
+        key: str,
+        value: Any,
+        ttl: Optional[int] = None,
+        *,
+        level: int = 1,
+    ) -> None:
+        """Synchronous wrapper around :meth:`set`."""
+        asyncio.run(self.set(key, value, ttl, level=level))
+
+    def delete_sync(self, key: str) -> bool:
+        """Synchronous wrapper around :meth:`delete`."""
+        return asyncio.run(self.delete(key))
 
 
 __all__ = ["HierarchicalCacheConfig", "HierarchicalCacheManager"]

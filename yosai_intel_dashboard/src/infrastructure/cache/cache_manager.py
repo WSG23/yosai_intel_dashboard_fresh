@@ -3,6 +3,7 @@ from __future__ import annotations
 """Unified asynchronous cache manager with pluggable backends."""
 
 import asyncio
+import inspect
 import json
 import logging
 import os
@@ -12,6 +13,8 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
 import redis.asyncio as redis
+
+from yosai_intel_dashboard.src.core.performance import cache_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -216,8 +219,11 @@ def cache_with_lock(
                 else f"{func.__module__}.{func.__name__}:{hash(str(args)+str(sorted(kwargs.items())))}"
             )
             async with manager.get_lock(cache_key):
-                cached = await manager.get(cache_key)
+                cached = manager.get(cache_key)
+                if inspect.isawaitable(cached):
+                    cached = await cached
                 if cached is not None:
+                    cache_monitor.record_cache_hit(name or func.__name__)
                     return cached
                 result = (
                     await func(*args, **kwargs) if is_async else func(*args, **kwargs)
@@ -226,7 +232,10 @@ def cache_with_lock(
                 effective_ttl = (
                     int(override) if override and override.isdigit() else ttl
                 )
-                await manager.set(cache_key, result, effective_ttl)
+                set_result = manager.set(cache_key, result, effective_ttl)
+                if inspect.isawaitable(set_result):
+                    await set_result
+                cache_monitor.record_cache_miss(name or func.__name__)
                 return result
 
         if is_async:
