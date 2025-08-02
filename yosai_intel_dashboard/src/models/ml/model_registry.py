@@ -149,6 +149,19 @@ class ModelRegistry:
                 session.add(record)
                 session.commit()
                 session.refresh(record)
+
+                # Keep only the five most recent versions per model
+                stmt = (
+                    select(ModelRecord)
+                    .where(ModelRecord.name == name)
+                    .order_by(ModelRecord.training_date.desc())
+                )
+                versions = session.execute(stmt).scalars().all()
+                for old in versions[5:]:
+                    session.delete(old)
+                if len(versions) > 5:
+                    session.commit()
+
                 return record
         finally:
             session.close()
@@ -213,6 +226,34 @@ class ModelRegistry:
                 .values(is_active=True)
             )
             session.commit()
+        finally:
+            session.close()
+
+    def rollback_to_previous(self, name: str) -> ModelRecord | None:
+        session = self._session()
+        try:
+            stmt = (
+                select(ModelRecord)
+                .where(ModelRecord.name == name)
+                .order_by(ModelRecord.version.desc())
+            )
+            records = session.execute(stmt).scalars().all()
+            target = next((r for r in records if not r.is_active), None)
+            if target is None:
+                return None
+            session.execute(
+                update(ModelRecord)
+                .where(ModelRecord.name == name)
+                .values(is_active=False)
+            )
+            session.execute(
+                update(ModelRecord)
+                .where(ModelRecord.id == target.id)
+                .values(is_active=True)
+            )
+            session.commit()
+            session.refresh(target)
+            return target
         finally:
             session.close()
 
