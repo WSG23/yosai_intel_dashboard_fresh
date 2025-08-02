@@ -7,10 +7,12 @@ from datetime import datetime
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
-import boto3
-import mlflow
 import pandas as pd
-import requests
+from optional_dependencies import import_optional
+
+boto3 = import_optional("boto3")
+mlflow = import_optional("mlflow")
+requests = import_optional("requests")
 from packaging.version import Version
 from sqlalchemy import (
     JSON,
@@ -76,10 +78,17 @@ class ModelRegistry:
         self.engine = create_engine(database_url)
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
-        self.s3 = s3_client or boto3.client("s3")
+        if s3_client is not None:
+            self.s3 = s3_client
+        elif boto3:
+            self.s3 = boto3.client("s3")
+        else:  # pragma: no cover - missing optional dependency
+            raise RuntimeError("boto3 is required for S3 storage")
         self.bucket = bucket
-        if mlflow_uri:
+        if mlflow_uri and mlflow:
             mlflow.set_tracking_uri(mlflow_uri)
+        elif mlflow_uri:
+            raise RuntimeError("mlflow is required for tracking")
         self.metric_thresholds = metric_thresholds or {}
         self._baseline_features: Dict[str, pd.DataFrame] = {}
         self._latest_features: Dict[str, pd.DataFrame] = {}
@@ -129,6 +138,8 @@ class ModelRegistry:
             self.s3.upload_file(model_path, self.bucket, key)
             storage_uri = f"s3://{self.bucket}/{key}"
 
+            if not mlflow:
+                raise RuntimeError("mlflow is required to register models")
             with mlflow.start_run() as run:
                 for k, v in metrics.items():
                     mlflow.log_metric(k, v)
@@ -270,6 +281,8 @@ class ModelRegistry:
             src = parsed.path if scheme == "file" else storage_uri
             shutil.copy(src, destination)
         elif scheme in ("http", "https"):
+            if not requests:
+                raise RuntimeError("requests is required for HTTP downloads")
             resp = requests.get(storage_uri, stream=True)
             resp.raise_for_status()
             with open(destination, "wb") as fh:

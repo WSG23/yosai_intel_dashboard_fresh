@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import pathlib
-import sys
-import types
-
 import pandas as pd
 import pytest
 from sklearn.linear_model import LogisticRegression
@@ -11,14 +7,7 @@ from sklearn.linear_model import LogisticRegression
 pytest.importorskip("shap")
 pytest.importorskip("lime")
 
-SERVICES_PATH = pathlib.Path(__file__).resolve().parents[1] / "services"
-services_mod = sys.modules.get("services")
-if services_mod is None:
-    services_mod = types.ModuleType("services")
-    sys.modules["services"] = services_mod
-services_mod.__path__ = [str(SERVICES_PATH)]
-
-from services.explainability_service import ExplainabilityService  # noqa: E402
+from services.explainability_service import ExplainabilityService
 
 
 def _make_dataset():

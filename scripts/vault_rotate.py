@@ -7,8 +7,10 @@ import os
 import secrets
 from typing import Iterable
 
-import hvac
-import requests
+from optional_dependencies import import_optional
+
+hvac = import_optional("hvac")
+requests = import_optional("requests")
 
 DB_PATH = "secret/data/db"
 JWT_PATH = "secret/data/jwt"
@@ -24,6 +26,9 @@ def rotate_field(client: hvac.Client, path: str, field: str) -> str:
 
 def _notify_services(urls: Iterable[str]) -> None:
     """POST to `/invalidate-secret` on each base URL."""
+    if not requests:
+        logging.warning("requests library not available; skipping notifications")
+        return
     for url in urls:
         url = url.rstrip("/") + "/invalidate-secret"
         try:
@@ -34,6 +39,8 @@ def _notify_services(urls: Iterable[str]) -> None:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
+    if not hvac:
+        raise RuntimeError("hvac library required to rotate secrets")
     addr = os.environ["VAULT_ADDR"]
     token = os.environ["VAULT_TOKEN"]
     client = hvac.Client(url=addr, token=token)

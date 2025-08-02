@@ -4,7 +4,9 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-import hvac
+from optional_dependencies import import_optional
+
+hvac = import_optional("hvac")
 
 
 class VaultClient:
@@ -13,6 +15,8 @@ class VaultClient:
     log = logging.getLogger(__name__)
 
     def __init__(self, url: str, token: str, *, max_attempts: int = 3) -> None:
+        if not hvac:
+            raise RuntimeError("hvac is required for VaultClient")
         self.client = hvac.Client(url=url, token=token)
         self.max_attempts = max_attempts
         self._cache: Dict[str, Any] = {}
