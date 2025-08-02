@@ -88,6 +88,31 @@ def create_app(config_name: str = None) -> Flask:
     # Data retention service
     retention_service = create_data_retention_service(db, audit_logger)
     container.register('data_retention_service', retention_service)
+
+    # ------------------------------------------------------------------
+    # Retention rules per data type and jurisdiction
+    # Example rules reference legal bases such as GDPR Art.5(1)(e)
+    # and Japan's APPI Art.19
+    # ------------------------------------------------------------------
+    retention_rules = {
+        "EU": {
+            "biometric_templates": {
+                "days": 30,
+                "legal_basis": "GDPR Art.5(1)(e)"
+            },
+            "access_logs": {
+                "days": 365,
+                "legal_basis": "GDPR Art.30"
+            }
+        },
+        "JP": {
+            "biometric_templates": {
+                "days": 60,
+                "legal_basis": "APPI Art.19"
+            }
+        }
+    }
+    retention_service.load_rules(retention_rules)  # pseudo-call enforcing rules
     
     # DPIA service
     dpia_service = create_dpia_service(db, audit_logger)
@@ -111,6 +136,10 @@ def create_app(config_name: str = None) -> Flask:
     
     # 6. Setup automated data retention (background processing)
     setup_data_retention_scheduler()
+    # Scheduler enforces retention policies
+    # schedule.every().day.at("02:00").do(retention_service.cleanup_expired_data)
+    # Cron equivalent:
+    # 0 2 * * * /usr/bin/python manage.py run_retention_cleanup
     
     # =========================================================================
     # Your existing service registrations go here
@@ -146,6 +175,66 @@ def create_app(config_name: str = None) -> Flask:
 
 
 # =============================================================================
+# AUDIT LOGGING SETUP
+# =============================================================================
+
+### Creating the audit logger instance
+
+```python
+from plugins.compliance_plugin.services.audit_logger import create_audit_logger
+
+audit_logger = create_audit_logger(db)
+```
+
+### Configuring log destinations (database/file)
+
+Database writes happen automatically via `ComplianceAuditLogger`.  
+To also log to a file:
+
+```python
+import logging
+
+file_handler = logging.FileHandler("logs/compliance_audit.log")
+logging.getLogger("compliance").addHandler(file_handler)
+```
+
+### Creating the `compliance_audit_log` table
+
+```sql
+CREATE TABLE IF NOT EXISTS compliance_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    actor_user_id VARCHAR(50) NOT NULL,
+    target_user_id VARCHAR(50),
+    action_type VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL,
+    resource_id VARCHAR(100),
+    source_ip VARCHAR(45),
+    user_agent TEXT,
+    request_id VARCHAR(100),
+    description TEXT NOT NULL,
+    legal_basis VARCHAR(50),
+    data_categories JSONB,
+    additional_metadata JSONB
+);
+```
+
+### Sample log entries
+
+| timestamp               | actor_user_id | action_type   | resource_type | description                                     | legal_basis          |
+|-------------------------|---------------|---------------|---------------|-------------------------------------------------|----------------------|
+| 2024-05-01T10:00:00Z    | user_1        | LOGIN         | user_profile  | User logged in                                  | legitimate_interests |
+| 2024-05-02T09:00:00Z    | admin_1       | DATA_DELETION | personal_data | Purged inactive account per retention policy    | retention_policy     |
+
+### Retention settings
+
+```python
+from plugins.compliance_plugin.config import ComplianceConfig
+
+config = ComplianceConfig({"audit_retention_days": 365})
+```
+
+# =============================================================================
 # STEP 2: Update existing models to include compliance fields
 # =============================================================================
 
@@ -174,6 +263,160 @@ def upgrade_existing_people_table():
     CREATE INDEX IF NOT EXISTS idx_access_events_contains_biometric ON access_events(contains_biometric_data);
     """
     return upgrade_sql
+
+
+
+# =============================================================================
+# Cross-Border Transfer Tracking
+# =============================================================================
+
+def create_cross_border_transfer_table():
+    """
+    SQL schema for tracking cross-border data transfers.
+    """
+    schema_sql = """
+    CREATE TABLE IF NOT EXISTS cross_border_transfer (
+        id SERIAL PRIMARY KEY,
+        destination VARCHAR(100) NOT NULL,
+        safeguard VARCHAR(255) NOT NULL,
+        approval BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    """
+    return schema_sql
+
+from plugins.compliance_plugin.services.cross_border_transfer_service import (
+    TransferMechanism,
+)
+
+def example_transfer_assessment():
+    """
+    Demonstrate assessing a transfer and using SCC templates.
+    """
+    container = Container()
+    transfer_service = container.get('cross_border_transfer_service')
+
+    assessment = transfer_service.assess_transfer_legality(
+        destination_country='BR',
+        data_types=['profile_data'],
+        transfer_purpose='analytics',
+        data_subject_count=1000,
+        recipient_entity='AnalyticsPartner',
+        transfer_relationship='controller_to_processor',
+    )
+
+    if assessment['has_adequacy_decision']:
+        print('Destination covered by adequacy decision')
+    else:
+        scc_template = transfer_service._scc_templates['controller_to_processor']
+        transfer_service.register_transfer_activity(
+            assessment_id=assessment['assessment_id'],
+            transfer_mechanism=TransferMechanism.STANDARD_CONTRACTUAL_CLAUSES,
+            transfer_details={'scc_template': scc_template},
+            authorized_by='dpo@yourcompany.com',
+        )
+
+# =============================================================================
+# Additional compliance tables for end-to-end auditability
+# =============================================================================
+
+## consent_log
+Tracks every change to a user's consent status.
+
+```sql
+CREATE TABLE IF NOT EXISTS consent_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    consent_type VARCHAR(100) NOT NULL,
+    granted BOOLEAN NOT NULL,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_consent_log_user_id ON consent_log(user_id);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/004_create_consent_log.sql
+```
+
+---
+
+## dsar_request
+Stores Data Subject Access Requests (DSAR) and their processing state.
+
+```sql
+CREATE TABLE IF NOT EXISTS dsar_request (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    request_type VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    data JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_dsar_request_user_id ON dsar_request(user_id);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/005_create_dsar_request.sql
+```
+
+---
+
+## compliance_audit_log
+Centralized audit trail for all compliance-related actions.
+
+```sql
+CREATE TABLE IF NOT EXISTS compliance_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_type VARCHAR(100) NOT NULL,
+    event_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    actor_id UUID,
+    target_id UUID,
+    event_details JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_compliance_audit_log_event_time
+    ON compliance_audit_log(event_time);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/006_create_compliance_audit_log.sql
+```
+
+---
+
+## cross_border_transfer
+Logs transfers of personal data across national borders.
+
+```sql
+CREATE TABLE IF NOT EXISTS cross_border_transfer (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    destination_country VARCHAR(2) NOT NULL,
+    transfer_mechanism VARCHAR(100) NOT NULL,
+    legal_basis VARCHAR(100) NOT NULL,
+    transfer_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}'
+);
+
+CREATE INDEX IF NOT EXISTS idx_cross_border_transfer_user_id
+    ON cross_border_transfer(user_id);
+```
+
+Migration command:
+
+```bash
+psql -f migrations/007_create_cross_border_transfer.sql
+```
 
 
 # =============================================================================
@@ -237,7 +480,7 @@ class EnhancedAnalyticsService:
             purpose='security_analytics',
             legal_basis='consent'
         )
-        
+
         return analysis_data
 
 
@@ -392,6 +635,62 @@ document.getElementById('delete-my-data').onclick = function() {
 </script>
 """
 
+
+# DSAR request endpoints
+
+The compliance plugin exposes a single Flask endpoint for creating Data Subject Access
+Requests (DSARs):
+
+```
+POST /v1/compliance/dsar/request
+```
+
+Specify the request type in the JSON body to create different DSAR requests:
+
+- **Access**
+  ```bash
+  curl -X POST /v1/compliance/dsar/request \
+       -H 'Content-Type: application/json' \
+       -d '{"request_type": "access", "email": "user@example.com"}'
+  ```
+- **Erasure**
+  ```bash
+  curl -X POST /v1/compliance/dsar/request \
+       -H 'Content-Type: application/json' \
+       -d '{"request_type": "erasure", "email": "user@example.com"}'
+  ```
+- **Portability**
+  ```bash
+  curl -X POST /v1/compliance/dsar/request \
+       -H 'Content-Type: application/json' \
+       -d '{"request_type": "portability", "email": "user@example.com"}'
+  ```
+
+### dsar_service workflow
+
+```python
+from yosai_intel_dashboard.src.services.compliance.dsar_service import (
+    DSARService, DSARRequestType
+)
+
+dsar_service: DSARService = container.get("dsar_service")
+
+# Queue a DSAR
+request_id = dsar_service.create_request(
+    user_id="123", request_type=DSARRequestType.ACCESS, email="user@example.com"
+)
+
+# Fulfill the request
+dsar_service.process_request(request_id, processed_by="admin-1")
+
+# Audit the request
+logs = dsar_service.audit_logger.get_actions(
+    resource_type="dsar_request", resource_id=request_id
+)
+```
+
+The example above queues a DSAR, processes it once fulfilled, and retrieves the
+audit trail for review.
 
 # =============================================================================
 # STEP 5: Compliance monitoring dashboard integration
