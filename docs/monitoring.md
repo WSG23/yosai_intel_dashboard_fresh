@@ -57,3 +57,27 @@ registry = ModelRegistry(database_url="sqlite:///models.db", bucket="models")
 monitor = ModelMonitor(registry)
 monitor.start()
 ```
+
+## Prediction Drift Monitoring
+
+`DriftMonitor` periodically compares live predictions with a baseline
+distribution. Each run logs PSI, KS and Wasserstein metrics, stores them via a
+user provided callback and triggers alerts when thresholds are exceeded.
+
+```python
+from services.monitoring.drift_monitor import DriftMonitor
+
+baseline = get_training_predictions()
+
+monitor = DriftMonitor(
+    baseline_supplier=lambda: baseline,
+    live_supplier=get_live_predictions,
+    thresholds={"psi": 0.2},
+    metric_store=save_metrics,
+    alert_func=notify_team,
+)
+monitor.start()
+```
+
+Metrics are appended to `monitor.history` and `alert_func` receives the column
+name and metric values whenever drift is detected.
