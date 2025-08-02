@@ -95,6 +95,28 @@ Low percentiles close to zero indicate fast responses while higher values or a
 steadily increasing trend suggest performance issues with a particular route or
 dependency.
 
+### Performance Budgets
+
+Latency budgets for critical endpoints are defined in
+`config/performance_budgets.yml`. Each entry specifies `p50`, `p95` and `p99`
+thresholds in milliseconds:
+
+```yaml
+endpoints:
+  /health:
+    p50: 50
+    p95: 100
+    p99: 200
+```
+
+`PerformanceProfiler` loads these budgets and compares live request metrics.
+When a percentile exceeds its configured budget the profiler increments the
+`performance_budget_violation_total` Prometheus counter and dispatches an alert.
+Prometheus rules in `monitoring/alerts.yml` evaluate this counter and raise
+notifications whenever budgets are violated. The load-testing helper
+`load-tests/check_thresholds.sh` reads the same file to fail runs that exceed
+any threshold.
+
 ### Deprecated Function Usage
 
 Decorate legacy helpers with `@deprecated` from `core` to automatically record

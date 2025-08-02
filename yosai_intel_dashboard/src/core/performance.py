@@ -3,6 +3,8 @@
 Performance optimization and monitoring system
 Inspired by Apple's Instruments and performance measurement tools
 """
+from __future__ import annotations
+
 import functools
 import logging
 import threading
@@ -11,6 +13,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -23,13 +26,35 @@ from typing import (
     Tuple,
 )
 
+import numpy as np
 import pandas as pd
 import psutil
+import yaml
+from prometheus_client import REGISTRY, Counter
+from prometheus_client.core import CollectorRegistry
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
+
+if "performance_budget_violation_total" not in REGISTRY._names_to_collectors:
+    performance_budget_violation_total = Counter(
+        "performance_budget_violation_total",
+        "Number of times performance budgets were violated",
+        ["endpoint", "percentile"],
+    )
+else:  # pragma: no cover - defensive in tests
+    performance_budget_violation_total = Counter(
+        "performance_budget_violation_total",
+        "Number of times performance budgets were violated",
+        ["endpoint", "percentile"],
+        registry=CollectorRegistry(),
+    )
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
-    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import ModelMetrics
+    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
+        ModelMetrics,
+    )
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer
@@ -472,10 +497,35 @@ class PerformanceProfiler(BaseModel):
         config: Optional[Any] = None,
         db: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        alert_dispatcher: Optional["AlertDispatcher"] = None,
     ) -> None:
         super().__init__(config, db, logger)
         self.profile_data: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
         self.active_profiles: Dict[str, float] = {}
+        self.endpoint_durations: Dict[str, List[float]] = defaultdict(list)
+        self.budgets = self._load_budgets()
+        if alert_dispatcher is not None:
+            self.alert_dispatcher = alert_dispatcher
+        else:
+            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+                AlertConfig,
+                AlertDispatcher,
+            )
+
+            self.alert_dispatcher = AlertDispatcher(AlertConfig())
+
+    def _load_budgets(self) -> Dict[str, Dict[str, float]]:
+        """Load performance budgets from YAML file."""
+        path = (
+            Path(__file__).resolve().parents[3] / "config" / "performance_budgets.yml"
+        )
+        try:
+            with path.open() as fh:
+                data = yaml.safe_load(fh) or {}
+            return data.get("endpoints", {})
+        except FileNotFoundError:  # pragma: no cover - configuration missing
+            self.logger.warning("Performance budget file missing at %s", path)
+            return {}
 
     def start_profiling(self, session_name: str) -> None:
         """Start a profiling session"""
@@ -488,6 +538,8 @@ class PerformanceProfiler(BaseModel):
 
         duration = time.time() - self.active_profiles.pop(session_name)
         self.profile_data[session_name].append(("session", duration))
+        self.endpoint_durations[session_name].append(duration)
+        self._check_budget(session_name)
         return duration
 
     def profile_function(
@@ -528,6 +580,31 @@ class PerformanceProfiler(BaseModel):
             }
 
         return report
+
+    def _check_budget(self, endpoint: str) -> None:
+        """Compare recent metrics for ``endpoint`` against configured budgets."""
+        budget = self.budgets.get(endpoint)
+        if not budget:
+            return
+        durations = np.array(self.endpoint_durations[endpoint]) * 1000  # ms
+        percentiles = {
+            "p50": float(np.percentile(durations, 50)),
+            "p95": float(np.percentile(durations, 95)),
+            "p99": float(np.percentile(durations, 99)),
+        }
+        for perc, value in percentiles.items():
+            threshold = budget.get(perc)
+            if threshold is not None and value > threshold:
+                msg = (
+                    f"{endpoint} {perc} {value:.2f}ms exceeds budget {threshold:.2f}ms"
+                )
+                performance_budget_violation_total.labels(
+                    endpoint=endpoint, percentile=perc
+                ).inc()
+                if self.alert_dispatcher:
+                    self.alert_dispatcher.send_alert(msg)
+                else:  # pragma: no cover - no dispatcher configured
+                    self.logger.warning(msg)
 
 
 class CacheMonitor(BaseModel):
