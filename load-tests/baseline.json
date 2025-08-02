@@ -1,0 +1,20 @@
+{
+  "/api/v1/analytics/dashboard-summary": {
+    "throughput": 100,
+    "p50": 200,
+    "p95": 500,
+    "p99": 800
+  },
+  "/api/v1/analytics/access-patterns": {
+    "throughput": 80,
+    "p50": 200,
+    "p95": 500,
+    "p99": 800
+  },
+  "/health": {
+    "throughput": 50,
+    "p50": 50,
+    "p95": 100,
+    "p99": 200
+  }
+}

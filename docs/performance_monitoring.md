@@ -55,6 +55,20 @@ memory consumption:
 Grafana can visualise these metrics using the dashboard template in
 `monitoring/grafana/dashboards/unified-platform.json`.
 
+An additional service performance dashboard lives in
+`dashboards/performance/service_performance.json`. Import it into Grafana to
+view API latency percentiles, CPU and memory usage, and asynchronous task
+timings sourced from Prometheus.
+
+Alert rules for these metrics are defined in `monitoring/alerts.yml`. They cover
+high latency, CPU and memory saturation, and slow background jobs. Configure
+Alertmanager with a Slack receiver to get notified when thresholds are
+breached.
+
+Prometheus data is persisted by mounting a volume and setting a 30‑day retention
+period in `docker-compose.dev.yml` and `docker-compose.unified.yml`, allowing
+historical trend analysis.
+
 ### Circuit Breaker Metrics
 
 Both the Python and Go services expose circuit breaker transitions using the
@@ -335,3 +349,30 @@ Two helper scripts under `monitoring/` capture runtime resource usage.
   ```bash
   python -m monitoring.tracemalloc_profile scripts/my_job.py --snapshot allocs.snap
   ```
+
+## Load Testing with Locust
+
+The `load-tests` folder provides utilities for exercising key API endpoints under load.
+
+### Local execution
+
+Install the development requirements and run:
+
+```bash
+./load-tests/run_locust.sh
+```
+
+This script runs Locust in headless mode against `http://localhost:8000` by default and
+writes results to `load-tests/results/`.
+
+### Continuous integration
+
+CI environments should invoke:
+
+```bash
+./load-tests/run_locust_ci.sh
+```
+
+It generates JSON and HTML regression reports comparing the current metrics with the
+baseline (`load-tests/baseline.json`) and validates p50/p95/p99 latency targets defined in
+`load-tests/thresholds.json`.
