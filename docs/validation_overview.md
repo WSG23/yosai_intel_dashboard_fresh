@@ -37,11 +37,29 @@ if not result['valid']:
 
 SecurityValidator provides comprehensive validation including:
 - **SQL injection prevention** - Detects and blocks SQL injection attempts
-- **XSS attack prevention** - Sanitizes cross-site scripting attempts  
+- **XSS attack prevention** - Sanitizes cross-site scripting attempts
 - **Path traversal prevention** - Blocks directory traversal attacks
 - **Unicode security** - Handles surrogate characters and encoding issues
 - **File validation** - Checks file types, sizes, and malicious content
 - **Input sanitization** - Cleans and normalizes user input
+
+## Anomaly Detection
+
+`SecurityValidator` can optionally incorporate an anomaly detection model to
+score inputs. Any model with a ``predict`` method returning ``1`` for normal
+values and ``-1`` for outliers can be supplied, such as scikit-learn's
+``IsolationForest``:
+
+```python
+from sklearn.ensemble import IsolationForest
+from validation import SecurityValidator
+
+model = IsolationForest().fit([[len(s)] for s in ["ok", "normal"]])
+validator = SecurityValidator(anomaly_model=model)
+
+# Raises ValidationError if the model predicts an outlier
+validator.validate_input("suspicious")
+```
 
 ## Migration from Deprecated Classes
 

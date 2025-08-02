@@ -1,12 +1,28 @@
 from __future__ import annotations
 
+"""Security validation utilities.
+
+This module exposes :class:`SecurityValidator` which can optionally incorporate
+an anomaly detection model such as scikit-learn's ``IsolationForest``. The model
+must implement a ``predict`` method returning ``1`` for normal inputs and ``-1``
+for anomalies.
+
+Example
+-------
+>>> from sklearn.ensemble import IsolationForest
+>>> from validation.security_validator import SecurityValidator
+>>> model = IsolationForest().fit([[1], [2], [3]])
+>>> validator = SecurityValidator(anomaly_model=model)
+>>> validator.validate_input("hello")  # doctest: +SKIP
+{"valid": True, "sanitized": "hello"}
+"""
+
 import html
 import os
 import re
-from typing import Iterable
+from typing import Any, Iterable
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
-# Import dynamically inside methods to avoid circular imports during module init
 
 from .core import ValidationResult
 from .file_validator import FileValidator
@@ -34,10 +50,27 @@ class SQLRule(ValidationRule):
 class SecurityValidator(CompositeValidator):
     """Validate input strings and file uploads."""
 
-    def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
+    def __init__(
+        self,
+        rules: Iterable[ValidationRule] | None = None,
+        anomaly_model: Any | None = None,
+    ) -> None:
         base_rules = list(rules or [XSSRule(), SQLRule()])
         super().__init__(base_rules)
         self.file_validator = FileValidator()
+        self.anomaly_model = anomaly_model
+
+    def _anomaly_check(self, value: str, field_name: str) -> None:
+        """Score ``value`` with ``anomaly_model`` if provided."""
+
+        if not self.anomaly_model:
+            return
+        try:
+            prediction = self.anomaly_model.predict([[len(value)]])
+        except Exception as exc:  # pragma: no cover - defensive
+            raise ValidationError("Anomaly check failed") from exc
+        if prediction[0] == -1:
+            raise ValidationError(f"Anomalous input detected in {field_name}")
 
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
@@ -67,6 +100,7 @@ class SecurityValidator(CompositeValidator):
         return {"valid": not issues, "issues": issues, "filename": sanitized}
 
     def validate_input(self, value: str, field_name: str = "input") -> dict:
+        self._anomaly_check(value, field_name)
         result = self.validate(value)
         if not result.valid:
             raise ValidationError("; ".join(result.issues or []))
