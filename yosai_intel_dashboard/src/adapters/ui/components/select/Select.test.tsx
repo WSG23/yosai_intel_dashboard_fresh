@@ -145,3 +145,16 @@ test('filters options when searchable', () => {
   expect(screen.queryByText('A')).not.toBeInTheDocument();
   expect(screen.getByText('B')).toBeInTheDocument();
 });
+
+test('filters options and selects via keyboard', () => {
+  const onChange = jest.fn();
+  render(
+    <Select value="" onChange={onChange} options={options} searchable placeholder="Search" />
+  );
+  const input = screen.getByRole('combobox');
+  fireEvent.change(input, { target: { value: 'b' } });
+  expect(screen.getByRole('option')).toHaveTextContent('B');
+  fireEvent.keyDown(input, { key: 'ArrowDown' });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(onChange).toHaveBeenCalledWith('b');
+});

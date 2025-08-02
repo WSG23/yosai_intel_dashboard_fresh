@@ -13,9 +13,6 @@ export interface SelectProps
   multiple?: boolean;
   placeholder?: string;
   className?: string;
-  /**
-   * Enables an internal search box that filters the available options.
-   */
 
   searchable?: boolean;
 }
@@ -30,66 +27,139 @@ export const Select = <T extends string,>({
   searchable = false,
   ...rest
 }) => {
-  const [query, setQuery] = React.useState('');
-  const filtered = React.useMemo(() => {
-    return options.filter(o =>
-      o.label.toLowerCase().includes(query.toLowerCase())
-    );
-  }, [options, query]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-
-    if (multiple) {
-      const current = Array.isArray(value) ? [...value] : [];
-      const index = current.indexOf(val);
-      if (index > -1) {
-        current.splice(index, 1);
+  if (!searchable) {
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      if (multiple) {
+        const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+        onChange(selected);
       } else {
-        current.push(val);
+        onChange(e.target.value);
       }
-      onChange(current);
-      setSearch('');
+    };
+
+    return (
+      <select
+        multiple={multiple}
+        value={value}
+        onChange={handleChange}
+        className={`border rounded-md px-2 py-1 ${className}`}
+        {...rest}
+      >
+        {!multiple && placeholder && <option value="">{placeholder}</option>}
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  const [query, setQuery] = React.useState('');
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
+  const filtered = React.useMemo(
+    () =>
+      options.filter(o =>
+        o.label.toLowerCase().includes(query.toLowerCase())
+      ),
+    [options, query]
+  );
+
+  React.useEffect(() => {
+    if (activeIndex > filtered.length - 1) {
+      setActiveIndex(filtered.length - 1);
+    }
+  }, [filtered.length, activeIndex]);
+
+  const selectOption = (index: number) => {
+    const opt = filtered[index];
+    if (!opt) return;
+    if (multiple) {
+      const current = Array.isArray(value) ? value : [];
+      const exists = current.includes(opt.value);
+      const next = exists
+        ? current.filter(v => v !== opt.value)
+        : [...current, opt.value];
+      onChange(next);
     } else {
-      onChange(val);
-      const selectedOpt = options.find(o => o.value === val);
-      setSearch(selectedOpt ? selectedOpt.label : '');
-      setIsOpen(false);
+      onChange(opt.value);
     }
   };
 
-  const renderSelect = (
-    <select
-      multiple={multiple}
-      value={value}
-      onChange={handleChange}
-      className={`border rounded-md px-2 py-1 ${className}`}
-      {...rest}
-    >
-      {!multiple && placeholder && <option value="">{placeholder}</option>}
-      {filtered.map(opt => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!filtered.length) return;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setActiveIndex(i => (i + 1) % filtered.length);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setActiveIndex(i => (i - 1 + filtered.length) % filtered.length);
+        break;
+      case 'Home':
+        e.preventDefault();
+        setActiveIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setActiveIndex(filtered.length - 1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        selectOption(activeIndex);
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setQuery('');
+        setActiveIndex(0);
+        break;
+    }
+  };
 
-  );
-
-  if (!searchable) {
-    return renderSelect;
-  }
+  const listboxId = React.useId();
 
   return (
-    <div>
+    <div className={className}>
       <input
         type="text"
         value={query}
-        onChange={e => setQuery(e.target.value)}
-        placeholder="Search..."
-        aria-label="Search options"
-        className="mb-2 border px-2 py-1"
+        placeholder={placeholder}
+        onChange={e => {
+          setQuery(e.target.value);
+          setActiveIndex(0);
+        }}
+        onKeyDown={handleKeyDown}
+        aria-controls={listboxId}
+        aria-expanded="true"
+        role="combobox"
+        className="border rounded-md px-2 py-1 mb-2 w-full"
+        {...rest}
       />
-      {renderSelect}
+      <ul role="listbox" id={listboxId} className="border rounded-md max-h-60 overflow-auto">
+        {filtered.map((opt, idx) => {
+          const selected = multiple
+            ? Array.isArray(value) && value.includes(opt.value)
+            : value === opt.value;
+          return (
+            <li
+              key={opt.value}
+              role="option"
+              aria-selected={selected}
+              id={`${listboxId}-option-${idx}`}
+              className={`${
+                activeIndex === idx ? 'bg-blue-500 text-white' : ''
+              } px-2 py-1 cursor-pointer`}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => selectOption(idx)}
+            >
+              {opt.label}
+            </li>
+          );
+        })}
+      </ul>
+
     </div>
   );
 };
