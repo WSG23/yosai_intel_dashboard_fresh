@@ -8,11 +8,11 @@ import warnings
 from typing import Optional
 
 from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
-from monitoring.model_performance_monitor import (
+from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
-from monitoring.prometheus.model_metrics import update_model_metrics
+from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.model_metrics import update_model_metrics
 from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
 
 

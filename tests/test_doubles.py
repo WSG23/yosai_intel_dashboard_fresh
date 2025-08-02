@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 
 

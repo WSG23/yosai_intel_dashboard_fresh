@@ -29,7 +29,7 @@ import psutil
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
-    from monitoring.model_performance_monitor import ModelMetrics
+    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import ModelMetrics
 
 from .base_model import BaseModel
 from .cpu_optimizer import CPUOptimizer

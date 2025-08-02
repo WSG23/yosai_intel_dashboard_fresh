@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Protocol, assert_type, runtime_che
 import pandas as pd
 import pytest
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import (
+from yosai_intel_dashboard.src.core.protocols import (
     AnalyticsServiceProtocol,
     ConfigurationProtocol,
     DatabaseProtocol,

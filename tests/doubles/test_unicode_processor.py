@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 
 
-class TestUnicodeProcessor(UnicodeProcessorProtocol):
+class FakeUnicodeProcessor(UnicodeProcessorProtocol):
     """Minimal Unicode processor for tests."""
 
     def clean_text(self, text: str, replacement: str = "") -> str:

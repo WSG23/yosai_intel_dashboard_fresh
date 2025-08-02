@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import (
+from yosai_intel_dashboard.src.core.protocols import (
     ConfigurationProtocol,
     UnicodeProcessorProtocol,
 )

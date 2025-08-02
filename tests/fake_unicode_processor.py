@@ -1,52 +1,46 @@
+"""Fake unicode processor for testing."""
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Union
-
 import pandas as pd
+from typing import Any
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 
 
 class FakeUnicodeProcessor(UnicodeProcessorProtocol):
-    """Minimal Unicode processor used for tests."""
-
-    def clean_surrogate_chars(self, text: str, replacement: str = "") -> str:
+    """Test implementation of UnicodeProcessor."""
+    
+    def clean_text(self, text: str, replacement: str = "") -> str:
+        """Clean text by removing surrogates."""
         if not isinstance(text, str):
             text = str(text)
+        # Remove surrogates
         text = text.replace("\ud800", replacement).replace("\udfff", replacement)
         return text.replace("\x00", "")
-
-    def clean_text(self, text: str, replacement: str = "") -> str:
-        """Alias for ``clean_surrogate_chars`` for protocol compliance."""
-        return self.clean_surrogate_chars(text, replacement)
-
-    def safe_decode_bytes(self, data: bytes, encoding: str = "utf-8") -> str:
-        try:
-            return data.decode(encoding, errors="ignore")
-        except Exception:
-            return ""
-
-    def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str:
-        """Alias for ``safe_decode_bytes`` for protocol compliance."""
-        return self.safe_decode_bytes(data, encoding)
-
+    
+    def clean_surrogate_chars(self, text: str, replacement: str = "") -> str:
+        """Remove surrogate characters."""
+        if not isinstance(text, str):
+            return text
+        # Remove all surrogates in the range
+        import re
+        return re.sub(r'[\ud800-\udfff]', replacement, text)
+    
     def safe_encode_text(self, value: Any) -> str:
-        if isinstance(value, bytes):
-            return self.safe_decode_bytes(value)
-        if value is None:
-            return ""
-        return str(value)
-
-    def sanitize_dataframe(
-        self,
-        df: pd.DataFrame,
-        *,
-        progress: Union[bool, Callable[[int, int], None], None] = None,
-    ) -> pd.DataFrame:
-        df_clean = df.copy()
-        df_clean.columns = [
-            self.safe_encode_text(c).lstrip("=+-@") for c in df_clean.columns
-        ]
-        for col in df_clean.select_dtypes(include=["object"]).columns:
-            df_clean[col] = df_clean[col].apply(self.safe_encode_text)
-        return df_clean
+        """Safely encode text."""
+        return "" if value is None else str(value)
+    
+    def safe_decode_text(self, data: bytes, encoding: str = "utf-8") -> str:
+        """Safely decode text."""
+        return data.decode(encoding, errors="replace") if isinstance(data, bytes) else str(data)
+    
+    def sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Sanitize dataframe."""
+        cleaned = df.copy()
+        # Clean column names
+        cleaned.columns = [col.lstrip("=") for col in cleaned.columns]
+        # Clean string values in dataframe
+        for col in cleaned.columns:
+            if cleaned[col].dtype == 'object':
+                cleaned[col] = cleaned[col].apply(lambda x: self.clean_surrogate_chars(x) if isinstance(x, str) else x)
+        return cleaned

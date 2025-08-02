@@ -11,8 +11,9 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from analytics.feature_extraction import extract_event_features
-from monitoring.model_performance_monitor import (
+# TODO: Fix import - analytics.feature_extraction not found
+# from analytics.feature_extraction import extract_event_features
+from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
