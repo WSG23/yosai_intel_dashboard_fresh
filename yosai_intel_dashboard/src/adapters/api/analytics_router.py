@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
@@ -25,6 +25,14 @@ async def init_cache_manager() -> None:
 class AnalyticsQuery(BaseModel):
     facility_id: Optional[str] = Query(default="default")
     range: Optional[str] = Query(default="30d")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"facility_id": "fac-123", "range": "7d"}
+            ]
+        }
+    )
 
 
 @router.get("/patterns")

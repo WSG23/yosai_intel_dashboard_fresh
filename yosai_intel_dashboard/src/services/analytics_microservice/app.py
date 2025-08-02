@@ -23,7 +23,7 @@ from fastapi import (
 )
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from yosai_intel_dashboard.src.infrastructure.config import get_database_config
@@ -165,6 +165,14 @@ class PatternsRequest(BaseModel):
 
 class PredictRequest(BaseModel):
     data: Any
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"data": {"features": [0.1, 0.2, 0.3]}}
+            ]
+        }
+    )
 
 
 @app.on_event("startup")
