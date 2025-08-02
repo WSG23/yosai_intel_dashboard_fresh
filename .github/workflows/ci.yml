@@ -3,8 +3,29 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
+  validate-structure:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Create symlinks
+        run: python scripts/create_symlinks.py
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Validate structure
+        run: python scripts/validate_structure.py
+      - name: Verify imports
+        run: python scripts/verify_imports.py
+
+  build:
+    needs: validate-structure
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: "${{ github.workspace }}:${{ github.workspace }}/yosai_intel_dashboard/src"
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
@@ -20,6 +41,8 @@ jobs:
           set -xe
           pip install -r requirements.lock
           pip install -r requirements-test.txt
+      - name: Create symlinks
+        run: python scripts/create_symlinks.py
       - name: Run pre-commit
         run: |
           set -xe
@@ -81,10 +104,16 @@ jobs:
           set -xe
           python tools/organize_imports.py --check
 
-        - name: PyTest
-          run: |
-            set -xe
-            LIGHTWEIGHT_SERVICES=1 pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml --cov-fail-under=80
+      - name: PyTest
+        run: |
+          set -xe
+          LIGHTWEIGHT_SERVICES=1 pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml --cov-fail-under=80
+          pytest tests/migration/ -v
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: coverage.xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
