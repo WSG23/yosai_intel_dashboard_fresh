@@ -1,0 +1,7 @@
+environment: prod
+replicaCount: 3
+image:
+  tag: prod
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 10
