@@ -5,11 +5,11 @@ export interface Option<T extends string> {
   label: string;
 }
 
-export interface SelectProps<T extends string = string>
-  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
-  value: T | T[];
-  onChange: (value: T | T[]) => void;
-  options: Option<T>[];
+export interface SelectProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+  value: string | string[];
+  onChange: (value: string | string[]) => void;
+  options: Option[];
   multiple?: boolean;
   placeholder?: string;
   className?: string;
@@ -25,91 +25,123 @@ export const Select = <T extends string,>({
   className = '',
   searchable = false,
   ...rest
-}: SelectProps<T>) => {
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (multiple) {
-      const selected = Array.from(e.target.selectedOptions).map(o => o.value as T);
-      onChange(selected as T[]);
-    } else {
-      onChange(e.target.value as T);
+}) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+  const listboxId = React.useId();
 
+  const filteredOptions = React.useMemo(
+    () =>
+      options.filter(opt =>
+        opt.label.toLowerCase().includes(search.toLowerCase())
+      ),
+    [options, search]
+  );
+
+  const selectOption = (val: string) => {
+    if (multiple) {
+      const current = Array.isArray(value) ? [...value] : [];
+      const index = current.indexOf(val);
+      if (index > -1) {
+        current.splice(index, 1);
+      } else {
+        current.push(val);
+      }
+      onChange(current);
+      setSearch('');
+    } else {
+      onChange(val);
+      const selectedOpt = options.find(o => o.value === val);
+      setSearch(selectedOpt ? selectedOpt.label : '');
+      setIsOpen(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!filtered.length) return;
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setActiveIndex(i => (i + 1) % filtered.length);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setActiveIndex(i => (i - 1 + filtered.length) % filtered.length);
-        break;
-      case 'Home':
-        e.preventDefault();
-        setActiveIndex(0);
-        break;
-      case 'End':
-        e.preventDefault();
-        setActiveIndex(filtered.length - 1);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        selectOption(activeIndex);
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setQuery('');
-        setActiveIndex(0);
-        break;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIsOpen(true);
+      setActiveIndex(prev => {
+        const next = prev === null ? 0 : Math.min(prev + 1, filteredOptions.length - 1);
+        return next;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setIsOpen(true);
+      setActiveIndex(prev => {
+        const next = prev === null ? filteredOptions.length - 1 : Math.max(prev - 1, 0);
+        return next;
+      });
+    } else if (e.key === 'Enter') {
+      if (activeIndex !== null && filteredOptions[activeIndex]) {
+        selectOption(filteredOptions[activeIndex].value);
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
     }
   };
 
-  const listboxId = React.useId();
+  const activeId =
+    activeIndex !== null ? `${listboxId}-option-${activeIndex}` : undefined;
 
   return (
-    <div className={className}>
+    <div className={`relative ${className}`} {...rest}>
       <input
         type="text"
-        value={query}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        aria-activedescendant={activeId}
         placeholder={placeholder}
+        value={search}
         onChange={e => {
-          setQuery(e.target.value);
-          setActiveIndex(0);
+          setSearch(e.target.value);
+          setIsOpen(true);
         }}
         onKeyDown={handleKeyDown}
-        aria-controls={listboxId}
-        aria-expanded="true"
-        role="combobox"
-        className="border rounded-md px-2 py-1 mb-2 w-full"
-        {...rest}
+        onFocus={() => setIsOpen(true)}
+        className="border rounded-md px-2 py-1 w-full"
       />
-      <ul role="listbox" id={listboxId} className="border rounded-md max-h-60 overflow-auto">
-        {filtered.map((opt, idx) => {
-          const selected = multiple
-            ? Array.isArray(value) && value.includes(opt.value)
-            : value === opt.value;
-          return (
-            <li
-              key={opt.value}
-              role="option"
-              aria-selected={selected}
-              id={`${listboxId}-option-${idx}`}
-              className={`${
-                activeIndex === idx ? 'bg-blue-500 text-white' : ''
-              } px-2 py-1 cursor-pointer`}
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => selectOption(idx)}
-            >
-              {opt.label}
-            </li>
-          );
-        })}
-      </ul>
+      {isOpen && (
+        <ul
+          role="listbox"
+          id={listboxId}
+          aria-multiselectable={multiple || undefined}
+          className="border rounded-md mt-1 max-h-60 overflow-auto bg-white z-10"
+        >
+          {filteredOptions.map((opt, index) => {
+            const selected = multiple
+              ? Array.isArray(value) && value.includes(opt.value)
+              : value === opt.value;
+            return (
+              <li
+                key={opt.value}
+                role="option"
+                id={`${listboxId}-option-${index}`}
+                aria-selected={selected}
+                className={`px-2 py-1 cursor-pointer hover:bg-gray-100 ${
+                  activeIndex === index ? 'bg-gray-100' : ''
+                }`}
+                onMouseDown={e => {
+                  e.preventDefault();
+                  selectOption(opt.value);
+                }}
+                onMouseEnter={() => setActiveIndex(index)}
+              >
+                {opt.label}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div role="status" aria-live="polite" className="sr-only">
+        {`${filteredOptions.length} results available`}
+      </div>
+
     </div>
   );
 };
 
 export default Select;
+

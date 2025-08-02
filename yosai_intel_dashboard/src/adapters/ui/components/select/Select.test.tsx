@@ -10,18 +10,50 @@ const options: Option<'a' | 'b'>[] = [
 test('calls onChange with selected value', () => {
   const onChange = jest.fn();
   render(<Select value="" onChange={onChange} options={options} />);
-  fireEvent.change(screen.getByRole('combobox'), { target: { value: 'a' } });
+  const input = screen.getByRole('combobox');
+  fireEvent.focus(input);
+  const option = screen.getByRole('option', { name: 'A' });
+  fireEvent.mouseDown(option);
   expect(onChange).toHaveBeenCalledWith('a');
 });
 
 test('handles multiple selection', () => {
   const onChange = jest.fn();
   render(<Select value={[]} onChange={onChange} options={options} multiple />);
-  const select = screen.getByRole('listbox');
-  fireEvent.change(select, {
-    target: { selectedOptions: [{ value: 'a' }, { value: 'b' }] }
-  });
-  expect(onChange).toHaveBeenCalledWith(['a', 'b']);
+  const input = screen.getByRole('combobox');
+  fireEvent.focus(input);
+  fireEvent.mouseDown(screen.getByRole('option', { name: 'A' }));
+  fireEvent.mouseDown(screen.getByRole('option', { name: 'B' }));
+  expect(onChange).toHaveBeenLastCalledWith(['a', 'b']);
+});
+
+test('manages aria attributes', () => {
+  render(<Select value="" onChange={() => {}} options={options} />);
+  const input = screen.getByRole('combobox');
+  expect(input).toHaveAttribute('aria-expanded', 'false');
+  fireEvent.focus(input);
+  const listbox = screen.getByRole('listbox');
+  expect(input).toHaveAttribute('aria-controls', listbox.id);
+  fireEvent.keyDown(input, { key: 'ArrowDown' });
+  const firstOption = screen.getByRole('option', { name: 'A' });
+  expect(input).toHaveAttribute('aria-activedescendant', firstOption.id);
+});
+
+test('sets aria-multiselectable when multiple', () => {
+  render(<Select value={[]} onChange={() => {}} options={options} multiple />);
+  const input = screen.getByRole('combobox');
+  fireEvent.focus(input);
+  const listbox = screen.getByRole('listbox');
+  expect(listbox).toHaveAttribute('aria-multiselectable', 'true');
+});
+
+test('announces number of results', () => {
+  render(<Select value="" onChange={() => {}} options={options} />);
+  const status = screen.getByRole('status');
+  expect(status).toHaveTextContent('2 results available');
+  const input = screen.getByRole('combobox');
+  fireEvent.change(input, { target: { value: 'A' } });
+  expect(status).toHaveTextContent('1 results available');
 });
 
 test('filters options based on search input', () => {
