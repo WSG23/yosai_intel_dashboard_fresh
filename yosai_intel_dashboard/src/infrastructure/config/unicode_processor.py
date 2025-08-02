@@ -7,7 +7,16 @@ import unicodedata
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
-from security.events import SecurityEvent, emit_security_event
+try:  # pragma: no cover - optional security events
+    from security.events import SecurityEvent, emit_security_event
+except Exception:  # pragma: no cover
+    from enum import Enum
+
+    class SecurityEvent(Enum):  # type: ignore[override]
+        VALIDATION_FAILED = 0
+
+    def emit_security_event(event: SecurityEvent, data: dict | None = None) -> None:
+        pass
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
     from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
