@@ -7,13 +7,19 @@ import threading
 import warnings
 from typing import Optional
 
+from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
 from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
 from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
 )
-from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
-from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
+from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.model_metrics import (
+    update_model_metrics,
+)
+from yosai_intel_dashboard.src.services.model_monitoring_service import (
+    ModelMonitoringService,
+)
+
 
 
 class ModelMonitor:
@@ -34,7 +40,7 @@ class ModelMonitor:
         self.interval_minutes = interval_minutes or default_interval
         self.registry = registry
         self.monitor = get_model_performance_monitor()
-        self.db = TimescaleDBManager()
+        self._monitoring_service = ModelMonitoringService()
         self._thread: Optional[threading.Thread] = None
         self._stop = threading.Event()
 
@@ -106,9 +112,28 @@ class ModelMonitor:
         for rec in records:
             if not getattr(rec, "is_active", False):
                 continue
-            metrics = self._calculate_metrics(rec.name)
-            self.monitor.log_metrics(metrics)
-            if self.monitor.detect_drift(metrics):
+            metrics_dict = rec.metrics or {}
+            metrics = ModelMetrics(
+                accuracy=metrics_dict.get("accuracy", 0.0),
+                precision=metrics_dict.get("precision", 0.0),
+                recall=metrics_dict.get("recall", 0.0),
+            )
+            update_model_metrics(metrics)
+            drift = self.monitor.detect_drift(metrics)
+            status = "drift" if drift else "ok"
+            for name, value in metrics.__dict__.items():
+                asyncio.run(
+                    self._monitoring_service.log_evaluation(
+                        rec.name,
+                        str(getattr(rec, "version", "")),
+                        name,
+                        float(value),
+                        "performance",
+                        status,
+                    )
+                )
+            if drift:
+
                 warnings.warn(
                     f"Model drift detected for {rec.name} {rec.version}",
                     RuntimeWarning,
