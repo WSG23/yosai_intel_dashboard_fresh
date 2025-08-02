@@ -1,12 +1,10 @@
 import pandas as pd
-import pytest
 
 from analytics.security_patterns import (
     SecurityEvent,
     SecurityPatternsAnalyzer,
     setup_isolated_security_testing,
 )
-from security.events import security_unified_callbacks
 
 
 def create_df_with_critical_threat():
@@ -41,45 +39,54 @@ def create_df_with_critical_threat():
 
 
 def test_callback_registration_and_fire():
-    controller = security_unified_callbacks
-    controller.clear_all_callbacks()
+    with setup_isolated_security_testing() as env:
+        controller = env.callback_manager
+        controller.clear_all_callbacks()
 
-    results = []
+        results = []
 
-    def cb(data):
-        results.append(data)
+        def cb(data):
+            results.append(data)
 
-    controller.register_event(SecurityEvent.THREAT_DETECTED, cb)
-    controller.trigger_event(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
+        controller.register_event(SecurityEvent.THREAT_DETECTED, cb)
+        controller.trigger_event(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
 
-    assert results == [{"msg": "alert"}]
-    assert controller.history == [(SecurityEvent.THREAT_DETECTED, {"msg": "alert"})]
+        assert results == [{"msg": "alert"}]
+        assert controller.history == [
+            (SecurityEvent.THREAT_DETECTED, {"msg": "alert"})
+        ]
 
 
 def test_analyzer_triggers_callbacks():
-    controller = security_unified_callbacks
-    controller.clear_all_callbacks()
-    events = []
+    with setup_isolated_security_testing() as env:
+        controller = env.callback_manager
+        controller.clear_all_callbacks()
+        events = []
 
-    controller.register_event(
-        SecurityEvent.THREAT_DETECTED,
-        lambda d: events.append(("threat", d)),
-    )
-    controller.register_event(
-        SecurityEvent.ANALYSIS_COMPLETE,
-        lambda d: events.append(("complete", d)),
-    )
+        controller.register_event(
+            SecurityEvent.THREAT_DETECTED,
+            lambda d: events.append(("threat", d)),
+        )
+        controller.register_event(
+            SecurityEvent.ANALYSIS_COMPLETE,
+            lambda d: events.append(("complete", d)),
+        )
 
-    analyzer = SecurityPatternsAnalyzer()
-    df = create_df_with_critical_threat()
-    analyzer.analyze_security_patterns(df)
+        analyzer = SecurityPatternsAnalyzer()
+        df = create_df_with_critical_threat()
+        analyzer.analyze_security_patterns(df)
 
-    events = [e[0] for e in controller.history]
-    assert SecurityEvent.THREAT_DETECTED in events
-    assert SecurityEvent.ANALYSIS_COMPLETE in events
+        events = [e[0] for e in controller.history]
+        assert SecurityEvent.THREAT_DETECTED in events
+        assert SecurityEvent.ANALYSIS_COMPLETE in events
 
 
-def test_setup_isolated_security_testing_not_implemented():
-    """Ensure the setup helper clearly indicates unfinished logic."""
-    with pytest.raises(NotImplementedError):
-        setup_isolated_security_testing()
+def test_setup_isolated_security_testing():
+    """The helper should isolate callbacks and capture logs."""
+    with setup_isolated_security_testing() as env:
+        env.callback_manager.trigger_event(
+            SecurityEvent.THREAT_DETECTED, {"msg": "alert"}
+        )
+        assert env.events[SecurityEvent.THREAT_DETECTED] == [{"msg": "alert"}]
+        env.logger.info("hello")
+        assert "hello" in env.log_stream.getvalue()
