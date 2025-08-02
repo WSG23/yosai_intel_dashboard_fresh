@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Select } from './Select';
+import { Select, Option } from './Select';
 
-const options = [
+const options: Option<'a' | 'b'>[] = [
   { value: 'a', label: 'A' },
   { value: 'b', label: 'B' }
 ];
@@ -103,4 +103,5 @@ test('multi-select keyboard toggling and focus management', () => {
   fireEvent.keyDown(listbox, { key: 'Escape' });
   fireEvent.blur(listbox);
   expect(listbox).not.toHaveFocus();
+
 });
