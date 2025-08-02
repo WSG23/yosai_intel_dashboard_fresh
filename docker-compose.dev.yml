@@ -70,6 +70,7 @@ services:
       - "prometheus.path=/metrics"
     environment:
       SERVICE_REGISTRY_URL: http://service-registry:8500
+      ENABLE_PROFILING: "true"
     depends_on:
       - analytics-service
       - service-registry

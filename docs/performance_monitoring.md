@@ -11,9 +11,42 @@ from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 summary = get_performance_monitor().get_metrics_summary()
 ```
 
-Snapshots are taken automatically in the background and can be visualized or exported
-for further analysis.
+ Snapshots are taken automatically in the background and can be visualized or exported
+ for further analysis.
 
+## Profiler Setup
+
+Enable the built-in profiler by setting `ENABLE_PROFILING=true`. The flag activates
+the request profiling middleware and records CPU and memory usage for each request.
+In docker-compose deployments, add the variable under the service environment:
+
+```yaml
+services:
+  dashboard:
+    environment:
+      ENABLE_PROFILING: "true"
+```
+
+For local development, `deployment/nginx.conf` exposes an optional `/nginx_status`
+endpoint to surface basic gateway metrics.
+
+## Query Optimization
+
+PostgreSQL query statistics can be collected with the `pg_stat_statements`
+extension. Enable it in the container command and create the extension during
+database setup (`deployment/database_setup.sql`):
+
+```yaml
+postgres:
+  command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
+```
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+```
+
+Use `EXPLAIN ANALYZE` with slow queries and add indexes suggested by
+`pg_stat_statements` to keep response times low.
 
 ## External Metrics Collection
 
@@ -54,6 +87,18 @@ memory consumption:
 
 Grafana can visualise these metrics using the dashboard template in
 `monitoring/grafana/dashboards/unified-platform.json`.
+
+## Dashboards
+
+Import the sample Grafana dashboards from `monitoring/grafana/dashboards`
+to track request latency, cache hit ratios and load-test throughput. Panels
+can be extended with custom PromQL queries to highlight regressions.
+
+## Alerting
+
+Prometheus rule files under `monitoring/prometheus/rules/` provide starter
+alert definitions for resource saturation and deprecated function usage.
+Route alerts to your paging system or messaging service for timely action.
 
 ### Circuit Breaker Metrics
 
@@ -298,7 +343,7 @@ python -m services.index_optimizer_cli create my_table column_a column_b
 The CLI relies on `analyze_index_usage()` and `recommend_new_indexes()` to build
 SQL statements and execute them against the configured database.
 
-### Load Testing
+## Load Testing
 
 The repository provides a small Kafka load generator in `tools/load_test.py`.
 It publishes synthetic access events at a configurable rate and then queries
@@ -314,7 +359,7 @@ minute while keeping the average processing latency under a second.  Metrics
 are scraped from the gateway at `http://localhost:9090` and can be visualised
 using the example Grafana dashboard in `dashboards/performance/load_test.json`.
 
-### Psutil and Tracemalloc Profiling
+## Psutil and Tracemalloc Profiling
 
 Two helper scripts under `monitoring/` capture runtime resource usage.
 
@@ -335,3 +380,17 @@ Two helper scripts under `monitoring/` capture runtime resource usage.
   ```bash
   python -m monitoring.tracemalloc_profile scripts/my_job.py --snapshot allocs.snap
   ```
+
+## Troubleshooting and Best Practices
+
+### Interpreting Profiler Output
+
+Spikes in `yosai_request_duration_seconds` often signal slow database calls or
+contention on external services. Check the top entries from `psutil_profile.py`
+for memory leaks and ensure the process stays below `MAX_MEMORY`.
+
+### Regression Reports
+
+Compare metrics across releases by exporting Prometheus data or running the load
+tests on the previous version. Regressions greater than 10% in latency or memory
+usage should trigger a review before deployment.

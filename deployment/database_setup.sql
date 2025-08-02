@@ -1,6 +1,9 @@
 -- database_setup.sql
 -- Run this SQL to create your database tables
 
+-- Enable query statistics extension for profiling and optimization
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
 -- Create facilities table
 CREATE TABLE IF NOT EXISTS facilities (
     facility_id VARCHAR(50) PRIMARY KEY,
