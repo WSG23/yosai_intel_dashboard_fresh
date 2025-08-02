@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Sequence
 
 from database.secure_exec import execute_query
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -97,3 +98,4 @@ class QueryOptimizer:
 
 
 __all__ = ["QueryOptimizer"]
+

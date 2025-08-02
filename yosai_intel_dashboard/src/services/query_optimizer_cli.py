@@ -1,4 +1,5 @@
 """CLI interface for :class:`QueryOptimizer`."""
+
 from __future__ import annotations
 
 import argparse
@@ -6,7 +7,6 @@ import json
 from typing import Sequence
 
 from services.query_optimizer import QueryOptimizer
-
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Query optimizer utilities")

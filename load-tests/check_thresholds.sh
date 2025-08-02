@@ -20,3 +20,6 @@ for f in "$@"; do
   fi
 
 done
+
+REPO_ROOT="$(dirname "$0")/.."
+python "$REPO_ROOT/tools/performance_report.py" "$@"

@@ -587,8 +587,8 @@ The CI pipeline enforces a minimum **80%** coverage threshold using
 - **Event Driven Callbacks**: Plugins react to events via the unified
   `TrulyUnifiedCallbacks` manager.
   This single interface replaces previous callback controllers.
-- **Metrics & Monitoring**: `PerformanceMonitor` tracks system performance
-  using `psutil`.
+ - **Metrics & Monitoring**: see [performance monitoring docs](docs/performance_monitoring.md)
+   for how `PerformanceMonitor` tracks system performance using `psutil`.
 - **Dependabot Updates**: Python dependencies automatically kept up-to-date.
 - **Unified Error Handling**: Use `core.error_handling` decorators and middleware for consistent logging
 
