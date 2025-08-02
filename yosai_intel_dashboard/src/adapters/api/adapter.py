@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 
+from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.openapi.utils import get_openapi
 from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
@@ -38,6 +41,14 @@ def create_api_app() -> "FastAPI":
     """Create API app registered on a BaseService."""
     validate_all_secrets()
     service = BaseService("api", "")
+    service.app = FastAPI(
+        title="Yosai Dashboard API",
+        version="1.0.0",
+        openapi_url="/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc",
+    )
+    service._add_health_routes()
     service.start()
     service.app.add_middleware(TimingMiddleware)
     build_dir = os.path.abspath(
@@ -114,6 +125,20 @@ def create_api_app() -> "FastAPI":
         return jsonify({"csrf_token": generate_csrf()})
 
     service.app.mount("/", WSGIMiddleware(app))
+
+    openapi_schema = get_openapi(
+        title=service.app.title,
+        version=service.app.version,
+        routes=service.app.routes,
+    )
+    docs_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.pardir, "docs", "openapi.json")
+    )
+    os.makedirs(os.path.dirname(docs_path), exist_ok=True)
+    with open(docs_path, "w") as f:
+        json.dump(openapi_schema, f, indent=2)
+    service.app.openapi_schema = openapi_schema
+
     return service.app
 
 
