@@ -43,6 +43,12 @@ def generate_docs(yaml_path: Path = YAML_FILE, output_path: Path = OUTPUT_FILE) 
             "",
             "This section will detail user impact and remediation steps.",
             "",
+            "## Monitoring",
+            "",
+            "Deprecated component usage is tracked via the `deprecation_usage_total` Prometheus metric.",
+            "The Grafana dashboard lives in `dashboards/grafana/deprecation-usage.json` and alert rules",
+            "are defined in `monitoring/prometheus/rules/deprecation_alerts.yml`.",
+            "",
         ]
     )
 

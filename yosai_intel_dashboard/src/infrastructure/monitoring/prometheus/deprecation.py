@@ -1,19 +1,19 @@
-"""Prometheus metrics for deprecated function usage."""
+"""Prometheus metrics for deprecated component usage."""
 
 from prometheus_client import REGISTRY, Counter, start_http_server
 from prometheus_client.core import CollectorRegistry
 
-if "deprecated_function_calls_total" not in REGISTRY._names_to_collectors:
-    deprecated_calls = Counter(
-        "deprecated_function_calls_total",
-        "Count of deprecated function calls",
-        ["function"],
+if "deprecation_usage_total" not in REGISTRY._names_to_collectors:
+    deprecation_usage = Counter(
+        "deprecation_usage_total",
+        "Count of deprecated component usage",
+        ["component"],
     )
 else:  # pragma: no cover - defensive
-    deprecated_calls = Counter(
-        "deprecated_function_calls_total",
-        "Count of deprecated function calls",
-        ["function"],
+    deprecation_usage = Counter(
+        "deprecation_usage_total",
+        "Count of deprecated component usage",
+        ["component"],
         registry=CollectorRegistry(),
     )
 
@@ -28,13 +28,13 @@ def start_deprecation_metrics_server(port: int = 8006) -> None:
         _metrics_started = True
 
 
-def record_deprecated_call(function: str) -> None:
-    """Increment Prometheus counter for ``function``."""
-    deprecated_calls.labels(function=function).inc()
+def record_deprecated_call(component: str) -> None:
+    """Increment Prometheus counter for ``component``."""
+    deprecation_usage.labels(component=component).inc()
 
 
 __all__ = [
-    "deprecated_calls",
+    "deprecation_usage",
     "start_deprecation_metrics_server",
     "record_deprecated_call",
 ]
