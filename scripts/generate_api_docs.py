@@ -69,5 +69,6 @@ def main() -> None:
     print(f"API docs written to {out_dir}")
 
 
+
 if __name__ == "__main__":
     main()

@@ -19,7 +19,12 @@ if "services" not in sys.modules:
 def _create_app(monkeypatch, origins):
 
     container = types.SimpleNamespace(
-        services={"file_processor": object()},
+        services={
+            "file_processor": object(),
+            "device_learning_service": object(),
+            "upload_processor": object(),
+            "consolidated_learning_service": object(),
+        },
         get=lambda key: container.services[key],
         register_singleton=lambda key, value: container.services.__setitem__(
             key, value
@@ -27,7 +32,9 @@ def _create_app(monkeypatch, origins):
         has=lambda key: key in container.services,
     )
     monkeypatch.setitem(
-        sys.modules, "core.container", types.SimpleNamespace(container=container)
+        sys.modules,
+        "yosai_intel_dashboard.src.core.container",
+        types.SimpleNamespace(container=container),
     )
 
     class DummyService:
@@ -51,37 +58,64 @@ def _create_app(monkeypatch, origins):
 
     from flask import Blueprint
 
-    upload_stub = types.ModuleType("services.upload_endpoint")
+    upload_stub = types.ModuleType("yosai_intel_dashboard.src.services.upload_endpoint")
     upload_stub.create_upload_blueprint = lambda *a, **k: Blueprint("upload", __name__)
-    device_stub = types.ModuleType("services.device_endpoint")
+    device_stub = types.ModuleType("yosai_intel_dashboard.src.services.device_endpoint")
     device_stub.create_device_blueprint = lambda *a, **k: Blueprint("device", __name__)
-    mappings_stub = types.ModuleType("services.mappings_endpoint")
+    mappings_stub = types.ModuleType("yosai_intel_dashboard.src.services.mappings_endpoint")
     mappings_stub.create_mappings_blueprint = lambda *a, **k: Blueprint("mappings", __name__)
+    token_stub = types.ModuleType("yosai_intel_dashboard.src.services.token_endpoint")
+    token_stub.create_token_blueprint = lambda *a, **k: Blueprint("token", __name__)
     settings_stub = types.ModuleType("settings_endpoint")
     settings_stub.settings_bp = Blueprint("settings", __name__)
+    from fastapi import APIRouter
+    analytics_stub = types.ModuleType("api.analytics_router")
+    analytics_stub.router = APIRouter()
+    analytics_stub.init_cache_manager = lambda: None
+    monitoring_stub = types.ModuleType("api.monitoring_router")
+    monitoring_stub.router = APIRouter()
     for name, mod in {
-        "services.upload_endpoint": upload_stub,
-        "services.device_endpoint": device_stub,
-        "services.mappings_endpoint": mappings_stub,
+        "yosai_intel_dashboard.src.services.upload_endpoint": upload_stub,
+        "yosai_intel_dashboard.src.services.device_endpoint": device_stub,
+        "yosai_intel_dashboard.src.services.mappings_endpoint": mappings_stub,
+        "yosai_intel_dashboard.src.services.token_endpoint": token_stub,
         "settings_endpoint": settings_stub,
+        "api.analytics_router": analytics_stub,
+        "api.monitoring_router": monitoring_stub,
     }.items():
         monkeypatch.setitem(sys.modules, name, mod)
 
-    monkeypatch.setattr("core.secrets_validator.validate_all_secrets", lambda: None)
     monkeypatch.setitem(
         sys.modules,
-        "core.rbac",
+        "yosai_intel_dashboard.src.core.secrets_validator",
+        types.SimpleNamespace(validate_all_secrets=lambda: None),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.core.rbac",
         types.SimpleNamespace(RBACService=object, create_rbac_service=lambda: None),
     )
     monkeypatch.setitem(
         sys.modules,
-        "services.security",
-        types.SimpleNamespace(require_token=lambda f: f),
+        "yosai_intel_dashboard.src.services.security",
+        types.SimpleNamespace(
+            verify_service_jwt=lambda token: True,
+            require_token=lambda f: f,
+        ),
     )
 
-    monkeypatch.setattr(
-        "config.get_security_config",
-        lambda: types.SimpleNamespace(cors_origins=origins),
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.infrastructure.config",
+        types.SimpleNamespace(
+            get_security_config=lambda: types.SimpleNamespace(cors_origins=origins),
+            get_cache_config=lambda: types.SimpleNamespace(ttl=0),
+        ),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.infrastructure.config.constants",
+        types.SimpleNamespace(API_PORT=8000),
     )
 
     adapter = importlib.import_module("api.adapter")

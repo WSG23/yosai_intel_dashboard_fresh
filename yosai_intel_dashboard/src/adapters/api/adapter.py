@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 
+from fastapi import Depends, HTTPException, status
 from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.openapi.utils import get_openapi
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
@@ -12,9 +17,20 @@ from yosai_framework.service import BaseService
 from yosai_intel_dashboard.src.core.rbac import RBACService, create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
 from yosai_intel_dashboard.src.infrastructure.config import get_security_config
-from yosai_intel_dashboard.src.services.security import require_token
+from yosai_intel_dashboard.src.services.security import verify_service_jwt
 
 csrf = CSRFProtect()
+bearer_scheme = HTTPBearer()
+
+
+def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> None:
+    """Validate Authorization header using JWT service tokens."""
+    if not verify_service_jwt(credentials.credentials):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
+        )
 
 from settings_endpoint import settings_bp
 
@@ -38,6 +54,14 @@ def create_api_app() -> "FastAPI":
     """Create API app registered on a BaseService."""
     validate_all_secrets()
     service = BaseService("api", "")
+    service.app = FastAPI(
+        title="Yosai Dashboard API",
+        version="1.0.0",
+        openapi_url="/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc",
+    )
+    service._add_health_routes()
     service.start()
     service.app.add_middleware(TimingMiddleware)
     build_dir = os.path.abspath(
@@ -65,9 +89,9 @@ def create_api_app() -> "FastAPI":
     CORS(app, origins=settings.cors_origins)
 
     # Third-party analytics demo endpoints (FastAPI router)
-    service.app.include_router(analytics_router)
+    service.app.include_router(analytics_router, dependencies=[Depends(verify_token)])
     service.app.add_event_handler("startup", init_cache_manager)
-    service.app.include_router(monitoring_router)
+    service.app.include_router(monitoring_router, dependencies=[Depends(verify_token)])
 
     # Core upload and mapping endpoints
     err_handler = (
@@ -114,6 +138,26 @@ def create_api_app() -> "FastAPI":
         return jsonify({"csrf_token": generate_csrf()})
 
     service.app.mount("/", WSGIMiddleware(app))
+
+    def custom_openapi() -> dict:
+        if service.app.openapi_schema:
+            return service.app.openapi_schema
+        schema = get_openapi(
+            title=service.app.title,
+            version="0.1.0",
+            routes=service.app.routes,
+        )
+        components = schema.setdefault("components", {})
+        security = components.setdefault("securitySchemes", {})
+        security["HTTPBearer"] = {"type": "http", "scheme": "bearer"}
+        for path in schema.get("paths", {}).values():
+            for method in path.values():
+                method.setdefault("security", [{"HTTPBearer": []}])
+        service.app.openapi_schema = schema
+        return schema
+
+    service.app.openapi = custom_openapi
+
     return service.app
 
 
