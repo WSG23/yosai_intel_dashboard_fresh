@@ -99,9 +99,55 @@ def create_app(config_name: str = None) -> Flask:
         dpia_service
     )
     container.register('compliance_dashboard', dashboard)
-    
+
     # 4. Register compliance middleware (audit trails, request IDs, etc.)
     register_compliance_middleware(app)
+
+```python
+import uuid
+
+
+class RequestIDMiddleware:
+    """Attach a correlation ID to each request."""
+
+    def __init__(self, app, header: str = "X-Correlation-ID"):
+        self.app = app
+        self.header = header
+
+    def __call__(self, environ, start_response):
+        request_id = environ.get(
+            f"HTTP_{self.header.upper().replace('-', '_')}",
+            str(uuid.uuid4()),
+        )
+        environ["REQUEST_ID"] = request_id
+        return self.app(environ, start_response)
+
+
+class AuditLoggingMiddleware:
+    """Log each request with the correlation ID."""
+
+    def __init__(self, app, logger, fmt: str = "{request_id} {method} {path}"):
+        self.app = app
+        self.logger = logger
+        self.fmt = fmt
+
+    def __call__(self, environ, start_response):
+        line = self.fmt.format(
+            request_id=environ.get("REQUEST_ID", "-"),
+            method=environ.get("REQUEST_METHOD", ""),
+            path=environ.get("PATH_INFO", ""),
+        )
+        self.logger.info(line)
+        return self.app(environ, start_response)
+
+
+app.config["AUDIT_LOG_FORMAT"] = "{request_id} {method} {path}"
+app.config["REQUEST_ID_HEADER"] = "X-Correlation-ID"
+app.wsgi_app = RequestIDMiddleware(
+    AuditLoggingMiddleware(app.wsgi_app, app.logger, app.config["AUDIT_LOG_FORMAT"]),
+    header=app.config["REQUEST_ID_HEADER"],
+)
+```
     
     # 5. Register compliance API routes
     register_compliance_routes(app)
