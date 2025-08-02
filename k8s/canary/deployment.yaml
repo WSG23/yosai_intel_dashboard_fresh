@@ -16,6 +16,10 @@ spec:
         app: yosai-dashboard
         track: canary
     spec:
+      initContainers:
+        - name: setup-symlinks
+          image: yosai-intel-dashboard:latest
+          command: ["python", "scripts/create_symlinks.py"]
       containers:
         - name: yosai-dashboard
           image: yosai-intel-dashboard:latest
@@ -48,22 +52,37 @@ spec:
               value: "redis"
             - name: REDIS_PORT
               value: "6379"
+            - name: PYTHONPATH
+              value: "/app:/app/yosai_intel_dashboard/src"
+            - name: MODULE_PATH
+              value: "yosai_intel_dashboard.src.services.main"
+            - name: ENABLE_LEGACY_IMPORTS
+              valueFrom:
+                configMapKeyRef:
+                  name: dashboard-config
+                  key: ENABLE_LEGACY_IMPORTS
           readinessProbe:
             httpGet:
-              path: /
+              path: /health/ready
               port: 8050
             initialDelaySeconds: 10
             periodSeconds: 20
           livenessProbe:
             httpGet:
-              path: /
+              path: /health/live
               port: 8050
             initialDelaySeconds: 20
             periodSeconds: 20
+          startupProbe:
+            httpGet:
+              path: /health/startup
+              port: 8050
+            failureThreshold: 30
+            periodSeconds: 10
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
+              cpu: "250m"
               memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"

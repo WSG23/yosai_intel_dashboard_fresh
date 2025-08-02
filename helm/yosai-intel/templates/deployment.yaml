@@ -20,10 +20,39 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "yosai-intel.serviceAccountName" . }}
+      initContainers:
+        - name: setup-symlinks
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["python", "scripts/create_symlinks.py"]
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.port }}
+          env:
+            - name: PYTHONPATH
+              value: {{ .Values.pythonPath | quote }}
+            - name: MODULE_PATH
+              value: {{ .Values.modulePath | quote }}
+            - name: ENABLE_LEGACY_IMPORTS
+              value: {{ .Values.enableLegacyImports | quote }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness }}
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness }}
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup }}
+              port: {{ .Values.service.port }}
+            failureThreshold: 30
+            periodSeconds: 10
           resources: {{- toYaml .Values.resources | nindent 12 }}

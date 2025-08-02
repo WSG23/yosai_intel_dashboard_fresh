@@ -29,11 +29,11 @@ spec:
         - destination:
             host: yosai-dashboard
             subset: stable
-          weight: 90
+          weight: 95
         - destination:
             host: yosai-dashboard
             subset: canary
-          weight: 10
+          weight: 5
       retries:
         attempts: 3
         perTryTimeout: 2s

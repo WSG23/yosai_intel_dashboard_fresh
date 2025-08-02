@@ -2,29 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: yosai-dashboard
+  namespace: yosai-dev
   labels:
     app: yosai-dashboard
-    track: stable
 spec:
-  replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+  replicas: 1
   selector:
     matchLabels:
       app: yosai-dashboard
-      track: stable
   template:
     metadata:
       labels:
         app: yosai-dashboard
-        track: stable
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/path: "/metrics"
-        prometheus.io/port: "8050"
     spec:
       initContainers:
         - name: setup-symlinks
@@ -36,41 +25,12 @@ spec:
           ports:
             - containerPort: 8050
           env:
-            - name: YOSAI_ENV
-              value: "production"
-            - name: DB_TYPE
-              value: "postgresql"
-            - name: DB_HOST
-              value: "db"
-            - name: DB_PORT
-              value: "5432"
-            - name: DB_NAME
-              value: "yosai_intel"
-            - name: DB_USER
-              value: "postgres"
-            - name: VAULT_ADDR
-              valueFrom:
-                configMapKeyRef:
-                  name: vault-config
-                  key: VAULT_ADDR
-            - name: VAULT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: vault-secret
-                  key: VAULT_TOKEN
-            - name: REDIS_HOST
-              value: "redis"
-            - name: REDIS_PORT
-              value: "6379"
             - name: PYTHONPATH
               value: "/app:/app/yosai_intel_dashboard/src"
             - name: MODULE_PATH
               value: "yosai_intel_dashboard.src.services.main"
             - name: ENABLE_LEGACY_IMPORTS
-              valueFrom:
-                configMapKeyRef:
-                  name: dashboard-config
-                  key: ENABLE_LEGACY_IMPORTS
+              value: "true"
           readinessProbe:
             httpGet:
               path: /health/ready

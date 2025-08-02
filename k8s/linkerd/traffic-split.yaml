@@ -7,6 +7,6 @@ spec:
   service: yosai-dashboard
   backends:
     - service: yosai-dashboard-v1
-      weight: 90
+      weight: 95
     - service: yosai-dashboard-v2
-      weight: 10
+      weight: 5
