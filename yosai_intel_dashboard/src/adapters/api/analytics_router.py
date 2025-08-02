@@ -11,7 +11,10 @@ from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsS
 from yosai_intel_dashboard.src.services.security import require_permission
 from shared.errors.types import ErrorCode
 
-router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
+# Routes now use an unversioned prefix and are mounted under /v1 by the
+# adapter. This simplifies preparing future versions while keeping unversioned
+# paths available for backward compatibility.
+router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 cfg = get_cache_config()
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))

@@ -4,17 +4,9 @@ import asyncio
 import base64
 import os
 
-from fastapi import (
-    Depends,
-    FastAPI,
-    File,
-    HTTPException,
-    Request,
-    Response,
-    UploadFile,
-    status,
-)
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response as FastAPIResponse, status
+from fastapi.middleware.wsgi import WSGIMiddleware
+
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -105,12 +97,32 @@ def create_api_app() -> "FastAPI":
     settings = get_security_config()
     CORS(app, origins=settings.cors_origins)
 
+    # Helper dependency used for deprecated unversioned routes
+    def add_deprecation_warning(response: FastAPIResponse) -> None:
+        response.headers[
+            "Warning"
+        ] = "299 - Deprecated API path; please use versioned '/v1' routes"
 
     # Third-party analytics demo endpoints (FastAPI router)
-    service.app.include_router(analytics_router, dependencies=[Depends(verify_token)])
     service.app.add_event_handler("startup", init_cache_manager)
-    service.app.include_router(monitoring_router, dependencies=[Depends(verify_token)])
-    service.app.include_router(explanations_router, dependencies=[Depends(verify_token)])
+
+    api_v1 = APIRouter(prefix="/v1")
+    api_v1.include_router(analytics_router)
+    api_v1.include_router(monitoring_router)
+    api_v1.include_router(explanations_router)
+
+    service.app.include_router(api_v1, dependencies=[Depends(verify_token)])
+
+    legacy_router = APIRouter()
+    legacy_router.include_router(analytics_router)
+    legacy_router.include_router(monitoring_router)
+    legacy_router.include_router(explanations_router)
+
+    service.app.include_router(
+        legacy_router,
+        dependencies=[Depends(verify_token), Depends(add_deprecation_warning)],
+        deprecated=True,
+    )
 
     # Core upload and related endpoints implemented directly with FastAPI
     file_processor = container.get("file_processor")

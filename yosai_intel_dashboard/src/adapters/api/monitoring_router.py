@@ -7,7 +7,9 @@ from fastapi import APIRouter, Query
 
 from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
 
-router = APIRouter(prefix="/v1/model-monitoring", tags=["model-monitoring"])
+# Expose routes without a version so the adapter can mount them under /v1 and
+# also offer deprecated legacy access.
+router = APIRouter(prefix="/model-monitoring", tags=["model-monitoring"])
 
 
 @router.get("/{model_name}")
