@@ -39,6 +39,7 @@ from api.analytics_router import (
 )
 from api.analytics_router import router as analytics_router
 from api.monitoring_router import router as monitoring_router
+from api.explanations import router as explanations_router
 from middleware.performance import TimingMiddleware
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
@@ -92,6 +93,7 @@ def create_api_app() -> "FastAPI":
     service.app.include_router(analytics_router, dependencies=[Depends(verify_token)])
     service.app.add_event_handler("startup", init_cache_manager)
     service.app.include_router(monitoring_router, dependencies=[Depends(verify_token)])
+    service.app.include_router(explanations_router, dependencies=[Depends(verify_token)])
 
     # Core upload and mapping endpoints
     err_handler = (
