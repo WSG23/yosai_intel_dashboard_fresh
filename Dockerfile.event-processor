@@ -1,0 +1,16 @@
+FROM golang:1.23 AS build
+WORKDIR /src
+
+COPY go ./go
+COPY resilience ./resilience
+COPY yosai_intel_dashboard/src/services/event_processing ./services/event_processing
+WORKDIR /src/services/event_processing
+RUN go build -o processor ./cmd/processor
+
+FROM alpine:3.18
+WORKDIR /app
+RUN apk add --no-cache curl
+COPY --from=build /src/services/event_processing/processor /usr/local/bin/processor
+EXPOSE 8002
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8002/health || exit 1
+ENTRYPOINT ["/usr/local/bin/processor"]
