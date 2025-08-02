@@ -29,8 +29,8 @@ Execute a scenario with:
 k6 run load-tests/k6/scenarios/api-gateway-test.js
 ```
 
-Results can be exported as JSON and verified against `load-tests/thresholds.json`
-using the `check_thresholds.sh` helper script.
+Results can be exported as JSON and verified against the budgets defined in
+`config/performance_budgets.yml` using the `check_thresholds.sh` helper script.
 
 ## Gatling Simulations
 
@@ -52,4 +52,5 @@ panels for error rate and p95 request duration.
 ## Continuous Integration
 
 The workflow `.github/workflows/performance-tests.yml` executes all scenarios on
-pull requests. The job fails if the metrics in `thresholds.json` are exceeded.
+pull requests. The job fails if the metrics in `config/performance_budgets.yml`
+are exceeded.
