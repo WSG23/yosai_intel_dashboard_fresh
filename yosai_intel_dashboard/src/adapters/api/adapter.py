@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import os
 
@@ -6,25 +8,28 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
-from yosai_intel_dashboard.src.infrastructure.config import get_security_config
+from yosai_framework.service import BaseService
 from yosai_intel_dashboard.src.core.rbac import RBACService, create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
+from yosai_intel_dashboard.src.infrastructure.config import get_security_config
 from yosai_intel_dashboard.src.services.security import require_token
-from yosai_framework.service import BaseService
 
 csrf = CSRFProtect()
+
+from settings_endpoint import settings_bp
 
 from api.analytics_router import (
     init_cache_manager,
 )
 from api.analytics_router import router as analytics_router
-from settings_endpoint import settings_bp
-
-from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
+from api.monitoring_router import router as monitoring_router
 from middleware.performance import TimingMiddleware
 from yosai_intel_dashboard.src.core.container import container
+from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 from yosai_intel_dashboard.src.services.device_endpoint import create_device_blueprint
-from yosai_intel_dashboard.src.services.mappings_endpoint import create_mappings_blueprint
+from yosai_intel_dashboard.src.services.mappings_endpoint import (
+    create_mappings_blueprint,
+)
 from yosai_intel_dashboard.src.services.token_endpoint import create_token_blueprint
 from yosai_intel_dashboard.src.services.upload_endpoint import create_upload_blueprint
 
@@ -62,12 +67,17 @@ def create_api_app() -> "FastAPI":
     # Third-party analytics demo endpoints (FastAPI router)
     service.app.include_router(analytics_router)
     service.app.add_event_handler("startup", init_cache_manager)
+    service.app.include_router(monitoring_router)
 
     # Core upload and mapping endpoints
-    err_handler = container.get("error_handler") if container.has("error_handler") else None
+    err_handler = (
+        container.get("error_handler") if container.has("error_handler") else None
+    )
     upload_bp = create_upload_blueprint(
         container.get("file_processor"),
-        file_handler=container.get("file_handler") if container.has("file_handler") else None,
+        file_handler=(
+            container.get("file_handler") if container.has("file_handler") else None
+        ),
         handler=err_handler,
     )
     device_bp = create_device_blueprint(
