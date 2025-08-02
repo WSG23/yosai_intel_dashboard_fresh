@@ -15,6 +15,7 @@ __all__ = [
     "ModelMonitoringService",
     "ModelMetrics",
     "get_model_performance_monitor",
+    "ModelPerformanceTracker",
     "RealTimeUIMonitor",
     "get_ui_monitor",
     "check_cluster_health",
@@ -67,6 +68,10 @@ def __getattr__(name: str):
         )
 
         return locals()[name]
+    if name == "ModelPerformanceTracker":
+        from .model_performance_tracker import ModelPerformanceTracker
+
+        return ModelPerformanceTracker
     if name == "ModelMonitoringService":
         from .model_monitoring_service import ModelMonitoringService
 
