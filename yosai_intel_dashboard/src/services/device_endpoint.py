@@ -1,12 +1,21 @@
 """API endpoints for device mapping suggestions."""
 
+from __future__ import annotations
+
 import pandas as pd
-from flask import Blueprint, jsonify, request
+from flask import Blueprint
 from flask_apispec import doc
 from pydantic import BaseModel
 
-from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
-from utils.pydantic_decorators import validate_input, validate_output
+from yosai_intel_dashboard.src.error_handling import (
+    ErrorCategory,
+    ErrorHandler,
+    api_error_response,
+)
+from yosai_intel_dashboard.src.utils.pydantic_decorators import (
+    validate_input,
+    validate_output,
+)
 
 
 class DeviceSuggestSchema(BaseModel):
