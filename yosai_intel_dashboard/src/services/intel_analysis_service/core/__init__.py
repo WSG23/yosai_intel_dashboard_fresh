@@ -1,16 +1,24 @@
-"""Core modules for intel analysis service.
+"""Core analytics modules for the intelligence analysis service."""
 
-Provides ETL pipeline, entity resolution, versioning, and streaming utilities.
-"""
-
-from .graph_entity_resolution import EntityResolver
-from .graph_etl_pipeline import GraphETLPipeline
-from .graph_versioning import GraphVersioner
-from .streaming import KafkaETLConsumer
+from .social_network import (
+    detect_power_structures,
+    find_unusual_collaborations,
+    Interaction,
+)
+from .behavioral_cliques import (
+    cluster_users_by_coaccess,
+    detect_behavioral_deviations,
+    AccessRecord,
+)
+from .risk_propagation import propagate_risk, TrustLink
 
 __all__ = [
-    "GraphETLPipeline",
-    "EntityResolver",
-    "GraphVersioner",
-    "KafkaETLConsumer",
+    "detect_power_structures",
+    "find_unusual_collaborations",
+    "cluster_users_by_coaccess",
+    "detect_behavioral_deviations",
+    "propagate_risk",
+    "Interaction",
+    "AccessRecord",
+    "TrustLink",
 ]
