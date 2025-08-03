@@ -13,7 +13,7 @@ from flask_login import current_user
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
 from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
-from database.secure_exec import execute_command
+from database.secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +232,8 @@ class ComplianceAuditLogger:
         self,
         target_user_id: Optional[str] = None,
         action_type: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        resource_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         limit: int = 1000,
@@ -248,6 +250,14 @@ class ComplianceAuditLogger:
             if action_type:
                 where_clauses.append("action_type = %s")
                 params.append(action_type)
+
+            if resource_type:
+                where_clauses.append("resource_type = %s")
+                params.append(resource_type)
+
+            if resource_id:
+                where_clauses.append("resource_id = %s")
+                params.append(resource_id)
 
             if start_date:
                 where_clauses.append("timestamp >= %s")
@@ -274,7 +284,10 @@ class ComplianceAuditLogger:
             params.append(limit)
             df = execute_query(self.db, query_sql, tuple(params))
 
-            return df.to_dict("records") if not df.empty else []
+            if df.empty:
+                return []
+
+            return df.head(limit).to_dict("records")
 
         except Exception as e:
             logger.error(f"Failed to search audit logs: {e}")

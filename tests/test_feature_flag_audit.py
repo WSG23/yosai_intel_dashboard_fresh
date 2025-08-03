@@ -11,6 +11,7 @@ class DummyAuditLogger:
     def __init__(self) -> None:
         self.calls: list[dict] = []
         self.history: list[dict] = []
+        self.search_calls: list[dict] = []
 
     # capture any of the specialized logging methods or generic log_action
     def log_feature_flag_created(self, **kwargs):
@@ -29,8 +30,16 @@ class DummyAuditLogger:
         self.calls.append(kwargs)
         self.history.append(kwargs)
 
-    def get_feature_flag_audit_history(self, name: str):
-        return self.history
+    def search_audit_logs(self, **kwargs):
+        self.search_calls.append(kwargs)
+        results = self.history
+        r_type = kwargs.get("resource_type")
+        r_id = kwargs.get("resource_id")
+        if r_type:
+            results = [r for r in results if r.get("resource_type") == r_type]
+        if r_id:
+            results = [r for r in results if r.get("resource_id") == r_id]
+        return results  # intentionally ignore limit to test enforcement
 
 
 def load_module(monkeypatch):
@@ -48,9 +57,10 @@ def load_module(monkeypatch):
         / "yosai_intel_dashboard"
         / "src"
         / "services"
-        / "feature_flag_audit.py"
+        / "feature_flags"
+        / "audit.py"
     )
-    spec = importlib.util.spec_from_file_location("feature_flag_audit", module_path)
+    spec = importlib.util.spec_from_file_location("feature_flags.audit", module_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     if hasattr(module, "audit_logger"):
@@ -121,15 +131,36 @@ def test_log_feature_flag_deleted(monkeypatch):
     assert ts_logged == ts
 
 
-def test_get_feature_flag_audit_history(monkeypatch):
+def test_get_feature_flag_audit_history_respects_limit(monkeypatch):
     module, dummy = load_module(monkeypatch)
+
+    # Populate history with many entries for two different flags
     dummy.history = [
         {
-            "actor_user_id": "user1",
-            "old_value": None,
-            "new_value": True,
-            "reason": "initial",
-            "timestamp": datetime.now(timezone.utc),
+            "resource_type": "feature_flag",
+            "resource_id": "my_flag",
+            "idx": i,
         }
+        for i in range(10)
     ]
-    assert module.get_feature_flag_audit_history("my_flag") == dummy.history
+    dummy.history += [
+        {
+            "resource_type": "feature_flag",
+            "resource_id": "other_flag",
+            "idx": i,
+        }
+        for i in range(10)
+    ]
+
+    limit = 5
+    result = module.get_feature_flag_audit_history("my_flag", limit=limit)
+
+    # Ensure filtering and limiting
+    assert len(result) == limit
+    assert all(entry["resource_id"] == "my_flag" for entry in result)
+
+    # Ensure search was called with proper filters
+    search_call = dummy.search_calls[-1]
+    assert search_call["resource_type"] == "feature_flag"
+    assert search_call["resource_id"] == "my_flag"
+    assert search_call["limit"] == limit
