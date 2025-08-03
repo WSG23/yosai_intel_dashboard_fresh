@@ -12,6 +12,7 @@ import dash
 import dash_bootstrap_components as dbc
 import pytest
 from dash import dcc, html
+from src.common.config import ConfigService
 
 from tests.import_helpers import import_optional, safe_import
 
@@ -147,8 +148,9 @@ def test_plugin_upload_event_sse_ws(
         AnalyticsWebSocketServer,
     )
 
+    cfg = ConfigService({'metrics_interval':0.01,'ping_interval':0.01,'ping_timeout':0.01})
     ws_server = AnalyticsWebSocketServer(
-        event_bus=event_bus, host="127.0.0.1", port=8765
+        event_bus=event_bus, host="127.0.0.1", port=8765, config=cfg
     )
 
     messages: list[str] = []

@@ -8,6 +8,8 @@ import time
 import types
 from pathlib import Path
 
+from src.common.config import ConfigService
+
 
 
 class DummyEventBus:
@@ -100,7 +102,8 @@ def _run_client(port: int, expected: int) -> list[dict]:
 
 def test_buffered_events_flushed_on_client_connect() -> None:
     event_bus = EventBus()
-    server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8766)
+    cfg = ConfigService({'metrics_interval':0.01,'ping_interval':0.01,'ping_timeout':0.01})
+    server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8766, config=cfg)
 
     time.sleep(0.1)
 
@@ -118,8 +121,9 @@ def test_buffered_events_flushed_on_client_connect() -> None:
 
 def test_queue_bound() -> None:
     event_bus = EventBus()
+    cfg = ConfigService({'metrics_interval':0.01,'ping_interval':0.01,'ping_timeout':0.01})
     server = AnalyticsWebSocketServer(
-        event_bus=event_bus, host="127.0.0.1", port=8767, queue_size=2
+        event_bus=event_bus, host="127.0.0.1", port=8767, queue_size=2, config=cfg
     )
 
     time.sleep(0.1)
@@ -138,11 +142,13 @@ def test_queue_bound() -> None:
 
 def test_compressed_broadcast() -> None:
     event_bus = EventBus()
+    cfg = ConfigService({'metrics_interval':0.01,'ping_interval':0.01,'ping_timeout':0.01})
     server = AnalyticsWebSocketServer(
         event_bus=event_bus,
         host="127.0.0.1",
         port=8768,
         compression_threshold=10,
+        config=cfg,
     )
 
     time.sleep(0.1)

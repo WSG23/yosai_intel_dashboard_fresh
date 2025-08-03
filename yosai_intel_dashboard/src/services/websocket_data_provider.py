@@ -14,14 +14,24 @@ from src.common import (
 )
 from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
 from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
+from src.common.base import BaseComponent
+from src.common.config import ConfigProvider
 
 
-class WebSocketDataProvider(EventDispatchMixin, LoggingMixin, BaseComponent):
+class WebSocketDataProvider(BaseComponent):
     """Publish sample analytics updates to an event bus periodically."""
 
-    @handle_deprecated("event_bus", "interval")
-    def __init__(self, *, event_bus: EventBusProtocol, interval: float = 1.0) -> None:
-        super().__init__(event_bus=event_bus, interval=interval)
+    def __init__(
+        self,
+        event_bus: EventBusProtocol,
+        *,
+        config: ConfigProvider | None = None,
+        interval: float | None = None,
+    ) -> None:
+        super().__init__(config)
+        self.event_bus = event_bus
+        self.interval = interval if interval is not None else self.config.metrics_interval
+
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
