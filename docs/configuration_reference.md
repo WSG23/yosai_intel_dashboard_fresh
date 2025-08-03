@@ -32,6 +32,7 @@ protobuf schema and the `YosaiConfig` loader.
 | `async_pool_max_size` | `20` | `` |
 | `async_connection_timeout` | `30` | `` |
 | `shrink_timeout` | `60` | `` |
+| `shrink_interval` | `0` | `` |
 | `use_intelligent_pool` | `False` | `` |
 
 ## Security

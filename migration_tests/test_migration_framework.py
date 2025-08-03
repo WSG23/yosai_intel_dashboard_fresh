@@ -4,9 +4,20 @@ import pathlib
 import sys
 import types
 
+import asyncio
 import pytest
 
-SERVICES_PATH = pathlib.Path(__file__).resolve().parents[1] / "services"
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+SERVICES_PATH = ROOT / "yosai_intel_dashboard" / "src" / "services"
+
+# Stub out heavy optional dependencies
+dash_stub = types.ModuleType("dash")
+dash_stub.Dash = object
+sys.modules.setdefault("dash", dash_stub)
+deps_stub = types.ModuleType("dash.dependencies")
+deps_stub.Input = deps_stub.Output = deps_stub.State = object
+sys.modules.setdefault("dash.dependencies", deps_stub)
 services_pkg = types.ModuleType("services")
 services_pkg.__path__ = [str(SERVICES_PATH)]
 sys.modules.setdefault("services", services_pkg)
@@ -75,28 +86,35 @@ class DummyPool:
             self.inserted.clear()
 
 
-@pytest.mark.asyncio
-async def test_migration_manager_progress(monkeypatch):
-    src_pool = DummyPool(rows=[{"id": 1}])
-    gw_pool = DummyPool()
-    ev_pool = DummyPool()
-    an_pool = DummyPool()
+def test_migration_manager_progress():
+    async def _run():
+        src_pool = DummyPool(rows=[{"id": 1}])
+        gw_pool = DummyPool()
+        ev_pool = DummyPool()
+        an_pool = DummyPool()
 
-    pools = iter([src_pool, gw_pool, ev_pool, an_pool])
+        pools = iter([src_pool, gw_pool, ev_pool, an_pool])
 
-    async def fake_create_pool(*_, **__):
-        return next(pools)
+        async def fake_create_pool(*_, **__):
+            return next(pools)
 
-    monkeypatch.setattr(framework.asyncpg, "create_pool", fake_create_pool)
+        mgr = framework.MigrationManager(
+            "postgresql://source",
+            [
+                gateway_migration.GatewayMigration(
+                    "postgresql://gw", pool_factory=fake_create_pool
+                ),
+                events_migration.EventsMigration(
+                    "postgresql://ev", pool_factory=fake_create_pool
+                ),
+                analytics_migration.AnalyticsMigration(
+                    "postgresql://an", pool_factory=fake_create_pool
+                ),
+            ],
+            pool_factory=fake_create_pool,
+        )
+        await mgr.migrate()
+        status = await mgr.status()
+        assert status["progress"]["gateway_logs"] == 1
 
-    mgr = framework.MigrationManager(
-        "postgresql://source",
-        [
-            gateway_migration.GatewayMigration("postgresql://gw"),
-            events_migration.EventsMigration("postgresql://ev"),
-            analytics_migration.AnalyticsMigration("postgresql://an"),
-        ],
-    )
-    await mgr.migrate()
-    status = await mgr.status()
-    assert status["progress"]["gateway_logs"] == 1
+    asyncio.run(_run())

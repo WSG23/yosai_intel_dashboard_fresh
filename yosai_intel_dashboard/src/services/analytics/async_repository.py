@@ -13,15 +13,17 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.services.timescale.models import AccessEvent, Base
 
 # ---------------------------------------------------------------------------
 # Engine and session factory
 # ---------------------------------------------------------------------------
 _db_cfg = get_database_config()
-_async_url = _db_cfg.get_connection_string().replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
+_conn_str = _db_cfg.get_connection_string()
+# Validate connection string and construct async variant
+parse_connection_string(_conn_str)
+_async_url = _conn_str.replace("postgresql://", "postgresql+asyncpg://")
 engine: AsyncEngine = create_async_engine(
     _async_url,
     pool_size=_db_cfg.async_pool_min_size,

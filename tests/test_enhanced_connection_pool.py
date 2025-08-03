@@ -1,14 +1,73 @@
 import threading
 import time
+import importlib.util
+from pathlib import Path
+import sys
+
+import threading
+import time
+import importlib.util
+import types
+from pathlib import Path
+import sys
 
 import pytest
 
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionValidationFailed
-from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
-from yosai_intel_dashboard.src.services.database.intelligent_connection_pool import (
-    CircuitBreaker,
-    IntelligentConnectionPool,
+spec_exc = importlib.util.spec_from_file_location(
+    "yosai_intel_dashboard.src.infrastructure.config.database_exceptions",
+    Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "infrastructure"
+    / "config"
+    / "database_exceptions.py",
+
 )
+exc_module = importlib.util.module_from_spec(spec_exc)
+sys.modules[spec_exc.name] = exc_module
+spec_exc.loader.exec_module(exc_module)  # type: ignore
+ConnectionValidationFailed = exc_module.ConnectionValidationFailed
+
+spec_ip = importlib.util.spec_from_file_location(
+    "intelligent_connection_pool",
+    Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "database"
+    / "intelligent_connection_pool.py",
+)
+ip_module = importlib.util.module_from_spec(spec_ip)
+spec_ip.loader.exec_module(ip_module)  # type: ignore
+CircuitBreaker = ip_module.CircuitBreaker
+IntelligentConnectionPool = ip_module.IntelligentConnectionPool
+
+
+class MockConnection:
+    def __init__(self):
+        self._connected = True
+
+    def execute_query(self, query, params=None):
+        return []
+
+    def execute_command(self, command, params=None):
+        return None
+
+    def health_check(self):
+        return self._connected
+
+    def close(self):
+        self._connected = False
+
+
+class MockConnection:
+    def __init__(self):
+        self._connected = True
+
+    def health_check(self):
+        return self._connected
+
+    def close(self):
+        self._connected = False
 
 
 def factory():

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import (
     ConfigurationProtocol,
-    DatabaseProtocol,
     EventBusProtocol,
     LoggingProtocol,
     SecurityServiceProtocol,
@@ -43,7 +42,10 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
-    from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, DatabaseSettings
+    from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+        DatabaseConnectionFactory,
+        DatabaseSettings,
+    )
     from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
     from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
     from yosai_intel_dashboard.src.core.logging import LoggingService
@@ -79,10 +81,9 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
     from yosai_intel_dashboard.src.error_handling import ErrorHandler
     container.register_singleton("error_handler", ErrorHandler)
     container.register_singleton(
-        "database_manager",
-        DatabaseManager,
-        protocol=DatabaseProtocol,
-        factory=lambda c: DatabaseManager(DatabaseSettings()),
+        "database_connection_factory",
+        DatabaseConnectionFactory,
+        factory=lambda c: DatabaseConnectionFactory(DatabaseSettings()),
     )
 
     from yosai_intel_dashboard.src.core.events import EventBus
@@ -115,7 +116,6 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from yosai_intel_dashboard.src.core.interfaces.protocols import (
         AnalyticsServiceProtocol,
         ConfigProviderProtocol,
-        DatabaseProtocol,
         EventBusProtocol,
         StorageProtocol,
     )
@@ -212,12 +212,11 @@ def register_analytics_services(container: ServiceContainer) -> None:
         protocol=PublishingProtocol,
         factory=lambda c: PublishingService(c.get("event_bus")),
     )
-    container.register_singleton(
-        "analytics_service",
-        AnalyticsService,
-        protocol=AnalyticsServiceProtocol,
-        factory=lambda c: AnalyticsService(
-            database=c.get("database_manager", DatabaseProtocol),
+    def _create_analytics_service(c):
+        factory = c.get("database_connection_factory")
+        db_conn = factory.create() if factory else None
+        return AnalyticsService(
+            database=db_conn,
             data_processor=c.get("data_processing_service", DataProcessorProtocol),
             config=c.get("dynamic_config", ConfigProviderProtocol),
             event_bus=c.get("event_bus", EventBusProtocol),
@@ -228,14 +227,20 @@ def register_analytics_services(container: ServiceContainer) -> None:
             calculator=c.get("calculator", CalculatorProtocol),
             publisher=c.get("publisher", PublishingProtocol),
             report_generator=c.get("report_generator", ReportGeneratorProtocol),
-            db_retriever=get_database_analytics_retriever(c.get("database_manager")),
+            db_retriever=get_database_analytics_retriever(db_conn),
             upload_controller=c.get(
                 "upload_processing_controller", UploadProcessingControllerProtocol
             ),
             upload_processor=c.get(
                 "upload_analytics_processor", UploadAnalyticsProtocol
             ),
-        ),
+        )
+
+    container.register_singleton(
+        "analytics_service",
+        AnalyticsService,
+        protocol=AnalyticsServiceProtocol,
+        factory=_create_analytics_service,
     )
 
 

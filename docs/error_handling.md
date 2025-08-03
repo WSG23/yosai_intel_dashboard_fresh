@@ -76,3 +76,20 @@ Metrics for breaker state transitions are exported via Prometheus.
 
 Moving to this module centralises logging and ensures that Prometheus metrics are
 available for all critical exceptions.
+
+## RetryStrategy Guidance
+
+Transient failures often benefit from configurable retries. The `RetryStrategy`
+mirrors the fields in `ConnectionRetryManager.RetryConfig` and can be tuned per
+scenario:
+
+| Failure scenario      | max_attempts | base_delay (s) | backoff_factor | jitter | max_delay (s) |
+|-----------------------|--------------|----------------|----------------|--------|---------------|
+| Network hiccup        | 5            | 0.5            | 2.0            | ✓      | 5             |
+| Database restart      | 10           | 1.0            | 2.0            | ✓      | 30            |
+
+Excessive backoff values can hide persistent outages and delay recovery. Avoid
+setting `max_delay` higher than the service's latency budget and keep
+`backoff_factor` modest. For production environments, start with conservative
+delays, monitor retry metrics and adjust the strategy as real-world behaviour is
+observed.

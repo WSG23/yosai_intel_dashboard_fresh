@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import os
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
+
+from database.utils import parse_connection_string
+
 
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
@@ -18,6 +21,9 @@ from .constants import (
     DEFAULT_DB_PORT,
 )
 from .dynamic_config import dynamic_config
+
+fernet_mod = import_optional("cryptography.fernet")
+Fernet = getattr(fernet_mod, "Fernet", None)
 
 
 def require_env_var(name: str) -> str:
@@ -59,12 +65,27 @@ class DatabaseConfig:
     async_pool_max_size: int = dynamic_config.get_db_pool_size() * 2
     async_connection_timeout: int = dynamic_config.get_db_connection_timeout()
     shrink_timeout: int = 60
+    shrink_interval: int = 0
     # Use the IntelligentConnectionPool instead of the default pool
     use_intelligent_pool: bool = False
 
     def __post_init__(self) -> None:
-        """Auto-generate connection URL if not explicitly provided."""
-        if not self.url:
+        """Auto-generate or validate the connection URL."""
+        if self.url:
+            info = parse_connection_string(self.url)
+            # Normalize fields from parsed connection info
+            self.type = info.dialect
+            if info.dialect == "sqlite":
+                self.name = info.path.lstrip("/") if info.path else self.name
+            else:
+                self.host = info.host or self.host
+                self.port = info.port or self.port
+                self.name = info.database or self.name
+                self.user = info.user or self.user
+                self.password = info.password or self.password
+            # ensure url is normalized (build_url may adjust formatting)
+            self.url = info.build_url()
+        else:
             if self.type == "sqlite":
                 self.url = f"sqlite:///{self.name}"
             elif self.type == "postgresql":
@@ -85,15 +106,84 @@ class DatabaseConfig:
                     self.url = f"mysql://{self.host}:{self.port}/{self.name}"
 
     def get_connection_string(self) -> str:
-        """Return a database connection string."""
-        if self.type == "postgresql":
-            return (
-                f"postgresql://{self.user}:{self.password}"
-                f"@{self.host}:{self.port}/{self.name}"
+        """Return a validated database connection string."""
+        # Ensure the URL is valid before returning
+        parse_connection_string(self.url)
+        return self.url
+
+    # ------------------------------------------------------------------
+    def to_dict(
+        self,
+        *,
+        include_password: bool = True,
+        fernet_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Serialize configuration to a dictionary.
+
+        Parameters
+        ----------
+        include_password:
+            If ``False``, the password field is omitted from the result.
+        fernet_key:
+            When provided, the password will be encrypted using this key.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary representation of the configuration.
+        """
+
+        data = asdict(self)
+
+        if not include_password:
+            data.pop("password", None)
+            return data
+
+        if fernet_key and data.get("password"):
+            if not Fernet:
+                raise ConfigurationError(
+                    "cryptography package is required for encryption"
+                )
+            key_bytes = (
+                fernet_key.encode() if isinstance(fernet_key, str) else fernet_key
             )
-        if self.type == "sqlite":
-            return f"sqlite:///{self.name}"
-        return f"mock://{self.name}"
+            f = Fernet(key_bytes)
+            data["password"] = f.encrypt(data["password"].encode()).decode()
+
+        return data
+
+    # ------------------------------------------------------------------
+    @classmethod
+    def from_dict(
+        cls,
+        data: Dict[str, Any],
+        *,
+        fernet_key: Optional[str] = None,
+    ) -> "DatabaseConfig":
+        """Create :class:`DatabaseConfig` from a dictionary.
+
+        Parameters
+        ----------
+        data:
+            Serialized configuration produced by :meth:`to_dict`.
+        fernet_key:
+            If provided, the password field will be decrypted using this key.
+        """
+
+        params = dict(data)
+
+        if fernet_key and params.get("password"):
+            if not Fernet:
+                raise ConfigurationError(
+                    "cryptography package is required for decryption"
+                )
+            key_bytes = (
+                fernet_key.encode() if isinstance(fernet_key, str) else fernet_key
+            )
+            f = Fernet(key_bytes)
+            params["password"] = f.decrypt(params["password"].encode()).decode()
+
+        return cls(**params)
 
 
 @dataclass

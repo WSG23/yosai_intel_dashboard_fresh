@@ -86,9 +86,12 @@ class RBACService:
 async def create_rbac_service() -> RBACService:
     """Create and initialize :class:`RBACService` using app configuration."""
     from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+    from database.utils import parse_connection_string
 
     db_cfg = get_database_config()
-    pool = await asyncpg.create_pool(dsn=db_cfg.get_connection_string())
+    dsn = db_cfg.get_connection_string()
+    parse_connection_string(dsn)
+    pool = await asyncpg.create_pool(dsn=dsn)
 
     redis_client: Optional[redis.Redis] = None
     try:
