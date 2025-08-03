@@ -1,21 +1,20 @@
 import React from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import '@fortawesome/fontawesome-free/css/all.min.css';
 import './styles/upload.css';
 import { Upload } from './components/upload';
+import { Shield } from 'lucide-react';
 
 function App() {
   return (
     <div className="App">
-      <nav className="navbar navbar-dark bg-dark mb-4">
-        <div className="container-fluid">
-          <span className="navbar-brand mb-0 h1">
-            <i className="fas fa-shield-alt me-2"></i>
+      <nav className="bg-gray-900 mb-4">
+        <div className="container mx-auto px-4">
+          <span className="flex items-center text-white text-xl font-semibold">
+            <Shield className="w-6 h-6 mr-2" />
             Yōsai Intel Dashboard
           </span>
         </div>
       </nav>
-      <div className="container-fluid">
+      <div className="container mx-auto px-4">
         <Upload />
       </div>
     </div>
