@@ -18,15 +18,38 @@ Example
 """
 
 import html
+import json
 import os
 import re
 from typing import Any, Iterable
+
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
 from .core import ValidationResult
 from .file_validator import FileValidator
 from .rules import CompositeValidator, ValidationRule
+
+# Import dynamically inside methods to avoid circular imports during module init
+
+
+def _regex_validator(
+    pattern: re.Pattern[str], issue: str
+) -> Callable[[str], ValidationResult]:
+    def _validate(data: str) -> ValidationResult:
+        if pattern.search(data):
+            return ValidationResult(False, data, [issue])
+        return ValidationResult(True, data)
+
+    return _validate
+
+
+def _json_validator(data: str) -> ValidationResult:
+    try:
+        parsed = json.loads(data)
+    except Exception:
+        return ValidationResult(False, data, ["json"])
+    return ValidationResult(True, json.dumps(parsed, ensure_ascii=False))
 
 
 class XSSRule(ValidationRule):
@@ -72,6 +95,7 @@ class SecurityValidator(CompositeValidator):
         if prediction[0] == -1:
             raise ValidationError(f"Anomalous input detected in {field_name}")
 
+
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
         name = os.path.basename(filename)
@@ -101,6 +125,7 @@ class SecurityValidator(CompositeValidator):
 
     def validate_input(self, value: str, field_name: str = "input") -> dict:
         self._anomaly_check(value, field_name)
+
         result = self.validate(value)
         if not result.valid:
             raise ValidationError("; ".join(result.issues or []))
