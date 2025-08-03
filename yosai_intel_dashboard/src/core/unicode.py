@@ -334,6 +334,12 @@ def object_count(items: Iterable[Any]) -> int:
     return sum(1 for v in counts.values() if v > 1)
 
 
+try:  # optional Cython speedup
+    from ._fast_unicode import object_count_fast as object_count  # type: ignore
+except Exception:  # pragma: no cover - extension not built
+    pass
+
+
 # ---------------------------------------------------------------------------
 # Preferred public API
 
