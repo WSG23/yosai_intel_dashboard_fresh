@@ -7,6 +7,15 @@ from typing import Any, Callable, TypeVar
 from .core import ErrorHandler
 from .exceptions import ErrorCategory
 
+try:  # pragma: no cover - avoid hard dependency during tests
+    from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+        DatabaseError,
+    )
+except Exception:  # noqa: BLE001 - fallback when config module isn't available
+    class DatabaseError(Exception):  # type: ignore[override]
+        """Fallback DatabaseError used when config module is unavailable."""
+        pass
+
 T = TypeVar("T")
 
 
@@ -28,6 +37,8 @@ def handle_errors(
                 except Exception as exc:  # noqa: BLE001
                     err = handler.handle(exc, category)
                     if reraise:
+                        if isinstance(exc, DatabaseError):
+                            raise exc
                         raise err
                     return err  # type: ignore[return-value]
 
@@ -40,6 +51,8 @@ def handle_errors(
             except Exception as exc:  # noqa: BLE001
                 err = handler.handle(exc, category)
                 if reraise:
+                    if isinstance(exc, DatabaseError):
+                        raise exc
                     raise err
                 return err  # type: ignore[return-value]
 
