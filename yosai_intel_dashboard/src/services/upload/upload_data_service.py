@@ -1,5 +1,7 @@
 """Service helpers for accessing uploaded data from the store."""
 
+from __future__ import annotations
+
 import logging
 from typing import Any, Dict, List
 
@@ -11,12 +13,17 @@ except ImportError:  # pragma: no cover - for Python <3.12
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
-    get_upload_data_service,
     UploadDataServiceProtocol,
+    get_upload_data_service,
 )
-from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore, uploaded_data_store
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
+from yosai_intel_dashboard.src.utils.upload_store import (
+    UploadedDataStore,
+    get_uploaded_data_store,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +31,9 @@ logger = logging.getLogger(__name__)
 class UploadDataService(UploadDataServiceProtocol):
     """Concrete service providing access to uploaded data via a store."""
 
-    def __init__(self, store: UploadedDataStore = uploaded_data_store) -> None:
+    def __init__(self, store: UploadedDataStore | None = None) -> None:
         """Initialize the service with the given ``UploadedDataStore``."""
-        self.store = store
+        self.store = store or get_uploaded_data_store()
 
     @override
     def get_uploaded_data(self) -> Dict[str, pd.DataFrame]:

@@ -146,15 +146,22 @@ class CSVProcessorService:
             }
 
         japanese_columns: List[str] = []
+        japanese_seen: set[str] = set()
         if self.japanese_handler:
             for col in df.columns:
                 if self.japanese_handler.contains_japanese(col):
-                    japanese_columns.append(col)
+                    if col not in japanese_seen:
+                        japanese_columns.append(col)
+                        japanese_seen.add(col)
+                    continue
 
                 sample_text = " ".join(str(v) for v in df[col].dropna().head(5))
-                if self.japanese_handler.contains_japanese(sample_text):
-                    if col not in japanese_columns:
-                        japanese_columns.append(col)
+                if (
+                    self.japanese_handler.contains_japanese(sample_text)
+                    and col not in japanese_seen
+                ):
+                    japanese_columns.append(col)
+                    japanese_seen.add(col)
 
         if self.repository:
             try:

@@ -43,7 +43,12 @@ class FakeConfiguration(ConfigurationProtocol):
         return {"valid": True}
 
 
-from yosai_intel_dashboard.src.core.auth import User, _apply_session_timeout, _determine_session_timeout
+import yosai_intel_dashboard.src.core.auth as auth
+from yosai_intel_dashboard.src.core.auth import (
+    User,
+    _apply_session_timeout,
+    _determine_session_timeout,
+)
 
 
 def test_determine_session_timeout(monkeypatch):
@@ -53,7 +58,7 @@ def test_determine_session_timeout(monkeypatch):
             session_timeout_by_role={"admin": 7200, "basic": 1800},
         )
     )
-    monkeypatch.setattr("core.auth.get_security_config", cfg.get_security_config)
+    monkeypatch.setattr(auth, "get_security_config", cfg.get_security_config)
     assert _determine_session_timeout(["basic"]) == 1800
     assert _determine_session_timeout(["unknown"]) == 3600
     assert _determine_session_timeout(["admin", "basic"]) == 7200
@@ -65,7 +70,7 @@ def test_apply_session_timeout_sets_flask_values(monkeypatch):
             session_timeout=3600, session_timeout_by_role={"admin": 7200}
         )
     )
-    monkeypatch.setattr("core.auth.get_security_config", cfg.get_security_config)
+    monkeypatch.setattr(auth, "get_security_config", cfg.get_security_config)
     app = Flask(__name__)
     # use a throwaway value rather than a real secret
     app.secret_key = os.urandom(16).hex()

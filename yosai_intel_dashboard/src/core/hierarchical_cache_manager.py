@@ -3,6 +3,7 @@ from __future__ import annotations
 """Simple hierarchical cache with three levels and basic metrics."""
 
 import asyncio
+import inspect
 import logging
 import os
 import time
@@ -134,8 +135,8 @@ class HierarchicalCacheManager(BaseModel):
                 value = await loader(key)
             else:
                 value = await asyncio.to_thread(loader, key)
-            self.set(key, value, level=1)
-            self.set(key, value, level=2)
+            await self.set(key, value, level=1)
+            await self.set(key, value, level=2)
 
         await asyncio.gather(*(_populate(k) for k in keys))
 

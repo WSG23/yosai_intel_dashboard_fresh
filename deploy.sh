@@ -13,3 +13,9 @@ fi
 
 echo "Deploying image tag $(git rev-parse --short HEAD)"
 # Placeholder for real deployment commands
+
+if [[ -n "${CDN_DISTRIBUTION_ID:-}" ]]; then
+  echo "Invalidating CDN distribution $CDN_DISTRIBUTION_ID"
+  aws cloudfront create-invalidation --distribution-id "$CDN_DISTRIBUTION_ID" --paths "/*"
+fi
+

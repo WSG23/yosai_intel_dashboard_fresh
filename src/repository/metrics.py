@@ -1,7 +1,9 @@
 """Metric repository abstractions and in-memory implementation."""
 from __future__ import annotations
 
-from typing import Any, Dict, Protocol
+from typing import Any, Dict, Protocol, Callable
+from cachetools import TTLCache
+from threading import RLock
 
 
 class MetricsRepository(Protocol):
@@ -50,4 +52,41 @@ class InMemoryMetricsRepository:
         }
 
 
-__all__ = ["MetricsRepository", "InMemoryMetricsRepository"]
+class CachedMetricsRepository:
+    """Wrap another repository and cache query results for a TTL."""
+
+    def __init__(self, repo: MetricsRepository, ttl: int = 60, maxsize: int = 128) -> None:
+        self._repo = repo
+        self._cache: TTLCache[str, Dict[str, Any]] = TTLCache(maxsize=maxsize, ttl=ttl)
+        self._lock = RLock()
+
+    def _get_or_set(self, key: str, fn: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:
+        with self._lock:
+            try:
+                return self._cache[key]
+            except KeyError:
+                value = fn()
+                self._cache[key] = value
+                return value
+
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        return self._get_or_set("performance", self._repo.get_performance_metrics)
+
+    def get_drift_data(self) -> Dict[str, Any]:
+        return self._get_or_set("drift", self._repo.get_drift_data)
+
+    def get_feature_importances(self) -> Dict[str, Any]:
+        return self._get_or_set("feature_importance", self._repo.get_feature_importances)
+
+    def snapshot(self) -> Dict[str, Any]:
+        return self._get_or_set(
+            "snapshot",
+            lambda: {
+                "performance": self._repo.get_performance_metrics(),
+                "drift": self._repo.get_drift_data(),
+                "feature_importance": self._repo.get_feature_importances(),
+            },
+        )
+
+
+__all__ = ["MetricsRepository", "InMemoryMetricsRepository", "CachedMetricsRepository"]

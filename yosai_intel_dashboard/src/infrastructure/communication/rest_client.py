@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import logging
 import os
 import ssl
+import warnings
 from dataclasses import dataclass
 from typing import Any, MutableMapping
-import warnings
 
 import aiohttp
-from tracing import propagate_context
 from tenacity import (
     AsyncRetrying,
     retry_if_exception_type,
@@ -22,6 +19,7 @@ from tenacity import (
 try:  # pragma: no cover - tracing is optional in tests
     from tracing import propagate_context
 except Exception:  # pragma: no cover - graceful fallback when tracing deps missing
+
     def propagate_context(headers: MutableMapping[str, str]) -> None:  # type: ignore
         return None
 
@@ -30,8 +28,9 @@ from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
-from ..monitoring.request_metrics import request_retry_count, request_retry_delay
+from yosai_intel_dashboard.src.error_handling import ErrorHandler
 
+from ..monitoring.request_metrics import request_retry_count, request_retry_delay
 
 
 @dataclass
@@ -73,6 +72,7 @@ class AsyncRestClient:
         mtls_cert: str | None = None,
         mtls_key: str | None = None,
         verify_ssl: bool = True,
+        pool_size: int = 100,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.circuit_breaker = CircuitBreaker(
@@ -82,7 +82,9 @@ class AsyncRestClient:
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._ssl = self._create_ssl_context(mtls_cert, mtls_key, verify_ssl)
         self._error_handler = ErrorHandler()
-
+        self._pool_size = pool_size
+        self._connector: aiohttp.TCPConnector | None = None
+        self._session: aiohttp.ClientSession | None = None
 
     # ------------------------------------------------------------------
     def _create_ssl_context(
@@ -100,19 +102,26 @@ class AsyncRestClient:
         return None
 
     # ------------------------------------------------------------------
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            await self._reset_session()
+        return self._session
+
     async def _health_check(self) -> bool:
         try:
-            async with aiohttp.ClientSession(
-                timeout=self.timeout, ssl=self._ssl
-            ) as sess:
-                async with sess.head(self.base_url) as resp:
-                    return resp.status < 500
+            session = await self._get_session()
+            async with session.head(self.base_url) as resp:
+                return resp.status < 500
         except Exception:
             return False
 
     async def _reset_session(self) -> None:
-        await self._session.close()
-        self._session = aiohttp.ClientSession(timeout=self.timeout, ssl=self._ssl)
+        if self._session is not None:
+            await self._session.close()
+        self._connector = aiohttp.TCPConnector(limit=self._pool_size, ssl=self._ssl)
+        self._session = aiohttp.ClientSession(
+            timeout=self.timeout, connector=self._connector
+        )
 
     # ------------------------------------------------------------------
     async def request(self, method: str, path: str, **kwargs: Any) -> Any:
@@ -125,23 +134,16 @@ class AsyncRestClient:
 
         async def _do_request() -> Any:
             async with self.circuit_breaker:
-                async with aiohttp.ClientSession() as session:
-                    async with session.request(
-                        method,
-                        url,
-                        timeout=self.timeout,
-                        ssl=self._ssl,
-                        **kwargs,
-                    ) as resp:
-                        self.log.info("%s %s -> %s", method, url, resp.status)
-                        resp.raise_for_status()
-                        ctype = resp.headers.get("Content-Type", "")
-                        if "application/json" in ctype:
-                            return await resp.json()
-                        return await resp.text()
+                session = await self._get_session()
+                async with session.request(method, url, **kwargs) as resp:
+                    self.log.info("%s %s -> %s", method, url, resp.status)
+                    resp.raise_for_status()
+                    ctype = resp.headers.get("Content-Type", "")
+                    if "application/json" in ctype:
+                        return await resp.json()
+                    return await resp.text()
 
         wait = self.retry_policy.build_wait()
-
 
         async for attempt in AsyncRetrying(
             retry=retry_if_exception_type(aiohttp.ClientError),
@@ -159,6 +161,10 @@ class AsyncRestClient:
         request_retry_count.inc()
         if retry_state.next_action:
             request_retry_delay.observe(retry_state.next_action.sleep)
+
+    async def close(self) -> None:
+        if self._session is not None:
+            await self._session.close()
 
 
 def create_service_client(service_name: str) -> "AsyncRestClient":

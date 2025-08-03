@@ -19,6 +19,7 @@ metadata = MetaData()
 # thirty days (hot storage) and retained for one year before being dropped.
 metadata.info["hot_interval"] = "30 days"
 metadata.info["retention_interval"] = "365 days"
+metadata.info["chunk_interval"] = "1 day"
 
 Base = declarative_base(metadata=metadata)
 
@@ -90,14 +91,17 @@ class ModelVersionMetric(Base):
 # ---------------------------------------------------------------------------
 
 
-def ensure_hypertable(conn: Connection, table: str, time_column: str = "time") -> None:
+def ensure_hypertable(
+    conn: Connection, table: str, time_column: str = "time", chunk_interval: str | None = None
+) -> None:
     """Create hypertable for ``table`` if it doesn't already exist."""
 
     conn.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb"))
+    interval = chunk_interval or Base.metadata.info.get("chunk_interval", "1 day")
     conn.execute(
         text(
-            "SELECT create_hypertable(:table, :time, if_not_exists => TRUE)"
-        ).bindparams(table=table, time=time_column)
+            "SELECT create_hypertable(:table, :time, if_not_exists => TRUE, chunk_time_interval => INTERVAL :chunk)"
+        ).bindparams(table=table, time=time_column, chunk=interval)
     )
 
 

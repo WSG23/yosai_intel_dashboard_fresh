@@ -10,6 +10,7 @@ import logging
 import secrets
 import time
 from concurrent.futures import ProcessPoolExecutor
+
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -32,10 +33,15 @@ def _sha256_bytes(data: bytes) -> str:
 # :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.src.core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.domain.entities.access_events import (
+    AccessEventModel,
+)
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
-main
+from yosai_intel_dashboard.src.infrastructure.monitoring.anomaly_detector import (
+    AnomalyDetector,
+)
 
 
 class SecurityLevel(Enum):
@@ -228,7 +234,9 @@ class SecurityAuditor(BaseModel):
     def get_security_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get security events summary"""
         cutoff = datetime.now() - timedelta(hours=hours)
-        recent_events = [e for e in self.events if e.timestamp >= cutoff]
+        timestamps = [e.timestamp for e in self.events]
+        idx = bisect_left(timestamps, cutoff)
+        recent_events = self.events[idx:]
 
         if not recent_events:
             return {"total_events": 0}
@@ -325,6 +333,13 @@ except Exception:  # pragma: no cover
 
     security_validator = _FallbackValidator()
 
+
+def validate_user_input(value: str, field: str) -> str:
+    """Validate and sanitize user input."""
+    result = security_validator.validate_input(value, field)
+    return result.get("sanitized", value)
+
+
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
 
@@ -418,8 +433,7 @@ def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
         from security.validation_middleware import ValidationMiddleware
-        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (  # noqa: E501
             TrulyUnifiedCallbacks,
         )
     except Exception:

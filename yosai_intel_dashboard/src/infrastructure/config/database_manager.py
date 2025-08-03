@@ -18,7 +18,8 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
 from database.query_optimizer import DatabaseQueryOptimizer
 from database.secure_exec import execute_batch, execute_command, execute_query
-from database.types import DatabaseConnection
+from database.types import DBRows, DatabaseConnection
+from database.replicated_connection import ReplicatedDatabaseConnection
 from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 
 
@@ -308,13 +309,26 @@ class DatabaseConnectionFactory:
         """Create a new database connection instance."""
         db_type = self.config.type.lower()
         if db_type == "mock":
-            return MockConnection()
-        if db_type == "sqlite":
-            return SQLiteConnection(self.config)
-        if db_type in {"postgresql", "postgres"}:
-            return PostgreSQLConnection(self.config)
-        logger.warning("Unknown database type: %s, using mock", db_type)
-        return MockConnection()
+            primary = MockConnection()
+        elif db_type == "sqlite":
+            primary = SQLiteConnection(self.config)
+        elif db_type in {"postgresql", "postgres"}:
+            primary = PostgreSQLConnection(self.config)
+        else:
+            logger.warning("Unknown database type: %s, using mock", db_type)
+            primary = MockConnection()
+
+        replicas: list[DatabaseConnection] = []
+        for url in getattr(self.config, "read_replicas", []):
+            if url == "mock":
+                replica_settings = DatabaseSettings(type="mock")
+            else:
+                replica_settings = DatabaseSettings(url=url)
+            replicas.append(DatabaseConnectionFactory(replica_settings).create())
+
+        if replicas:
+            return ReplicatedDatabaseConnection(primary, replicas)
+        return primary
 
 
 class DatabaseManager(DatabaseConnectionFactory):

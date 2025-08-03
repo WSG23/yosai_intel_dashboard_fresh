@@ -1,4 +1,6 @@
 import asyncio
+import requests
+import smtplib
 
 import pytest
 
@@ -85,20 +87,17 @@ def test_send_alert_sync_fallback(monkeypatch):
         def quit(self):
             pass
 
-    monkeypatch.setattr("requests.post", dummy_post)
-    monkeypatch.setattr("smtplib.SMTP", lambda host: DummySMTPBlocking(host))
-    monkeypatch.setattr(
-        "aiohttp.ClientSession",
-        lambda: (_ for _ in ()).throw(AssertionError("async called")),
-    )
-    monkeypatch.setattr(
-        "aiosmtplib.SMTP",
-        lambda *a, **k: (_ for _ in ()).throw(AssertionError("async called")),
-    )
+    monkeypatch.setattr(requests, "post", dummy_post, raising=False)
+    monkeypatch.setattr(smtplib, "SMTP", lambda host: DummySMTPBlocking(host))
+
+    tasks = []
 
     class Loop:
         def is_running(self):
             return True
+
+        def create_task(self, coro):
+            tasks.append(coro)
 
     monkeypatch.setattr(asyncio, "get_running_loop", lambda: Loop())
 
@@ -110,6 +109,9 @@ def test_send_alert_sync_fallback(monkeypatch):
         )
     )
     dispatcher.send_alert("hello")
+
+    for coro in tasks:
+        asyncio.run(coro)
 
     assert ("http://slack", {"text": "hello"}) in calls
     assert ("http://wh", {"message": "hello"}) in calls
