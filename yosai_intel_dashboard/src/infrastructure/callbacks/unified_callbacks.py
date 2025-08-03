@@ -11,11 +11,13 @@ from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
+    Awaitable,
     Callable,
     Dict,
     Iterable,
     List,
     Optional,
+    Protocol,
     Set,
     Tuple,
     Type,
@@ -30,12 +32,19 @@ from .callback_registry import CallbackRegistry, ComponentCallbackManager
 logger = logging.getLogger(__name__)
 
 
+class CallbackHandler(Protocol):
+    """Protocol for synchronous or asynchronous callback handlers."""
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | Awaitable[Any]:
+        ...
+
+
 @dataclass
 class Operation:
     """Represent a single callback operation."""
 
     name: str
-    func: Callable[..., Any]
+    func: CallbackHandler
     timeout: Optional[float] = None
     retries: int = 0
 
@@ -45,7 +54,7 @@ class EventCallback:
     """Internal representation of an event callback."""
 
     priority: int
-    func: Callable[..., Any]
+    func: CallbackHandler
     secure: bool = False
     timeout: Optional[float] = None
     retries: int = 0
@@ -117,7 +126,7 @@ class TrulyUnifiedCallbacks:
         component_name: str,
         allow_duplicate: bool = False,
         **kwargs: Any,
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    ) -> Callable[[CallbackHandler], CallbackHandler]:
         """Register a Dash callback and track conflicts."""
 
         if self.app is None:
@@ -145,7 +154,7 @@ class TrulyUnifiedCallbacks:
 
         outputs_tuple = outputs if isinstance(outputs, (list, tuple)) else (outputs,)
 
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def decorator(func: CallbackHandler) -> CallbackHandler:
             with self._lock:
                 if callback_id in self._dash_callbacks:
                     raise ValueError(f"Callback ID '{callback_id}' already registered")
@@ -195,7 +204,7 @@ class TrulyUnifiedCallbacks:
         component_name: str,
         allow_duplicate: bool = False,
         **kwargs: Any,
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    ) -> Callable[[CallbackHandler], CallbackHandler]:
         """Alias for handle_register - register a Dash callback and track conflicts."""
         return self.handle_register(
             outputs=outputs,
@@ -218,7 +227,7 @@ class TrulyUnifiedCallbacks:
         component_name: str,
         allow_duplicate: bool = False,
         **kwargs: Any,
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    ) -> Callable[[CallbackHandler], CallbackHandler]:
         """Alias for handle_register."""
         return self.handle_register(
             outputs=outputs,
@@ -267,7 +276,7 @@ class TrulyUnifiedCallbacks:
     def register_event(
         self,
         event: CallbackEvent,
-        func: Callable[..., Any],
+        func: CallbackHandler,
         *,
         priority: int = 50,
         secure: bool = False,
@@ -296,7 +305,7 @@ class TrulyUnifiedCallbacks:
             self._event_callbacks[event].sort(key=lambda c: c.priority)
 
     # ------------------------------------------------------------------
-    def unregister_event(self, event: CallbackEvent, func: Callable[..., Any]) -> None:
+    def unregister_event(self, event: CallbackEvent, func: CallbackHandler) -> None:
         """Remove a previously registered event callback."""
         with self._lock:
             self._event_callbacks[event] = [
@@ -376,7 +385,7 @@ class TrulyUnifiedCallbacks:
         tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
         return await asyncio.gather(*tasks) if tasks else []
 
-    def get_event_callbacks(self, event: CallbackEvent) -> List[Callable[..., Any]]:
+    def get_event_callbacks(self, event: CallbackEvent) -> List[CallbackHandler]:
         """Return registered callbacks for *event*."""
         with self._lock:
             return [cb.func for cb in self._event_callbacks.get(event, [])]
@@ -390,7 +399,7 @@ class TrulyUnifiedCallbacks:
     def register_operation(
         self,
         group: str,
-        func: Callable[..., Any],
+        func: CallbackHandler,
         *,
         name: Optional[str] = None,
         timeout: Optional[float] = None,
@@ -546,4 +555,4 @@ class TrulyUnifiedCallbacks:
     get_metrics = get_event_metrics
 
 
-__all__ = ["TrulyUnifiedCallbacks"]
+__all__ = ["TrulyUnifiedCallbacks", "CallbackHandler"]
