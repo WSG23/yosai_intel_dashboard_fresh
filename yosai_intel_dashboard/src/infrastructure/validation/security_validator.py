@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import html
+import logging
 import os
 import re
-from typing import Iterable
+from typing import Any, Iterable
 
-from yosai_intel_dashboard.src.core.exceptions import ValidationError
+from yosai_intel_dashboard.src.core.exceptions import (
+    PermanentBanError,
+    TemporaryBlockError,
+    ValidationError,
+)
 # Import dynamically inside methods to avoid circular imports during module init
 
 from .core import ValidationResult
@@ -34,10 +39,50 @@ class SQLRule(ValidationRule):
 class SecurityValidator(CompositeValidator):
     """Validate input strings and file uploads."""
 
-    def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
+    def __init__(
+        self,
+        rules: Iterable[ValidationRule] | None = None,
+        redis_client: Any | None = None,
+        rate_limit: int | None = None,
+        window_seconds: int | None = None,
+    ) -> None:
         base_rules = list(rules or [XSSRule(), SQLRule()])
         super().__init__(base_rules)
         self.file_validator = FileValidator()
+        self.redis = redis_client
+        if rate_limit is None or window_seconds is None:
+            from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+                dynamic_config,
+            )
+
+            rate_limit = rate_limit or dynamic_config.security.rate_limit_requests
+            window_seconds = (
+                window_seconds
+                or dynamic_config.security.rate_limit_window_minutes * 60
+            )
+        self.rate_limit = rate_limit
+        self.window_seconds = window_seconds
+        self.logger = logging.getLogger(__name__)
+
+    def _check_rate_limit(self, identifier: str) -> None:
+        if not self.redis:
+            return
+        key = f"rl:{identifier}"
+        count = self.redis.incr(key)
+        if count == 1:
+            self.redis.expire(key, self.window_seconds)
+        if count <= self.rate_limit:
+            return
+        esc_key = f"rl:esc:{identifier}"
+        level = self.redis.incr(esc_key)
+        if level == 1:
+            self.logger.warning("Rate limit exceeded for %s", identifier)
+        elif level == 2:
+            self.logger.warning("Temporary block for %s", identifier)
+            raise TemporaryBlockError("Rate limit exceeded")
+        else:
+            self.logger.error("Permanent ban for %s", identifier)
+            raise PermanentBanError("Rate limit exceeded")
 
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
@@ -66,7 +111,10 @@ class SecurityValidator(CompositeValidator):
 
         return {"valid": not issues, "issues": issues, "filename": sanitized}
 
-    def validate_input(self, value: str, field_name: str = "input") -> dict:
+    def validate_input(
+        self, value: str, field_name: str = "input", identifier: str | None = None
+    ) -> dict:
+        self._check_rate_limit(identifier or "global")
         result = self.validate(value)
         if not result.valid:
             raise ValidationError("; ".join(result.issues or []))

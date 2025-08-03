@@ -15,8 +15,10 @@ class Validator:
     def __init__(self, validator: SecurityValidator | None = None) -> None:
         self.validator = validator or SecurityValidator()
 
-    def validate_input(self, value: str, field_name: str = "input") -> Dict[str, any]:
-        return self.validator.validate_input(value, field_name)
+    def validate_input(
+        self, value: str, field_name: str = "input", identifier: str | None = None
+    ) -> Dict[str, any]:
+        return self.validator.validate_input(value, field_name, identifier)
 
     def validate_file_upload(self, filename: str, content: bytes) -> Dict[str, any]:
         return self.validator.validate_file_upload(filename, content)
