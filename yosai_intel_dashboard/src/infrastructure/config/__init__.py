@@ -65,7 +65,7 @@ def create_config_manager(
     validator = validator or ConfigValidator()
     transformer = transformer or ConfigTransformer()
 
-    return ConfigManager(
+    return SecureConfigManager(
         config_path=config_path,
         loader=loader,
         validator=validator,
