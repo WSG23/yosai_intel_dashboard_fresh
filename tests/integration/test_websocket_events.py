@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 import websockets
+from src.common.config import ConfigService
 
 
 def _load_server():
@@ -63,7 +64,8 @@ AnalyticsWebSocketServer, EventBus = _load_server()
 
 def test_websocket_events_broadcast():
     event_bus = EventBus()
-    server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8766)
+    cfg = ConfigService({'metrics_interval':0.01,'ping_interval':0.01,'ping_timeout':0.01})
+    server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8766, config=cfg)
     try:
 
         async def runner():

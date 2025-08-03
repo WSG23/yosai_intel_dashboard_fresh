@@ -4,6 +4,8 @@ import types
 import time
 from pathlib import Path
 
+from src.common.config import ConfigService
+
 
 def _load_provider():
     pkg_names = [
@@ -63,7 +65,12 @@ class DummyBus:
 def test_websocket_data_provider_integration():
     Provider = _load_provider()
     bus = DummyBus()
-    provider = Provider(bus, interval=0.01)
+    cfg = ConfigService({
+        'metrics_interval': 0.01,
+        'ping_interval': 0.01,
+        'ping_timeout': 0.01,
+    })
+    provider = Provider(bus, config=cfg)
     time.sleep(0.05)
     provider.stop()
     assert any(e[0] == "analytics_update" for e in bus.events)
