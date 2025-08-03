@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import DefaultDict, Dict, List, Set
+from collections import deque
+from typing import DefaultDict, Dict, Iterable, List, Set
 
 from yosai_intel_dashboard.src.core.protocols.plugin import PluginProtocol
 
@@ -44,11 +45,11 @@ class PluginDependencyResolver:
         if missing:
             raise ValueError(f"Unknown dependencies: {', '.join(sorted(missing))}")
 
-        queue = [n for n, deg in in_degree.items() if deg == 0]
+        queue = deque([n for n, deg in in_degree.items() if deg == 0])
         ordered: List[PluginProtocol] = []
 
         while queue:
-            node = queue.pop(0)
+            node = queue.popleft()
             ordered.append(name_map[node])
             for dep in list(adjacency.get(node, set())):
                 in_degree[dep] -= 1
