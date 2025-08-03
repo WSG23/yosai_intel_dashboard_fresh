@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import os
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
+from optional_dependencies import import_optional
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .app_config import UploadConfig
@@ -18,6 +19,9 @@ from .constants import (
     DEFAULT_DB_PORT,
 )
 from .dynamic_config import dynamic_config
+
+fernet_mod = import_optional("cryptography.fernet")
+Fernet = getattr(fernet_mod, "Fernet", None)
 
 
 def require_env_var(name: str) -> str:
@@ -59,6 +63,7 @@ class DatabaseConfig:
     async_pool_max_size: int = dynamic_config.get_db_pool_size() * 2
     async_connection_timeout: int = dynamic_config.get_db_connection_timeout()
     shrink_timeout: int = 60
+    shrink_interval: int = 0
     # Use the IntelligentConnectionPool instead of the default pool
     use_intelligent_pool: bool = False
 
@@ -94,6 +99,80 @@ class DatabaseConfig:
         if self.type == "sqlite":
             return f"sqlite:///{self.name}"
         return f"mock://{self.name}"
+
+    # ------------------------------------------------------------------
+    def to_dict(
+        self,
+        *,
+        include_password: bool = True,
+        fernet_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Serialize configuration to a dictionary.
+
+        Parameters
+        ----------
+        include_password:
+            If ``False``, the password field is omitted from the result.
+        fernet_key:
+            When provided, the password will be encrypted using this key.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary representation of the configuration.
+        """
+
+        data = asdict(self)
+
+        if not include_password:
+            data.pop("password", None)
+            return data
+
+        if fernet_key and data.get("password"):
+            if not Fernet:
+                raise ConfigurationError(
+                    "cryptography package is required for encryption"
+                )
+            key_bytes = (
+                fernet_key.encode() if isinstance(fernet_key, str) else fernet_key
+            )
+            f = Fernet(key_bytes)
+            data["password"] = f.encrypt(data["password"].encode()).decode()
+
+        return data
+
+    # ------------------------------------------------------------------
+    @classmethod
+    def from_dict(
+        cls,
+        data: Dict[str, Any],
+        *,
+        fernet_key: Optional[str] = None,
+    ) -> "DatabaseConfig":
+        """Create :class:`DatabaseConfig` from a dictionary.
+
+        Parameters
+        ----------
+        data:
+            Serialized configuration produced by :meth:`to_dict`.
+        fernet_key:
+            If provided, the password field will be decrypted using this key.
+        """
+
+        params = dict(data)
+
+        if fernet_key and params.get("password"):
+            if not Fernet:
+                raise ConfigurationError(
+                    "cryptography package is required for decryption"
+                )
+            key_bytes = (
+                fernet_key.encode() if isinstance(fernet_key, str) else fernet_key
+            )
+            f = Fernet(key_bytes)
+            params["password"] = f.decrypt(params["password"].encode()).decode()
+
+        return cls(**params)
 
 
 @dataclass

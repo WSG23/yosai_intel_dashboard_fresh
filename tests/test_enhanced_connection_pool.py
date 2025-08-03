@@ -4,6 +4,13 @@ import importlib.util
 from pathlib import Path
 import sys
 
+import threading
+import time
+import importlib.util
+import types
+from pathlib import Path
+import sys
+
 import pytest
 
 spec_exc = importlib.util.spec_from_file_location(
@@ -14,6 +21,7 @@ spec_exc = importlib.util.spec_from_file_location(
     / "infrastructure"
     / "config"
     / "database_exceptions.py",
+
 )
 exc_module = importlib.util.module_from_spec(spec_exc)
 sys.modules[spec_exc.name] = exc_module
@@ -43,6 +51,17 @@ class MockConnection:
 
     def execute_command(self, command, params=None):
         return None
+
+    def health_check(self):
+        return self._connected
+
+    def close(self):
+        self._connected = False
+
+
+class MockConnection:
+    def __init__(self):
+        self._connected = True
 
     def health_check(self):
         return self._connected

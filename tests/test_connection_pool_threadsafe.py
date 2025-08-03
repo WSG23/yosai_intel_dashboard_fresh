@@ -16,6 +16,7 @@ spec_cp.loader.exec_module(cp_module)  # type: ignore
 DatabaseConnectionPool = cp_module.DatabaseConnectionPool
 
 
+
 class MockConnection:
     def __init__(self):
         self._connected = True
@@ -25,6 +26,7 @@ class MockConnection:
 
     def execute_command(self, command, params=None):
         return None
+
 
     def health_check(self):
         return self._connected

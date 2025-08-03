@@ -9,6 +9,7 @@ from .config_manager import ConfigManager, get_config, reload_config
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
+from .database_connection_factory import DatabaseConnectionFactory, RetryStrategy
 from .dynamic_config import DynamicConfigManager, dynamic_config
 from .environment_processor import EnvironmentProcessor
 from .hierarchical_loader import HierarchicalLoader
@@ -18,17 +19,19 @@ from .protocols import (
     ConfigTransformerProtocol,
     ConfigValidatorProtocol,
 )
+from .pydantic_models import DatabaseConnectionFactoryConfig
 from .schema import (
     AppSettings,
     ConfigSchema,
     DatabaseSettings,
-    SecuritySettings,
     RetrainingSettings,
+    SecuritySettings,
 )
 from .secure_config_manager import SecureConfigManager
 from .secure_db import execute_secure_query
 from .unicode_handler import UnicodeHandler
 from .unified_loader import UnifiedLoader
+from .database_connection_factory import DatabaseConnectionFactory
 
 
 def create_config_manager(
@@ -62,7 +65,7 @@ def create_config_manager(
     validator = validator or ConfigValidator()
     transformer = transformer or ConfigTransformer()
 
-    return ConfigManager(
+    return SecureConfigManager(
         config_path=config_path,
         loader=loader,
         validator=validator,
@@ -79,6 +82,11 @@ def get_app_config() -> AppSettings:
 def get_database_config() -> DatabaseSettings:
     """Get database configuration"""
     return get_config().get_database_config()
+
+
+def get_database_connection_factory_config() -> DatabaseConnectionFactoryConfig:
+    """Get database connection factory configuration"""
+    return get_config().get_database_connection_factory_config()
 
 
 def get_security_config() -> SecuritySettings:
@@ -99,6 +107,7 @@ __all__ = [
     "ConfigSchema",
     "AppSettings",
     "DatabaseSettings",
+    "DatabaseConnectionFactoryConfig",
     "SecuritySettings",
     "RetrainingSettings",
     "UploadConfig",
@@ -121,6 +130,7 @@ __all__ = [
     # Convenience getters
     "get_app_config",
     "get_database_config",
+    "get_database_connection_factory_config",
     "get_security_config",
     "get_plugin_config",
     # Dynamic configuration
@@ -133,6 +143,8 @@ __all__ = [
     "RetrainingConfig",
     "execute_secure_query",
     "UnicodeHandler",
+    "DatabaseConnectionFactory",
+
 ]
 
 

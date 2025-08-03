@@ -6,6 +6,9 @@ from typing import Optional
 
 import asyncpg
 
+from factories.db_health import DBHealthStatus
+
+
 _pool: Optional[asyncpg.pool.Pool] = None
 
 
@@ -58,16 +61,13 @@ async def close_pool() -> None:
         _pool = None
 
 
-async def health_check() -> bool:
-    """Return True if the pool can successfully run a simple query."""
+async def health_check() -> DBHealthStatus:
+    """Run a simple query to determine database health."""
     if _pool is None:
-        return False
+        return DBHealthStatus(healthy=False, details={"error": "pool not initialized"})
     try:
-        conn = await _pool.acquire()
-        try:
+        async with _pool.acquire() as conn:
             await conn.execute("SELECT 1")
-        finally:
-            await _pool.release(conn)
         return True
     except Exception:
         return False
