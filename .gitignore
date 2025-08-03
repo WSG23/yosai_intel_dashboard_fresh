@@ -59,6 +59,7 @@ data/learned_mappings.json
 !docs/openapi.json
 !docs/analytics_microservice_openapi.json
 !docs/event_ingestion_openapi.json
+!docs/openapi_prev.json
 !package.json
 !package-lock.json
 !yosai_intel_dashboard/src/adapters/ui/tsconfig.json
