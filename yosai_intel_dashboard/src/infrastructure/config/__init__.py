@@ -22,8 +22,8 @@ from .schema import (
     AppSettings,
     ConfigSchema,
     DatabaseSettings,
-    SecuritySettings,
     RetrainingSettings,
+    SecuritySettings,
 )
 from .secure_config_manager import SecureConfigManager
 from .secure_db import execute_secure_query
@@ -62,7 +62,7 @@ def create_config_manager(
     validator = validator or ConfigValidator()
     transformer = transformer or ConfigTransformer()
 
-    return ConfigManager(
+    return SecureConfigManager(
         config_path=config_path,
         loader=loader,
         validator=validator,

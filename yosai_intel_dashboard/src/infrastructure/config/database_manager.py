@@ -11,10 +11,10 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 from database.query_optimizer import DatabaseQueryOptimizer
 from database.secure_exec import execute_command, execute_query
 from database.types import DatabaseConnection
+from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
@@ -27,6 +27,13 @@ from .protocols import (
 from .schema import DatabaseSettings
 
 logger = logging.getLogger(__name__)
+
+
+def _scrub_password(message: str, password: str | None) -> str:
+    """Remove plain password occurrences from error messages."""
+    if password:
+        return message.replace(password, "***")
+    return message
 
 
 class MockConnection:
@@ -170,8 +177,9 @@ class PostgreSQLConnection:
                 execute_command(cursor, "CREATE EXTENSION IF NOT EXISTS timescaledb;")
                 self._connection.commit()
         except psycopg2.Error as e:
-            logger.error(f"Failed to connect to PostgreSQL: {e}")
-            raise DatabaseError(f"PostgreSQL connection failed: {e}") from e
+            sanitized = _scrub_password(str(e), self.config.password)
+            logger.error("Failed to connect to PostgreSQL: %s", sanitized)
+            raise DatabaseError(f"PostgreSQL connection failed: {sanitized}") from e
 
     def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         """Execute PostgreSQL query"""
@@ -188,8 +196,9 @@ class PostgreSQLConnection:
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
         except psycopg2.Error as e:
-            logger.error(f"PostgreSQL query error: {e}")
-            raise DatabaseError(f"Query failed: {e}") from e
+            sanitized = _scrub_password(str(e), self.config.password)
+            logger.error("PostgreSQL query error: %s", sanitized)
+            raise DatabaseError(f"Query failed: {sanitized}") from e
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute PostgreSQL command"""
@@ -205,9 +214,10 @@ class PostgreSQLConnection:
 
             self._connection.commit()
         except psycopg2.Error as e:
-            logger.error(f"PostgreSQL command error: {e}")
+            sanitized = _scrub_password(str(e), self.config.password)
+            logger.error("PostgreSQL command error: %s", sanitized)
             self._connection.rollback()
-            raise DatabaseError(f"Command failed: {e}") from e
+            raise DatabaseError(f"Command failed: {sanitized}") from e
 
     def health_check(self) -> bool:
         """Check PostgreSQL connection health"""
