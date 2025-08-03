@@ -18,13 +18,14 @@ Example
 """
 
 import html
+import inspect
+import json
 import logging
 import os
 import re
 from functools import lru_cache
 
-from typing import Iterable
-import logging
+from typing import Any, Iterable
 
 
 try:  # pragma: no cover - allow using the validator without full core package
@@ -125,7 +126,14 @@ class SecurityValidator(CompositeValidator):
     - ``SSRFRule`` for server-side request forgery.
     """
 
-    def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
+    def __init__(
+        self,
+        rules: Iterable[ValidationRule] | None = None,
+        *,
+        rate_limit: int | None = None,
+        window_seconds: int | None = None,
+        redis_client: Any | None = None,
+    ) -> None:
         base_rules = list(
             rules
             or [
@@ -144,10 +152,13 @@ class SecurityValidator(CompositeValidator):
                 dynamic_config,
             )
 
-            rate_limit = rate_limit or dynamic_config.security.rate_limit_requests
+            rate_limit = (
+                rate_limit if rate_limit is not None else dynamic_config.security.rate_limit_requests
+            )
             window_seconds = (
                 window_seconds
-                or dynamic_config.security.rate_limit_window_minutes * 60
+                if window_seconds is not None
+                else dynamic_config.security.rate_limit_window_minutes * 60
             )
         self.rate_limit = rate_limit
         self.window_seconds = window_seconds
@@ -262,6 +273,20 @@ class SecurityValidator(CompositeValidator):
             raise ValidationError("; ".join(result.issues or []))
         logger.info("Validation succeeded for %s", field_name)
         return {"valid": True, "sanitized": result.sanitized or value}
+
+    def scan_query(self, sql: str) -> None:
+        """Apply :class:`SQLRule` to ``sql`` and log call site on failure."""
+
+        check = SQLRule().validate(sql)
+        if check.valid:
+            return
+        frame = inspect.stack()[1]
+        logger.warning(
+            "SQL injection detected in %s:%s", frame.filename, frame.lineno
+        )
+        raise ValidationError(
+            "Potential SQL injection detected. Use parameterized statements."
+        )
 
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
         result = self.file_validator.validate_file_upload(filename, content)
