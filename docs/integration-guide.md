@@ -277,7 +277,7 @@ CREATE TABLE IF NOT EXISTS compliance_audit_log (
 ```python
 from plugins.compliance_plugin.config import ComplianceConfig
 
-config = ComplianceConfig({"audit_retention_days": 365})
+config = ComplianceConfig.from_dict({"audit_retention_days": 365})
 ```
 
 # =============================================================================
