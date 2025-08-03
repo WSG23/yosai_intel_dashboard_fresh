@@ -10,7 +10,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class BaseModel:
     """Base class for all models"""
 
@@ -29,7 +29,7 @@ class BaseModel:
         return True
 
 
-@dataclass
+@dataclass(slots=True)
 class AccessEventModel(BaseModel):
     """Model for access control events"""
 
@@ -134,7 +134,7 @@ class AccessEventModel(BaseModel):
             return {}
 
 
-@dataclass
+@dataclass(slots=True)
 class AnomalyDetectionModel(BaseModel):
     """Model for anomaly detection"""
 

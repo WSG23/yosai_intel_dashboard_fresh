@@ -15,6 +15,8 @@ from .protocols import EventBusProtocol
 class EventBus(BaseModel, EventBusProtocol):
     """In-memory pub/sub event bus."""
 
+    __slots__ = ("_subscribers", "_history", "_counter")
+
     def __init__(
         self,
         config: Optional[Any] = None,
