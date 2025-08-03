@@ -11,8 +11,10 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
@@ -32,11 +34,19 @@ type JWTConfig struct {
 
 // TokenCache caches validated tokens and tracks blacklisted JTIs.
 type TokenCache struct {
-	redis *redis.Client
+	redis    *redis.Client
+	blFilter *bloom.BloomFilter
+	mu       sync.RWMutex
 }
 
 // NewTokenCache creates a TokenCache using the given redis client.
-func NewTokenCache(rdb *redis.Client) *TokenCache { return &TokenCache{redis: rdb} }
+func NewTokenCache(rdb *redis.Client) *TokenCache {
+	// Estimate capacity for blacklisted JTIs. False positive rate 1%.
+	// The bloom filter prevents unnecessary Redis lookups for tokens that
+	// have never been blacklisted.
+	filter := bloom.NewWithEstimates(100000, 0.01)
+	return &TokenCache{redis: rdb, blFilter: filter}
+}
 
 func (tc *TokenCache) cacheKey(token string) string   { return "jwt:" + token }
 func (tc *TokenCache) blacklistKey(jti string) string { return "bl:" + jti }
@@ -71,6 +81,12 @@ func (tc *TokenCache) IsBlacklisted(ctx context.Context, jti string) (bool, erro
 	if jti == "" {
 		return false, nil
 	}
+	tc.mu.RLock()
+	inFilter := tc.blFilter.TestString(jti)
+	tc.mu.RUnlock()
+	if !inFilter {
+		return false, nil
+	}
 	res, err := tc.redis.Exists(ctx, tc.blacklistKey(jti)).Result()
 	if err != nil {
 		return false, err
@@ -83,6 +99,9 @@ func (tc *TokenCache) Blacklist(ctx context.Context, jti string, ttl time.Durati
 	if jti == "" {
 		return nil
 	}
+	tc.mu.Lock()
+	tc.blFilter.AddString(jti)
+	tc.mu.Unlock()
 	return tc.redis.Set(ctx, tc.blacklistKey(jti), 1, ttl).Err()
 }
 
