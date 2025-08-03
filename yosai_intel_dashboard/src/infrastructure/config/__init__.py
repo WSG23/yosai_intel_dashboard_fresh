@@ -9,6 +9,7 @@ from .config_manager import ConfigManager, get_config, reload_config
 from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .constants import CSSConstants, PerformanceConstants, SecurityConstants
+from .database_connection_factory import DatabaseConnectionFactory, RetryStrategy
 from .dynamic_config import DynamicConfigManager, dynamic_config
 from .environment_processor import EnvironmentProcessor
 from .hierarchical_loader import HierarchicalLoader
@@ -22,8 +23,8 @@ from .schema import (
     AppSettings,
     ConfigSchema,
     DatabaseSettings,
-    SecuritySettings,
     RetrainingSettings,
+    SecuritySettings,
 )
 from .secure_config_manager import SecureConfigManager
 from .secure_db import execute_secure_query
@@ -133,6 +134,8 @@ __all__ = [
     "RetrainingConfig",
     "execute_secure_query",
     "UnicodeHandler",
+    "DatabaseConnectionFactory",
+    "RetryStrategy",
 ]
 
 
