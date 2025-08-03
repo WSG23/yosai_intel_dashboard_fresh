@@ -94,6 +94,15 @@ Import the sample Grafana dashboards from `monitoring/grafana/dashboards`
 to track request latency, cache hit ratios and load-test throughput. Panels
 can be extended with custom PromQL queries to highlight regressions.
 
+## Service Level Objectives
+
+Latency and error-rate targets are recorded to Prometheus so dashboards can
+display both the live metrics and their objectives. The default goals are a
+95th percentile request latency under **500 ms** and fewer than **1%** 5xx
+responses. These thresholds appear as constant lines in the provided
+dashboards, making it easy to spot SLO breaches during load testing or
+production monitoring.
+
 ## Alerting
 
 Prometheus rule files under `monitoring/prometheus/rules/` provide starter
