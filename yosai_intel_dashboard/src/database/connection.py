@@ -5,7 +5,9 @@ from typing import Optional, Protocol
 import pandas as pd
 from opentelemetry import trace
 
-from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, MockConnection
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+    DatabaseConnectionFactory,
+)
 from database.metrics import queries_total, query_errors_total
 
 
@@ -26,21 +28,14 @@ class DatabaseConnection(Protocol):
 
 
 def create_database_connection() -> DatabaseConnection:
-    """Create database connection using existing DatabaseManager"""
-    # Use your existing database manager
+    """Create database connection using :class:`DatabaseConnectionFactory`."""
     from yosai_intel_dashboard.src.infrastructure.config import get_config
 
     config_manager = get_config()
     db_config = config_manager.get_database_config()
 
-    # Create database manager with existing config
-    db_manager = DatabaseManager(
-        db_type=db_config.type,
-        connection_string=getattr(db_config, "connection_string", ""),
-        **db_config.__dict__,
-    )
-
-    conn = db_manager.get_connection()
+    factory = DatabaseConnectionFactory(db_config)
+    conn = factory.create()
 
     tracer = trace.get_tracer("database")
 
@@ -75,6 +70,5 @@ def create_database_connection() -> DatabaseConnection:
 __all__ = [
     "DatabaseConnection",
     "create_database_connection",
-    "DatabaseManager",
-    "MockConnection",
+    "DatabaseConnectionFactory",
 ]

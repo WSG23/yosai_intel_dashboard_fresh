@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-"""
-Database Manager - Fixed imports for streamlined architecture
+"""Database connection utilities and factories.
+
+This module previously exposed a number of database manager and connection
+classes.  As the codebase evolved a dedicated factory has been introduced to
+create connections based on :class:`DatabaseSettings`.  The legacy classes are
+still available for backwards compatibility but are now deprecated.
 """
 import logging
 import sqlite3
 import threading
 import time
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
@@ -30,9 +35,18 @@ logger = logging.getLogger(__name__)
 
 
 class MockConnection:
-    """Mock database connection for testing"""
+    """Mock database connection for testing.
+
+    Deprecated: prefer using :class:`DatabaseConnectionFactory` with a
+    ``DatabaseSettings`` type of ``"mock"``.
+    """
 
     def __init__(self):
+        warnings.warn(
+            "MockConnection is deprecated; use DatabaseConnectionFactory",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._connected = True
         logger.info("Mock database connection created")
 
@@ -56,9 +70,17 @@ class MockConnection:
 
 
 class SQLiteConnection:
-    """SQLite database connection"""
+    """SQLite database connection.
+
+    Deprecated: prefer using :class:`DatabaseConnectionFactory`.
+    """
 
     def __init__(self, config: DatabaseSettings):
+        warnings.warn(
+            "SQLiteConnection is deprecated; use DatabaseConnectionFactory",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.config = config
         self.db_path = config.name
         self._connection: Optional[sqlite3.Connection] = None
@@ -136,9 +158,17 @@ class SQLiteConnection:
 
 
 class PostgreSQLConnection:
-    """PostgreSQL database connection (requires psycopg2)"""
+    """PostgreSQL database connection (requires psycopg2).
+
+    Deprecated: prefer using :class:`DatabaseConnectionFactory`.
+    """
 
     def __init__(self, config: DatabaseSettings):
+        warnings.warn(
+            "PostgreSQLConnection is deprecated; use DatabaseConnectionFactory",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.config = config
         self._connection = None
         self._connect()
@@ -229,35 +259,50 @@ class PostgreSQLConnection:
             logger.info("PostgreSQL connection closed")
 
 
-class DatabaseManager:
-    """Database manager factory"""
+class DatabaseConnectionFactory:
+    """Factory for creating database connections based on configuration."""
+
+    def __init__(self, config: DatabaseSettings) -> None:
+        self.config = config
+
+    def create(self) -> DatabaseConnection:
+        """Create a new database connection instance."""
+        db_type = self.config.type.lower()
+        if db_type == "mock":
+            return MockConnection()
+        if db_type == "sqlite":
+            return SQLiteConnection(self.config)
+        if db_type in {"postgresql", "postgres"}:
+            return PostgreSQLConnection(self.config)
+        logger.warning("Unknown database type: %s, using mock", db_type)
+        return MockConnection()
+
+
+class DatabaseManager(DatabaseConnectionFactory):
+    """Deprecated connection manager.
+
+    This class is retained for backwards compatibility.  Use
+    :class:`DatabaseConnectionFactory` and call :meth:`create` instead.
+    """
 
     def __init__(self, config: DatabaseSettings):
-        self.config = config
+        warnings.warn(
+            "DatabaseManager is deprecated; use DatabaseConnectionFactory",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(config)
         self._connection: Optional[DatabaseConnection] = None
 
     def get_connection(self) -> DatabaseConnection:
-        """Get database connection"""
+        """Return a cached database connection."""
         if self._connection is None:
-            self._connection = self._create_connection()
+            self._connection = self.create()
         return self._connection
 
-    def _create_connection(self) -> DatabaseConnection:
-        """Create appropriate database connection"""
-        db_type = self.config.type.lower()
-
-        if db_type == "mock":
-            return MockConnection()
-
-        elif db_type == "sqlite":
-            return SQLiteConnection(self.config)
-
-        elif db_type in ["postgresql", "postgres"]:
-            return PostgreSQLConnection(self.config)
-
-        else:
-            logger.warning(f"Unknown database type: {db_type}, using mock")
-            return MockConnection()
+    # Backwards compatibility for subclasses expecting _create_connection
+    def _create_connection(self) -> DatabaseConnection:  # pragma: no cover - legacy
+        return self.create()
 
     def health_check(self) -> bool:
         """Check database health"""
@@ -314,7 +359,15 @@ class ThreadSafeDatabaseManager(DatabaseManager):
 
 # Factory function
 def create_database_manager(config: DatabaseSettings) -> DatabaseManager:
-    """Create database manager from config"""
+    """Create database manager from config.
+
+    Deprecated: use :class:`DatabaseConnectionFactory` instead.
+    """
+    warnings.warn(
+        "create_database_manager is deprecated; use DatabaseConnectionFactory",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return DatabaseManager(config)
 
 
@@ -322,25 +375,27 @@ def create_database_manager(config: DatabaseSettings) -> DatabaseManager:
 __all__ = [
     "DatabaseSettings",
     "DatabaseConnection",
-    "MockConnection",
-    "SQLiteConnection",
-    "PostgreSQLConnection",
-    "DatabaseManager",
-    "ThreadSafeDatabaseManager",
+    "DatabaseConnectionFactory",
     "DatabaseError",
-    "create_database_manager",
-    "EnhancedPostgreSQLManager",
 ]
 
 
 class EnhancedPostgreSQLManager(DatabaseManager):
-    """PostgreSQL manager with retry, pooling and Unicode safety."""
+    """Deprecated PostgreSQL manager with retry and pooling.
+
+    Use :class:`DatabaseConnectionFactory` instead.
+    """
 
     def __init__(
         self,
         config: DatabaseSettings,
         retry_config: RetryConfigProtocol | None = None,
     ) -> None:
+        warnings.warn(
+            "EnhancedPostgreSQLManager is deprecated; use DatabaseConnectionFactory",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(config)
         self.optimizer = DatabaseQueryOptimizer()
         from database.intelligent_connection_pool import IntelligentConnectionPool
