@@ -19,6 +19,7 @@ Example
 
 import html
 import io
+
 import json
 import logging
 import mimetypes
@@ -34,11 +35,30 @@ rate_limit = None
 window_seconds = None
 
 
+
 try:  # pragma: no cover - allow using the validator without full core package
-    from yosai_intel_dashboard.src.core.exceptions import ValidationError
+    from yosai_intel_dashboard.src.core.exceptions import (
+        ValidationError,
+        TemporaryBlockError,
+        PermanentBanError,
+    )
 except Exception:  # pragma: no cover
     class ValidationError(Exception):
         """Fallback validation error when core package is unavailable."""
+
+    class TemporaryBlockError(Exception):
+        pass
+
+    class PermanentBanError(Exception):
+        pass
+
+try:  # pragma: no cover
+    from yosai_intel_dashboard.src.infrastructure.cache import redis_client
+except Exception:  # pragma: no cover
+    redis_client = None
+
+rate_limit = None
+window_seconds = None
 
 
 # Import dynamically inside methods to avoid circular imports during module init
@@ -122,6 +142,19 @@ class SSRFRule(ValidationRule):
         return ValidationResult(True, data)
 
 
+class IDORRule(ValidationRule):
+    """Verify a user is authorized to access a given resource ID."""
+
+    def __init__(self, user: Any, authorizer: Callable[[Any, str], bool]) -> None:
+        self.user = user
+        self.authorizer = authorizer
+
+    def validate(self, data: str) -> ValidationResult:
+        if not self.authorizer(self.user, data):
+            return ValidationResult(False, data, ["unauthorized"])
+        return ValidationResult(True, data)
+
+
 class SecurityValidator(CompositeValidator):
     """Validate input strings and file uploads against common OWASP risks.
 
@@ -132,7 +165,15 @@ class SecurityValidator(CompositeValidator):
     - ``SSRFRule`` for server-side request forgery.
     """
 
-    def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
+    def __init__(
+        self,
+        rules: Iterable[ValidationRule] | None = None,
+        *,
+        rate_limit: int | None = None,
+        window_seconds: int | None = None,
+        redis_client: Any | None = None,
+
+    ) -> None:
         base_rules = list(
             rules
             or [
@@ -157,7 +198,9 @@ class SecurityValidator(CompositeValidator):
             ws = ws or dynamic_config.security.rate_limit_window_minutes * 60
         self.rate_limit = rl
         self.window_seconds = ws
+
         self.logger = logging.getLogger(__name__)
+        self._authorize_resource = authorize_resource or (lambda _u, _r: True)
 
     def _check_rate_limit(self, identifier: str) -> None:
         if not self.redis:
@@ -190,6 +233,14 @@ class SecurityValidator(CompositeValidator):
         if name != filename or not name or name in {".", ".."}:
             raise ValidationError("Invalid filename")
         return name
+
+    def validate_resource_id(self, user: Any, resource_id: Any) -> Any:
+        """Validate that ``user`` is authorized for ``resource_id``."""
+        rule = IDORRule(user, self._authorize_resource)
+        result = rule.validate(str(resource_id))
+        if not result.valid:
+            raise ValidationError("Unauthorized resource access")
+        return result.sanitized
 
     # ------------------------------------------------------------------
     def _virus_scan(self, content: bytes) -> None:
@@ -300,6 +351,20 @@ class SecurityValidator(CompositeValidator):
             raise ValidationError("; ".join(result.issues or []))
         logger.info("Validation succeeded for %s", field_name)
         return {"valid": True, "sanitized": result.sanitized or value}
+
+    def scan_query(self, sql: str) -> None:
+        """Apply :class:`SQLRule` to ``sql`` and log call site on failure."""
+
+        check = SQLRule().validate(sql)
+        if check.valid:
+            return
+        frame = inspect.stack()[1]
+        logger.warning(
+            "SQL injection detected in %s:%s", frame.filename, frame.lineno
+        )
+        raise ValidationError(
+            "Potential SQL injection detected. Use parameterized statements."
+        )
 
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
         meta = self.validate_file_meta(filename, content)

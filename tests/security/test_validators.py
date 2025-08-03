@@ -95,3 +95,12 @@ def test_malicious_query_rejected():
     client = app.test_client()
     resp = client.get("/?q=%3Cscript%3E")
     assert resp.status_code == 400
+
+
+def test_resource_id_authorization():
+    def deny(user, resource_id):
+        return False
+
+    validator = SecurityValidator(authorize_resource=deny)
+    with pytest.raises(ValidationError):
+        validator.validate_resource_id("alice", "secret-id")

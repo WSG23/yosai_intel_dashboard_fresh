@@ -25,7 +25,9 @@ class AccessEventModel(BaseModel):
     """Model for access control events with full type safety"""
 
     @monitor_query_performance()
-    def get_data(self, filters: Dict[str, Any] | None = None) -> pd.DataFrame:
+    def get_data(
+        self, filters: Dict[str, Any] | None = None, user: Any | None = None
+    ) -> pd.DataFrame:
         """Get access events with optional filtering"""
 
         base_query = """
@@ -60,10 +62,14 @@ class AccessEventModel(BaseModel):
             params.append(filters["end_date"])
 
         if "person_id" in filters:
+            if user is not None:
+                _sql_validator.validate_resource_id(user, filters["person_id"])
             base_query += " AND person_id = %s"
             params.append(filters["person_id"])
 
         if "door_id" in filters:
+            if user is not None:
+                _sql_validator.validate_resource_id(user, filters["door_id"])
             base_query += " AND door_id = %s"
             params.append(filters["door_id"])
 

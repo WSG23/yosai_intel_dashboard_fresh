@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from .exceptions import ErrorCategory, YosaiException
+from monitoring.error_budget import record_error
 
 
 @dataclass
@@ -28,10 +29,12 @@ class ErrorHandler:
         exc: Exception,
         category: ErrorCategory = ErrorCategory.INTERNAL,
         details: Optional[Any] = None,
+        service: str = "unknown",
     ) -> YosaiException:
         """Create a :class:`YosaiException` for *exc* and log it."""
 
         self.log.exception("unhandled error", exc_info=exc)
+        record_error(service)
         context = ErrorContext(exc, category, str(exc), details)
         return YosaiException(context.category, context.message, context.details)
 

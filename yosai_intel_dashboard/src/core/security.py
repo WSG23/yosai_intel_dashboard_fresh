@@ -20,6 +20,49 @@ from yosai_intel_dashboard.src.core.base_model import BaseModel
 # :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
 from validation.security_validator import SecurityValidator
 
+# Reuse a single validator instance for lightweight string sanitization across
+# the application.  The validator implements the heavy lifting in
+# ``validation.security_validator.SecurityValidator``; this helper simply
+# delegates to it so callers don't need to instantiate or import the class
+# directly.
+_INPUT_VALIDATOR: SecurityValidator | None = None
+
+
+def validate_user_input(value: str, field_name: str = "input") -> str:
+    """Return a sanitized version of ``value``.
+
+    Parameters
+    ----------
+    value:
+        User supplied string to validate.
+    field_name:
+        Optional identifier used for logging context.
+
+    Raises
+    ------
+    validation.security_validator.ValidationError
+        If the underlying validator determines the value is unsafe.
+
+    Returns
+    -------
+    str
+        Sanitized representation suitable for downstream processing.
+    """
+
+    global _INPUT_VALIDATOR
+    if _INPUT_VALIDATOR is None:
+        # ``SecurityValidator`` optionally relies on a Redis client for rate
+        # limiting.  During tests this client may not be configured, so ensure
+        # the module has a ``redis_client`` attribute set to ``None`` before
+        # instantiation to avoid ``NameError``.
+        import validation.security_validator as _sv  # local import for patching
+
+        if not hasattr(_sv, "redis_client"):
+            _sv.redis_client = None  # type: ignore[attr-defined]
+        _INPUT_VALIDATOR = _sv.SecurityValidator()
+    result = _INPUT_VALIDATOR.validate_input(value, field_name)
+    return result.get("sanitized", value)
+
 
 class SecurityLevel(Enum):
     """Security threat levels"""
@@ -258,7 +301,6 @@ class SecureHashManager:
 
 
 # Global security instances
-security_validator = SecurityValidator()
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
 
@@ -273,26 +315,23 @@ def validate_input_decorator(field_mapping: Dict[str, str] = None):
             if field_mapping:
                 for param_name, field_name in field_mapping.items():
                     if param_name in kwargs:
-                        validation = security_validator.validate_input(
-                            kwargs[param_name], field_name
-                        )
-                        if not validation["valid"]:
+                        try:
+                            kwargs[param_name] = validate_user_input(
+                                kwargs[param_name], field_name
+                            )
+                        except Exception as exc:
                             security_auditor.log_security_event(
                                 "input_validation_failed",
-                                validation["severity"],
+                                SecurityLevel.HIGH,
                                 {
                                     "function": func.__name__,
                                     "field": field_name,
-                                    "issues": validation["issues"],
+                                    "issues": [str(exc)],
                                 },
                             )
                             raise ValueError(
-                                "Invalid input for "
-                                f"{field_name}: {validation['issues']}"
+                                f"Invalid input for {field_name}: {exc}"  # noqa: EM102
                             )
-
-                        # Use sanitized input
-                        kwargs[param_name] = validation["sanitized"]
 
             return func(*args, **kwargs)
 
