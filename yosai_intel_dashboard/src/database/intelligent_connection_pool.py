@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple, Set
 
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionValidationFailed
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    ConnectionValidationFailed,
+    PoolExhaustedError,
+)
 from database.types import DatabaseConnection
 
 
@@ -51,8 +54,10 @@ class IntelligentConnectionPool:
         min_size: int,
         max_size: int,
         timeout: int,
-        shrink_timeout: int,
+        shrink_timeout: int | None = None,
         *,
+        shrink_interval: float = 0,
+        idle_timeout: int | None = None,
         failure_threshold: int = 5,
         recovery_timeout: int = 30,
         threshold: float = 0.75,
@@ -64,11 +69,17 @@ class IntelligentConnectionPool:
         self._max_pool_size = max(max_size, min_size)
         self._max_size = min_size
         self._timeout = timeout
-        self._shrink_timeout = shrink_timeout
+        if idle_timeout is None:
+            idle_timeout = shrink_timeout if shrink_timeout is not None else 0
+        self._idle_timeout = idle_timeout
         self._threshold = threshold
+        self._shrink_interval = shrink_interval
+        self._shutdown = False
+        self._shrink_thread: threading.Thread | None = None
 
         self._pool: List[Tuple[DatabaseConnection, float]] = []
         self._active = 0
+        self._in_use: Set[DatabaseConnection] = set()
         self.circuit_breaker = CircuitBreaker(failure_threshold, recovery_timeout)
         self.metrics: Dict[str, Any] = {
             "acquired": 0,
@@ -85,6 +96,12 @@ class IntelligentConnectionPool:
             self._pool.append((conn, time.time()))
             self._active += 1
 
+        if self._shrink_interval > 0:
+            self._shrink_thread = threading.Thread(
+                target=self._periodic_shrink, daemon=True
+            )
+            self._shrink_thread.start()
+
     # ------------------------------------------------------------------
     def _maybe_expand(self) -> None:
         if self._max_size == 0:
@@ -99,7 +116,7 @@ class IntelligentConnectionPool:
         now = time.time()
         new_pool: List[Tuple[DatabaseConnection, float]] = []
         for conn, ts in self._pool:
-            if now - ts > self._shrink_timeout and self._max_size > self._min_size:
+            if now - ts > self._idle_timeout and self._max_size > self._min_size:
                 conn.close()
                 self._active -= 1
                 self._max_size -= 1
@@ -107,6 +124,18 @@ class IntelligentConnectionPool:
             else:
                 new_pool.append((conn, ts))
         self._pool = new_pool
+
+    # ------------------------------------------------------------------
+    def _periodic_shrink(self) -> None:
+        while not self._shutdown:
+            time.sleep(self._shrink_interval)
+            with self._condition:
+                self._shrink_idle_connections()
+
+    def close(self) -> None:
+        self._shutdown = True
+        if self._shrink_thread is not None:
+            self._shrink_thread.join(timeout=0.1)
 
     # ------------------------------------------------------------------
     def get_connection(self) -> DatabaseConnection:
@@ -132,6 +161,7 @@ class IntelligentConnectionPool:
                     self.metrics["acquired"] += 1
                     self.metrics["acquire_times"].append(time.time() - start)
                     self.circuit_breaker.record_success()
+                    self._in_use.add(conn)
                     self._condition.notify()
                     return conn
 
@@ -148,6 +178,7 @@ class IntelligentConnectionPool:
                     self.metrics["acquired"] += 1
                     self.metrics["acquire_times"].append(time.time() - start)
                     self.circuit_breaker.record_success()
+                    self._in_use.add(conn)
                     self._condition.notify()
                     return conn
 
@@ -155,18 +186,24 @@ class IntelligentConnectionPool:
                 if remaining <= 0:
                     self.metrics["timeouts"] += 1
                     self.circuit_breaker.record_failure()
-                    raise TimeoutError("No available connection in pool")
+                    raise PoolExhaustedError("No available connection in pool")
                 self._condition.wait(timeout=remaining)
 
     # ------------------------------------------------------------------
     def release_connection(self, conn: DatabaseConnection) -> None:
         with self._condition:
             self._shrink_idle_connections()
+            self._in_use.discard(conn)
             if not conn.health_check():
                 conn.close()
                 self._active -= 1
                 self.metrics["failed"] += 1
                 self.circuit_breaker.record_failure()
+                return
+
+            if self._max_size == 0:
+                conn.close()
+                self._condition.notify()
                 return
 
             if len(self._pool) >= self._max_size:
@@ -209,6 +246,20 @@ class IntelligentConnectionPool:
         data["active"] = self._active
         data["max_size"] = self._max_size
         return data
+
+    # ------------------------------------------------------------------
+    def close_all(self) -> None:
+        """Close all connections and prevent further use."""
+        with self._condition:
+            for conn, _ in self._pool:
+                conn.close()
+            self._pool.clear()
+            for conn in list(self._in_use):
+                conn.close()
+            self._in_use.clear()
+            self._active = 0
+            self._max_size = 0
+            self._condition.notify_all()
 
 
 __all__ = ["IntelligentConnectionPool", "CircuitBreaker"]

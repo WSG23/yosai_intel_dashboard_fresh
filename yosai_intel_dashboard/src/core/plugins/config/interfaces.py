@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from database.types import DBRows
+
 
 @dataclass
 class ConnectionResult:
@@ -34,7 +36,7 @@ class IDatabaseManager(ABC):
         pass
 
     @abstractmethod
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[Dict] = None) -> DBRows:
         """Execute database query"""
         pass
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import AsyncIterator, List
+from typing import AsyncIterator, List, Callable, Awaitable
 
 import asyncpg
 from yosai_intel_dashboard.src.infrastructure.config.constants import MIGRATION_CHUNK_SIZE
@@ -14,8 +14,13 @@ class AnalyticsMigration(MigrationStrategy):
     TABLE = "analytics_results"
     CHUNK_SIZE = MIGRATION_CHUNK_SIZE
 
-    def __init__(self, target_dsn: str) -> None:
-        super().__init__(self.TABLE, target_dsn)
+    def __init__(
+        self,
+        target_dsn: str,
+        *,
+        pool_factory: Callable[..., Awaitable[asyncpg.Pool]] | None = None,
+    ) -> None:
+        super().__init__(self.TABLE, target_dsn, pool_factory=pool_factory)
 
     async def run(self, source_pool: asyncpg.Pool) -> AsyncIterator[int]:
         start = 0

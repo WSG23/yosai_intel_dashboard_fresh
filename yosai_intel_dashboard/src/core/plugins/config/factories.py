@@ -3,14 +3,8 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Callable, Dict, List, Type
-
-from yosai_intel_dashboard.src.core.hierarchical_cache_manager import (
-    HierarchicalCacheManager,
-)
-from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import (
-    IntelligentMultiLevelCache,
-)
 
 from .interfaces import ICacheManager, IDatabaseManager
 
@@ -36,6 +30,7 @@ class DatabaseManagerFactory:
         # Import here to avoid circular imports
         from .database_manager import (
             AsyncPostgreSQLManager,
+            MockDatabaseManager,
             SQLiteDatabaseManager,
         )
 
@@ -45,8 +40,13 @@ class DatabaseManagerFactory:
                 {
                     "postgresql": AsyncPostgreSQLManager,
                     "sqlite": SQLiteDatabaseManager,
+                    "mock": MockDatabaseManager,
                 }
             )
+
+        if os.getenv("USE_MOCK_DB"):
+            logger.info("USE_MOCK_DB set - using MockDatabaseManager")
+            return MockDatabaseManager(database_config)
 
         db_type = getattr(database_config, "type", "sqlite")
 
@@ -84,6 +84,12 @@ class CacheManagerFactory:
             AdvancedRedisCacheManager,
             MemoryCacheManager,
             RedisCacheManager,
+        )
+        from yosai_intel_dashboard.src.core.hierarchical_cache_manager import (
+            HierarchicalCacheManager,
+        )
+        from yosai_intel_dashboard.src.core.intelligent_multilevel_cache import (
+            IntelligentMultiLevelCache,
         )
 
         # Register default managers if not already registered
