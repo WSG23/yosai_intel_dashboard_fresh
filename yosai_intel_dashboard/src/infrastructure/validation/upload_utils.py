@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-import os
+from pathlib import Path
 from typing import Dict, List
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
@@ -24,7 +24,7 @@ def decode_and_validate_upload(
     try:
         sanitized = validator.sanitize_filename(filename)
     except ValidationError:
-        sanitized = os.path.basename(filename)
+        sanitized = Path(filename).name
         issues.append("Invalid filename")
 
     if "," not in contents:
