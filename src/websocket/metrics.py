@@ -45,15 +45,26 @@ _event_bus: EventBusProtocol | None = None
 
 _metrics_started = False
 
+
 def set_event_bus(bus: EventBusProtocol) -> None:
     """Configure the ``EventBus`` used for publishing metric updates."""
     global _event_bus
     _event_bus = bus
 
-def _publish(name: str, value: float) -> None:
+
+def snapshot() -> Dict[str, float]:
+    """Return a snapshot of current metric counters."""
+    return {
+        "websocket_connections_total": websocket_connections_total._value.get(),  # type: ignore[attr-defined]
+        "websocket_reconnect_attempts_total": websocket_reconnect_attempts_total._value.get(),  # type: ignore[attr-defined]
+        "websocket_ping_failures_total": websocket_ping_failures_total._value.get(),  # type: ignore[attr-defined]
+    }
+
+
+def _publish_snapshot() -> None:
     if _event_bus:
         try:
-            _event_bus.publish("metrics_update", {name: value})
+            _event_bus.publish("metrics_update", snapshot())
         except Exception:  # pragma: no cover - best effort
             pass
 
@@ -68,25 +79,22 @@ def start_metrics_server(port: int = 8003) -> None:
 def record_connection() -> None:
     """Increment connection counter and publish update."""
     websocket_connections_total.inc()
-    _publish(
-        "websocket_connections_total", websocket_connections_total._value.get()  # type: ignore[attr-defined]
-    )
+    _publish_snapshot()
 
 def record_reconnect_attempt() -> None:
     """Increment reconnect counter and publish update."""
     websocket_reconnect_attempts_total.inc()
-    _publish(
-        "websocket_reconnect_attempts_total",
-        websocket_reconnect_attempts_total._value.get(),  # type: ignore[attr-defined]
-    )
+    _publish_snapshot()
 
 def record_ping_failure() -> None:
     """Increment ping failure counter and publish update."""
     websocket_ping_failures_total.inc()
-    _publish(
-        "websocket_ping_failures_total",
-        websocket_ping_failures_total._value.get(),  # type: ignore[attr-defined]
-    )
+    _publish_snapshot()
+
+
+def publish_snapshot() -> None:
+    """Explicitly publish the current metric snapshot."""
+    _publish_snapshot()
 
 __all__ = [
     "websocket_connections_total",
@@ -95,6 +103,8 @@ __all__ = [
     "record_connection",
     "record_reconnect_attempt",
     "record_ping_failure",
+    "publish_snapshot",
+    "snapshot",
     "set_event_bus",
     "start_metrics_server",
 ]

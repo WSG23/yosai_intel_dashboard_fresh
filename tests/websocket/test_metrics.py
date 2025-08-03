@@ -25,6 +25,8 @@ def test_websocket_metrics_publish_updates():
     metrics.record_ping_failure()
 
     assert bus.events[0][0] == "metrics_update"
-    assert bus.events[0][1]["websocket_connections_total"] == start_conn + 1
-    assert bus.events[1][1]["websocket_reconnect_attempts_total"] == start_reconnect + 1
-    assert bus.events[2][1]["websocket_ping_failures_total"] == start_ping + 1
+    assert bus.events[0][1]["websocket_connections_total"] == 1
+    assert bus.events[0][1]["websocket_reconnect_attempts_total"] == 0
+    assert bus.events[1][1]["websocket_reconnect_attempts_total"] == 1
+    assert bus.events[2][1]["websocket_ping_failures_total"] == 1
+
