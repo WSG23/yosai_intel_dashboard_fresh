@@ -26,3 +26,12 @@ groups:
       severity: critical
     annotations:
       summary: High database query error rate
+- name: error_budget
+  rules:
+  - alert: ErrorBudgetExhausted
+    expr: service_error_budget_remaining <= 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: Service error budget exhausted

@@ -4,6 +4,12 @@ import { eventBus } from '../eventBus';
 import websocket_metrics from '../metrics/websocket_metrics';
 
 
+export enum WebSocketState {
+  DISCONNECTED,
+  RECONNECTING,
+  CONNECTED,
+}
+
 export const useWebSocket = (
   path: string,
   socketFactory?: (url: string) => WebSocket
