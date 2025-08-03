@@ -3,13 +3,19 @@ import { useStore } from 'zustand';
 import { createSessionSlice, SessionSlice } from './sessionSlice';
 import { createAnalyticsSlice, AnalyticsSlice } from './analyticsSlice';
 import { createUploadSlice, UploadSlice } from './uploadSlice';
+import { createSelectionSlice, SelectionSlice } from './selectionSlice';
 
-export type BoundState = SessionSlice & AnalyticsSlice & UploadSlice;
+export type BoundState =
+  SessionSlice &
+  AnalyticsSlice &
+  UploadSlice &
+  SelectionSlice;
 
 export const boundStore = createStore<BoundState>()((...a) => ({
   ...createSessionSlice(...a),
   ...createAnalyticsSlice(...a),
   ...createUploadSlice(...a),
+  ...createSelectionSlice(...a),
 }));
 
 export const useBoundStore = <T,>(selector: (state: BoundState) => T) =>
@@ -29,4 +35,12 @@ export const useUploadStore = () =>
   useBoundStore((state) => ({
     uploadedFiles: state.uploadedFiles,
     setUploadedFiles: state.setUploadedFiles,
+  }));
+
+export const useSelectionStore = () =>
+  useBoundStore((state) => ({
+    selectedThreats: state.selectedThreats,
+    setSelectedThreats: state.setSelectedThreats,
+    selectedRange: state.selectedRange,
+    setSelectedRange: state.setSelectedRange,
   }));
