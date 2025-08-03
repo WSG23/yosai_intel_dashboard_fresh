@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import logging
 import threading
 import time
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Set
 
 from database.types import DatabaseConnection
+from .database_exceptions import PoolExhaustedError
+
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseConnectionPool:
@@ -30,6 +35,7 @@ class DatabaseConnectionPool:
 
         self._pool: List[Tuple[DatabaseConnection, float]] = []
         self._active = 0
+        self._in_use: Set[DatabaseConnection] = set()
 
         for _ in range(initial_size):
             conn = self._factory()
@@ -42,7 +48,13 @@ class DatabaseConnectionPool:
                 return
             usage = (self._active - len(self._pool)) / self._max_size
             if usage >= self._threshold and self._max_size < self._max_pool_size:
-                self._max_size = min(self._max_size * 2, self._max_pool_size)
+                new_size = min(self._max_size * 2, self._max_pool_size)
+                logger.warning(
+                    "Expanding connection pool to %d due to usage %.2f",
+                    new_size,
+                    usage,
+                )
+                self._max_size = new_size
 
     def _shrink_idle_connections(self) -> None:
         with self._lock:
@@ -53,6 +65,9 @@ class DatabaseConnectionPool:
                     now - ts > self._shrink_timeout
                     and self._max_size > self._initial_size
                 ):
+                    logger.warning(
+                        "Closing idle connection after %.2fs", now - ts
+                    )
                     conn.close()
                     self._active -= 1
                     self._max_size -= 1
@@ -71,30 +86,48 @@ class DatabaseConnectionPool:
                 if self._pool:
                     conn, _ = self._pool.pop()
                     if not conn.health_check():
+                        logger.warning("Discarding unhealthy connection")
                         conn.close()
                         self._active -= 1
                         continue
+                    self._in_use.add(conn)
                     return conn
 
                 if self._active < self._max_size:
                     conn = self._factory()
                     self._active += 1
+                    self._in_use.add(conn)
                     return conn
 
             if time.time() >= deadline:
+                logger.error(
+                    "Timed out waiting for database connection (active=%d, pool=%d)",
+                    self._active,
+                    len(self._pool),
+                )
                 raise TimeoutError("No available connection in pool")
+
 
             time.sleep(0.05)
 
     def release_connection(self, conn: DatabaseConnection) -> None:
         with self._lock:
             self._shrink_idle_connections()
+            self._in_use.discard(conn)
             if not conn.health_check():
+                logger.warning("Dropping unhealthy connection on release")
                 conn.close()
                 self._active -= 1
                 return
 
+            if self._max_size == 0:
+                conn.close()
+                return
+
             if len(self._pool) >= self._max_size:
+                logger.warning(
+                    "Connection pool full; closing returned connection"
+                )
                 conn.close()
                 self._active -= 1
             else:
@@ -108,6 +141,9 @@ class DatabaseConnectionPool:
                 conn, ts = self._pool.pop()
                 if not conn.health_check():
                     healthy = False
+                    logger.warning(
+                        "Removing unhealthy idle connection during health check"
+                    )
                     conn.close()
                     self._active -= 1
                     if self._max_size > self._initial_size:
@@ -117,3 +153,15 @@ class DatabaseConnectionPool:
             for item in temp:
                 self.release_connection(item[0])
             return healthy
+
+    def close_all(self) -> None:
+        """Close all connections and prevent further use."""
+        with self._lock:
+            for conn, _ in self._pool:
+                conn.close()
+            self._pool.clear()
+            for conn in list(self._in_use):
+                conn.close()
+            self._in_use.clear()
+            self._active = 0
+            self._max_size = 0

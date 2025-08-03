@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .constants import (
     DEFAULT_APP_HOST,
@@ -39,6 +39,34 @@ class DatabaseModel(BaseModel):
     async_connection_timeout: int = 30
     shrink_timeout: int = 60
     use_intelligent_pool: bool = False
+
+
+class RetrySettings(BaseModel):
+    max_attempts: int = 3
+    base_delay: float = 0.5
+    jitter: bool = True
+    backoff_factor: float = 2.0
+    max_delay: float = 60.0
+
+
+class DatabaseConnectionFactoryConfig(BaseModel):
+    type: str = "sqlite"
+    host: str = Field(default=DEFAULT_DB_HOST, json_schema_extra={"env": "DB_HOST"})
+    port: int = Field(default=DEFAULT_DB_PORT, json_schema_extra={"env": "DB_PORT"})
+    user: str = Field(default="user", json_schema_extra={"env": "DB_USER"})
+    password: str = Field(default="", json_schema_extra={"env": "DB_PASSWORD"})
+    min_connections: int = 1
+    max_connections: int = 10
+    timeout: int = 30
+    retry: RetrySettings = Field(default_factory=RetrySettings)
+
+    @model_validator(mode="after")
+    def _check_pool_sizes(
+        cls, values: "DatabaseConnectionFactoryConfig"
+    ) -> "DatabaseConnectionFactoryConfig":
+        if values.max_connections < values.min_connections:
+            raise ValueError("max_connections must be >= min_connections")
+        return values
 
 
 class SecurityModel(BaseModel):
@@ -157,6 +185,9 @@ class ConfigModel(BaseModel):
     uploads: UploadModel = Field(default_factory=UploadModel)
     secret_validation: SecretValidationModel = Field(
         default_factory=SecretValidationModel
+    )
+    database_connection_factory: DatabaseConnectionFactoryConfig = Field(
+        default_factory=DatabaseConnectionFactoryConfig
     )
     environment: str = "development"
     plugin_settings: Dict[str, Dict[str, object]] = Field(default_factory=dict)

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from yosai_intel_dashboard.src.core.secret_manager import validate_secrets
+from factories import health_check as db_health_check
 
 
 def register_health_endpoints(server: Any, progress_events: Any | None = None) -> None:
@@ -12,6 +13,12 @@ def register_health_endpoints(server: Any, progress_events: Any | None = None) -
     def health():
         """Basic health check."""
         return {"status": "ok"}, 200
+
+    @server.route("/health/db", methods=["GET"])
+    def health_db():
+        """Database connectivity check."""
+        status = db_health_check()
+        return status.model_dump(), 200
 
     @server.route("/health/secrets", methods=["GET"])
     def health_secrets():

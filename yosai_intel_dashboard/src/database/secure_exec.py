@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, Optional
 
+from database.types import DBRows
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +20,9 @@ def _validate_params(params: Optional[Iterable[Any]]) -> Optional[tuple]:
     raise TypeError("params must be a tuple/list or None")
 
 
-def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
+def execute_query(
+    conn: Any, sql: str, params: Optional[Iterable[Any]] = None
+) -> DBRows:
     """Validate and execute a SELECT query on the given connection."""
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
@@ -33,7 +37,7 @@ def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
     raise AttributeError("Object has no execute or execute_query method")
 
 
-def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> Any:
+def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
     """Execute a parameterized SELECT query enforcing provided params."""
     if params is None:
         raise ValueError("params must be provided for execute_secure_query")
