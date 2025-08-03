@@ -83,17 +83,54 @@ manager can mark versions as `active`, `deprecated`, or `sunset` to control
 behavior. Deprecated versions return a `Warning` header while sunset versions
 return a `410 Gone` response.
 
-## Database Manager
+## Database Connection Factory
 
-### `DatabaseManager`
+### `DatabaseConnectionFactory`
 
-Factory class for creating database connections.
+Unified factory for creating database connections with pooling, retry logic,
+health checks, async support, and Unicode-safe queries.
 
-#### Methods
+Configuration:
 
-- `from_environment() -> DatabaseConfig`: Create config from environment variables
-- `create_connection(config) -> DatabaseConnection`: Create database connection
-- `test_connection(config) -> bool`: Test database connectivity
+```yaml
+database:
+  type: postgresql
+  pool_size: 20
+  max_overflow: 40
+  retries:
+    attempts: 5
+    backoff_seconds: 1.5
+```
+
+Usage:
+
+```python
+from yosai_intel_dashboard.src.infrastructure.database import (
+    DatabaseConnectionFactory,
+    DatabaseConfig,
+)
+
+config = DatabaseConfig(
+    type="postgresql",
+    pool_size=20,
+    max_overflow=40,
+    retry_attempts=5,
+    retry_backoff=1.5,
+)
+factory = DatabaseConnectionFactory(config)
+
+with factory.connection() as conn:
+    conn.execute("SELECT 1")
+
+async with factory.async_connection() as conn:
+    await conn.execute("SELECT 1")
+
+factory.health_check()
+```
+
+For local testing or development, set the `USE_MOCK_DB` environment variable to
+force the factory to return a `MockDatabaseManager` instead of a real database
+connection.
 
 ## Analytics Service
 
@@ -129,9 +166,10 @@ instances created by registered factories.
 
 ```python
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.database import DatabaseConnectionFactory
 
 container = ServiceContainer()
-container.register_factory("db", DatabaseManager)
+container.register_factory("db", DatabaseConnectionFactory)
 
 # Later in the code
 if container.has("db"):

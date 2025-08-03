@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional, Protocol, TypeVar
 
 from .database_exceptions import ConnectionRetryExhausted
+from .circuit_breaker import CircuitBreaker
 from .protocols import (
     ConnectionRetryManagerProtocol,
     RetryConfigProtocol,
@@ -40,32 +41,39 @@ class ConnectionRetryManager(ConnectionRetryManagerProtocol):
         self,
         config: Optional[RetryConfig] = None,
         callbacks: Optional[RetryCallbacks] = None,
+        circuit_breaker: Optional[CircuitBreaker] = None,
     ) -> None:
         self.config = config or RetryConfig()
         self.callbacks = callbacks
+        self.circuit_breaker = circuit_breaker
 
     def run_with_retry(self, func: Callable[[], T]) -> T:
-        attempt = 1
-        while True:
-            try:
-                result = func()
-                if self.callbacks and hasattr(self.callbacks, "on_success"):
-                    self.callbacks.on_success()
-                return result
-            except Exception as exc:
-                if attempt >= self.config.max_attempts:
-                    if self.callbacks and hasattr(self.callbacks, "on_failure"):
-                        self.callbacks.on_failure()
-                    raise ConnectionRetryExhausted(
-                        "maximum retry attempts reached"
-                    ) from exc
-                delay = self.config.base_delay * (
-                    self.config.backoff_factor ** (attempt - 1)
-                )
-                if self.config.jitter:
-                    delay += random.uniform(0, self.config.base_delay)
-                delay = min(delay, self.config.max_delay)
-                if self.callbacks and hasattr(self.callbacks, "on_retry"):
-                    self.callbacks.on_retry(attempt, delay)
-                time.sleep(delay)
-                attempt += 1
+        def execute() -> T:
+            attempt = 1
+            while True:
+                try:
+                    result = func()
+                    if self.callbacks and hasattr(self.callbacks, "on_success"):
+                        self.callbacks.on_success()
+                    return result
+                except Exception as exc:
+                    if attempt >= self.config.max_attempts:
+                        if self.callbacks and hasattr(self.callbacks, "on_failure"):
+                            self.callbacks.on_failure()
+                        raise ConnectionRetryExhausted(
+                            "maximum retry attempts reached"
+                        ) from exc
+                    delay = self.config.base_delay * (
+                        self.config.backoff_factor ** (attempt - 1)
+                    )
+                    if self.config.jitter:
+                        delay += random.uniform(0, self.config.base_delay)
+                    delay = min(delay, self.config.max_delay)
+                    if self.callbacks and hasattr(self.callbacks, "on_retry"):
+                        self.callbacks.on_retry(attempt, delay)
+                    time.sleep(delay)
+                    attempt += 1
+
+        if self.circuit_breaker:
+            return self.circuit_breaker.call(execute)
+        return execute()

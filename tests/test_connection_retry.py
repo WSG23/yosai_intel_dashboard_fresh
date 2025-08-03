@@ -2,8 +2,50 @@ import time
 
 import pytest
 
-from yosai_intel_dashboard.src.infrastructure.config.connection_retry import ConnectionRetryManager, RetryConfig
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionRetryExhausted
+import importlib.util
+import sys
+import types
+from pathlib import Path
+
+
+def _load_module(name: str, relative_path: str):
+    path = Path(__file__).resolve().parents[1] / relative_path
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+config_pkg = types.ModuleType("config")
+config_pkg.__path__ = []  # type: ignore[attr-defined]
+sys.modules["config"] = config_pkg
+
+exc_mod = _load_module(
+    "config.database_exceptions",
+    "yosai_intel_dashboard/src/infrastructure/config/database_exceptions.py",
+)
+ConnectionRetryExhausted = exc_mod.ConnectionRetryExhausted
+
+protocols_mod = _load_module(
+    "config.protocols",
+    "yosai_intel_dashboard/src/infrastructure/config/protocols.py",
+)
+_ = protocols_mod  # silence unused variable
+
+circuit_mod = _load_module(
+    "config.circuit_breaker",
+    "yosai_intel_dashboard/src/infrastructure/config/circuit_breaker.py",
+)
+_ = circuit_mod
+
+conn_mod = _load_module(
+    "config.connection_retry",
+    "yosai_intel_dashboard/src/infrastructure/config/connection_retry.py",
+)
+ConnectionRetryManager = conn_mod.ConnectionRetryManager
+RetryConfig = conn_mod.RetryConfig
 
 
 def test_retry_success(monkeypatch):

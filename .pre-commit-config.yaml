@@ -37,3 +37,8 @@ repos:
         entry: python tools/organize_imports.py --check
         language: system
         types: [python]
+      - id: no-direct-execute-query
+        name: no direct execute_query calls
+        entry: python tools/check_execute_query.py
+        language: system
+        types: [python]

@@ -19,6 +19,10 @@ __all__ = [
     "RealTimeUIMonitor",
     "get_ui_monitor",
     "check_cluster_health",
+    "health_check",
+    "health_check_router",
+    "register_health_check",
+    "setup_health_checks",
     "deprecated_calls",
     "record_deprecated_call",
     "start_deprecation_metrics_server",
@@ -58,6 +62,20 @@ def __getattr__(name: str):
         from .kafka_health import check_cluster_health
 
         return check_cluster_health
+    if name in {
+        "health_check",
+        "health_check_router",
+        "register_health_check",
+        "setup_health_checks",
+    }:
+        from ..discovery.health_check import (
+            health_check,
+            health_check_router,
+            register_health_check,
+            setup_health_checks,
+        )
+
+        return locals()[name]
     if name in {
         "ModelPerformanceMonitor",
         "ModelMetrics",

@@ -31,3 +31,12 @@ created on application startup.
 
 The async pool ensures non‑blocking database access and allows the
 web server to handle more concurrent requests.
+
+## Best Practices
+
+- Acquire connections using `async with pool.acquire() as conn:` so that
+  connections are released back to the pool even if an error is raised.
+- Keep connection usage scoped to the smallest possible block and avoid
+  storing connections on long‑lived objects.
+- Always call `close_pool()` during application shutdown to cleanly
+  dispose of the pool and its resources.
