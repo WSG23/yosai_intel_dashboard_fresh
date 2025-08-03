@@ -1,15 +1,15 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Upload from './Upload';
 import { ZustandProvider } from '../../state';
-import axios from 'axios/dist/node/axios.cjs';
+import { api } from '../../api/client';
 
 describe('Upload error handling', () => {
   beforeEach(() => {
-    jest.spyOn(axios, 'post').mockRejectedValue(new Error('Server Error'));
+    jest.spyOn(api, 'post').mockRejectedValue(new Error('Server Error'));
   });
 
   afterEach(() => {
-    (axios.post as jest.Mock).mockRestore();
+    (api.post as jest.Mock).mockRestore();
   });
 
   it('shows error when upload fails', async () => {
