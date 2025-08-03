@@ -938,8 +938,11 @@ defaults:
 
 
 - `PBKDF2_ITERATIONS` – password hashing iterations
- - `RATE_LIMIT_REQUESTS` – number of requests allowed per window
-- `RATE_LIMIT_WINDOW` – rate limit window in minutes
+- `RATE_LIMIT_REQUESTS` – number of requests allowed per window for the default tier
+- `RATE_LIMIT_WINDOW` – rate limit window in minutes for the default tier
+- `RATE_LIMIT_<TIER>_REQUESTS` – per-tier request limit override
+- `RATE_LIMIT_<TIER>_WINDOW` – per-tier window override in minutes
+- `RATE_LIMIT_<TIER>_BURST` – optional burst capacity for the tier
 - `MAX_UPLOAD_MB` – maximum allowed upload size
 - `DB_POOL_SIZE` – database connection pool size
 - `DB_INITIAL_POOL_SIZE` – starting number of pooled connections

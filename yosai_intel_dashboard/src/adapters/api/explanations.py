@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from shared.errors.types import ErrorCode
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.services.security import require_permission
+from yosai_intel_dashboard.src.core.security import validate_user_input
 from yosai_intel_dashboard.src.services.analytics.analytics_service import (
     AnalyticsService,
     get_analytics_service,
@@ -20,6 +21,7 @@ async def get_explanation(
     svc: AnalyticsService = Depends(get_analytics_service),
 ):
     """Return stored SHAP explanations for a prediction."""
+    prediction_id = validate_user_input(prediction_id, "prediction_id")
     if svc.model_registry is None:
         raise http_error(ErrorCode.INTERNAL, "model registry unavailable", 500)
     record = svc.model_registry.get_explanation(prediction_id)

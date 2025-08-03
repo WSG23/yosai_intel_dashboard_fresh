@@ -3,7 +3,7 @@ import { FixedSizeList as List } from 'react-window';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Activity, Users, DoorOpen, AlertCircle } from 'lucide-react';
-import { useWebSocket } from '../hooks/useWebSocket';
+import { useWebSocket } from '../hooks';
 import { useEventStream } from '../hooks/useEventStream';
 import {
   LineChart,

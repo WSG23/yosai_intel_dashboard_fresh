@@ -30,7 +30,14 @@ security:
   cors_enabled: true
   cors_origins: []
   rate_limiting_enabled: true
-  rate_limit_per_minute: 1000
+  rate_limits:
+    basic:
+      requests: 1000
+      window_minutes: 1
+    premium:
+      requests: 2000
+      window_minutes: 1
+      burst: 100
 
 sample_files:
   csv_path: "data/sample_data.csv"

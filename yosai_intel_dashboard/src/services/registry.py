@@ -9,8 +9,15 @@ from typing import Any, Dict, Optional
 import aiohttp
 
 from tracing import propagate_context
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
+from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
+from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
 
 from .base_database_service import BaseDatabaseService
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 
 logger = logging.getLogger(__name__)
 
@@ -55,27 +62,39 @@ class ServiceDiscovery:
         )
         self.base_url = url.rstrip("/")
         self.session = aiohttp.ClientSession()
+        self._circuit_breaker = CircuitBreaker(5, 30, name="service_discovery")
+
+        self._error_handler = ErrorHandler()
 
     async def resolve_async(self, name: str) -> Optional[str]:
         """Return ``host:port`` for *name* or ``None`` if lookup fails."""
         try:
             headers: Dict[str, str] = {}
             propagate_context(headers)
-            async with self.session.get(
-                f"{self.base_url}/v1/health/service/{name}",
-                params={"passing": 1},
-                headers=headers,
-                timeout=2,
-            ) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
-                if not data:
-                    return None
-                svc = data[0]["Service"]
-                return f"{svc['Address']}:{svc['Port']}"
-        except Exception as exc:  # pragma: no cover - network failures
-            logger.warning("Service discovery failed for '%s': %s", name, exc)
+            async with self._circuit_breaker:
+                async with self.session.get(
+                    f"{self.base_url}/v1/health/service/{name}",
+                    params={"passing": 1},
+                    headers=headers,
+                    timeout=2,
+                ) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+                    if not data:
+                        return None
+                    svc = data[0]["Service"]
+                    return f"{svc['Address']}:{svc['Port']}"
+        except CircuitBreakerOpen as exc:  # pragma: no cover - circuit open
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
             return None
+
+        except Exception as exc:  # pragma: no cover - network failures
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+            cached = self._cache.get(name)
+            if cached is not None:
+                return cached
+            env = os.getenv(f"{name.upper()}_SERVICE_URL")
+            return env
 
     def resolve(self, name: str) -> Optional[str]:
         """Return ``host:port`` for *name* or ``None`` if lookup fails."""

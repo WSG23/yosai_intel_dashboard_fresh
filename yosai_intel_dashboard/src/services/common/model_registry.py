@@ -6,6 +6,14 @@ from typing import Optional
 
 import aiohttp
 
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
+from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
+from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +25,9 @@ class ModelRegistry:
             base_url or os.getenv("MODEL_REGISTRY_URL", "http://localhost:8080")
         ).rstrip("/")
         self._session: aiohttp.ClientSession | None = None
+        self._circuit_breaker = CircuitBreaker(5, 30, name="model_registry")
+
+        self._error_handler = ErrorHandler()
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
@@ -29,16 +40,21 @@ class ModelRegistry:
         """Return the active version for *model_name* or *default* if lookup fails."""
         try:
             session = await self._get_session()
-            async with session.get(
-                f"{self.base_url}/models/{model_name}/active",
-                timeout=aiohttp.ClientTimeout(total=2),
-            ) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
-                return data.get("version", default)
+            async with self._circuit_breaker:
+                async with session.get(
+                    f"{self.base_url}/models/{model_name}/active",
+                    timeout=aiohttp.ClientTimeout(total=2),
+                ) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+                    return data.get("version", default)
+        except CircuitBreakerOpen as exc:
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+            return default
         except Exception as exc:  # pragma: no cover - network failures
             logger.warning("model registry lookup failed for %s: %s", model_name, exc)
             return default
+
 
     async def close(self) -> None:
         if self._session and not self._session.closed:
