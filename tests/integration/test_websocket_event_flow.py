@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 import websockets
+from src.common.config import ConfigService
 
 
 def _load_server():
@@ -66,7 +67,8 @@ ws_module, AnalyticsWebSocketServer, EventBus = _load_server()
 @pytest.fixture
 def websocket_server():
     event_bus = EventBus()
-    server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8770)
+    cfg = ConfigService({'metrics_interval':0.01,'ping_interval':0.01,'ping_timeout':0.01})
+    server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8770, config=cfg)
     server.pool = ws_module.WebSocketConnectionPool()
     server._queue = deque()
     time.sleep(0.05)

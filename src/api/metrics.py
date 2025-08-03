@@ -1,25 +1,34 @@
 from flask import Blueprint, jsonify
 
-metrics_bp = Blueprint('metrics', __name__, url_prefix='/v1/metrics')
+from src.repository import InMemoryMetricsRepository, MetricsRepository
 
-# Sample static data for demonstration purposes
-PERFORMANCE_METRICS = {'throughput': 100, 'latency_ms': 50}
-DRIFT_DATA = {'prediction_drift': 0.02, 'feature_drift': {'age': 0.01}}
-FEATURE_IMPORTANCES = {'age': 0.3, 'income': 0.2, 'score': 0.1}
+metrics_bp = Blueprint("metrics", __name__, url_prefix="/v1/metrics")
 
-@metrics_bp.get('/performance')
+_metrics_repo: MetricsRepository = InMemoryMetricsRepository()
+
+
+def set_metrics_repository(repo: MetricsRepository) -> None:
+    """Inject a metrics repository implementation."""
+    global _metrics_repo
+    _metrics_repo = repo
+
+
+@metrics_bp.get("/performance")
 def get_performance_metrics():
-    """Return sample performance metrics."""
-    return jsonify(PERFORMANCE_METRICS)
+    """Return performance metrics from the repository."""
+    return jsonify(_metrics_repo.get_performance_metrics())
 
-@metrics_bp.get('/drift')
+
+@metrics_bp.get("/drift")
 def get_drift_data():
-    """Return sample drift statistics."""
-    return jsonify(DRIFT_DATA)
+    """Return drift statistics from the repository."""
+    return jsonify(_metrics_repo.get_drift_data())
 
-@metrics_bp.get('/feature-importance')
+
+@metrics_bp.get("/feature-importance")
 def get_feature_importances():
-    """Return sample feature importances."""
-    return jsonify(FEATURE_IMPORTANCES)
+    """Return feature importances from the repository."""
+    return jsonify(_metrics_repo.get_feature_importances())
 
-__all__ = ['metrics_bp']
+
+__all__ = ["metrics_bp", "set_metrics_repository"]
