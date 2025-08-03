@@ -40,6 +40,7 @@ class AnalyticsWebSocketServer:
         # Buffer for events published while no clients are connected
         self._queue: Deque[dict] = deque(maxlen=100)
 
+
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -54,6 +55,7 @@ class AnalyticsWebSocketServer:
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         await self.pool.acquire(websocket)
         self.clients.add(websocket)
+        await self.pool.acquire(websocket)
         if self._queue:
             queued = list(self._queue)
             self._queue.clear()
@@ -115,7 +117,7 @@ class AnalyticsWebSocketServer:
             message = json.dumps(data)
             if self._loop is not None:
                 asyncio.run_coroutine_threadsafe(
-                    self._broadcast_async(message), self._loop
+                    self.pool.broadcast(message), self._loop
                 )
         else:
             self._queue.append(data)
