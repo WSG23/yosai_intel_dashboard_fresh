@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
 	"time"
 
+	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
@@ -13,12 +15,15 @@ import (
 
 // TokenCache provides caching and blacklist operations for JWT tokens using Redis.
 type TokenCache struct {
-	client *redis.Client
+	client   *redis.Client
+	blFilter *bloom.BloomFilter
+	mu       sync.RWMutex
 }
 
 // NewTokenCache returns a new TokenCache using the given Redis client.
 func NewTokenCache(client *redis.Client) *TokenCache {
-	return &TokenCache{client: client}
+	filter := bloom.NewWithEstimates(100000, 0.01)
+	return &TokenCache{client: client, blFilter: filter}
 }
 
 func tokenKey(id string) string     { return "token:" + id }
@@ -58,6 +63,9 @@ func (t *TokenCache) Set(ctx context.Context, tokenID string, claims *auth.Enhan
 func (t *TokenCache) Blacklist(ctx context.Context, tokenID string, ttl time.Duration) error {
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
+	t.mu.Lock()
+	t.blFilter.AddString(tokenID)
+	t.mu.Unlock()
 	return t.client.Set(ctx, blacklistKey(tokenID), "1", ttl).Err()
 }
 
@@ -66,6 +74,12 @@ func (t *TokenCache) IsBlacklisted(ctx context.Context, tokenID string) (bool, e
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
 
+	t.mu.RLock()
+	inFilter := t.blFilter.TestString(tokenID)
+	t.mu.RUnlock()
+	if !inFilter {
+		return false, nil
+	}
 	exists, err := t.client.Exists(ctx, blacklistKey(tokenID)).Result()
 	if err != nil {
 		if err == redis.Nil || errors.Is(err, context.DeadlineExceeded) {
