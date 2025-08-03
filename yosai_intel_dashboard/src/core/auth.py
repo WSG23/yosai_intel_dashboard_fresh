@@ -5,26 +5,30 @@ from __future__ import annotations
 User model leverages mixins; see ADR-0005 for details.
 """
 
+import base64
+import hashlib
 import json
 import logging
 import os
+import secrets
 import socket
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import wraps
 from typing import List, Optional
 from urllib.error import URLError
 from urllib.request import urlopen
 
+import pyotp
 from authlib.integrations.flask_client import OAuth
-from flask import Blueprint, current_app, redirect, session, url_for
+from flask import Blueprint, current_app, jsonify, redirect, request, session, url_for
 from flask_login import (
     LoginManager,
     UserMixin,
+    current_user,
     login_required,
     login_user,
     logout_user,
-    current_user,
 )
 from jose import jwt
 
@@ -32,6 +36,7 @@ from yosai_intel_dashboard.src.infrastructure.config import (
     get_cache_config,
     get_security_config,
 )
+from yosai_intel_dashboard.src.security.roles import get_permissions_for_roles
 
 from .secret_manager import SecretsManager
 from .session_store import InMemorySessionStore, MemcachedSessionStore
@@ -61,7 +66,9 @@ def load_user(user_id: str) -> Optional[User]:
     data = session_store.get(user_id)
     if data is None:
         return None
-    return User(data["id"], data.get("name", ""), data.get("email", ""), data.get("roles", []))
+    return User(
+        data["id"], data.get("name", ""), data.get("email", ""), data.get("roles", [])
+    )
 
 
 @login_manager.request_loader
@@ -92,6 +99,11 @@ def init_auth(app) -> None:
     login_manager.login_view = "auth.login"
 
     app.config.setdefault("AUTH0_AUDIENCE", audience)
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_SAMESITE="Strict",
+    )
     auth_bp.auth0 = auth0
     app.register_blueprint(auth_bp)
 
@@ -168,9 +180,18 @@ def login():
           description: Redirect to Auth0
     """
     auth0 = auth_bp.auth0
+    verifier = base64.urlsafe_b64encode(os.urandom(40)).rstrip(b"=").decode()
+    challenge = (
+        base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest())
+        .rstrip(b"=")
+        .decode()
+    )
+    session["code_verifier"] = verifier
     return auth0.authorize_redirect(
         redirect_uri=url_for("auth.callback", _external=True),
         audience=current_app.config.get("AUTH0_AUDIENCE"),
+        code_challenge=challenge,
+        code_challenge_method="S256",
     )
 
 
@@ -185,7 +206,9 @@ def callback():
           description: Redirect to dashboard
     """
     auth0 = auth_bp.auth0
-    token = auth0.authorize_access_token()
+    token = auth0.authorize_access_token(
+        code_verifier=session.pop("code_verifier", None)
+    )
     id_token = token.get("id_token")
     manager = SecretsManager()
     domain = manager.get("AUTH0_DOMAIN")
@@ -208,7 +231,89 @@ def callback():
     )
     session["roles"] = user.roles
     session["user_id"] = user.id
+    permissions = list(get_permissions_for_roles(user.roles))
+    session["permissions"] = permissions
+    secret = manager.get("JWT_SECRET")
+    now = datetime.utcnow()
+    access_token = jwt.encode(
+        {
+            "sub": user.id,
+            "exp": now + timedelta(minutes=5),
+            "roles": user.roles,
+            "iat": now,
+            "jti": secrets.token_urlsafe(8),
+        },
+        secret,
+        algorithm="HS256",
+    )
+    refresh_token = jwt.encode(
+        {
+            "sub": user.id,
+            "exp": now + timedelta(hours=1),
+            "type": "refresh",
+            "iat": now,
+        },
+        secret,
+        algorithm="HS256",
+    )
+    session["access_token"] = access_token
+    session["refresh_token"] = refresh_token
+    if "admin" in user.roles:
+        session["mfa_verified"] = False
     return redirect("/")
+
+
+@auth_bp.route("/token")
+@login_required
+def token():
+    return jsonify({"access_token": session.get("access_token")})
+
+
+@auth_bp.route("/refresh")
+@login_required
+def refresh():
+    manager = SecretsManager()
+    secret = manager.get("JWT_SECRET")
+    refresh_token = session.get("refresh_token")
+    try:
+        data = jwt.decode(refresh_token, secret, algorithms=["HS256"])
+    except Exception:
+        return "Forbidden", 403
+    if data.get("type") != "refresh":
+        return "Forbidden", 403
+    now = datetime.utcnow()
+    new_access = jwt.encode(
+        {
+            "sub": data["sub"],
+            "exp": now + timedelta(minutes=5),
+            "roles": session.get("roles", []),
+            "iat": now,
+            "jti": secrets.token_urlsafe(8),
+        },
+        secret,
+        algorithm="HS256",
+    )
+    session["access_token"] = new_access
+    return jsonify({"access_token": new_access})
+
+
+@auth_bp.route("/mfa")
+@login_required
+def mfa():
+    return "MFA required", 200
+
+
+@auth_bp.route("/mfa/verify")
+@login_required
+def mfa_verify():
+    code = request.args.get("code")
+    manager = SecretsManager()
+    secret = manager.get("MFA_SECRET")
+    totp = pyotp.TOTP(secret)
+    if totp.verify(code):
+        session["mfa_verified"] = True
+        return redirect("/")
+    return "Forbidden", 403
 
 
 @auth_bp.route("/logout")
@@ -254,10 +359,21 @@ def role_required(role: str):
     return decorator
 
 
+def mfa_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not session.get("mfa_verified"):
+            return redirect(url_for("auth.mfa"))
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 __all__ = [
     "init_auth",
     "login_required",
     "role_required",
+    "mfa_required",
     "User",
     "login_manager",
 ]
