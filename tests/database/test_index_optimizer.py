@@ -18,6 +18,9 @@ def make_sqlite_conn(indexes=None):
         def execute_command(self, command, params=None):
             self.executed.append((command, params))
 
+        def execute_batch(self, command, params_seq):
+            self.executed.append((command, list(params_seq)))
+
     return SQLiteConnection(indexes)
 
 

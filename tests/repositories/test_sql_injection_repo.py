@@ -111,6 +111,11 @@ class RecordingConn:
         self.last_params = params
         return 0
 
+    def execute_batch(self, command, params_seq):
+        self.last_query = command
+        self.last_params = params_seq
+        return 0
+
     def health_check(self):
         return True
 

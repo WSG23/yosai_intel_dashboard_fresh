@@ -6,7 +6,7 @@ The :class:`DatabaseConnection` protocol describes the minimal interface
 expected by the connection pools and helpers in this package.
 """
 
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, Iterable, List, Optional, Protocol
 
 
 # ---------------------------------------------------------------------------
@@ -25,6 +25,10 @@ class DatabaseConnection(Protocol):
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute a command (INSERT, UPDATE, DELETE)"""
+        ...
+
+    def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
+        """Execute a command against multiple parameter sets"""
         ...
 
     def health_check(self) -> bool:

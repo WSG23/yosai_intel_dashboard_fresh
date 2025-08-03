@@ -11,6 +11,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     List,
     Optional,
     Protocol,
@@ -35,6 +36,11 @@ class DatabaseProtocol(Protocol):
     @abstractmethod
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute a command (INSERT, UPDATE, DELETE)"""
+        ...
+
+    @abstractmethod
+    def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
+        """Execute a command across multiple parameter sets"""
         ...
 
     @abstractmethod
