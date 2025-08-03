@@ -1,1 +1,2 @@
 # Add intel_analysis_service dependencies here
+strawberry-graphql[fastapi]

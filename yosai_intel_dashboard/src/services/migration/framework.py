@@ -6,10 +6,18 @@ from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator, Dict, List, Sequence, Callable, Awaitable
 
 import asyncpg
+from asyncpg import utils as asyncpg_utils
 
 from .validators.integrity_checker import IntegrityChecker
 
 LOG = logging.getLogger(__name__)
+
+# Only allow truncating approved tables to avoid SQL injection
+APPROVED_TABLES = {
+    "gateway_logs",
+    "access_events",
+    "analytics_results",
+}
 
 
 class MigrationStrategy(ABC):
@@ -39,7 +47,10 @@ class MigrationStrategy(ABC):
         if self.target_pool is None:
             return
         async with self.target_pool.acquire() as conn:
-            await conn.execute(f"TRUNCATE TABLE {self.name} CASCADE")
+            if self.name not in APPROVED_TABLES:
+                raise ValueError(f"Unapproved table: {self.name}")
+            table = asyncpg_utils._quote_ident(self.name)
+            await conn.execute(f"TRUNCATE TABLE {table} CASCADE")
 
 
 class MigrationManager:

@@ -1,0 +1,19 @@
+"""Connectors for pushing events to common SIEM systems."""
+
+from __future__ import annotations
+
+from typing import Dict
+
+
+def send_to_siem(event: Dict, system: str) -> None:
+    """Send an ``event`` to a named SIEM ``system``.
+
+    The implementation is deliberately generic and logs the payload.  Real
+    connectors would authenticate and forward the event using the vendor's API.
+    """
+
+    if system.lower() not in {"splunk", "qradar", "elk"}:
+        raise ValueError(f"Unknown SIEM system: {system}")
+    # In real code this would send the event. For now we simply print it so
+    # tests and examples can observe the behaviour without side effects.
+    print(f"Sending event to {system}: {event}")
