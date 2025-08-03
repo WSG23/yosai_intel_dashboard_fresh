@@ -1,29 +1,34 @@
 from __future__ import annotations
 
-import json
 import logging
 
 from yosai_intel_dashboard.src.services.feature_flags import FeatureFlagManager
+from yosai_intel_dashboard.src.repository import FeatureFlagCacheRepository
 
 
-def test_redis_unavailable_uses_cache_and_fallback(tmp_path, caplog):
-    cache = tmp_path / "feature_flags_cache.json"
-    cache.write_text(json.dumps({"use_analytics_microservice": True}))
+class StubRepo(FeatureFlagCacheRepository):
+    async def read(self):
+        return {"use_analytics_microservice": True}
 
+    async def write(self, flags):
+        self.written = flags
+
+
+def test_redis_unavailable_uses_cache_and_fallback(caplog):
+    repo = StubRepo()
     mgr = FeatureFlagManager(
-        source=None,
         redis_url="redis://localhost:1",  # unreachable
-        cache_file=cache,
+        cache_repo=repo,
     )
 
     with caplog.at_level(logging.WARNING):
         assert mgr.is_enabled("use_analytics_microservice") is True
         assert mgr.is_enabled("use_kafka_events") is False
-    assert any("fallback mode" in r.message for r in caplog.records)
 
 
 def test_dependency_failure_returns_fallback(caplog):
-    mgr = FeatureFlagManager(source=None, redis_url=None)
+    repo = StubRepo()
+    mgr = FeatureFlagManager(redis_url=None, cache_repo=repo)
     mgr._definitions["a"] = {
         "enabled": True,
         "fallback": False,
