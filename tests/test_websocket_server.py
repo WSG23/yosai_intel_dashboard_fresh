@@ -3,6 +3,7 @@ import importlib.util
 import sys
 import types
 from pathlib import Path
+import threading
 
 
 def _load_server():
@@ -98,3 +99,45 @@ def test_ping_client_closes_on_timeout():
     assert events and events[0]["status"] == "timeout"
     assert ws.closed
     assert ws not in server.clients
+
+
+def _run_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
+
+def test_stop_closes_clients_and_releases_pool():
+    bus = DummyBus()
+    server = _create_server(bus)
+    loop = asyncio.new_event_loop()
+    server._loop = loop
+    server._thread = threading.Thread(target=_run_loop, args=(loop,), daemon=True)
+    server._thread.start()
+    ws = DummyWS()
+    server.clients.add(ws)
+    asyncio.run_coroutine_threadsafe(server.pool.acquire(ws), loop).result()
+    server._queue.append({"queued": True})
+    server.stop()
+    loop.close()
+    assert ws.closed
+    assert len(server.clients) == 0
+    assert len(server.pool) == 0
+    assert not server._queue
+
+
+def test_stop_cancels_heartbeat_task():
+    bus = DummyBus()
+    server = _create_server(bus)
+    loop = asyncio.new_event_loop()
+    server._loop = loop
+    server._thread = threading.Thread(target=_run_loop, args=(loop,), daemon=True)
+    server._thread.start()
+
+    async def create_task():
+        return asyncio.create_task(asyncio.sleep(3600))
+
+    server._heartbeat_task = asyncio.run_coroutine_threadsafe(create_task(), loop).result()
+
+    server.stop()
+    loop.close()
+    assert server._heartbeat_task is None

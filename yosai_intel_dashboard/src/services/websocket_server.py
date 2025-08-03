@@ -5,8 +5,8 @@ import json
 import logging
 import threading
 from collections import deque
+from contextlib import suppress
 from typing import Optional, Set, Deque
-
 
 from websockets import WebSocketServerProtocol, serve
 
@@ -37,6 +37,9 @@ class AnalyticsWebSocketServer:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
 
+        self.pool = WebSocketConnectionPool()
+        self._queue: Deque[dict] = deque()
+
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -50,6 +53,7 @@ class AnalyticsWebSocketServer:
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         self.clients.add(websocket)
+        await self.pool.acquire(websocket)
         if self._queue:
             queued = list(self._queue)
             self._queue.clear()
@@ -115,6 +119,9 @@ class AnalyticsWebSocketServer:
         else:
             self._queue.append(data)
 
+    async def _broadcast_async(self, message: str) -> None:
+        await self.pool.broadcast(message)
+
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""
@@ -122,8 +129,21 @@ class AnalyticsWebSocketServer:
             self.event_bus.unsubscribe(self._subscription_id)
             self._subscription_id = None
         if self._loop is not None:
-            if self._heartbeat_task is not None:
-                self._loop.call_soon_threadsafe(self._heartbeat_task.cancel)
+            async def _shutdown() -> None:
+                for ws in list(self.clients):
+                    try:
+                        await ws.close()
+                    finally:
+                        await self.pool.release(ws)
+                self.clients.clear()
+                self._queue.clear()
+                if self._heartbeat_task is not None:
+                    self._heartbeat_task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await self._heartbeat_task
+                    self._heartbeat_task = None
+
+            asyncio.run_coroutine_threadsafe(_shutdown(), self._loop).result()
 
             self._loop.call_soon_threadsafe(self._loop.stop)
             self._thread.join(timeout=1)
