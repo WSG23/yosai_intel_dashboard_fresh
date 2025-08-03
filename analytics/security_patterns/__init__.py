@@ -148,13 +148,21 @@ def generate_threat_attempt() -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def _detect_rapid_failures(df: pd.DataFrame) -> Iterator[Threat]:
-    """Yield threats for users with multiple rapid denied accesses."""
-    failures = df[df.get("access_result") == "Denied"].sort_values("timestamp")
-    for person, group in failures.groupby("person_id"):
-        times = group["timestamp"].sort_values()
-        if len(times) >= 3 and (times.iloc[-1] - times.iloc[0]).total_seconds() <= 60:
-            yield Threat("rapid_denied_access", {"person_id": person})
+def _detect_rapid_failures(df: pd.DataFrame) -> List[Threat]:
+    failures = df[df.get("access_result") == "Denied"].copy()
+    if failures.empty:
+        return []
+
+    summary = (
+        failures.groupby("person_id")["timestamp"].agg(["count", "min", "max"])
+    )
+    summary["window"] = (summary["max"] - summary["min"]).dt.total_seconds()
+    mask = (summary["count"] >= 3) & (summary["window"] <= 60)
+    return [
+        Threat("rapid_denied_access", {"person_id": person})
+        for person in summary[mask].index
+    ]
+
 
 
 # ---------------------------------------------------------------------------
