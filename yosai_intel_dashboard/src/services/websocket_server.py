@@ -7,15 +7,14 @@ import logging
 import threading
 from collections import deque
 from contextlib import suppress
-from typing import Optional, Set, Deque
-
+from typing import Deque, Optional, Set
 
 from websockets import WebSocketServerProtocol, serve
 
-from src.websocket import metrics as websocket_metrics
-from yosai_intel_dashboard.src.core.events import EventBus
 from src.common.base import BaseComponent
 from src.common.config import ConfigProvider, ConfigService
+from src.websocket import metrics as websocket_metrics
+from yosai_intel_dashboard.src.core.events import EventBus
 
 from .websocket_pool import WebSocketConnectionPool
 
@@ -36,24 +35,25 @@ class AnalyticsWebSocketServer(BaseComponent):
         ping_timeout: float | None = None,
         queue_size: int = 100,
         compression_threshold: int = 0,
-
     ) -> None:
-        super().__init__(component_id="AnalyticsWebSocketServer")
-        self.config = config or ConfigService()
-        self.host = host
-        self.port = port
-        self.event_bus = event_bus or EventBus()
+        config = config or ConfigService()
+        event_bus = event_bus or EventBus()
+        ping_interval = (
+            ping_interval if ping_interval is not None else config.ping_interval
+        )
+        ping_timeout = ping_timeout if ping_timeout is not None else config.ping_timeout
+        super().__init__(
+            component_id="AnalyticsWebSocketServer",
+            event_bus=event_bus,
+            config=config,
+            host=host,
+            port=port,
+            ping_interval=ping_interval,
+            ping_timeout=ping_timeout,
+            queue_size=queue_size,
+            compression_threshold=compression_threshold,
+        )
         self.clients: Set[WebSocketServerProtocol] = set()
-        # fall back to configured ping settings when not explicitly provided
-        self.ping_interval = (
-            ping_interval if ping_interval is not None else self.config.ping_interval
-        )
-        self.ping_timeout = (
-            ping_timeout if ping_timeout is not None else self.config.ping_timeout
-        )
-
-        self.compression_threshold = compression_threshold
-
         self.pool = WebSocketConnectionPool()
         self._queue: Deque[dict] = deque(maxlen=queue_size)
 
@@ -135,10 +135,7 @@ class AnalyticsWebSocketServer(BaseComponent):
     def broadcast(self, data: dict) -> None:
         if self.clients:
             message = json.dumps(data)
-            if (
-                self.compression_threshold
-                and len(message) > self.compression_threshold
-            ):
+            if self.compression_threshold and len(message) > self.compression_threshold:
                 payload: bytes | str = gzip.compress(message.encode("utf-8"))
             else:
                 payload = message
@@ -152,13 +149,13 @@ class AnalyticsWebSocketServer(BaseComponent):
     async def _broadcast_async(self, message: str) -> None:
         await self.pool.broadcast(message)
 
-
     def stop(self) -> None:
         """Stop the server thread and event loop."""
         if self.event_bus and self._subscription_id:
             self.event_bus.unsubscribe(self._subscription_id)
             self._subscription_id = None
         if self._loop is not None:
+
             async def _shutdown() -> None:
                 for ws in list(self.clients):
                     try:

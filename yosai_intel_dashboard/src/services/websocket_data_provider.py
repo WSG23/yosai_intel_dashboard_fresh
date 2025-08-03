@@ -29,10 +29,14 @@ class WebSocketDataProvider(BaseComponent):
         config: ConfigProvider | None = None,
         interval: float | None = None,
     ) -> None:
-        super().__init__(component_id="WebSocketDataProvider")
-        self.config = config or ConfigService()
-        self.event_bus = event_bus
-        self.interval = interval if interval is not None else self.config.metrics_interval
+        config = config or ConfigService()
+        interval = interval if interval is not None else config.metrics_interval
+        super().__init__(
+            component_id="WebSocketDataProvider",
+            event_bus=event_bus,
+            config=config,
+            interval=interval,
+        )
 
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -45,7 +49,9 @@ class WebSocketDataProvider(BaseComponent):
             if hasattr(self.event_bus, "publish"):
                 self.event_bus.publish("analytics_update", payload)
             else:  # pragma: no cover - alternative EventBus API
-                self.event_bus.emit("analytics_update", payload)  # type: ignore[attr-defined]
+                self.event_bus.emit(
+                    "analytics_update", payload
+                )  # type: ignore[attr-defined]
             logging.debug("analytics_update dispatched")
             self._stop.wait(self.interval)
 
@@ -56,4 +62,3 @@ class WebSocketDataProvider(BaseComponent):
 
 
 __all__ = ["WebSocketDataProvider"]
-
