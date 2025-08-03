@@ -36,7 +36,6 @@ from .events import CallbackEvent
 # ---------------------------------------------------------------------------
 # Type aliases
 # ---------------------------------------------------------------------------
-CallbackHandler: TypeAlias = Callable[..., Any]
 Outputs: TypeAlias = Output | tuple[Output, ...]
 Inputs: TypeAlias = Input | tuple[Input, ...] | None
 States: TypeAlias = State | tuple[State, ...] | None
@@ -352,7 +351,7 @@ class TrulyUnifiedCallbacks:
             self._event_callbacks[event].sort(key=lambda c: c.priority)
 
     # ------------------------------------------------------------------
-    def unregister_event(self, event: CallbackEvent, func: Callable[..., Any]) -> None:
+    def unregister_event(self, event: CallbackEvent, func: CallbackHandler) -> None:
         """Remove a previously registered event callback.
 
         Thread-safe via an internal ``RLock``.
@@ -436,7 +435,7 @@ class TrulyUnifiedCallbacks:
         tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
         return await asyncio.gather(*tasks) if tasks else []
 
-    def get_event_callbacks(self, event: CallbackEvent) -> List[Callable[..., Any]]:
+    def get_event_callbacks(self, event: CallbackEvent) -> List[CallbackHandler]:
         """Return registered callbacks for *event*.
 
         Thread-safe via an internal ``RLock``.
