@@ -95,3 +95,8 @@ from yosai_intel_dashboard.src.infrastructure.config.settings import Settings
 ```
 
 Run `isort .` to automatically sort imports before committing changes.
+
+## Developer Guides
+
+Refer to [docs/developer_guides.rst](docs/developer_guides.rst) for instructions on
+the test migration script and reviewing any items flagged as ``needs manual review``.
