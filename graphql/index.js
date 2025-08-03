@@ -31,21 +31,27 @@ const typeDefs = gql`
   }
 `;
 
-const analyticsLoader = new DataLoader(async keys => {
-  return Promise.all(
-    keys.map(async ({ facilityId, range }) => {
-      const resp = await axios.get(`${REST_BASE}/api/v1/analytics/patterns`, {
-        params: { facility_id: facilityId, range }
-      });
-      const data = resp.data;
-      return {
-        total_records: data.data_summary?.total_records,
-        unique_users: data.data_summary?.unique_users,
-        unique_devices: data.data_summary?.unique_devices,
-      };
-    })
-  );
-});
+const analyticsLoader = new DataLoader(
+  async keys =>
+    Promise.all(
+      keys.map(async ({ facilityId, range }) => {
+        const resp = await axios.get(`${REST_BASE}/api/v1/analytics/patterns`, {
+          params: { facility_id: facilityId, range }
+        });
+        const data = resp.data;
+        return {
+          total_records: data.data_summary?.total_records,
+          unique_users: data.data_summary?.unique_users,
+          unique_devices: data.data_summary?.unique_devices,
+        };
+      })
+    ),
+  {
+    // Cache by facility and time range so repeat loads within a GraphQL
+    // operation only trigger the REST call once.
+    cacheKeyFn: key => `${key.facilityId}:${key.range}`
+  }
+);
 
 const resolvers = {
   Query: {
