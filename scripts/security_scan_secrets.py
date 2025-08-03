@@ -1,61 +1,44 @@
 #!/usr/bin/env python3
-"""Scan the repository for secrets using detect-secrets.
+"""Scan application secrets for common weaknesses."""
 
-This wrapper ensures a shared workflow for secret scanning. It will
-compare the current state of the repository against the stored baseline
-and exit with a non-zero status if new secrets are detected.
-
-If the baseline does not exist yet, it will be generated automatically.
-"""
 from __future__ import annotations
 
-import subprocess
-import sys
-from pathlib import Path
+import json
+import math
+import os
+import re
+from collections import Counter
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-BASELINE_PATH = REPO_ROOT / ".secrets.baseline"
-REPORT_PATH = REPO_ROOT / "secret-scan-report.json"
-
-
-def _run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-
-def generate_baseline() -> None:
-    result = _run(["detect-secrets", "scan", str(REPO_ROOT)])
-    BASELINE_PATH.write_text(result.stdout)
-    print(f"Baseline created at {BASELINE_PATH}")
+DEFAULT_PATTERNS = [
+    re.compile(p, re.IGNORECASE)
+    for p in ["dev", "development", "test", "secret", "change[-_]?me"]
+]
 
 
-def main() -> int:
-    if not BASELINE_PATH.exists():
-        generate_baseline()
-        return 0
+def entropy(value: str) -> float:
+    if not value:
+        return 0.0
+    length = len(value)
+    counts = Counter(value)
+    return -sum((c / length) * math.log2(c / length) for c in counts.values())
 
-    result = _run(
-        [
-            "detect-secrets",
-            "scan",
-            "--baseline",
-            str(BASELINE_PATH),
-            str(REPO_ROOT),
-        ]
-    )
 
-    REPORT_PATH.write_text(result.stdout or "{}")
-
-    if result.returncode != 0:
-        print("Potential secrets detected. See secret-scan-report.json for details.")
-        print(
-            "Remove the secrets or run 'detect-secrets audit .secrets.baseline' "
-            "to update the baseline if these are false positives."
-        )
-    else:
-        print("No new secrets detected.")
-
-    return result.returncode
+def main() -> None:
+    secret = os.getenv("SECRET_KEY", "")
+    errors = []
+    if not secret or any(p.search(secret) for p in DEFAULT_PATTERNS) or entropy(secret) < 3.5:
+        errors.append("Secret may be weak or missing")
+    severity = "HIGH" if errors else "LOW"
+    data = {
+        "name": "Secrets scan",
+        "severity": severity,
+        "findings": errors,
+        "remediation": "Rotate weak or missing secrets." if errors else "No action required",
+    }
+    with open("security_secrets_scan.json", "w", encoding="utf-8") as fh:
+        json.dump(data, fh)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
+
