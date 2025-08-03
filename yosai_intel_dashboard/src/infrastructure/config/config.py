@@ -3,18 +3,17 @@
 Simplified Configuration System
 Replaces: config/yaml_config.py, config/unified_config.py, config/validator.py
 """
+from __future__ import annotations
+
 from typing import Any, Dict, Optional
 
-import yaml
-
-from .base import (
-    CacheConfig,
-    Config,
-)
-from .config_transformer import ConfigTransformer
+from .base import CacheConfig, Config
+from .config_manager import ConfigManager, create_config_manager
+from .pydantic_models import DatabaseConnectionFactoryConfig
 from .schema import (
     AnalyticsSettings,
     AppSettings,
+    ConfigSchema,
     DatabaseSettings,
     MonitoringSettings,
     SampleFilesSettings,
@@ -23,7 +22,7 @@ from .schema import (
 )
 
 # Global configuration instance
-_config_manager: Optional["ConfigManager"] = None
+_config_manager: Optional[ConfigManager] = None
 
 
 def get_config() -> "ConfigManager":
@@ -87,6 +86,11 @@ def get_secret_validation_config() -> SecretValidationSettings:
     return get_config().get_secret_validation_config()
 
 
+def get_database_connection_factory_config() -> DatabaseConnectionFactoryConfig:
+    """Get database connection factory configuration"""
+    return get_config().get_database_connection_factory_config()
+
+
 def get_plugin_config(name: str) -> Dict[str, Any]:
     """Get configuration for a specific plugin"""
     return get_config().get_plugin_config(name)
@@ -99,6 +103,7 @@ __all__ = [
     "ConfigSchema",
     "AppSettings",
     "DatabaseSettings",
+    "DatabaseConnectionFactoryConfig",
     "SecuritySettings",
     "SampleFilesSettings",
     "AnalyticsSettings",
@@ -117,10 +122,6 @@ __all__ = [
     "get_monitoring_config",
     "get_cache_config",
     "get_secret_validation_config",
+    "get_database_connection_factory_config",
     "get_plugin_config",
 ]
-
-# Use new implementation by default
-from .config_manager import ConfigManager as ConfigManager
-from .config_manager import get_config as get_config
-from .config_manager import reload_config as reload_config

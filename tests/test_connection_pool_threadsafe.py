@@ -26,6 +26,7 @@ class MockConnection:
         self.closed = True
 
 
+
 def factory():
     return MockConnection()
 

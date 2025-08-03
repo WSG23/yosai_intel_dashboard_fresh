@@ -5,29 +5,19 @@ from __future__ import annotations
 from typing import AsyncIterator, Iterable, Sequence
 
 from sqlalchemy import delete, select, update
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from yosai_intel_dashboard.src.database.async_engine_factory import build_async_engine
 from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.services.timescale.models import AccessEvent, Base
 
 # ---------------------------------------------------------------------------
 # Engine and session factory
 # ---------------------------------------------------------------------------
 _db_cfg = get_database_config()
-_async_url = _db_cfg.get_connection_string().replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
-engine: AsyncEngine = create_async_engine(
-    _async_url,
-    pool_size=_db_cfg.async_pool_min_size,
-    max_overflow=max(_db_cfg.async_pool_max_size - _db_cfg.async_pool_min_size, 0),
-    pool_timeout=_db_cfg.async_connection_timeout,
-)
+engine: AsyncEngine = build_async_engine(_db_cfg)
+
 
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 
