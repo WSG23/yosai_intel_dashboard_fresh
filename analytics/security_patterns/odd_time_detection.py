@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Iterator
 
+import numpy as np
 import pandas as pd
 
 from .pattern_detection import Threat
@@ -38,7 +39,7 @@ def detect_odd_time(df: pd.DataFrame) -> Iterator[Threat]:
         std_hour = baseline.get("std_hour", 0)
         if mean_hour is None:
             continue
-        hours = group["hour"].tolist()
+        hours = group["hour"].to_numpy()
         if std_hour == 0:
             if any(h != mean_hour for h in hours):
                 yield Threat("odd_time_access", {"person_id": person})
@@ -47,6 +48,5 @@ def detect_odd_time(df: pd.DataFrame) -> Iterator[Threat]:
             if abs(h - mean_hour) > 2 * std_hour:
                 yield Threat("odd_time_access", {"person_id": person, "hour": int(h)})
                 break
-
 
 __all__ = ["BaselineMetricsDB", "detect_odd_time"]

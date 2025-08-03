@@ -54,6 +54,22 @@ services:
     restart: unless-stopped
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
 
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      POOL_MODE: session
+    ports:
+      - "6432:6432"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    secrets:
+      - db_password
+
 volumes:
   postgres_data:
 

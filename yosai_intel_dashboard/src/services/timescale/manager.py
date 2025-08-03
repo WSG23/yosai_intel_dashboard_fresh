@@ -78,6 +78,7 @@ class TimescaleDBManager:
     # ------------------------------------------------------------------
     async def _setup(self, conn: asyncpg.Connection) -> None:
         await conn.execute("CREATE EXTENSION IF NOT EXISTS timescaledb")
+        chunk_interval = os.getenv("TIMESCALE_CHUNK_INTERVAL", "1 day")
         await conn.execute(
             """
             CREATE TABLE IF NOT EXISTS access_events (
@@ -94,7 +95,8 @@ class TimescaleDBManager:
             """,
         )
         await conn.execute(
-            "SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE)"
+            "SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE, chunk_time_interval => $1::interval)",
+            chunk_interval,
         )
         await conn.execute(
             """
@@ -115,6 +117,29 @@ class TimescaleDBManager:
                 start_offset => INTERVAL '1 day',
                 end_offset => INTERVAL '1 minute',
                 schedule_interval => INTERVAL '5 minutes',
+                if_not_exists => TRUE
+            )
+            """,
+        )
+        await conn.execute(
+            """
+            CREATE MATERIALIZED VIEW IF NOT EXISTS access_event_hourly
+            WITH (timescaledb.continuous) AS
+            SELECT time_bucket('1 hour', time) AS bucket,
+                   facility_id,
+                   COUNT(*) AS event_count
+            FROM access_events
+            GROUP BY bucket, facility_id
+            WITH NO DATA
+            """,
+        )
+        await conn.execute(
+            """
+            SELECT add_continuous_aggregate_policy(
+                'access_event_hourly',
+                start_offset => INTERVAL '7 days',
+                end_offset => INTERVAL '1 hour',
+                schedule_interval => INTERVAL '1 hour',
                 if_not_exists => TRUE
             )
             """,
@@ -144,7 +169,8 @@ class TimescaleDBManager:
             """,
         )
         await conn.execute(
-            "SELECT create_hypertable('model_monitoring_events', 'time', if_not_exists => TRUE)"
+            "SELECT create_hypertable('model_monitoring_events', 'time', if_not_exists => TRUE, chunk_time_interval => $1::interval)",
+            chunk_interval,
         )
         await conn.execute(
             "SELECT add_compression_policy('model_monitoring_events', INTERVAL $1 || ' days', if_not_exists => TRUE)",
@@ -210,6 +236,32 @@ class TimescaleDBManager:
                 logger.error(
                     "Continuous aggregate access_events_5min missing (%s)", agg_count
                 )
+            agg_count = await conn.fetchval(
+                """
+                SELECT COUNT(*) FROM timescaledb_information.continuous_aggregates
+                WHERE view_name = 'access_event_hourly'
+                """
+            )
+            if agg_count != 1:
+                logger.error(
+                    "Continuous aggregate access_event_hourly missing (%s)", agg_count
+                )
+
+    # ------------------------------------------------------------------
+    async def refresh_materialized_view(self, view: str) -> None:
+        """Refresh the specified continuous aggregate."""
+        if self.pool is None:
+            await self.connect()
+        assert self.pool is not None
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                "CALL refresh_continuous_aggregate($1, NULL, NULL)", view
+            )
+
+    async def refresh_dashboard_views(self) -> None:
+        """Refresh materialized views used by dashboards."""
+        for view in ("access_events_5min", "access_event_hourly"):
+            await self.refresh_materialized_view(view)
 
     # ------------------------------------------------------------------
     async def _health_monitor_loop(self, interval: int) -> None:

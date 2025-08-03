@@ -1,18 +1,11 @@
-from __future__ import annotations
-
 import logging
-import os
 import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 import pandas as pd
-from optional_dependencies import import_optional
-
-boto3 = import_optional("boto3")
-mlflow = import_optional("mlflow")
-requests = import_optional("requests")
 from packaging.version import Version
 from sqlalchemy import (
     JSON,
@@ -27,6 +20,12 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+from optional_dependencies import import_optional
+
+boto3 = import_optional("boto3")
+mlflow = import_optional("mlflow")
+requests = import_optional("requests")
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +133,7 @@ class ModelRegistry:
                 else:
                     version = "0.1.0"
 
-            key = f"{name}/{version}/{os.path.basename(model_path)}"
+            key = f"{name}/{version}/{Path(model_path).name}"
             self.s3.upload_file(model_path, self.bucket, key)
             storage_uri = f"s3://{self.bucket}/{key}"
 

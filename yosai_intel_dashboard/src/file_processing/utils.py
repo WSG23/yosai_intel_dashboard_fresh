@@ -8,15 +8,19 @@ from typing import Any, Dict, Iterable
 import chardet
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from yosai_intel_dashboard.src.core.config import get_max_display_rows
-from yosai_intel_dashboard.src.core.performance_file_processor import PerformanceFileProcessor
+from yosai_intel_dashboard.src.core.performance_file_processor import (
+    PerformanceFileProcessor,
+)
 from yosai_intel_dashboard.src.core.unicode import (
     UnicodeProcessor,
     safe_format_number,
     safe_unicode_decode,
     sanitize_for_utf8,
+)
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,10 +63,7 @@ def sanitize_dataframe_unicode(
         for start in range(0, len(df), chunk_size):
             chunk = df.iloc[start : start + chunk_size].copy()
             for col in obj_cols:
-                chunk[col] = [
-                    UnicodeProcessor.clean_text(x) if isinstance(x, str) else x
-                    for x in chunk[col].astype(str)
-                ]
+                chunk[col] = chunk[col].astype(str).map(UnicodeProcessor.clean_text)
             yield chunk
 
     if stream:

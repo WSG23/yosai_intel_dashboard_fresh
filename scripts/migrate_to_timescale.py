@@ -161,15 +161,17 @@ def setup_timescale(conn: connection) -> None:
             )
             """,
         )
+        chunk_interval = os.getenv("TIMESCALE_CHUNK_INTERVAL", "1 day")
         cur.execute(
             """
             SELECT create_hypertable(
                 'access_events',
                 'time',
-                chunk_time_interval => INTERVAL '1 day',
+                chunk_time_interval => %s::interval,
                 if_not_exists => TRUE
             )
-            """
+            """,
+            (chunk_interval,),
         )
 
         # indexes for common query patterns
@@ -231,6 +233,33 @@ def setup_timescale(conn: connection) -> None:
             """
         )
 
+        cur.execute("SELECT to_regclass('access_event_hourly')")
+        if cur.fetchone()[0] is None:
+            cur.execute(
+                """
+                CREATE MATERIALIZED VIEW access_event_hourly
+                WITH (timescaledb.continuous) AS
+                SELECT time_bucket('1 hour', time) AS bucket,
+                       facility_id,
+                       COUNT(*) AS event_count
+                FROM access_events
+                GROUP BY bucket, facility_id
+                WITH NO DATA
+                """
+            )
+
+        cur.execute(
+            """
+            SELECT add_continuous_aggregate_policy(
+                'access_event_hourly',
+                schedule_interval => INTERVAL '1 hour',
+                start_offset => INTERVAL '7 days',
+                end_offset => INTERVAL '1 hour',
+                if_not_exists => TRUE
+            )
+            """
+        )
+
         # compression and retention
         cur.execute(
             """
@@ -260,6 +289,68 @@ def setup_timescale(conn: connection) -> None:
             )
             """
         )
+        # anomaly detections hypertable
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS anomaly_detections (
+                anomaly_id UUID PRIMARY KEY,
+                event_id UUID REFERENCES access_events(event_id),
+                anomaly_type VARCHAR(50) NOT NULL,
+                severity VARCHAR(20) NOT NULL,
+                confidence_score FLOAT NOT NULL,
+                description TEXT,
+                detected_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ai_model_version VARCHAR(50),
+                additional_context JSONB,
+                is_verified BOOLEAN,
+                verified_by VARCHAR(50),
+                verified_at TIMESTAMPTZ
+            )
+            """
+        )
+        cur.execute(
+            """
+            SELECT create_hypertable(
+                'anomaly_detections',
+                'detected_at',
+                chunk_time_interval => INTERVAL '1 day',
+                if_not_exists => TRUE
+            )
+            """
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_anomaly_detections_type ON anomaly_detections(anomaly_type)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_anomaly_detections_time ON anomaly_detections(detected_at)"
+        )
+        cur.execute(
+            """
+            ALTER TABLE anomaly_detections
+                SET (
+                    timescaledb.compress,
+                    timescaledb.compress_orderby = 'detected_at DESC'
+                )
+            """
+        )
+        cur.execute(
+            """
+            SELECT add_compression_policy(
+                'anomaly_detections',
+                INTERVAL '30 days',
+                if_not_exists => TRUE
+            )
+            """
+        )
+        cur.execute(
+            """
+            SELECT add_retention_policy(
+                'anomaly_detections',
+                INTERVAL '180 days',
+                if_not_exists => TRUE
+            )
+            """
+        )
     conn.commit()
 
 
@@ -281,9 +372,9 @@ def insert_rows(cur: cursor, table: str, rows: List[dict[str, Any]]) -> None:
     if not rows:
         return
     columns = rows[0].keys()
-    values = [tuple(row[col] for col in columns) for row in rows]
+    values = (tuple(row[col] for col in columns) for row in rows)
     cols = ",".join(columns)
-    placeholders = ",".join(["%s"] * len(columns))
+    placeholders = ",".join("%s" for _ in columns)
     query = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
     execute_batch(cur, query, values)
 
@@ -394,8 +485,7 @@ def run_verification(target_conn: connection) -> None:
             "SELECT table_name FROM information_schema.tables "
             "WHERE table_schema='public'",
         )
-        tables = [r[0] for r in cur.fetchall()]
-        LOG.info("Tables: %s", ", ".join(tables))
+        LOG.info("Tables: %s", ", ".join(r[0] for r in cur.fetchall()))
         execute_query(
             cur, "SELECT * FROM timescaledb_information.compressed_hypertables"
         )

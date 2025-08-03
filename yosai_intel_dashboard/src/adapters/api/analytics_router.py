@@ -2,6 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
+from api.cache import cached_json_response
 from pydantic import BaseModel, ConfigDict
 
 from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
@@ -52,7 +53,7 @@ async def get_patterns_analysis(
     facility_id = validate_user_input(query.facility_id or "", "facility_id")
     range_val = validate_user_input(query.range or "", "range")
     data = _cached_service.get_analytics_summary_sync(facility_id, range_val)
-    return JSONResponse(content=data)
+    return cached_json_response(data, max_age=cfg.ttl)
 
 
 @router.get("/sources")
@@ -61,8 +62,9 @@ async def get_data_sources(_: None = Depends(require_permission("analytics.read"
 
     Currently returns a static list with test values for demonstration purposes.
     """
-    return JSONResponse(
-        content={"sources": [{"value": "test", "label": "Test Data Source"}]}
+    return cached_json_response(
+        {"sources": [{"value": "test", "label": "Test Data Source"}]},
+        max_age=cfg.ttl,
     )
 
 
@@ -95,9 +97,12 @@ async def get_chart_data(
     range_val = validate_user_input(query.range or "", "range")
     data = _cached_service.get_analytics_summary_sync(facility_id, range_val)
     if chart_type == "patterns":
-        return JSONResponse(content={"type": "patterns", "data": data})
+        return cached_json_response(
+            {"type": "patterns", "data": data}, max_age=cfg.ttl
+        )
     if chart_type == "timeline":
-        return JSONResponse(
-            content={"type": "timeline", "data": data.get("hourly_distribution", {})}
+        return cached_json_response(
+            {"type": "timeline", "data": data.get("hourly_distribution", {})},
+            max_age=cfg.ttl,
         )
     raise http_error(ErrorCode.INVALID_INPUT, "Unknown chart type", 400)

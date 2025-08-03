@@ -6,11 +6,12 @@ connection URLs used throughout the project.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Optional
 from urllib.parse import urlparse
 
 
-@dataclass
+@dataclass(frozen=True)
 class ParsedConnection:
     """Normalized representation of a database connection string."""
 
@@ -52,6 +53,7 @@ class ParsedConnection:
         raise ValueError(f"Unsupported dialect: {dialect}")
 
 
+@lru_cache(maxsize=128)
 def parse_connection_string(url: str) -> ParsedConnection:
     """Parse and validate *url* returning a :class:`ParsedConnection`.
 

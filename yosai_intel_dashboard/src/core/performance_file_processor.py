@@ -23,7 +23,9 @@ class PerformanceFileProcessor:
     def __init__(
         self, chunk_size: int = DEFAULT_CHUNK_SIZE, *, max_memory_mb: int | None = None
     ) -> None:
-        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+            dynamic_config,
+        )
 
         self.chunk_size = chunk_size
         self.logger = logging.getLogger(__name__)
@@ -64,7 +66,12 @@ class PerformanceFileProcessor:
         if isinstance(file_path, (str, Path)):
             handle = Path(file_path)
 
-        reader = pd.read_csv(handle, chunksize=self.chunk_size, encoding=encoding)
+        reader = pd.read_csv(
+            handle,
+            chunksize=self.chunk_size,
+            encoding=encoding,
+            memory_map=True,
+        )
 
         def generator() -> Iterable[pd.DataFrame]:
             rows = 0

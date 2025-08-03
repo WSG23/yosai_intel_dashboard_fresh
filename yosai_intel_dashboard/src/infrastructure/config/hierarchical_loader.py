@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import yaml
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from .base_loader import BaseConfigLoader
 from .environment import get_environment
@@ -42,6 +42,7 @@ class DatabaseSettings(BaseModel):
     password: str = ""
     url: str = ""
     query_timeout_seconds: int = 600
+    read_replicas: list[str] = Field(default_factory=list)
 
 
 class SecuritySettings(BaseModel):

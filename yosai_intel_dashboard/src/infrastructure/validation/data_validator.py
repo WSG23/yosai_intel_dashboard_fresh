@@ -28,12 +28,14 @@ class MissingColumnsRule(ValidationRule):
     """Ensure required columns are present."""
 
     def __init__(self, required: Iterable[str]) -> None:
-        self.required = list(required)
+        # Use a set for faster membership checks during validation
+        self.required = set(required)
 
     def validate(self, df: pd.DataFrame) -> ValidationResult:
-        missing = [c for c in self.required if c not in df.columns]
+        df_columns = set(df.columns)
+        missing = self.required - df_columns
         if missing:
-            issue = f"missing_columns:{','.join(missing)}"
+            issue = f"missing_columns:{','.join(sorted(missing))}"
             return ValidationResult(False, df, [issue])
         return ValidationResult(True, df)
 
@@ -49,7 +51,7 @@ class SuspiciousColumnNameRule(ValidationRule):
     def validate(self, df: pd.DataFrame) -> ValidationResult:
         suspicious = [c for c in df.columns if self.pattern.search(str(c))]
         if suspicious:
-            issue = f"suspicious_columns:{','.join(map(str, suspicious))}"
+            issue = f"suspicious_column_names:{','.join(map(str, suspicious))}"
             return ValidationResult(False, df, [issue])
         return ValidationResult(True, df)
 

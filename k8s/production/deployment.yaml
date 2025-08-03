@@ -41,9 +41,9 @@ spec:
             - name: DB_TYPE
               value: "postgresql"
             - name: DB_HOST
-              value: "db"
+              value: "pgbouncer"
             - name: DB_PORT
-              value: "5432"
+              value: "6432"
             - name: DB_NAME
               value: "yosai_intel"
             - name: DB_USER

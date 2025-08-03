@@ -741,6 +741,13 @@ memory and CPU optimizers keep resource usage within the thresholds described in
 Large uploads are streamed through the `AsyncFileProcessor` to avoid blocking
 the event loop.
 
+### Hot-path Redis Clients
+
+Separate Redis databases can be used for frequently accessed data. Set
+`SESSION_REDIS_URL` for session tokens and `METRICS_REDIS_URL` for recent
+metrics. When only `REDIS_URL` is provided, database `0` stores sessions and
+database `1` stores metrics by default.
+
 ### Cache Warming
 
 Use `IntelligentCacheWarmer` with a `HierarchicalCacheManager` to prefill

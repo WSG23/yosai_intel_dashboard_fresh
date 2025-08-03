@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import pathlib
 import shutil
@@ -12,6 +13,8 @@ import psycopg2
 import pytest
 from psycopg2.extras import execute_batch
 from testcontainers.postgres import PostgresContainer
+
+from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
 
 
 @pytest.mark.integration
@@ -61,11 +64,21 @@ def test_timescale_policies(tmp_path):
         )
         conn.commit()
 
-        cur.execute(
-            "CALL refresh_continuous_aggregate('access_events_5min', NULL, NULL)"
-        )
-        cur.execute("SELECT COUNT(*) FROM access_events_5min")
-        assert cur.fetchone()[0] > 0
+        manager = TimescaleDBManager(dsn)
+        asyncio.run(manager.connect())
+        asyncio.run(manager.refresh_dashboard_views())
+
+        async def _counts() -> tuple[int, int]:
+            assert manager.pool is not None
+            async with manager.pool.acquire() as c:
+                c1 = await c.fetchval("SELECT COUNT(*) FROM access_events_5min")
+                c2 = await c.fetchval("SELECT COUNT(*) FROM access_event_hourly")
+            return c1, c2
+
+        count_5, count_h = asyncio.run(_counts())
+        assert count_5 > 0
+        assert count_h > 0
+        asyncio.run(manager.close())
 
         cur.execute(
             "SELECT job_id FROM timescaledb_information.jobs WHERE hypertable_name='access_events' AND proc_name='policy_compression'"
