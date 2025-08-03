@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { defaultPool, HEARTBEAT_TIMEOUT } from './websocketPool';
 
 export const useWebSocket = (
   path: string,
@@ -8,6 +9,7 @@ export const useWebSocket = (
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
   const stoppedRef = useRef(false);
 
@@ -15,8 +17,22 @@ export const useWebSocket = (
     const fullUrl = path.startsWith('ws')
       ? path
       : `ws://${window.location.host}${path}`;
-    const ws = socketFactory ? socketFactory(fullUrl) : new WebSocket(fullUrl);
+    const ws = socketFactory ? socketFactory(fullUrl) : defaultPool.get(fullUrl);
     wsRef.current = ws;
+
+    const resetHeartbeat = () => {
+      if (heartbeatTimeout.current) {
+        clearTimeout(heartbeatTimeout.current);
+      }
+      heartbeatTimeout.current = setTimeout(() => ws.close(), HEARTBEAT_TIMEOUT);
+    };
+    resetHeartbeat();
+    if (typeof (ws as any).on === 'function') {
+      (ws as any).on('ping', () => {
+        (ws as any).pong?.();
+        resetHeartbeat();
+      });
+    }
 
     ws.onopen = () => {
       setIsConnected(true);
@@ -37,6 +53,9 @@ export const useWebSocket = (
     stoppedRef.current = true;
     if (retryTimeout.current) {
       clearTimeout(retryTimeout.current);
+    }
+    if (heartbeatTimeout.current) {
+      clearTimeout(heartbeatTimeout.current);
     }
     wsRef.current?.close();
   };
