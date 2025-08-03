@@ -18,12 +18,13 @@ from .protocols import (
     ConfigTransformerProtocol,
     ConfigValidatorProtocol,
 )
+from .pydantic_models import DatabaseConnectionFactoryConfig
 from .schema import (
     AppSettings,
     ConfigSchema,
     DatabaseSettings,
-    SecuritySettings,
     RetrainingSettings,
+    SecuritySettings,
 )
 from .secure_config_manager import SecureConfigManager
 from .secure_db import execute_secure_query
@@ -81,6 +82,11 @@ def get_database_config() -> DatabaseSettings:
     return get_config().get_database_config()
 
 
+def get_database_connection_factory_config() -> DatabaseConnectionFactoryConfig:
+    """Get database connection factory configuration"""
+    return get_config().get_database_connection_factory_config()
+
+
 def get_security_config() -> SecuritySettings:
     """Get security configuration"""
     return get_config().get_security_config()
@@ -99,6 +105,7 @@ __all__ = [
     "ConfigSchema",
     "AppSettings",
     "DatabaseSettings",
+    "DatabaseConnectionFactoryConfig",
     "SecuritySettings",
     "RetrainingSettings",
     "UploadConfig",
@@ -121,6 +128,7 @@ __all__ = [
     # Convenience getters
     "get_app_config",
     "get_database_config",
+    "get_database_connection_factory_config",
     "get_security_config",
     "get_plugin_config",
     # Dynamic configuration
