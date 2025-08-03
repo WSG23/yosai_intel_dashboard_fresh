@@ -37,11 +37,41 @@ if not result['valid']:
 
 SecurityValidator provides comprehensive validation including:
 - **SQL injection prevention** - Detects and blocks SQL injection attempts
-- **XSS attack prevention** - Sanitizes cross-site scripting attempts  
+- **XSS attack prevention** - Sanitizes cross-site scripting attempts
 - **Path traversal prevention** - Blocks directory traversal attacks
 - **Unicode security** - Handles surrogate characters and encoding issues
 - **File validation** - Checks file types, sizes, and malicious content
 - **Input sanitization** - Cleans and normalizes user input
+
+### Virus scanning hook
+
+`SecurityValidator` exposes a private `_virus_scan` method that receives the
+raw file bytes. By default this hook performs no action, but integrators can
+override it to connect to ClamAV or other scanners. The hook should raise
+`ValidationError` when malware is detected.
+
+```python
+import io
+import clamd
+from validation import SecurityValidator
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
+
+
+class ClamAVValidator(SecurityValidator):
+    def __init__(self) -> None:
+        super().__init__()
+        self.clam = clamd.ClamdNetworkSocket()
+
+    def _virus_scan(self, content: bytes) -> None:
+        result = self.clam.instream(io.BytesIO(content))
+        if result.get("stream") == ("FOUND", None):
+            raise ValidationError("Virus detected")
+
+```
+
+Any exception raised from `_virus_scan` is surfaced as a validation issue,
+allowing applications to block infected uploads.
+
 
 ## Migration from Deprecated Classes
 

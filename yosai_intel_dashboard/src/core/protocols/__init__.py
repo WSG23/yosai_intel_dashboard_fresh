@@ -232,7 +232,9 @@ class SecurityServiceProtocol(Protocol):
     """Protocol for security validation operations."""
 
     @abstractmethod
-    def validate_input(self, value: str, field_name: str = "input") -> Dict[str, Any]:
+    def validate_input(
+        self, value: str, field_name: str = "input", identifier: str | None = None
+    ) -> Dict[str, Any]:
         """Validate user input for security threats."""
         ...
 

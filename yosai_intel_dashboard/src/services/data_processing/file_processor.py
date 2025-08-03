@@ -22,6 +22,7 @@ from yosai_intel_dashboard.src.file_processing import (
 )
 from unicode_toolkit import safe_encode_text
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
 
 from .file_handler import process_file_simple
@@ -101,7 +102,10 @@ def decode_contents(contents: str) -> Tuple[bytes | None, str | None]:
 def validate_metadata(filename: str, decoded: bytes) -> Tuple[str | None, str | None]:
     """Validate filename and size using :class:`SecurityValidator`."""
     validator = SecurityValidator()
-    meta = validator.validate_file_meta(filename, len(decoded))
+    try:
+        meta = validator.validate_file_meta(filename, decoded)
+    except ValidationError as exc:
+        return None, str(exc)
     if not meta["valid"]:
         return None, "; ".join(meta["issues"])
     return meta["filename"], None

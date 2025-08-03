@@ -3,13 +3,14 @@ from yosai_intel_dashboard.src.infrastructure.validation.security_validator impo
     SecurityValidator,
 )
 
+
 def test_sql_injection_validation():
-    validator = SecurityValidator()
+    validator = SecurityValidator(rate_limit=1, window_seconds=60)
     with pytest.raises(Exception):
         validator.validate_input('1; DROP TABLE users')
 
 def test_main_validation_orchestration():
-    validator = SecurityValidator()
+    validator = SecurityValidator(rate_limit=1, window_seconds=60)
     value = "<script>alert('xss')</script>"
     with pytest.raises(Exception):
         validator.validate_input(value, "comment")
@@ -30,3 +31,4 @@ def test_ssrf_detection():
     validator = SecurityValidator()
     with pytest.raises(Exception):
         validator.validate_input('http://127.0.0.1/admin')
+
