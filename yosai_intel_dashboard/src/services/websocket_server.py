@@ -5,13 +5,12 @@ import json
 import logging
 import threading
 from collections import deque
-from typing import Optional, Set, Deque
-
+from typing import Deque, Optional, Set
 
 from websockets import WebSocketServerProtocol, serve
 
-from yosai_intel_dashboard.src.core.events import EventBus
 from src.websocket import metrics as websocket_metrics
+from yosai_intel_dashboard.src.core.events import EventBus
 
 from .websocket_pool import WebSocketConnectionPool
 
@@ -28,7 +27,6 @@ class AnalyticsWebSocketServer:
         port: int = 6789,
         ping_interval: float = 30.0,
         ping_timeout: float = 10.0,
-
     ) -> None:
         self.host = host
         self.port = port
@@ -37,8 +35,11 @@ class AnalyticsWebSocketServer:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
 
+        # Connection pool managing active websockets
         self.pool = WebSocketConnectionPool()
-        self._queue: Deque[dict] = deque()
+        # Buffer for events published while no clients are connected
+        self._queue: Deque[dict] = deque(maxlen=100)
+
 
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
@@ -52,6 +53,7 @@ class AnalyticsWebSocketServer:
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
+        await self.pool.acquire(websocket)
         self.clients.add(websocket)
         await self.pool.acquire(websocket)
         if self._queue:
@@ -68,6 +70,7 @@ class AnalyticsWebSocketServer:
             logger.debug("WebSocket connection error: %s", exc)
         finally:
             await self.pool.release(websocket)
+            self.clients.discard(websocket)
 
     async def _serve(self) -> None:
         self._loop = asyncio.get_running_loop()
@@ -119,6 +122,9 @@ class AnalyticsWebSocketServer:
         else:
             self._queue.append(data)
 
+    async def _broadcast_async(self, message: str) -> None:
+        """Asynchronously send ``message`` to all clients in the pool."""
+        await self.pool.broadcast(message)
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""
