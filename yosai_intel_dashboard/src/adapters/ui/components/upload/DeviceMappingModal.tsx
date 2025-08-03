@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import {
-  BuildingOfficeIcon,
-  ArrowRightOnRectangleIcon,
-  ArrowLeftOnRectangleIcon,
-  ShieldCheckIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
+  Building2,
+  LogIn,
+  LogOut,
+  ShieldCheck,
+  AlertTriangle,
+} from 'lucide-react';
 import { Button } from '../shared/Button';
 import { Input } from '../shared/Input';
 import { Select } from '../select/Select';
@@ -140,7 +140,7 @@ export const DeviceMappingModal: React.FC<Props> = ({
           <div className="p-6 overflow-y-auto max-h-[60vh]">
             {/* Info Alert */}
             <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-start gap-3">
-              <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="text-sm text-blue-800 dark:text-blue-200">
                 <p className="font-medium mb-1">AI has analyzed {devices.length} devices.</p>
                 <p>Review and correct classifications. Your edits train the AI for better future predictions.</p>
@@ -173,7 +173,7 @@ export const DeviceMappingModal: React.FC<Props> = ({
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                            <Building2 className="h-5 w-5 text-gray-400" />
                             <div>
                               <div className="font-medium">{mapping.deviceId}</div>
                               <Badge 
@@ -201,13 +201,13 @@ export const DeviceMappingModal: React.FC<Props> = ({
                               label="Entry"
                               checked={mapping.isEntry}
                               onChange={(checked) => updateMapping(index, { isEntry: checked })}
-                              icon={<ArrowRightOnRectangleIcon className="h-4 w-4" />}
+                              icon={<LogIn className="h-4 w-4" />}
                             />
                             <Checkbox
                               label="Exit"
                               checked={mapping.isExit}
                               onChange={(checked) => updateMapping(index, { isExit: checked })}
-                              icon={<ArrowLeftOnRectangleIcon className="h-4 w-4" />}
+                              icon={<LogOut className="h-4 w-4" />}
                             />
                           </div>
                         </td>
@@ -223,7 +223,7 @@ export const DeviceMappingModal: React.FC<Props> = ({
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
-                            <ShieldCheckIcon className="h-5 w-5 text-gray-400" />
+                            <ShieldCheck className="h-5 w-5 text-gray-400" />
                             <Input
                               type="number"
                               min={0}

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
+from yosai_intel_dashboard.src.database.infrastructure_events import get_active_events
 from yosai_intel_dashboard.src.services.notification_service import NotificationService
 
 
@@ -18,6 +19,7 @@ class AlertThresholds:
 
 
 # ------------------------------------------------------------------
+
 
 def _load_thresholds() -> AlertThresholds:
     from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
@@ -50,6 +52,10 @@ class AlertManager:
 
     # ------------------------------------------------------------------
     def _notify(self, message: str) -> None:
+        events = get_active_events()
+        if events:
+            details = "; ".join(f"{e.source}: {e.description}" for e in events)
+            message = f"{message} | Infrastructure events: {details}"
         try:
             self.notifier.send(message)
         except Exception:  # pragma: no cover - defensive
