@@ -1,21 +1,22 @@
 from __future__ import annotations
 
-"""Simple background publisher for analytics WebSocket demos."""
+"""Background publisher for demo analytics events.
+
+This small utility periodically publishes sample analytics payloads on an event
+bus.  It is intentionally lightweight and only implements the behaviour required
+by the unit tests; the real project contains a far more feature rich version.
+"""
 
 import logging
 import threading
 from typing import Any, Dict
 
-from src.common import (
-    BaseComponent,
-    EventDispatchMixin,
-    LoggingMixin,
-    handle_deprecated,
-)
-from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
-from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
 from src.common.base import BaseComponent
-from src.common.config import ConfigProvider
+from src.common.config import ConfigProvider, ConfigService
+from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
+from yosai_intel_dashboard.src.services.analytics_summary import (
+    generate_sample_analytics,
+)
 
 
 class WebSocketDataProvider(BaseComponent):
@@ -28,7 +29,8 @@ class WebSocketDataProvider(BaseComponent):
         config: ConfigProvider | None = None,
         interval: float | None = None,
     ) -> None:
-        super().__init__(config)
+        super().__init__(component_id="WebSocketDataProvider")
+        self.config = config or ConfigService()
         self.event_bus = event_bus
         self.interval = interval if interval is not None else self.config.metrics_interval
 
@@ -36,11 +38,15 @@ class WebSocketDataProvider(BaseComponent):
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
+    # ------------------------------------------------------------------
     def _run(self) -> None:
         while not self._stop.is_set():
             payload: Dict[str, Any] = generate_sample_analytics()
-            self.dispatch_event("analytics_update", payload)
-            self.log(logging.DEBUG, "analytics_update dispatched")
+            if hasattr(self.event_bus, "publish"):
+                self.event_bus.publish("analytics_update", payload)
+            else:  # pragma: no cover - alternative EventBus API
+                self.event_bus.emit("analytics_update", payload)  # type: ignore[attr-defined]
+            logging.debug("analytics_update dispatched")
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
@@ -50,3 +56,4 @@ class WebSocketDataProvider(BaseComponent):
 
 
 __all__ = ["WebSocketDataProvider"]
+
