@@ -1,13 +1,22 @@
 """Pytest configuration for the test-suite."""
+
 from __future__ import annotations
 
 import importlib.util
+import os
+import resource
 import warnings
 from contextlib import contextmanager
 from typing import Callable, Iterator, List
 
 import pytest
+
 from database.types import DatabaseConnection
+
+try:
+    from memory_profiler import memory_usage
+except Exception:  # pragma: no cover - optional dependency
+    memory_usage = None  # type: ignore
 
 pytest_plugins = ["tests.config"]
 
@@ -32,6 +41,32 @@ if _missing_packages:
     )
 
 
+DEFAULT_MAX_MEMORY_MB = int(os.environ.get("PYTEST_MAX_MEMORY_MB", "512"))
+
+
+@pytest.fixture(autouse=True)
+def profile_and_limit_memory(request):
+    """Profile memory usage and enforce per-test memory caps."""
+    max_mb = DEFAULT_MAX_MEMORY_MB
+    marker = request.node.get_closest_marker("memlimit")
+    if marker and marker.args:
+        try:
+            max_mb = int(marker.args[0])
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            pass
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    limit_bytes = max_mb * 1024 * 1024
+    resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, hard))
+    before = memory_usage(-1, max_iterations=1)[0] if memory_usage else None
+    try:
+        yield
+    finally:
+        after = memory_usage(-1, max_iterations=1)[0] if memory_usage else None
+        if before is not None and after is not None:
+            print(f"[mem] {request.node.nodeid}: {before:.1f} -> {after:.1f} MiB")
+        resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
+
+
 @pytest.fixture
 def temp_dir(tmp_path_factory):
     """Provide a temporary directory unique to each test."""
@@ -41,7 +76,9 @@ def temp_dir(tmp_path_factory):
 @pytest.fixture
 def di_container():
     """Simple dependency injection container instance."""
-    from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+    from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+        ServiceContainer,
+    )
 
     return ServiceContainer()
 
@@ -157,6 +194,7 @@ def postgres_connection_factory() -> Iterator[DatabaseConnectionFactory]:
 
     pytest.importorskip("testcontainers.postgres")
     from testcontainers.postgres import PostgresContainer
+
     from yosai_intel_dashboard.src.infrastructure.config.connection_pool import (
         DatabaseConnectionPool,
     )
