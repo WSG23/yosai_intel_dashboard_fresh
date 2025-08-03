@@ -20,7 +20,6 @@ from typing import (
     Protocol,
     Tuple,
     Type,
-    TypedDict,
     TypeAlias,
     TypedDict,
 )
