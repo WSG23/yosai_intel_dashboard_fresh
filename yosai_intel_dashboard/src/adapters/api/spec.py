@@ -14,7 +14,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # Provide lightweight stubs for heavy dependencies when generating the spec
 if os.environ.get("SPEC_STUBS"):
     import builtins
-    import importlib
     import types
 
     real_import = builtins.__import__
@@ -32,7 +31,7 @@ if os.environ.get("SPEC_STUBS"):
                 sys.modules[name] = module
                 return module
             raise
-        except ImportError as exc:
+        except ImportError:
             # Handle missing attribute imports
             if name.startswith(
                 ("services", "config", "core", "yosai_intel_dashboard", "mapping")
@@ -70,7 +69,9 @@ if os.environ.get("SPEC_STUBS"):
     )
     service_registration_stub = types.ModuleType("services.upload.service_registration")
     service_registration_stub.register_upload_services = lambda container: None
-    sys.modules.setdefault("services.upload.service_registration", service_registration_stub)
+    sys.modules.setdefault(
+        "services.upload.service_registration", service_registration_stub
+    )
 
     core_container_stub = types.ModuleType("core.container")
     core_container_stub.container = container_stub
@@ -110,18 +111,26 @@ if os.environ.get("SPEC_STUBS"):
 def create_flask_app() -> Flask:
     """Create a Flask app with all blueprints registered."""
     from api.settings_endpoint import settings_bp
-
     from yosai_intel_dashboard.src.core.container import container
-    from yosai_intel_dashboard.src.services.device_endpoint import create_device_blueprint
-    from yosai_intel_dashboard.src.services.mappings_endpoint import create_mappings_blueprint
+    from yosai_intel_dashboard.src.services.device_endpoint import (
+        create_device_blueprint,
+    )
+    from yosai_intel_dashboard.src.services.feature_flags_endpoint import (
+        create_feature_flags_blueprint,
+    )
+    from yosai_intel_dashboard.src.services.mappings_endpoint import (
+        create_mappings_blueprint,
+    )
     from yosai_intel_dashboard.src.services.token_endpoint import create_token_blueprint
-    from yosai_intel_dashboard.src.services.upload_endpoint import create_upload_blueprint
+    from yosai_intel_dashboard.src.services.upload_endpoint import (
+        create_upload_blueprint,
+    )
 
     if not os.environ.get("SPEC_STUBS"):
+        from plugins.compliance_plugin.compliance_controller import compliance_bp
+
         import api.plugin_performance as plugin_perf
         import api.risk_scoring as risk
-
-        from plugins.compliance_plugin.compliance_controller import compliance_bp
     else:
         compliance_bp = Blueprint(
             "compliance", __name__, url_prefix="/v1/complia" "nce"
@@ -130,10 +139,14 @@ def create_flask_app() -> Flask:
         risk = types.SimpleNamespace(calculate_score_endpoint=lambda: ("", 200))
 
     app = Flask(__name__)
-    err_handler = container.get("error_handler") if container.has("error_handler") else None
+    err_handler = (
+        container.get("error_handler") if container.has("error_handler") else None
+    )
     upload_bp = create_upload_blueprint(
         container.get("file_processor"),
-        file_handler=container.get("file_handler") if container.has("file_handler") else None,
+        file_handler=(
+            container.get("file_handler") if container.has("file_handler") else None
+        ),
         handler=err_handler,
     )
     device_bp = create_device_blueprint(
@@ -148,11 +161,13 @@ def create_flask_app() -> Flask:
         handler=err_handler,
     )
     token_bp = create_token_blueprint(handler=err_handler)
+    flags_bp = create_feature_flags_blueprint(handler=err_handler)
 
     app.register_blueprint(upload_bp)
     app.register_blueprint(device_bp)
     app.register_blueprint(mappings_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(flags_bp)
     app.register_blueprint(token_bp)
     app.register_blueprint(compliance_bp)
 

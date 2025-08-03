@@ -5,6 +5,10 @@ It relies on **Dash** and **dash-bootstrap-components** for rendering and uses
 `pandas` to inspect uploaded files. Optional AI suggestions come from the
 `ComponentPluginAdapter` so plugins can provide smarter mappings.
 
+If the plugin service is unreachable the adapter now returns an empty mapping
+and records the error via ``ErrorHandler``. UI components should detect this
+case and display a placeholder instead of AI powered suggestions.
+
 ## Usage
 
 Call `register_callbacks` during application startup to enable the interactive

@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { defaultPool, HEARTBEAT_TIMEOUT } from './websocketPool';
+import { eventBus } from '../eventBus';
 
+export enum WebSocketState {
+  DISCONNECTED,
+  RECONNECTING,
+  CONNECTED,
+}
 
 export const useWebSocket = (
   path: string,

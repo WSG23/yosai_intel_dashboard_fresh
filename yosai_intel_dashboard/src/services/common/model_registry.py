@@ -13,6 +13,7 @@ from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
 from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
 from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,6 +26,7 @@ class ModelRegistry:
         ).rstrip("/")
         self._session: aiohttp.ClientSession | None = None
         self._circuit_breaker = CircuitBreaker(5, 30, name="model_registry")
+
         self._error_handler = ErrorHandler()
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -52,6 +54,7 @@ class ModelRegistry:
         except Exception as exc:  # pragma: no cover - network failures
             logger.warning("model registry lookup failed for %s: %s", model_name, exc)
             return default
+
 
     async def close(self) -> None:
         if self._session and not self._session.closed:
