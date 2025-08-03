@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 
 from .pattern_detection import Threat
@@ -30,15 +31,20 @@ def detect_odd_time(df: pd.DataFrame) -> List[Threat]:
         std_hour = baseline.get("std_hour", 0)
         if mean_hour is None:
             continue
-        hours = group["hour"].tolist()
+        hours = group["hour"].to_numpy()
         if std_hour == 0:
-            if any(h != mean_hour for h in hours):
+            if np.any(hours != mean_hour):
                 threats.append(Threat("odd_time_access", {"person_id": person}))
             continue
-        for h in hours:
-            if abs(h - mean_hour) > 2 * std_hour:
-                threats.append(Threat("odd_time_access", {"person_id": person, "hour": int(h)}))
-                break
+        deviations = np.abs(hours - mean_hour)
+        mask = deviations > 2 * std_hour
+        if np.any(mask):
+            threats.append(
+                Threat(
+                    "odd_time_access",
+                    {"person_id": person, "hour": int(hours[mask][0])},
+                )
+            )
     return threats
 
 
