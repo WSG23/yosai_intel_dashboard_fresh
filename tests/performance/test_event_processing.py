@@ -3,6 +3,8 @@ import time
 import uuid
 from datetime import datetime
 
+import pytest
+
 
 class PerformanceTestRunner:
     """Simple event processing performance benchmark."""
@@ -30,6 +32,21 @@ class PerformanceTestRunner:
         total = end - start
         print(f"Processed {self.num_events} events in {total:.2f} seconds")
         return total
+
+
+EVENT_PROCESSING_THRESHOLD_SECONDS = 0.2
+
+
+@pytest.mark.performance
+def test_event_processing_benchmark_threshold() -> None:
+    runner = PerformanceTestRunner(num_events=10000)
+    total = runner.run()
+    assert (
+        total <= EVENT_PROCESSING_THRESHOLD_SECONDS
+    ), (
+        f"Processing {runner.num_events} events took {total:.2f}s, "
+        f"exceeding threshold {EVENT_PROCESSING_THRESHOLD_SECONDS}s"
+    )
 
 
 if __name__ == "__main__":

@@ -7,6 +7,9 @@ import pandas as pd
 import pytest
 
 
+SCHEDULED_DELETIONS_THRESHOLD_SECONDS = 0.1
+
+
 def original_process(df: pd.DataFrame) -> int:
     processed = 0
     for _, row in df.iterrows():
@@ -55,3 +58,7 @@ def test_process_scheduled_deletions_benchmark():
 
     assert baseline == optimized
     assert optimized_duration <= original_duration
+    assert optimized_duration <= SCHEDULED_DELETIONS_THRESHOLD_SECONDS, (
+        f"Optimized processing took {optimized_duration:.4f}s, "
+        f"expected <= {SCHEDULED_DELETIONS_THRESHOLD_SECONDS}s"
+    )
