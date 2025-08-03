@@ -18,6 +18,7 @@ def main() -> None:
 
     secret_key = secrets.token_urlsafe(32)
     db_password = secrets.token_urlsafe(32)
+    # Use Path.open to ensure UTF-8 encoding
     with Path(args.output).open("w", encoding="utf-8") as fh:
         fh.write(f"SECRET_KEY={secret_key}\n")
         fh.write(f"DB_PASSWORD={db_password}\n")
