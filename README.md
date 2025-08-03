@@ -1024,6 +1024,7 @@ The `/v1/plugins/performance` endpoint exposes metrics for dashboards.
 - Supports PostgreSQL, SQLite, and Mock databases
 - Type-safe connection management
 - Retry logic via `connection_retry.py` with exponential backoff
+- Customizable retry strategies via `DatabaseConnectionFactory`
  - Safe Unicode handling using `UnicodeSQLProcessor` for queries and
    `UnicodeProcessor` for parameters
 - Connection pooling through `connection_pool.py`
@@ -1037,6 +1038,22 @@ from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
 )
 manager = EnhancedPostgreSQLManager(DatabaseConfig(type="postgresql"))
 manager.execute_query_with_retry("SELECT 1")
+```
+
+Custom retry strategies can be supplied to the connection factory:
+
+```python
+from config.database_connection_factory import DatabaseConnectionFactory
+from config.database_manager import DatabaseSettings
+
+class NoDelayStrategy:
+    def run_with_retry(self, func):
+        return func()
+
+factory = DatabaseConnectionFactory(
+    DatabaseSettings(type="mock"), retry_strategy=NoDelayStrategy()
+)
+conn = factory.create()
 ```
 
 ### Models Layer (`models/`)
