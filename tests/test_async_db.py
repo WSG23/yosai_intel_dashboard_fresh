@@ -69,8 +69,7 @@ def test_pool_creation(monkeypatch):
     asyncio.run(async_db.close_pool())
 
 
-@pytest.mark.asyncio
-async def test_health_check(monkeypatch):
+def test_health_check(monkeypatch):
     pool = DummyPool()
 
     async def fake_create_pool(**_):
@@ -90,6 +89,7 @@ async def test_connection_cleanup_on_exception(monkeypatch):
         async def execute(self, _query: str):
             raise RuntimeError("fail")
 
+
     async def fake_create_pool(**_):
         return BadPool()
 
@@ -101,3 +101,4 @@ async def test_connection_cleanup_on_exception(monkeypatch):
     assert isinstance(pool, DummyPool)
     assert pool.acquired is False
     await async_db.close_pool()
+

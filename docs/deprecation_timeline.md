@@ -8,9 +8,11 @@ This document summarizes features scheduled for removal and links to their migra
 |-----------|-----------------|-----------------|----------------|
 | legacy-auth | 1.2.0 | 2.0.0 | [Legacy Auth Migration](migration/legacy-auth.md) |
 | old-dashboard | 1.5.0 | 2.1.0 | [New Dashboard Migration](migration/new-dashboard.md) |
+| database-manager | 2.4.0 | 3.0.0 | [Database Manager to Factory Migration](migration/database_manager_to_factory.md) |
 
 - [Legacy Auth Migration](migration/legacy-auth.md)
 - [New Dashboard Migration](migration/new-dashboard.md)
+- [Database Manager to Factory Migration](migration/database_manager_to_factory.md)
 
 
 This section will detail user impact and remediation steps.
