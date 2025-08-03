@@ -3,8 +3,10 @@ from __future__ import annotations
 """Utilities for predictive cache warming."""
 
 import asyncio
+import json
 import logging
 from collections import Counter
+from pathlib import Path
 from typing import Any, Callable, List, Optional
 
 from .base_model import BaseModel
@@ -30,6 +32,19 @@ class UsagePatternAnalyzer(BaseModel):
     def top_keys(self, limit: int = 5) -> List[str]:
         """Return the most frequently used keys."""
         return [k for k, _ in self._counter.most_common(limit)]
+
+    # ------------------------------------------------------------------
+    def save(self, path: str | Path) -> None:
+        """Persist usage counters to *path* in JSON format."""
+        Path(path).write_text(json.dumps(self._counter))
+
+    # ------------------------------------------------------------------
+    def load(self, path: str | Path) -> None:
+        """Load usage counters from *path* if it exists."""
+        p = Path(path)
+        if p.exists():
+            data = json.loads(p.read_text() or "{}")
+            self._counter = Counter(data)
 
 
 class IntelligentCacheWarmer:
@@ -58,12 +73,23 @@ class IntelligentCacheWarmer:
         loop = asyncio.get_event_loop()
 
         async def _load(key: str) -> None:
-            if self.cache.get(key) is None:
+            if await self.cache.get(key) is None:
                 value = await loop.run_in_executor(None, self.loader, key)
-                self.cache.set(key, value, level=1)
-                self.cache.set(key, value, level=2)
+                await self.cache.set(key, value, level=1)
+                await self.cache.set(key, value, level=2)
 
         await asyncio.gather(*(_load(k) for k in keys))
+
+    # ------------------------------------------------------------------
+    async def warm_from_file(self, path: str | Path, limit: int = 5) -> None:
+        """Warm caches using usage statistics stored at *path*."""
+        self.analyzer.load(path)
+        await self.warm(limit)
+
+    # ------------------------------------------------------------------
+    def save_stats(self, path: str | Path) -> None:
+        """Persist usage statistics for future startups."""
+        self.analyzer.save(path)
 
 
 __all__ = ["UsagePatternAnalyzer", "IntelligentCacheWarmer"]
