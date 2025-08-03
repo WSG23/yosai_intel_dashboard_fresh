@@ -1,0 +1,7 @@
+@startuml
+component Publisher
+component Subscriber
+component EventBus
+Publisher --> EventBus : publish
+EventBus --> Subscriber : dispatch
+@enduml

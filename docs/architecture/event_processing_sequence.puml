@@ -1,0 +1,11 @@
+@startuml
+actor Producer
+participant "EventBus" as Bus
+participant "AnalyticsService" as Service
+participant "Repository" as Repo
+
+Producer -> Bus : publish(event)
+Bus -> Service : dispatch(event)
+Service -> Repo : persist(event)
+Service -> Bus : publish(analytics_update)
+@enduml

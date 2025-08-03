@@ -1,0 +1,15 @@
+@startuml
+interface IPersonRepository
+class PersonRepository
+class InMemoryPersonRepository
+IPersonRepository <|.. PersonRepository
+IPersonRepository <|.. InMemoryPersonRepository
+
+interface IAccessEventRepository
+class AccessEventRepository
+IAccessEventRepository <|.. AccessEventRepository
+
+interface IDoorRepository
+class DoorRepository
+IDoorRepository <|.. DoorRepository
+@enduml

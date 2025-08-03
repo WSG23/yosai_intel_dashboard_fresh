@@ -1,0 +1,19 @@
+@startuml
+class BaseModel
+interface EventBusProtocol
+class EventBus
+EventBus -|> BaseModel
+EventBus ..|> EventBusProtocol
+
+interface IPersonRepository
+class PersonRepository
+IPersonRepository <|.. PersonRepository
+
+interface IAccessEventRepository
+class AccessEventRepository
+IAccessEventRepository <|.. AccessEventRepository
+
+interface IDoorRepository
+class DoorRepository
+IDoorRepository <|.. DoorRepository
+@enduml
