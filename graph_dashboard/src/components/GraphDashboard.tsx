@@ -5,6 +5,7 @@ import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import Heatmap from 'heatmap.js';
 import { request, gql } from 'graphql-request';
+import { AccessibleVisualization } from '../../../components/accessibility';
 
 type Node = { id: string; label: string; properties?: Record<string, string> };
 type Edge = { source: string; target: string; weight?: number };
@@ -61,26 +62,52 @@ export const GraphDashboard: React.FC = () => {
     a.click();
   };
 
-  const graphComponent = is3D ? (
+  const graphVisualization = is3D ? (
     <ForceGraph3D graphData={graph} />
   ) : (
     <ForceGraph2D graphData={graph} />
   );
 
+  const graphComponent = (
+    <AccessibleVisualization
+      title="Security Graph"
+      summary={`Graph with ${graph.nodes.length} nodes and ${graph.edges.length} edges.`}
+      tableData={{
+        headers: ['Node ID', 'Label'],
+        rows: graph.nodes.map((n) => [n.id, n.label]),
+      }}
+    >
+      {graphVisualization}
+    </AccessibleVisualization>
+  );
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}>
-        <button onClick={() => setIs3D(!is3D)}>{is3D ? '2D' : '3D'}</button>
+        <button
+          onClick={() => setIs3D(!is3D)}
+          aria-label="Toggle 3D view"
+        >
+          {is3D ? '2D' : '3D'}
+        </button>
         <input
           placeholder="Filter by label"
+          aria-label="Filter nodes by label"
           value={labelFilter}
           onChange={(e) => setLabelFilter(e.target.value)}
           style={{ marginLeft: 10 }}
         />
-        <button onClick={() => exportGraph('gephi')}>Export Gephi</button>
-        <button onClick={() => exportGraph('cytoscape')}>Export Cytoscape</button>
+        <button onClick={() => exportGraph('gephi')} aria-label="Export Gephi">
+          Export Gephi
+        </button>
+        <button
+          onClick={() => exportGraph('cytoscape')}
+          aria-label="Export Cytoscape"
+        >
+          Export Cytoscape
+        </button>
         <div style={{ width: 200, marginTop: 10 }}>
-          <Slider min={0} max={100} defaultValue={0} />
+          <Slider min={0} max={100} defaultValue={0} aria-label="Graph slider" />
         </div>
       </div>
       {graphComponent}
