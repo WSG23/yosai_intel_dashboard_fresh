@@ -10,6 +10,7 @@ import psutil
 
 from yosai_intel_dashboard.src.core.performance import (
     MetricType,
+    PerformanceProfiler,
     get_performance_monitor,
 )
 from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (

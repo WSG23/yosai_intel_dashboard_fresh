@@ -7,6 +7,7 @@ import types
 import sys
 from pathlib import Path
 
+import pytest
 os.environ.setdefault("CACHE_TTL_SECONDS", "1")
 os.environ.setdefault("JWKS_CACHE_TTL", "1")
 from tests.import_helpers import safe_import, import_optional
@@ -49,36 +50,38 @@ dynamic_config = cfg_module.dynamic_config
 def test_malicious_filename_is_invalid():
     validator = SecurityValidator()
     result = validator.validate_file_meta("../../evil.csv", b"data")
-    assert result["valid"] is False
-    assert any("Invalid filename" in issue for issue in result["issues"])
+    assert result.valid is False
+    assert "invalid_filename" in (result.issues or [])
 
 
 def test_oversized_upload_is_invalid():
     validator = SecurityValidator()
     too_big = dynamic_config.security.max_upload_mb * 1024 * 1024 + 1
     result = validator.validate_file_meta("big.csv", b"x" * too_big)
-    assert result["valid"] is False
-    assert any("File too large" in issue for issue in result["issues"])
+    assert result.valid is False
+    assert "file_too_large" in (result.issues or [])
 
 
 def test_sanitize_filename_rejects_path_components():
     validator = SecurityValidator()
-    with pytest.raises(ValidationError):
-        validator.sanitize_filename("../foo/bar.csv")
+    result = validator.sanitize_filename("../foo/bar.csv")
+    assert result.valid is False
+    assert "invalid_filename" in (result.issues or [])
 
 
 def test_valid_png_signature():
     validator = SecurityValidator()
     png = b"\x89PNG\r\n\x1a\nrest"
     result = validator.validate_file_meta("img.png", png)
-    assert result["valid"]
+    assert result.valid
 
 
-def test_signature_mismatch_raises():
+def test_signature_mismatch_detected():
     validator = SecurityValidator()
     png = b"\x89PNG\r\n\x1a\nrest"
-    with pytest.raises(ValidationError):
-        validator.validate_file_meta("img.jpg", png)
+    result = validator.validate_file_meta("img.jpg", png)
+    assert result.valid is False
+    assert "file_signature_mismatch" in (result.issues or [])
 
 
 def test_virus_scan_failure():
@@ -88,5 +91,6 @@ def test_virus_scan_failure():
 
     validator = BadScanner()
     png = b"\x89PNG\r\n\x1a\nrest"
-    with pytest.raises(ValidationError):
-        validator.validate_file_meta("img.png", png)
+    result = validator.validate_file_meta("img.png", png)
+    assert result.valid is False
+    assert "virus_detected" in (result.issues or [])

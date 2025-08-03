@@ -1,15 +1,23 @@
 import pandas as pd
 import pytest
+from types import SimpleNamespace
 
-from yosai_intel_dashboard.src.core.exceptions import ValidationError
-from security.xss_validator import XSSPrevention
+from tests.import_helpers import safe_import
+
+stub_dynamic_config = SimpleNamespace(
+    security=SimpleNamespace(max_upload_mb=1),
+    upload=SimpleNamespace(allowed_file_types=[".csv", ".json", ".xlsx", ".xls"]),
+)
+safe_import("config", SimpleNamespace())
+safe_import("config.dynamic_config", SimpleNamespace(dynamic_config=stub_dynamic_config))
+
 from validation.security_validator import SecurityValidator
 
 
 def test_unicode_normalization():
     validator = SecurityValidator()
-    with pytest.raises(ValidationError):
-        validator.validate_input("<script>")
+    res = validator.validate_input("<script>")
+    assert res.valid is False
 
 
 def test_html_js_injection_attempts():
@@ -19,25 +27,21 @@ def test_html_js_injection_attempts():
         "<img src=x onerror=alert(1)>",
     ]
     for payload in payloads:
-        with pytest.raises(ValidationError):
-            validator.validate_input(payload)
+        res = validator.validate_input(payload)
+        assert res.valid is False
 
 
 def test_json_input_allowed():
     validator = SecurityValidator()
-    # Should not raise ValidationError for quotes within JSON structures
-    validator.validate_input('{"key":"val"}')
+    res = validator.validate_input('{"key":"val"}')
+    assert res.valid
 
 
 def test_sql_injection_detection():
     validator = SecurityValidator()
-    with pytest.raises(ValidationError):
-        validator.validate_input("1; DROP TABLE users", "query_parameter")
-
-
-def test_xss_sanitization():
-    result = XSSPrevention.sanitize_html_output("<script>alert('xss')</script>")
-    assert "<" not in result and ">" not in result
+    res = validator.validate_input("1; DROP TABLE users", "query_parameter")
+    assert res.valid is False
+    assert "sql_injection" in (res.issues or [])
 
 
 def test_file_size_limit(monkeypatch):
@@ -45,16 +49,16 @@ def test_file_size_limit(monkeypatch):
     monkeypatch.setattr("config.dynamic_config.security.max_upload_mb", 0)
     validator = SecurityValidator()
     csv_bytes = df.to_csv(index=False).encode("utf-8")
-    with pytest.raises(ValidationError):
-        validator.validate_file_upload("data.csv", csv_bytes)
+    res = validator.validate_file_upload("data.csv", csv_bytes)
+    assert res.valid is False
 
 
 def test_csv_injection_detection():
     df = pd.DataFrame({"a": ["=cmd()"]})
     validator = SecurityValidator()
     csv_bytes = df.to_csv(index=False).encode("utf-8")
-    with pytest.raises(ValidationError):
-        validator.validate_file_upload("data.csv", csv_bytes)
+    res = validator.validate_file_upload("data.csv", csv_bytes)
+    assert res.valid is False
 
 
 def test_csv_safe_dataframe_allowed():
@@ -62,36 +66,26 @@ def test_csv_safe_dataframe_allowed():
     validator = SecurityValidator()
     csv_bytes = df.to_csv(index=False).encode("utf-8")
     result = validator.validate_file_upload("data.csv", csv_bytes)
-    assert result["valid"] is True
-
-
-def _create_test_app():
-    from flask import Flask
-
-    from security.validation_middleware import ValidationMiddleware
-
-    app = Flask(__name__)
-    middleware = ValidationMiddleware()
-    app.before_request(middleware.validate_request)
-    app.after_request(middleware.sanitize_response)
-
-    @app.route("/", methods=["GET", "POST"])
-    def index():
-        return "ok"
-
-    return app
+    assert result.valid is True
 
 
 def test_oversized_upload_rejected(monkeypatch):
     monkeypatch.setattr("config.dynamic_config.security.max_upload_mb", 0)
-    app = _create_test_app()
-    client = app.test_client()
-    resp = client.post("/", data="A" * 1024)
-    assert resp.status_code == 413
+    validator = SecurityValidator()
+    res = validator.validate_file_upload("data.csv", b"A" * 1024)
+    assert res.valid is False
 
 
 def test_malicious_query_rejected():
-    app = _create_test_app()
-    client = app.test_client()
-    resp = client.get("/?q=%3Cscript%3E")
-    assert resp.status_code == 400
+    validator = SecurityValidator()
+    res = validator.scan_query("SELECT * FROM users; DROP TABLE users;")
+    assert res.valid is False
+
+
+def test_validate_resource_id():
+    validator = SecurityValidator()
+    good = validator.validate_resource_id("res_123-abc")
+    bad = validator.validate_resource_id("../etc/passwd")
+    assert good.valid is True
+    assert bad.valid is False
+

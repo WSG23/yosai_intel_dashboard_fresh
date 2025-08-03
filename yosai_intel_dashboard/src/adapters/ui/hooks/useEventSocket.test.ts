@@ -15,9 +15,17 @@ class MockSocket {
   public onopen: (() => void) | null = null;
   public onclose: (() => void) | null = null;
   public close = jest.fn();
+  public pong = jest.fn();
+  private handlers: Record<string, Function> = {};
   constructor(public url: string) {
     MockSocket.instance = this;
     MockSocket.instances.push(this);
+  }
+  on(evt: string, handler: Function) {
+    this.handlers[evt] = handler;
+  }
+  trigger(evt: string) {
+    this.handlers[evt]?.();
   }
   static instance: MockSocket | null = null;
   static instances: MockSocket[] = [];
@@ -130,6 +138,67 @@ describe('useEventSocket', () => {
     });
 
     expect(MockSocket.instances).toHaveLength(1);
+  });
 
+  it('emits connection state via eventBus', () => {
+    const events: EventSocketState[] = [];
+    const off = eventBus.on<EventSocketState>('event_socket_state', s => events.push(s));
+
+    const { unmount } = renderHook(() =>
+      useEventSocket(
+        'ws://test',
+        (url) => new MockSocket(url) as unknown as WebSocket,
+        false,
+      ),
+    );
+
+    expect(events).toEqual([EventSocketState.CONNECTING]);
+
+    act(() => {
+      MockSocket.instance?.onopen?.();
+    });
+    expect(events[events.length - 1]).toBe(EventSocketState.CONNECTED);
+
+    act(() => {
+      MockSocket.instance?.onclose?.();
+    });
+    expect(events[events.length - 1]).toBe(EventSocketState.RECONNECTING);
+
+    unmount();
+    expect(events[events.length - 1]).toBe(EventSocketState.DISCONNECTED);
+
+    off();
+  });
+
+  it('responds to ping with pong and resets heartbeat', () => {
+    const { unmount } = renderHook(() =>
+      useEventSocket(
+        'ws://test',
+        (url) => new MockSocket(url) as unknown as WebSocket,
+        false,
+      ),
+    );
+
+    act(() => {
+      jest.advanceTimersByTime(29999);
+    });
+    expect(MockSocket.instance?.close).not.toHaveBeenCalled();
+
+    act(() => {
+      MockSocket.instance?.trigger('ping');
+    });
+    expect(MockSocket.instance?.pong).toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(29999);
+    });
+    expect(MockSocket.instance?.close).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(30000);
+    });
+    expect(MockSocket.instance?.close).toHaveBeenCalled();
+
+    unmount();
   });
 });
