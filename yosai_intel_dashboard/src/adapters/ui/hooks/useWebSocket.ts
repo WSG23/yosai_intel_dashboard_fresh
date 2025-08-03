@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { defaultPool, HEARTBEAT_TIMEOUT } from './websocketPool';
+import { eventBus } from '../eventBus';
+import websocket_metrics from '../metrics/websocket_metrics';
 
 
 export const useWebSocket = (
@@ -47,6 +49,7 @@ export const useWebSocket = (
       }
       setState(WebSocketState.RECONNECTING);
       eventBus.emit('websocket_state', WebSocketState.RECONNECTING);
+      websocket_metrics.record_reconnect_attempt();
       const delay = Math.min(1000 * 2 ** attemptRef.current, 30000);
       attemptRef.current += 1;
       retryTimeout.current = setTimeout(connect, delay);
