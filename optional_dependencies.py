@@ -14,8 +14,6 @@ Example
 ...     shap.TreeExplainer(...)
 """
 
-from __future__ import annotations
-
 import importlib
 import logging
 import types
