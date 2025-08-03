@@ -19,6 +19,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Deque,
     Dict,
     Iterable,
     List,
@@ -163,7 +164,9 @@ class PerformanceMonitor:
         self.metrics: deque = deque(maxlen=max_metrics)
         self.snapshots: deque = deque(maxlen=1000)
         self.active_timers: Dict[str, float] = {}
-        self.aggregated_metrics: Dict[str, List[float]] = defaultdict(list)
+        self.aggregated_metrics: Dict[str, Deque[float]] = defaultdict(
+            lambda: deque(maxlen=1000)
+        )
         self.logger = logging.getLogger(__name__)
         self._lock = threading.Lock()
         self.memory_threshold_mb = getattr(
@@ -206,10 +209,6 @@ class PerformanceMonitor:
         with self._lock:
             self.metrics.append(metric)
             self.aggregated_metrics[name].append(value)
-
-            # Keep only recent aggregated metrics
-            if len(self.aggregated_metrics[name]) > 1000:
-                self.aggregated_metrics[name] = self.aggregated_metrics[name][-1000:]
 
             if self.budgets:
                 _check_budget(name.split(".")[0], value, self.budgets, self.dispatcher)
