@@ -3,12 +3,14 @@
 
 from __future__ import annotations
 
-import os
+from pathlib import Path
 
 from dash import Dash
 from graphviz import Digraph
 
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
 from yosai_intel_dashboard.src.services.upload.callbacks import UploadCallbacks
 
 
@@ -37,15 +39,14 @@ def main() -> None:
     coord = load_callbacks()
     graph = build_graph(coord)
 
-    docs_dir = os.path.join(os.path.dirname(__file__), os.pardir, "docs")
-    docs_dir = os.path.abspath(docs_dir)
-    os.makedirs(docs_dir, exist_ok=True)
+    docs_dir = Path(__file__).resolve().parent.parent / "docs"
+    docs_dir.mkdir(parents=True, exist_ok=True)
 
-    dot_path = os.path.join(docs_dir, "callback_graph.dot")
-    with open(dot_path, "w") as f:
+    dot_path = docs_dir / "callback_graph.dot"
+    with Path(dot_path).open("w", encoding="utf-8") as f:
         f.write(graph.source)
 
-    graph.render(os.path.join(docs_dir, "callback_graph"), format="png", cleanup=True)
+    graph.render(str(docs_dir / "callback_graph"), format="png", cleanup=True)
     print(f"Wrote {dot_path} and callback_graph.png")
 
 
