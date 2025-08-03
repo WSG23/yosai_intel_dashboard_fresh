@@ -9,6 +9,19 @@ import logging
 import secrets
 from pathlib import Path
 
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
+
+
+def _store_secret(client: boto3.client, name: str, value: str) -> None:
+    """Create or update a secret in AWS Secrets Manager."""
+    try:
+        client.create_secret(Name=name, SecretString=value)
+        logging.info("created secret %s", name)
+    except client.exceptions.ResourceExistsException:
+        client.put_secret_value(SecretId=name, SecretString=value)
+        logging.info("updated secret %s", name)
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate development secrets")
     parser.add_argument(
@@ -24,6 +37,13 @@ def main() -> None:
         fh.write(f"DB_PASSWORD={db_password}\n")
     logging.basicConfig(level=logging.INFO)
     logging.info("generated secrets written to %s", args.output)
+
+    try:
+        client = boto3.client("secretsmanager")
+        _store_secret(client, "dev/SECRET_KEY", secret_key)
+        _store_secret(client, "dev/DB_PASSWORD", db_password)
+    except (BotoCoreError, ClientError) as exc:
+        logging.debug("skipping AWS Secrets Manager update: %s", exc)
 
 
 if __name__ == "__main__":
