@@ -3,7 +3,7 @@ import importlib.util
 from pathlib import Path
 
 spec_cp = importlib.util.spec_from_file_location(
-    "connection_pool",
+    "yosai_intel_dashboard.src.infrastructure.config.connection_pool",
     Path(__file__).resolve().parents[1]
     / "yosai_intel_dashboard"
     / "src"

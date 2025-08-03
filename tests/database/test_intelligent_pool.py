@@ -1,4 +1,5 @@
 import importlib.util
+import importlib.util
 import types
 from pathlib import Path
 import sys
@@ -17,6 +18,16 @@ sys.modules.setdefault(
     "yosai_intel_dashboard.src.infrastructure", types.ModuleType("yosai_intel_dashboard.src.infrastructure")
 )
 sys.modules["yosai_intel_dashboard.src.infrastructure.config"] = config_pkg
+
+metrics_pkg = types.ModuleType(
+    "yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.connection_pool"
+)
+metrics_pkg.db_pool_active_connections = types.SimpleNamespace(set=lambda v: None)
+metrics_pkg.db_pool_current_size = types.SimpleNamespace(set=lambda v: None)
+metrics_pkg.db_pool_wait_seconds = types.SimpleNamespace(observe=lambda v: None)
+sys.modules[
+    "yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.connection_pool"
+] = metrics_pkg
 
 from yosai_intel_dashboard.src.database.intelligent_connection_pool import IntelligentConnectionPool
 
@@ -57,3 +68,39 @@ def test_pool_resizes_and_reports_metrics():
     assert metrics["acquired"] == 2
     assert metrics["released"] == 2
     assert "avg_acquire_time" in metrics
+
+
+def test_warmup_prefills_pool():
+    class WarmConn:
+        def __init__(self):
+            self.warm_calls = 0
+            self._connected = True
+
+        def execute_query(self, query, params=None):
+            self.warm_calls += 1
+            return []
+
+        def execute_command(self, command, params=None):
+            return None
+
+        def health_check(self):
+            return self._connected
+
+        def close(self):
+            self._connected = False
+
+    def warm_factory():
+        return WarmConn()
+
+    pool = IntelligentConnectionPool(warm_factory, 1, 2, timeout=1, shrink_timeout=1)
+    conn, _ = pool._pool[0]
+    assert conn.warm_calls == 1
+
+    conn.close()
+    pool._pool.clear()
+    pool._active = 0
+
+    pool.warmup()
+    assert pool._active == 1
+    conn, _ = pool._pool[0]
+    assert conn.warm_calls == 1
