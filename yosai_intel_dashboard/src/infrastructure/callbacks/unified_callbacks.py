@@ -21,7 +21,8 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TypedDict,
+    TypeAlias,
+
 )
 
 from dash import Dash
@@ -29,6 +30,15 @@ from dash.dependencies import Input, Output, State
 
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
 from .events import CallbackEvent
+
+# ---------------------------------------------------------------------------
+# Type aliases
+# ---------------------------------------------------------------------------
+CallbackHandler: TypeAlias = Callable[..., Any]
+Outputs: TypeAlias = Output | tuple[Output, ...]
+Inputs: TypeAlias = Input | tuple[Input, ...] | None
+States: TypeAlias = State | tuple[State, ...] | None
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +114,7 @@ class TrulyUnifiedCallbacks:
             self.security = SecurityValidator()
         else:
             self.security = security_validator
-        self._lock = threading.RLock()
+        self._lock: threading.RLock = threading.RLock()
         self._event_callbacks: Dict[CallbackEvent, List[EventCallback]] = defaultdict(
             list
         )
@@ -118,7 +128,9 @@ class TrulyUnifiedCallbacks:
         )
 
     # ------------------------------------------------------------------
-    def callback(self, *args: Any, **kwargs: Any):
+    def callback(
+        self, *args: Any, **kwargs: Any
+    ) -> Callable[[CallbackHandler], CallbackHandler]:
         """Unified callback decorator for Dash callbacks."""
         from ...core.plugins.callback_unifier import CallbackUnifier
 
@@ -129,16 +141,20 @@ class TrulyUnifiedCallbacks:
     # Dash callback registration ---------------------------------------
     def handle_register(
         self,
-        outputs: Any,
-        inputs: Iterable[Input] | Input | None = None,
-        states: Iterable[State] | State | None = None,
+        outputs: Outputs,
+        inputs: Inputs = None,
+        states: States = None,
         *,
         callback_id: str,
         component_name: str,
         allow_duplicate: bool = False,
         **kwargs: Any,
     ) -> Callable[[CallbackHandler], CallbackHandler]:
-        """Register a Dash callback and track conflicts."""
+        """Register a Dash callback and track conflicts.
+
+        Thread-safe via an internal ``RLock``.
+        """
+
 
         if self.app is None:
             raise RuntimeError("Dash app not configured for TrulyUnifiedCallbacks")
@@ -207,16 +223,20 @@ class TrulyUnifiedCallbacks:
     # ------------------------------------------------------------------
     def register_callback(
         self,
-        outputs: Any,
-        inputs: Iterable[Input] | Input | None = None,
-        states: Iterable[State] | State | None = None,
+        outputs: Outputs,
+        inputs: Inputs = None,
+        states: States = None,
         *,
         callback_id: str,
         component_name: str,
         allow_duplicate: bool = False,
         **kwargs: Any,
     ) -> Callable[[CallbackHandler], CallbackHandler]:
-        """Alias for handle_register - register a Dash callback and track conflicts."""
+        """Alias for :meth:`handle_register`.
+
+        Thread-safe via :meth:`handle_register`'s internal ``RLock``.
+        """
+
         return self.handle_register(
             outputs=outputs,
             inputs=inputs,
@@ -230,16 +250,20 @@ class TrulyUnifiedCallbacks:
     # ------------------------------------------------------------------
     def register_handler(
         self,
-        outputs: Any,
-        inputs: Iterable[Input] | Input | None = None,
-        states: Iterable[State] | State | None = None,
+        outputs: Outputs,
+        inputs: Inputs = None,
+        states: States = None,
         *,
         callback_id: str,
         component_name: str,
         allow_duplicate: bool = False,
         **kwargs: Any,
     ) -> Callable[[CallbackHandler], CallbackHandler]:
-        """Alias for handle_register."""
+        """Alias for :meth:`handle_register`.
+
+        Thread-safe via :meth:`handle_register`'s internal ``RLock``.
+        """
+
         return self.handle_register(
             outputs=outputs,
             inputs=inputs,
@@ -252,7 +276,10 @@ class TrulyUnifiedCallbacks:
 
     # ------------------------------------------------------------------
     def get_callback_conflicts(self) -> Dict[str, List[str]]:
-        """Return mapping of output identifiers to conflicting callback IDs."""
+        """Return mapping of output identifiers to conflicting callback IDs.
+
+        Thread-safe via an internal ``RLock``.
+        """
         conflicts: Dict[str, List[str]] = {}
         seen: Dict[str, str] = {}
         with self._lock:
@@ -267,12 +294,16 @@ class TrulyUnifiedCallbacks:
 
     @property
     def registered_callbacks(self) -> Dict[str, DashCallbackRegistration]:
+        """Thread-safe copy of registered callbacks."""
         with self._lock:
             return dict(self._dash_callbacks)
 
     # ------------------------------------------------------------------
     def print_callback_summary(self) -> None:
-        """Log a summary of registered callbacks grouped by namespace."""
+        """Log a summary of registered callbacks grouped by namespace.
+
+        Thread-safe via an internal ``RLock``.
+        """
         with self._lock:
             for namespace, ids in self._namespaces.items():
                 logger.info(f"Callbacks for {namespace}:")
@@ -294,7 +325,10 @@ class TrulyUnifiedCallbacks:
         timeout: Optional[float] = None,
         retries: int = 0,
     ) -> None:
-        """Register an event callback."""
+        """Register an event callback.
+
+        Thread-safe via an internal ``RLock``.
+        """
 
         if secure:
             original = func
@@ -316,8 +350,12 @@ class TrulyUnifiedCallbacks:
             self._event_callbacks[event].sort(key=lambda c: c.priority)
 
     # ------------------------------------------------------------------
-    def unregister_event(self, event: CallbackEvent, func: CallbackHandler) -> None:
-        """Remove a previously registered event callback."""
+    def unregister_event(self, event: CallbackEvent, func: Callable[..., Any]) -> None:
+        """Remove a previously registered event callback.
+
+        Thread-safe via an internal ``RLock``.
+        """
+
         with self._lock:
             self._event_callbacks[event] = [
                 cb for cb in self._event_callbacks.get(event, []) if cb.func != func
@@ -396,13 +434,20 @@ class TrulyUnifiedCallbacks:
         tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
         return await asyncio.gather(*tasks) if tasks else []
 
-    def get_event_callbacks(self, event: CallbackEvent) -> List[CallbackHandler]:
-        """Return registered callbacks for *event*."""
+    def get_event_callbacks(self, event: CallbackEvent) -> List[Callable[..., Any]]:
+        """Return registered callbacks for *event*.
+
+        Thread-safe via an internal ``RLock``.
+        """
         with self._lock:
             return [cb.func for cb in self._event_callbacks.get(event, [])]
 
-    def get_event_metrics(self, event: CallbackEvent) -> CallbackMetrics:
-        """Return execution metrics for *event*."""
+    def get_event_metrics(self, event: CallbackEvent) -> Dict[str, float | int]:
+        """Return execution metrics for *event*.
+
+        Thread-safe via an internal ``RLock``.
+        """
+
         with self._lock:
             return self._event_metrics.get(
                 event, CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
@@ -418,17 +463,27 @@ class TrulyUnifiedCallbacks:
         timeout: Optional[float] = None,
         retries: int = 0,
     ) -> None:
-        """Register an operation under a group name."""
+        """Register an operation under a group name.
+
+        Thread-safe via an internal ``RLock``.
+        """
         op = Operation(name or func.__name__, func, timeout, retries)
         with self._lock:
             self._groups[group].append(op)
 
     def clear_group(self, group: str) -> None:
+        """Clear registered operations for *group*.
+
+        Thread-safe via an internal ``RLock``.
+        """
         with self._lock:
             self._groups.pop(group, None)
 
     def execute_group(self, group: str, *args: Any, **kwargs: Any) -> List[Any]:
-        """Execute all operations in a group sequentially."""
+        """Execute all operations in a group sequentially.
+
+        Thread-safe via an internal ``RLock`` when accessing group definitions.
+        """
         from ...core.error_handling import ErrorSeverity, error_handler, with_retry
 
         results: List[Any] = []
@@ -455,7 +510,10 @@ class TrulyUnifiedCallbacks:
     async def execute_group_async(
         self, group: str, *args: Any, **kwargs: Any
     ) -> List[Any]:
-        """Execute all operations in a group concurrently."""
+        """Execute all operations in a group concurrently.
+
+        Thread-safe via an internal ``RLock`` when accessing group definitions.
+        """
         from ...core.error_handling import ErrorSeverity, error_handler, with_retry
 
         async def _run(op: Operation) -> Any:
