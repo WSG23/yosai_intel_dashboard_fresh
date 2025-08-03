@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Generate Markdown and PDF API docs from the OpenAPI spec."""
-from __future__ import annotations
 
 import subprocess
 from pathlib import Path
@@ -20,7 +19,10 @@ def convert_to_markdown(spec: Path, dest: Path) -> None:
     Tries a series of known converters until one succeeds.
     """
     for template in CONVERTER_CMDS:
-        cmd = [part.format(input=str(spec), output=str(dest)) for part in template]
+        cmd = [
+            part.replace("{input}", str(spec)).replace("{output}", str(dest))
+            for part in template
+        ]
         try:
             subprocess.run(cmd, check=True)
             return
