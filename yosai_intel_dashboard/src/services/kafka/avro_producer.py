@@ -67,6 +67,9 @@ class AvroProducer:
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._monitor, daemon=True)
         self._thread.start()
+        # Reuse a single buffer for encoding to avoid repeated allocations
+        self._buffer = io.BytesIO()
+        self._buf_lock = threading.Lock()
 
     def _encode(self, subject: str, value: Dict[str, Any]) -> bytes:
         if subject not in self._schema_cache:
@@ -75,9 +78,13 @@ class AvroProducer:
             self._schema_cache[subject] = (info, schema)
         else:
             info, schema = self._schema_cache[subject]
-        buf = io.BytesIO()
-        schemaless_writer(buf, schema, value)
-        return b"\x00" + struct.pack(">I", info.id) + buf.getvalue()
+        # Reset and reuse the internal buffer for serialization
+        with self._buf_lock:
+            buf = self._buffer
+            buf.seek(0)
+            buf.truncate(0)
+            schemaless_writer(buf, schema, value)
+            return b"\x00" + struct.pack(">I", info.id) + buf.getvalue()
 
     # ------------------------------------------------------------------
     def _monitor(self) -> None:
