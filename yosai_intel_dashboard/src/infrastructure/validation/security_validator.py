@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import os
 import re
+from pathlib import Path
 from typing import Iterable
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
@@ -42,13 +43,49 @@ class SecurityValidator(CompositeValidator):
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
         name = os.path.basename(filename)
-        if not name or name in {".", ".."}:
+        if name != filename or not name or name in {".", ".."}:
             raise ValidationError("Invalid filename")
         return name
 
-    def validate_file_meta(self, filename: str, size_bytes: int) -> dict:
-        """Validate filename and size limits without reading contents."""
+    # ------------------------------------------------------------------
+    def _virus_scan(self, content: bytes) -> None:
+        """Hook for virus scanning.
+
+        Integrators can override this method to connect to an external
+        scanner. The hook should raise :class:`ValidationError` if malicious
+        content is detected.
+        """
+
+        return None
+
+    def _check_magic(self, filename: str, content: bytes) -> None:
+        """Validate that ``content`` matches the expected file signature."""
+
+        magic_map: dict[str, bytes] = {
+            ".png": b"\x89PNG\r\n\x1a\n",
+            ".jpg": b"\xff\xd8\xff",
+            ".jpeg": b"\xff\xd8\xff",
+            ".pdf": b"%PDF-",
+            ".gif": b"GIF8",
+            ".xlsx": b"PK\x03\x04",
+            ".xls": b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",
+        }
+
+        ext = Path(filename).suffix.lower()
+        sig = magic_map.get(ext)
+        header = content[:8]
+        if sig and not header.startswith(sig):
+            raise ValidationError("File signature mismatch")
+
+        if not sig:
+            for expected_ext, expected_sig in magic_map.items():
+                if header.startswith(expected_sig):
+                    raise ValidationError("File extension does not match content")
+
+    def validate_file_meta(self, filename: str, content: bytes) -> dict:
+        """Validate filename, size limits and basic file signatures."""
         issues: list[str] = []
+        size_bytes = len(content)
         try:
             sanitized = self.sanitize_filename(filename)
         except ValidationError:
@@ -63,6 +100,9 @@ class SecurityValidator(CompositeValidator):
         max_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
         if size_bytes > max_bytes:
             issues.append("File too large")
+
+        self._check_magic(sanitized, content)
+        self._virus_scan(content)
 
         return {"valid": not issues, "issues": issues, "filename": sanitized}
 
