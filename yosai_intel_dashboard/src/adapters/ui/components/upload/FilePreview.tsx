@@ -1,5 +1,5 @@
 import React from 'react';
-import { DocumentIcon } from '@heroicons/react/24/outline';
+import { FileText } from 'lucide-react';
 import { ProgressBar } from '../shared/ProgressBar';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 export const FilePreview: React.FC<Props> = ({ file, onRemove }) => {
   return (
     <div className="flex items-center gap-4 p-4 border rounded-md bg-white dark:bg-gray-800">
-      <DocumentIcon className="h-6 w-6 text-gray-400" />
+      <FileText className="h-6 w-6 text-gray-400" />
       <div className="flex-1">
         <div className="flex justify-between">
           <span className="font-medium text-sm">{file.file.name}</span>
