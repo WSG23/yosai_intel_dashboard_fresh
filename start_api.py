@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-from __future__ import annotations
 
 import logging
-import os
 import sys
+from pathlib import Path
 
 from yosai_intel_dashboard.src.core.env_validation import validate_required_env
 
 logger = logging.getLogger(__name__)
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Import Flask app directly from adapter
 from api.adapter import create_api_app
