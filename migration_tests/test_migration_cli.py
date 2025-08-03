@@ -5,7 +5,17 @@ import types
 
 import pytest
 
-SERVICES_PATH = pathlib.Path(__file__).resolve().parents[1] / "services"
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+SERVICES_PATH = ROOT / "yosai_intel_dashboard" / "src" / "services"
+
+# Stub out heavy optional dependencies
+dash_stub = types.ModuleType("dash")
+dash_stub.Dash = object
+sys.modules.setdefault("dash", dash_stub)
+deps_stub = types.ModuleType("dash.dependencies")
+deps_stub.Input = deps_stub.Output = deps_stub.State = object
+sys.modules.setdefault("dash.dependencies", deps_stub)
 services_pkg = types.ModuleType("services")
 services_pkg.__path__ = [str(SERVICES_PATH)]
 sys.modules.setdefault("services", services_pkg)
