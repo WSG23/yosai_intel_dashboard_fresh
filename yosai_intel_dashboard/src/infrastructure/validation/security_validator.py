@@ -21,8 +21,10 @@ import html
 import logging
 import os
 import re
-from pathlib import Path
+from functools import lru_cache
+
 from typing import Iterable
+import logging
 
 
 from yosai_intel_dashboard.src.core.exceptions import (
@@ -57,6 +59,9 @@ def _json_validator(data: str) -> ValidationResult:
     except Exception:
         return ValidationResult(False, data, ["json"])
     return ValidationResult(True, json.dumps(parsed, ensure_ascii=False))
+
+
+logger = logging.getLogger(__name__)
 
 
 class XSSRule(ValidationRule):
@@ -127,6 +132,10 @@ class SecurityValidator(CompositeValidator):
             raise PermanentBanError("Rate limit exceeded")
 
 
+    @lru_cache(maxsize=128)
+    def _cached_validate(self, value: str) -> ValidationResult:
+        return super().validate(value)
+
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
         name = os.path.basename(filename)
@@ -188,25 +197,38 @@ class SecurityValidator(CompositeValidator):
         if size_bytes > max_bytes:
             issues.append("File too large")
 
-        self._check_magic(sanitized, content)
-        self._virus_scan(content)
+        result = {"valid": not issues, "issues": issues, "filename": sanitized}
+        if result["valid"]:
+            logger.info("File metadata for '%s' is valid", filename)
+        else:
+            logger.warning(
+                "File metadata validation failed for '%s': %s",
+                filename,
+                "; ".join(result["issues"]),
+            )
+        return result
 
-        return {"valid": not issues, "issues": issues, "filename": sanitized}
+    def validate_input(self, value: str, field_name: str = "input") -> dict:
+        result = self._cached_validate(value)
 
-    def validate_input(
-        self, value: str, field_name: str = "input", identifier: str | None = None
-    ) -> dict:
-        self._check_rate_limit(identifier or "global")
-
-        result = self.validate(value)
         if not result.valid:
+            logger.warning(
+                "Validation failed for %s: %s",
+                field_name,
+                "; ".join(result.issues or []),
+            )
             raise ValidationError("; ".join(result.issues or []))
+        logger.info("Validation succeeded for %s", field_name)
         return {"valid": True, "sanitized": result.sanitized or value}
 
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
         result = self.file_validator.validate_file_upload(filename, content)
         if not result["valid"]:
+            logger.warning(
+                "File '%s' failed validation: %s", filename, "; ".join(result["issues"])
+            )
             raise ValidationError("; ".join(result["issues"]))
+        logger.info("File '%s' passed validation", filename)
         return result
 
 

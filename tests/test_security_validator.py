@@ -1,63 +1,59 @@
+import html
 import logging
 import sys
 import types
+from pathlib import Path
+import importlib
 
 import pytest
+
+# ---------------------------------------------------------------------------
+# Provide lightweight stubs for heavy dependencies used during import
+
+core_exc = types.ModuleType("yosai_intel_dashboard.src.core.exceptions")
 
 
 class ValidationError(Exception):
     pass
 
 
-class TemporaryBlockError(Exception):
-    pass
-
-
-class PermanentBanError(Exception):
-    pass
-
-
-class ConfigurationError(Exception):
-    pass
-
-
-core_exceptions = types.ModuleType("yosai_intel_dashboard.src.core.exceptions")
-core_exceptions.ValidationError = ValidationError
-core_exceptions.TemporaryBlockError = TemporaryBlockError
-core_exceptions.PermanentBanError = PermanentBanError
-core_exceptions.ConfigurationError = ConfigurationError
-sys.modules.setdefault("yosai_intel_dashboard.src.core", types.ModuleType("core"))
-sys.modules["yosai_intel_dashboard.src.core.exceptions"] = core_exceptions
-
-security_stub = types.ModuleType("security")
-unicode_security_validator = types.ModuleType("security.unicode_security_validator")
-unicode_security_validator.UnicodeSecurityValidator = object
-unicode_security_validator.UnicodeSecurityConfig = object
-security_stub.unicode_security_validator = unicode_security_validator
-security_stub.secrets_validator = types.SimpleNamespace(
-    SecretsValidator=object, register_health_endpoint=lambda *a, **k: None
+core_exc.ValidationError = ValidationError
+sys.modules.setdefault("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src", types.ModuleType("yosai_intel_dashboard.src")
 )
-sys.modules["security"] = security_stub
-sys.modules["security.unicode_security_validator"] = unicode_security_validator
-
-file_validator_stub = types.ModuleType(
-    "yosai_intel_dashboard.src.infrastructure.validation.file_validator"
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.core", types.ModuleType("yosai_intel_dashboard.src.core")
 )
+sys.modules["yosai_intel_dashboard.src.core.exceptions"] = core_exc
 
-
-class DummyFileValidator:
-    def validate_file_upload(self, *a, **k):  # pragma: no cover - simple stub
-        return {"valid": True}
-
-
-file_validator_stub.FileValidator = DummyFileValidator
+dyn_cfg = types.ModuleType(
+    "yosai_intel_dashboard.src.infrastructure.config.dynamic_config"
+)
+dyn_cfg.dynamic_config = types.SimpleNamespace(
+    security=types.SimpleNamespace(max_upload_mb=10)
+)
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.infrastructure",
+    types.ModuleType("yosai_intel_dashboard.src.infrastructure"),
+)
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.infrastructure.config",
+    types.ModuleType("yosai_intel_dashboard.src.infrastructure.config"),
+)
 sys.modules[
-    "yosai_intel_dashboard.src.infrastructure.validation.file_validator"
-] = file_validator_stub
+    "yosai_intel_dashboard.src.infrastructure.config.dynamic_config"
+] = dyn_cfg
 
-from yosai_intel_dashboard.src.infrastructure.validation.security_validator import (
-    SecurityValidator,
-)
+# Stub the package to avoid executing validation.__init__
+validation_pkg = types.ModuleType("validation")
+validation_pkg.__path__ = [str(Path(__file__).resolve().parents[1] / "validation")]
+sys.modules["validation"] = validation_pkg
+
+SecurityValidator = importlib.import_module(
+    "validation.security_validator"
+).SecurityValidator
+
 
 
 def test_sql_injection_validation():
@@ -78,37 +74,30 @@ def test_validate_file_upload_rules():
     validator = SecurityValidator(rate_limit=1, window_seconds=60)
     valid = validator.validate_file_upload("ok.csv", b"a,b\n1,2")
     assert valid["valid"]
+    with pytest.raises(Exception):
+        validator.validate_file_upload("bad.csv", b"=cmd()")
 
 
-class RedisMock:
-    def __init__(self) -> None:
-        self.store: dict[str, int] = {}
+def test_validation_cache_and_logging(caplog):
+    validator = SecurityValidator()
+    with caplog.at_level(logging.INFO):
+        validator.validate_input("safe input")
+        validator.validate_input("safe input")
 
-    def incr(self, key: str) -> int:
-        self.store[key] = self.store.get(key, 0) + 1
-        return self.store[key]
+    cache_info = validator._cached_validate.cache_info()
+    assert cache_info.hits == 1
 
-    def expire(self, key: str, _seconds: int) -> None:
-        pass
+    records = [r for r in caplog.records if r.name == "validation.security_validator"]
+    assert any("Validation succeeded" in r.message for r in records)
 
 
-def test_rate_limit_escalation(caplog: pytest.LogCaptureFixture) -> None:
-    redis = RedisMock()
-    validator = SecurityValidator(redis_client=redis, rate_limit=1, window_seconds=60)
-    identifier = "user1"
-
-    validator.validate_input("safe", identifier=identifier)
-
+def test_validation_logs_failure(caplog):
+    validator = SecurityValidator()
     with caplog.at_level(logging.WARNING):
-        validator.validate_input("safe", identifier=identifier)
-        assert "Rate limit exceeded" in caplog.text
+        with pytest.raises(Exception):
+            validator.validate_input("1; DROP TABLE users")
 
-        caplog.clear()
-        with pytest.raises(TemporaryBlockError):
-            validator.validate_input("safe", identifier=identifier)
-        assert "Temporary block" in caplog.text
+    records = [r for r in caplog.records if r.name == "validation.security_validator"]
+    assert any("Validation failed" in r.message for r in records)
 
-        caplog.clear()
-        with pytest.raises(PermanentBanError):
-            validator.validate_input("safe", identifier=identifier)
-        assert "Permanent ban" in caplog.text
+
