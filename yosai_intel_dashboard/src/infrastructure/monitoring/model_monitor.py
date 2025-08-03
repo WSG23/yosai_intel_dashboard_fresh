@@ -7,6 +7,8 @@ import threading
 import warnings
 from typing import Optional
 
+import numpy as np
+
 from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
 from yosai_intel_dashboard.src.infrastructure.config import get_monitoring_config
 from yosai_intel_dashboard.src.utils.scipy_compat import stats
@@ -91,15 +93,18 @@ class ModelMonitor:
             return ModelMetrics(accuracy=0.0, precision=0.0, recall=0.0)
 
         preds, labels = zip(*pairs)
-        total = len(labels)
-        correct = sum(p == t for p, t in zip(preds, labels))
-        accuracy = correct / total
+        preds_arr = np.array(preds)
+        labels_arr = np.array(labels)
+
+        accuracy = float(np.mean(preds_arr == labels_arr))
 
         # Binary classification assumption
         pos_label = 1
-        tp = sum(1 for p, t in zip(preds, labels) if p == pos_label and t == pos_label)
-        fp = sum(1 for p, t in zip(preds, labels) if p == pos_label and t != pos_label)
-        fn = sum(1 for p, t in zip(preds, labels) if p != pos_label and t == pos_label)
+        pred_pos = preds_arr == pos_label
+        label_pos = labels_arr == pos_label
+        tp = int(np.sum(pred_pos & label_pos))
+        fp = int(np.sum(pred_pos & ~label_pos))
+        fn = int(np.sum(~pred_pos & label_pos))
         precision = tp / (tp + fp) if tp + fp else 0.0
         recall = tp / (tp + fn) if tp + fn else 0.0
 
