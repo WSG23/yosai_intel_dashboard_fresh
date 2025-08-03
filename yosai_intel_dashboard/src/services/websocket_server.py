@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -43,7 +45,7 @@ class AnalyticsWebSocketServer:
 
     async def _serve(self) -> None:
         self._loop = asyncio.get_running_loop()
-        async with serve(self._handler, self.host, self.port):
+        async with serve(self._handler, self.host, self.port, compression="deflate"):
             await asyncio.Event().wait()
 
     def _run(self) -> None:
