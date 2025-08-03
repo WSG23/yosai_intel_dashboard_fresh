@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+import inspect
+
 import pandas as pd
 
-from yosai_intel_dashboard.src.services.analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
-from yosai_intel_dashboard.src.services.analytics.security_patterns.pattern_detection import detect_critical_door_risks
-from yosai_intel_dashboard.src.services.database.connection import create_database_connection
+from analytics.security_patterns import SecurityPatternsAnalyzer, prepare_security_data
+from analytics.security_patterns.pattern_detection import detect_critical_door_risks
 
 
 def test_analyze_failed_access_returns_expected_keys(monkeypatch):
@@ -19,9 +22,6 @@ def test_analyze_failed_access_returns_expected_keys(monkeypatch):
         def health_check(self) -> bool:
             return True
 
-    monkeypatch.setattr(
-        "services.database.baseline_metrics.create_database_connection", lambda: DummyConn()
-    )
     analyzer = SecurityPatternsAnalyzer()
     df = pd.DataFrame(
         {
@@ -63,7 +63,7 @@ def test_detect_critical_door_risks():
         }
     )
     prepared = prepare_security_data(df)
-    threats = detect_critical_door_risks(prepared)
+    threats = list(detect_critical_door_risks(prepared))
     assert any(t.threat_type == "critical_door_anomaly" for t in threats)
 
 
@@ -76,14 +76,14 @@ def test_detect_odd_time_zero_variance(monkeypatch):
             pass
 
     monkeypatch.setattr(
-        "services.analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
         lambda: DummyBaseline(),
     )
 
     df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 10]})
-    from yosai_intel_dashboard.src.services.analytics.security_patterns.odd_time_detection import detect_odd_time
+    from analytics.security_patterns.odd_time_detection import detect_odd_time
 
-    threats = detect_odd_time(df)
+    threats = list(detect_odd_time(df))
     assert threats == []
 
 
@@ -96,12 +96,26 @@ def test_detect_odd_time_zero_baseline_std(monkeypatch):
             pass
 
     monkeypatch.setattr(
-        "services.analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
         lambda: DummyBaseline(),
     )
 
     df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 12]})
-    from yosai_intel_dashboard.src.services.analytics.security_patterns.odd_time_detection import detect_odd_time
+    from analytics.security_patterns.odd_time_detection import detect_odd_time
 
-    threats = detect_odd_time(df)
+    threats = list(detect_odd_time(df))
     assert len(threats) == 1
+
+
+def test_detection_functions_return_generators():
+    """Ensure detection helpers provide generators for lazy iteration."""
+    df_cd = pd.DataFrame(
+        columns=["door_type", "access_result", "clearance_level", "required_clearance"]
+    )
+    prepared_cd = prepare_security_data(df_cd)
+    assert inspect.isgenerator(detect_critical_door_risks(prepared_cd))
+
+    from analytics.security_patterns.odd_time_detection import detect_odd_time
+
+    df_ot = pd.DataFrame(columns=["person_id", "hour"])
+    assert inspect.isgenerator(detect_odd_time(df_ot))

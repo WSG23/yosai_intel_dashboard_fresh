@@ -4,7 +4,7 @@ import contextlib
 import io
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterator, List
 
 import pandas as pd
 
@@ -15,9 +15,8 @@ from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import
     TrulyUnifiedCallbacks,
 )
 
-from .pattern_detection import Threat, detect_critical_door_risks
 from .odd_time_detection import detect_odd_time
-
+from .pattern_detection import Threat, detect_critical_door_risks
 
 # Fallback callback manager used if ``security.events`` cannot be imported.
 fallback_callbacks: TrulyUnifiedCallbacks | None = None
@@ -27,7 +26,9 @@ class _SimpleCallbacks:
     """Lightweight callback manager used when dependencies are missing."""
 
     def __init__(self) -> None:
-        self._event_callbacks: Dict[SecurityEvent, List[Any]] = {e: [] for e in SecurityEvent}
+        self._event_callbacks: Dict[SecurityEvent, List[Any]] = {
+            e: [] for e in SecurityEvent
+        }
         self.history: List[tuple[SecurityEvent, Any]] = []
 
     def register_event(self, event: SecurityEvent, func: Any) -> None:
@@ -46,6 +47,7 @@ class _SimpleCallbacks:
 
 # ---------------------------------------------------------------------------
 # Public helpers
+
 
 def prepare_security_data(df: pd.DataFrame) -> pd.DataFrame:
     """Prepare raw access log dataframe for pattern analysis."""
@@ -88,19 +90,18 @@ class SecurityPatternsAnalyzer:
 
     def analyze_security_patterns(self, df: pd.DataFrame) -> List[Threat]:
         prepared = self._prepare_data(df)
-        threats = detect_critical_door_risks(prepared)
+        threats = list(detect_critical_door_risks(prepared))
         threats.extend(_detect_rapid_failures(prepared))
         try:  # pragma: no cover - import may fail in test environment
             import security.events as se  # type: ignore
+
             manager = se.security_unified_callbacks
         except Exception:  # pragma: no cover
             manager = fallback_callbacks
         if manager is None:
             manager = _SimpleCallbacks()
         if threats:
-            manager.trigger_event(
-                SecurityEvent.THREAT_DETECTED, {"threats": threats}
-            )
+            manager.trigger_event(SecurityEvent.THREAT_DETECTED, {"threats": threats})
         manager.trigger_event(
             SecurityEvent.ANALYSIS_COMPLETE, {"records": len(prepared)}
         )
@@ -109,6 +110,7 @@ class SecurityPatternsAnalyzer:
 
 # ---------------------------------------------------------------------------
 # Test data generators
+
 
 def generate_failed_access(count: int = 3) -> pd.DataFrame:
     """Generate a dataframe representing failed access attempts."""
@@ -146,18 +148,18 @@ def generate_threat_attempt() -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def _detect_rapid_failures(df: pd.DataFrame) -> List[Threat]:
+def _detect_rapid_failures(df: pd.DataFrame) -> Iterator[Threat]:
+    """Yield threats for users with multiple rapid denied accesses."""
     failures = df[df.get("access_result") == "Denied"].sort_values("timestamp")
-    threats: List[Threat] = []
     for person, group in failures.groupby("person_id"):
         times = group["timestamp"].sort_values()
         if len(times) >= 3 and (times.iloc[-1] - times.iloc[0]).total_seconds() <= 60:
-            threats.append(Threat("rapid_denied_access", {"person_id": person}))
-    return threats
+            yield Threat("rapid_denied_access", {"person_id": person})
 
 
 # ---------------------------------------------------------------------------
 # Isolated testing context
+
 
 @dataclass
 class SecurityTestEnv:
@@ -178,6 +180,7 @@ def setup_isolated_security_testing() -> Any:
     fallback_callbacks = new_manager
     try:  # pragma: no cover - import may fail if optional deps missing
         import security.events as se  # type: ignore
+
         original_manager = se.security_unified_callbacks
         se.security_unified_callbacks = new_manager
     except Exception:  # pragma: no cover
@@ -225,4 +228,3 @@ __all__ = [
     "detect_critical_door_risks",
     "detect_odd_time",
 ]
-
