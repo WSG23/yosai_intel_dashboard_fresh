@@ -1,7 +1,5 @@
 """Connectors for pushing events to common SIEM systems."""
 
-from __future__ import annotations
-
 from typing import Dict
 
 

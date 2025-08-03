@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import base64
 import os
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
@@ -13,7 +11,7 @@ def decode_and_validate_upload(
     contents: str,
     filename: str,
     validator: SecurityValidator | None = None,
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """Decode base64 ``contents`` and validate upload metadata.
 
     Returns a dict with keys ``valid``, ``filename``, ``decoded`` (bytes or ``None``),
