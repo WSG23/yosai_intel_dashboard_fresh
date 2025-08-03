@@ -1,16 +1,16 @@
-from __future__ import annotations
-
-import asyncio
-import json
 import logging
 import os
-import threading
+import importlib.util
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Dict
 
 
-import aiofiles
-import aiohttp
+# Dynamically load the redis store located beside this module
+_store_path = Path(__file__).with_name("feature_flags") / "redis_store.py"
+_spec = importlib.util.spec_from_file_location("_ff_redis_store", _store_path)
+redis_store = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(redis_store)  # type: ignore[arg-type]
+RedisFeatureFlagStore = redis_store.RedisFeatureFlagStore
 
 from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
@@ -45,183 +45,35 @@ def get_evaluation_context() -> Dict[str, Any]:
 
 
 class FeatureFlagManager:
-    """Watch a JSON file or HTTP endpoint for feature flag updates."""
+    """Feature flag manager backed by Redis with a local cache."""
 
+    def __init__(self, redis_url: str | None = None) -> None:
+        redis_url = redis_url or os.getenv("FEATURE_FLAG_REDIS_URL", "redis://localhost:6379/0")
+        self._store = RedisFeatureFlagStore(redis_url=redis_url)
+        # expose the cache for tests that monkeypatch _flags
+        self._flags = self._store._flags
 
-class FeatureFlagManager:
-    """Watch a JSON file, HTTP endpoint or Redis for feature flag updates."""
-
-    def __init__(
-        self,
-        source: str | None = None,
-        poll_interval: float = 5.0,
-        redis_url: str | None = None,
-        cache_file: str | Path | None = None,
-    ) -> None:
-        self.source = source or os.getenv("FEATURE_FLAG_SOURCE", "feature_flags.json")
-        self.poll_interval = poll_interval
-        self.redis_url = redis_url or os.getenv("FEATURE_FLAG_REDIS_URL")
-        self.redis_key = os.getenv("FEATURE_FLAG_REDIS_KEY", "feature_flags")
-        self.cache_file = Path(
-            cache_file or os.getenv("FEATURE_FLAG_CACHE", "feature_flags_cache.json")
-        )
-        # ``_definitions`` holds flag metadata including fallbacks and dependencies
-        self._definitions: Dict[str, Dict[str, Any]] = json.loads(
-            json.dumps(FLAG_DEFINITIONS)
-        )
-        # ``_flags`` holds the last evaluated values for quick lookup
-        self._flags: Dict[str, bool] = {}
-        self._callbacks: List[Callable[[Dict[str, bool]], Any]] = []
-        self._stop = threading.Event()
-        self._thread: threading.Thread | None = None
-        self._last_mtime: float | None = None
-        self._circuit_breaker = CircuitBreaker(5, 30, name="feature_flags")
-        self._error_handler = ErrorHandler()
-        asyncio.run(self.load_flags())
-
-
-        # Load cached flags before attempting any remote fetches
-        self._load_cache()
-        self._recompute_flags()
-        self.load_flags()
-
-    # ------------------------------------------------------------------
-    async def load_flags_async(self) -> None:
-        """Asynchronously load flags from Redis, HTTP or file sources."""
-
-        data: Dict[str, Any] = {}
-        if self.redis_url and redis is not None:
-            try:
-                if self._redis is None:
-                    self._redis = redis.from_url(self.redis_url, decode_responses=True)
-                raw = await self._redis.get(self.redis_key)
-                data = json.loads(raw) if raw else {}
-            except Exception as exc:  # pragma: no cover - network failures
-                self._fallback_mode = True
-                logger.warning("Failed to fetch flags from Redis: %s", exc)
-                return
-        elif self.source and (
-            self.source.startswith("http://") or self.source.startswith("https://")
-        ):
-            try:
-                async with self._circuit_breaker:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(self.source, timeout=2) as resp:
-                            resp.raise_for_status()
-                            data = await resp.json()
-            except CircuitBreakerOpen as exc:  # pragma: no cover - circuit open
-                self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
-                return
-
-            except Exception as exc:  # pragma: no cover - network failures
-                logger.warning("Failed to fetch flags from %s: %s", self.source, exc)
-                return self._flags.copy()
-        else:
-            path = Path(self.source)
-            if not path.is_file():
-                return self._flags.copy()
-            mtime = path.stat().st_mtime
-            if self._last_mtime and mtime == self._last_mtime:
-                return self._flags.copy()
-            self._last_mtime = mtime
-            try:
-                async with aiofiles.open(path) as fh:
-                    content = await fh.read()
-                    data = json.loads(content)
-            except Exception as exc:  # pragma: no cover - bad file
-                logger.warning("Failed to read %s: %s", path, exc)
-                return self._flags.copy()
-
-        if isinstance(data, dict):
-            for name, value in data.items():
-                definition = self._definitions.setdefault(name, {"fallback": False})
-                if isinstance(value, dict):
-                    definition["enabled"] = bool(
-                        value.get("enabled", value.get("value", False))
-                    )
-                    if "fallback" in value:
-                        definition["fallback"] = bool(value["fallback"])
-                    if "requires" in value:
-                        definition["requires"] = list(value["requires"])
-                else:
-                    definition["enabled"] = bool(value)
-            self._recompute_flags()
-            await self._save_cache()
-            self._fallback_mode = False
-            self._warned_fallback = False
-
-    # ------------------------------------------------------------------
-
-        return self._flags.copy()
-
-    def load_flags(self) -> Dict[str, bool]:
-        """Synchronous wrapper for :meth:`load_flags_async`."""
-        return asyncio.run(self.load_flags_async())
 
     # ------------------------------------------------------------------
     def start(self) -> None:
-        """Start background watcher for flag changes."""
-        if self._thread and self._thread.is_alive():
-            return
-
-        self._stop.clear()
-        self._thread = threading.Thread(target=self._watch, daemon=True)
-        self._thread.start()
+        """Start the background Pub/Sub listener."""
+        self._store.start()
 
     # ------------------------------------------------------------------
     def stop(self) -> None:
-        """Stop the background watcher."""
-        if self._thread:
-            self._stop.set()
-            self._thread.join()
+        """Stop the background Pub/Sub listener."""
+        self._store.stop()
 
-    # ------------------------------------------------------------------
-    def _watch(self) -> None:
-        while not self._stop.is_set():
-            asyncio.run(self.load_flags_async())
-            if self._stop.wait(self.poll_interval):
-                break
-
-    def is_enabled(
-        self, name: str, default: bool = False, context: Dict[str, Any] | None = None
-    ) -> bool:
-        """Return True if *name* flag is enabled."""
-        ctx = context or get_evaluation_context()
-        logger.debug("Evaluating flag %s with context %s", name, ctx)
-        return self._flags.get(name, default)
+    def is_enabled(self, name: str, default: bool = False) -> bool:
+        return self._store.get_flag(name, default)
 
     def set_flag(self, name: str, value: bool) -> None:
-        """Create or update a flag and persist it."""
-        self._flags[name] = bool(value)
-        self._persist_flags()
+        self._store.set_flag(name, value)
 
-    def delete_flag(self, name: str) -> bool:
-        """Delete *name* flag.  Returns ``True`` if removed."""
-        removed = self._flags.pop(name, None) is not None
-        if removed:
-            self._persist_flags()
-        return removed
-
-    def _persist_flags(self) -> None:
-        """Persist current flags to the JSON source if possible."""
-        if self.source.startswith("http://") or self.source.startswith("https://"):
-            return
-        try:
-            path = Path(self.source)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, "w", encoding="utf-8") as fh:
-                json.dump(self._flags, fh)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.warning("Failed to persist flags to %s: %s", self.source, exc)
-
-
-    def register_callback(self, cb: Callable[[Dict[str, bool]], Any]) -> None:
-        """Register *cb* to be called when flags change."""
-        self._callbacks.append(cb)
 
     # ------------------------------------------------------------------
     def get_all(self) -> Dict[str, bool]:
-        return self._flags.copy()
+        return self._store.get_all()
 
     # ------------------------------------------------------------------
     def _resolve(self, name: str, seen: Set[str]) -> bool:
