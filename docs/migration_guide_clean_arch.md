@@ -24,6 +24,14 @@ flowchart LR
 
 Key migration outcome: a unified callback system using **TrulyUnifiedCallbacks**; legacy coordinators were removed in favor of this consolidated API【F:docs/migration_callback_system.md†L1-L16】.
 
+## Related Architectural Decisions
+
+- [ADR 0001: BaseComponent](adr/0001-base-component.md)
+- [ADR 0002: ConfigService](adr/0002-config-service.md)
+- [ADR 0003: EventBus](adr/0003-event-bus.md)
+- [ADR 0004: Repository Pattern](adr/0004-repository-pattern.md)
+- [ADR 0005: Mixins](adr/0005-mixins.md)
+
 ## 2. Import Migration Guide
 
 | Old Import | New Import | Notes |

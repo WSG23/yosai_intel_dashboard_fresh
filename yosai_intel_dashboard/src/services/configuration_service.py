@@ -1,11 +1,25 @@
+"""Configuration service facade.
+
+See ADR-0002 for design decisions around ConfigService.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Dict
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import DynamicConfigManager, dynamic_config
-from yosai_intel_dashboard.src.infrastructure.config.utils import get_ai_confidence_threshold as _get_ai_confidence_threshold
-from yosai_intel_dashboard.src.infrastructure.config.utils import get_upload_chunk_size as _get_upload_chunk_size
-from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import (
+    ConfigurationServiceProtocol,
+)
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    DynamicConfigManager,
+    dynamic_config,
+)
+from yosai_intel_dashboard.src.infrastructure.config.utils import (
+    get_ai_confidence_threshold as _get_ai_confidence_threshold,
+)
+from yosai_intel_dashboard.src.infrastructure.config.utils import (
+    get_upload_chunk_size as _get_upload_chunk_size,
+)
 
 
 class DynamicConfigurationService(ConfigurationServiceProtocol):

@@ -1,4 +1,7 @@
-"""Simple in-memory event bus implementing ``EventBusProtocol``."""
+"""Simple in-memory event bus implementing ``EventBusProtocol``.
+
+See ADR-0003 for pub/sub rationale.
+"""
 
 from __future__ import annotations
 

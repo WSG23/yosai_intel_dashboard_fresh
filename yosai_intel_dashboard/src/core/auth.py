@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-"""Auth0 OIDC integration"""
+"""Auth0 OIDC integration.
+
+User model leverages mixins; see ADR-0005 for details.
+"""
 
 import json
 import logging
@@ -24,7 +27,10 @@ from flask_login import (
 )
 from jose import jwt
 
-from yosai_intel_dashboard.src.infrastructure.config import get_cache_config, get_security_config
+from yosai_intel_dashboard.src.infrastructure.config import (
+    get_cache_config,
+    get_security_config,
+)
 
 from .secret_manager import SecretsManager
 
