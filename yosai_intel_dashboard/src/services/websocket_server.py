@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import gzip
 import json
 import logging
 import threading
@@ -27,6 +28,9 @@ class AnalyticsWebSocketServer:
         port: int = 6789,
         ping_interval: float = 30.0,
         ping_timeout: float = 10.0,
+        queue_size: int = 0,
+        compression_threshold: int | None = None,
+
     ) -> None:
         self.host = host
         self.port = port
@@ -35,10 +39,9 @@ class AnalyticsWebSocketServer:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
 
-        # Connection pool managing active websockets
         self.pool = WebSocketConnectionPool()
-        # Buffer for events published while no clients are connected
-        self._queue: Deque[dict] = deque(maxlen=100)
+        self._queue: Deque[dict] = deque(maxlen=queue_size or None)
+        self.compression_threshold = compression_threshold
 
 
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -123,8 +126,11 @@ class AnalyticsWebSocketServer:
             self._queue.append(data)
 
     async def _broadcast_async(self, message: str) -> None:
-        """Asynchronously send ``message`` to all clients in the pool."""
-        await self.pool.broadcast(message)
+        payload: str | bytes = message
+        if self.compression_threshold and len(message) > self.compression_threshold:
+            payload = gzip.compress(message.encode("utf-8"))
+        await self.pool.broadcast(payload)
+
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""

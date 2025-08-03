@@ -6,6 +6,8 @@ import json
 import sys
 import time
 import types
+from pathlib import Path
+
 
 
 class DummyEventBus:
@@ -48,7 +50,15 @@ events_module = types.ModuleType("yosai_intel_dashboard.src.core.events")
 events_module.EventBus = DummyEventBus
 
 services_pkg = types.ModuleType("yosai_intel_dashboard.src.services")
-services_pkg.__path__ = []
+services_pkg.__path__ = [
+    str(
+        Path(__file__).resolve().parents[2]
+        / "yosai_intel_dashboard"
+        / "src"
+        / "services"
+    )
+]
+
 
 sys.modules["yosai_intel_dashboard"] = root_pkg
 sys.modules["yosai_intel_dashboard.src"] = src_pkg
@@ -56,15 +66,6 @@ sys.modules["yosai_intel_dashboard.src.core"] = core_pkg
 sys.modules["yosai_intel_dashboard.src.core.events"] = events_module
 sys.modules["yosai_intel_dashboard.src.services"] = services_pkg
 
-# Preload dependencies used by the websocket server
-pool_spec = importlib.util.spec_from_file_location(
-    "yosai_intel_dashboard.src.services.websocket_pool",
-    "yosai_intel_dashboard/src/services/websocket_pool.py",
-)
-pool_module = importlib.util.module_from_spec(pool_spec)
-assert pool_spec.loader is not None
-pool_spec.loader.exec_module(pool_module)
-sys.modules[pool_spec.name] = pool_module
 
 # Load the websocket server module directly
 spec = importlib.util.spec_from_file_location(
@@ -87,6 +88,10 @@ def _run_client(port: int, expected: int) -> list[dict]:
         async with websockets.connect(f"ws://127.0.0.1:{port}") as ws:
             for _ in range(expected):
                 msg = await asyncio.wait_for(ws.recv(), timeout=1)
+                if isinstance(msg, bytes):
+                    import gzip
+
+                    msg = gzip.decompress(msg).decode("utf-8")
                 received.append(json.loads(msg))
         return received
 
@@ -109,3 +114,44 @@ def test_buffered_events_flushed_on_client_connect() -> None:
     assert len(history) == 6  # original 3 + republished 3
 
     server.stop()
+
+
+def test_queue_bound() -> None:
+    event_bus = EventBus()
+    server = AnalyticsWebSocketServer(
+        event_bus=event_bus, host="127.0.0.1", port=8767, queue_size=2
+    )
+
+    time.sleep(0.1)
+
+    for i in range(3):
+        event_bus.publish("analytics_update", {"idx": i})
+
+    messages = _run_client(8767, 2)
+    assert [m["idx"] for m in messages] == [1, 2]
+
+    history = event_bus.get_event_history("analytics_update")
+    assert len(history) == 5  # initial 3 + republished 2
+
+    server.stop()
+
+
+def test_compressed_broadcast() -> None:
+    event_bus = EventBus()
+    server = AnalyticsWebSocketServer(
+        event_bus=event_bus,
+        host="127.0.0.1",
+        port=8768,
+        compression_threshold=10,
+    )
+
+    time.sleep(0.1)
+
+    payload = {"data": "x" * 100}
+    event_bus.publish("analytics_update", payload)
+
+    messages = _run_client(8768, 1)
+    assert messages[0] == payload
+
+    server.stop()
+
