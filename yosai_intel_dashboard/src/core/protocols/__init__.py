@@ -38,6 +38,16 @@ class DatabaseProtocol(Protocol):
         ...
 
     @abstractmethod
+    def prepare_statement(self, name: str, query: str) -> None:
+        """Prepare ``query`` for later execution."""
+        ...
+
+    @abstractmethod
+    def execute_prepared(self, name: str, params: tuple) -> pd.DataFrame:
+        """Execute a previously prepared statement."""
+        ...
+
+    @abstractmethod
     def begin_transaction(self) -> Any:
         """Begin database transaction."""
         ...

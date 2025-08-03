@@ -86,4 +86,43 @@ def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None)
     raise AttributeError("Object has no execute or execute_command method")
 
 
-__all__ = ["execute_query", "execute_command", "execute_secure_query"]
+def prepare_statement(conn: Any, name: str, sql: str) -> None:
+    """Prepare ``sql`` on ``conn`` under identifier ``name``."""
+    if not isinstance(name, str) or not isinstance(sql, str):
+        raise TypeError("name and sql must be strings")
+    optimized_sql = _get_optimizer(conn).optimize_query(sql)
+    logger.debug("Preparing statement %s: %s", name, optimized_sql)
+    if hasattr(conn, "prepare_statement"):
+        conn.prepare_statement(name, optimized_sql)
+        return
+    cache = getattr(conn, "_prepared_statements", None)
+    if cache is None:
+        cache = {}
+        try:
+            setattr(conn, "_prepared_statements", cache)
+        except Exception:
+            pass
+    cache[name] = optimized_sql
+
+
+def execute_prepared(conn: Any, name: str, params: Optional[Iterable[Any]] = None):
+    """Execute a previously prepared statement."""
+    p = _validate_params(params)
+    if hasattr(conn, "execute_prepared"):
+        return conn.execute_prepared(name, p if p is not None else tuple())
+    cache = getattr(conn, "_prepared_statements", {})
+    sql = cache.get(name)
+    if sql is None:
+        raise AttributeError(f"Statement {name!r} has not been prepared")
+    if sql.lstrip().lower().startswith("select"):
+        return execute_query(conn, sql, p)
+    return execute_command(conn, sql, p)
+
+
+__all__ = [
+    "execute_query",
+    "execute_command",
+    "execute_secure_query",
+    "prepare_statement",
+    "execute_prepared",
+]

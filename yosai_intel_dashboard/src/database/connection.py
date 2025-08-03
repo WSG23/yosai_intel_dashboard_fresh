@@ -10,6 +10,7 @@ from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
 )
 from database.metrics import queries_total, query_errors_total
 from database.utils import parse_connection_string
+from database.types import DBRows
 
 
 
@@ -22,6 +23,14 @@ class DatabaseConnection(Protocol):
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute INSERT/UPDATE/DELETE"""
+        ...
+
+    def prepare_statement(self, name: str, query: str) -> None:
+        """Prepare ``query`` under ``name`` for later execution."""
+        ...
+
+    def execute_prepared(self, name: str, params: tuple) -> DBRows:
+        """Execute a previously prepared statement."""
         ...
 
     def health_check(self) -> bool:
@@ -63,6 +72,19 @@ def create_database_connection() -> DatabaseConnection:
                 queries_total.inc()
                 try:
                     return conn.execute_command(command, params)
+                except Exception:
+                    query_errors_total.inc()
+                    raise
+
+        def prepare_statement(self, name: str, query: str) -> None:
+            with tracer.start_as_current_span("prepare_statement"):
+                return conn.prepare_statement(name, query)
+
+        def execute_prepared(self, name: str, params: tuple) -> DBRows:
+            with tracer.start_as_current_span("execute_prepared"):
+                queries_total.inc()
+                try:
+                    return conn.execute_prepared(name, params)
                 except Exception:
                     query_errors_total.inc()
                     raise

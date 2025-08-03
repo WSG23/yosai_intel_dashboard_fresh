@@ -27,6 +27,14 @@ class DatabaseConnection(Protocol):
         """Execute a command (INSERT, UPDATE, DELETE)"""
         ...
 
+    def prepare_statement(self, name: str, query: str) -> None:
+        """Prepare ``query`` under ``name`` for later execution."""
+        ...
+
+    def execute_prepared(self, name: str, params: tuple) -> DBRows:
+        """Execute a previously prepared statement."""
+        ...
+
     def health_check(self) -> bool:
         """Verify database connectivity"""
         ...
