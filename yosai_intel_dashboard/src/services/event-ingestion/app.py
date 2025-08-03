@@ -11,20 +11,22 @@ from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
-from yosai_intel_dashboard.src.core.security import RateLimiter
-from yosai_intel_dashboard.src.error_handling import http_error
-from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
-from yosai_intel_dashboard.src.services.security import verify_service_jwt
-from yosai_intel_dashboard.src.services.streaming.service import StreamingService
 from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
+from yosai_intel_dashboard.src.core.security import RateLimiter
+from yosai_intel_dashboard.src.error_handling import http_error
+from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
+    load_service_config,
+)
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+from yosai_intel_dashboard.src.services.security import verify_service_jwt
+from yosai_intel_dashboard.src.services.streaming.service import StreamingService
 
 SERVICE_NAME = "event-ingestion-service"
 os.environ.setdefault("YOSAI_SERVICE_NAME", SERVICE_NAME)
@@ -49,17 +51,24 @@ async def rate_limit(request: Request, call_next):
         auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
     )
     result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    headers = {
+        "X-RateLimit-Limit": str(result.get("limit", rate_limiter.max_requests)),
+        "X-RateLimit-Remaining": str(result.get("remaining", 0)),
+        "X-RateLimit-Reset": str(int(result.get("reset", 0))),
+    }
     if not result["allowed"]:
-        headers = {}
         retry = result.get("retry_after")
-        if retry:
+        if retry is not None:
             headers["Retry-After"] = str(int(retry))
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content={"detail": "rate limit exceeded"},
             headers=headers,
         )
-    return await call_next(request)
+    response = await call_next(request)
+    for key, value in headers.items():
+        response.headers[key] = value
+    return response
 
 
 def verify_token(authorization: str = Header("")) -> dict:

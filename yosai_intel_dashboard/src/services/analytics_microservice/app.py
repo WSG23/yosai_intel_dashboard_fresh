@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -9,7 +10,6 @@ from typing import Any
 import joblib
 import pandas as pd
 import redis.asyncio as aioredis
-import uuid
 from fastapi import (
     APIRouter,
     Depends,
@@ -27,12 +27,26 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, ConfigDict
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
-from yosai_intel_dashboard.src.infrastructure.config import get_database_config
 from database.utils import parse_connection_string
-from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
-from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
+from shared.errors.types import ErrorCode, ErrorResponse
+from yosai_framework import ServiceBuilder
+from yosai_framework.errors import ServiceError
+from yosai_framework.service import BaseService
+from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter
 from yosai_intel_dashboard.src.error_handling import http_error
+from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
+    load_service_config,
+)
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DEFAULT_CACHE_HOST,
+    DEFAULT_CACHE_PORT,
+)
+from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
+    register_health_check,
+    setup_health_checks,
+)
 from yosai_intel_dashboard.src.services.analytics_microservice import async_queries
 from yosai_intel_dashboard.src.services.analytics_microservice.analytics_service import (
     AnalyticsService,
@@ -45,15 +59,8 @@ from yosai_intel_dashboard.src.services.auth import verify_jwt_token
 from yosai_intel_dashboard.src.services.common import async_db
 from yosai_intel_dashboard.src.services.common.async_db import close_pool, create_pool
 from yosai_intel_dashboard.src.services.common.secrets import get_secret
-from shared.errors.types import ErrorCode, ErrorResponse
-from yosai_framework import ServiceBuilder
-from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
-from yosai_intel_dashboard.models.ml import ModelRegistry
-from yosai_intel_dashboard.src.services.explainability_service import ExplainabilityService
-from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
-    register_health_check,
-    setup_health_checks,
+from yosai_intel_dashboard.src.services.explainability_service import (
+    ExplainabilityService,
 )
 
 SERVICE_NAME = "analytics-microservice"
@@ -81,17 +88,24 @@ async def rate_limit(request: Request, call_next):
         auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
     )
     result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    headers = {
+        "X-RateLimit-Limit": str(result.get("limit", rate_limiter.max_requests)),
+        "X-RateLimit-Remaining": str(result.get("remaining", 0)),
+        "X-RateLimit-Reset": str(int(result.get("reset", 0))),
+    }
     if not result["allowed"]:
-        headers = {}
         retry = result.get("retry_after")
-        if retry:
+        if retry is not None:
             headers["Retry-After"] = str(int(retry))
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             content={"detail": "rate limit exceeded"},
             headers=headers,
         )
-    return await call_next(request)
+    response = await call_next(request)
+    for key, value in headers.items():
+        response.headers[key] = value
+    return response
 
 
 async def _db_check(_: FastAPI) -> bool:
@@ -177,11 +191,7 @@ class PredictRequest(BaseModel):
     data: Any
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {"data": {"features": [0.1, 0.2, 0.3]}}
-            ]
-        }
+        json_schema_extra={"examples": [{"data": {"features": [0.1, 0.2, 0.3]}}]}
     )
 
 
