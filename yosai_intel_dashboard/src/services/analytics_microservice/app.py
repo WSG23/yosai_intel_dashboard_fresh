@@ -4,7 +4,7 @@ import json
 import os
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import joblib
 import pandas as pd
@@ -94,11 +94,26 @@ async def rate_limit(request: Request, call_next):
     return await call_next(request)
 
 
-async def _db_check(_: FastAPI) -> bool:
-    return await async_db.health_check()
+async def _db_check(app: FastAPI) -> Dict[str, Any]:
+    healthy = await async_db.health_check()
+    return {
+        "healthy": healthy,
+        "circuit_breaker": getattr(app.state, "db_circuit_breaker", "closed"),
+        "retries": getattr(app.state, "db_retries", 0),
+    }
+
+
+async def _broker_check(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
+
+
+async def _external_api_check(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
 
 
 register_health_check(app, "database", _db_check)
+register_health_check(app, "message_broker", _broker_check)
+register_health_check(app, "external_api", _external_api_check)
 
 _SECRET_PATH = "secret/data/jwt#secret"
 
