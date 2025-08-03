@@ -1,6 +1,8 @@
+import gc
 import importlib
 import importlib.machinery
 import importlib.util
+import os
 import pathlib
 import sys
 
@@ -8,6 +10,17 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+# Tune garbage collection behaviour.  The higher thresholds reduce the
+# frequency of collections for long-running services while keeping memory
+# usage bounded.
+gc.set_threshold(1000, 10, 10)
+
+# Allow short-lived helper processes to skip the collector entirely once
+# they have released resources.  Opt in via ``SHORT_LIVED_PROCESS=1``.
+if os.getenv("SHORT_LIVED_PROCESS") == "1":
+    gc.collect()
+    gc.disable()
 
 # Provide lightweight service stubs for environments without full dependencies
 if "services" not in sys.modules:
