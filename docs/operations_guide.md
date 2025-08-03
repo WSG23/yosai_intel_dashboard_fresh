@@ -48,6 +48,23 @@ limits are approached. Example rules:
     summary: Pod memory usage above 90% of limit
 ```
 
+### Connection Pool Monitoring
+
+Database connection pool health is exported via Prometheus metrics:
+
+- `db_pool_current_size` – current maximum pool size
+- `db_pool_active_connections` – connections in use
+- `db_pool_wait_seconds` – histogram of wait time to obtain a connection
+
+Example queries:
+
+```promql
+db_pool_active_connections
+histogram_quantile(0.95, rate(db_pool_wait_seconds_bucket[5m]))
+```
+
+Set alerts if active connections approach the pool size or wait times grow.
+
 Import `monitoring/grafana/dashboards/unified-platform.json` into Grafana to view
 CPU and memory graphs based on these metrics.
 

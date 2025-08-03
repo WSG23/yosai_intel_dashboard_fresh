@@ -6,6 +6,12 @@ from typing import Callable, List, Tuple
 
 from database.types import DatabaseConnection
 
+from ..monitoring.prometheus.connection_pool import (
+    db_pool_active_connections,
+    db_pool_current_size,
+    db_pool_wait_seconds,
+)
+
 
 class DatabaseConnectionPool:
     """Connection pool that can grow and shrink based on usage."""
@@ -36,6 +42,13 @@ class DatabaseConnectionPool:
             self._pool.append((conn, time.time()))
             self._active += 1
 
+        self._update_metrics()
+
+    def _update_metrics(self) -> None:
+        """Update Prometheus gauges to reflect pool state."""
+        db_pool_current_size.set(self._max_size)
+        db_pool_active_connections.set(self._active - len(self._pool))
+
     def _maybe_expand(self) -> None:
         with self._lock:
             if self._max_size == 0:
@@ -43,6 +56,7 @@ class DatabaseConnectionPool:
             usage = (self._active - len(self._pool)) / self._max_size
             if usage >= self._threshold and self._max_size < self._max_pool_size:
                 self._max_size = min(self._max_size * 2, self._max_pool_size)
+                self._update_metrics()
 
     def _shrink_idle_connections(self) -> None:
         with self._lock:
@@ -59,9 +73,11 @@ class DatabaseConnectionPool:
                 else:
                     new_pool.append((conn, ts))
             self._pool = new_pool
+            self._update_metrics()
 
     def get_connection(self) -> DatabaseConnection:
-        deadline = time.time() + self._timeout
+        start = time.time()
+        deadline = start + self._timeout
         while True:
             with self._lock:
                 self._shrink_idle_connections()
@@ -73,15 +89,21 @@ class DatabaseConnectionPool:
                     if not conn.health_check():
                         conn.close()
                         self._active -= 1
+                        self._update_metrics()
                         continue
+                    self._update_metrics()
+                    db_pool_wait_seconds.observe(time.time() - start)
                     return conn
 
                 if self._active < self._max_size:
                     conn = self._factory()
                     self._active += 1
+                    self._update_metrics()
+                    db_pool_wait_seconds.observe(time.time() - start)
                     return conn
 
             if time.time() >= deadline:
+                db_pool_wait_seconds.observe(time.time() - start)
                 raise TimeoutError("No available connection in pool")
 
             time.sleep(0.05)
@@ -92,6 +114,7 @@ class DatabaseConnectionPool:
             if not conn.health_check():
                 conn.close()
                 self._active -= 1
+                self._update_metrics()
                 return
 
             if len(self._pool) >= self._max_size:
@@ -99,6 +122,7 @@ class DatabaseConnectionPool:
                 self._active -= 1
             else:
                 self._pool.append((conn, time.time()))
+            self._update_metrics()
 
     def health_check(self) -> bool:
         with self._lock:
@@ -116,4 +140,5 @@ class DatabaseConnectionPool:
                     temp.append((conn, ts))
             for item in temp:
                 self.release_connection(item[0])
+            self._update_metrics()
             return healthy
