@@ -59,6 +59,7 @@ class DatabaseConfig:
     async_pool_max_size: int = dynamic_config.get_db_pool_size() * 2
     async_connection_timeout: int = dynamic_config.get_db_connection_timeout()
     shrink_timeout: int = 60
+    shrink_interval: int = 0
     # Use the IntelligentConnectionPool instead of the default pool
     use_intelligent_pool: bool = False
 

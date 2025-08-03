@@ -298,6 +298,7 @@ class ThreadSafeDatabaseManager(DatabaseManager):
             getattr(self.config, "max_pool_size", 1),
             getattr(self.config, "connection_timeout", 30),
             getattr(self.config, "shrink_timeout", 60),
+            shrink_interval=getattr(self.config, "shrink_interval", 0),
         )
 
     def get_connection(self) -> DatabaseConnection:  # type: ignore[override]
@@ -359,6 +360,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
             self.config.max_pool_size,
             self.config.connection_timeout,
             self.config.shrink_timeout,
+            shrink_interval=getattr(self.config, "shrink_interval", 0),
         )
 
     def execute_query_with_retry(self, query: str, params: Optional[Dict] = None):

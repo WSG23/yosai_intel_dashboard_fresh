@@ -38,6 +38,7 @@ class DatabaseModel(BaseModel):
     async_pool_max_size: int = 20
     async_connection_timeout: int = 30
     shrink_timeout: int = 60
+    shrink_interval: int = 0
     use_intelligent_pool: bool = False
 
 
