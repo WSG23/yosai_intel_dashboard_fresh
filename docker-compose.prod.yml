@@ -57,6 +57,22 @@ services:
     secrets:
       - db_password
 
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD_FILE: /run/secrets/db_password.txt
+      POOL_MODE: session
+    ports:
+      - "6432:6432"
+    depends_on:
+      - db
+    restart: unless-stopped
+    secrets:
+      - db_password
+
   redis:
     image: redis:7
     volumes:
