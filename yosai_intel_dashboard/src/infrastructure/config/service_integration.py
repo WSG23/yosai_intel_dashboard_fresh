@@ -11,12 +11,7 @@ def get_service_registry():
 
     return registry
 
-__all__ = [
-    "get_database_manager",
-    "get_database_connection",
-    "get_mock_connection",
-    "get_enhanced_postgresql_manager",
-]
+__all__ = ["get_database_connection_factory"]
 
 
 def _get_service(name: str):
@@ -26,21 +21,6 @@ def _get_service(name: str):
     return None
 
 
-def get_database_manager():
-    """Return the optional ``DatabaseManager`` service."""
-    return _get_service("DatabaseManager")
-
-
-def get_database_connection():
-    """Return the optional ``DatabaseConnection`` service."""
-    return _get_service("DatabaseConnection")
-
-
-def get_mock_connection():
-    """Return the optional ``MockConnection`` service."""
-    return _get_service("MockConnection")
-
-
-def get_enhanced_postgresql_manager():
-    """Return the optional ``EnhancedPostgreSQLManager`` service."""
-    return _get_service("EnhancedPostgreSQLManager")
+def get_database_connection_factory():
+    """Return the optional ``DatabaseConnectionFactory`` service."""
+    return _get_service("DatabaseConnectionFactory")

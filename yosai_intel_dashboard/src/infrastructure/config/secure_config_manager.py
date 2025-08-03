@@ -8,6 +8,7 @@ from dataclasses import is_dataclass
 from typing import Any, Dict, Optional
 
 from botocore.exceptions import ClientError
+
 from optional_dependencies import import_optional
 
 boto3 = import_optional("boto3")
@@ -19,6 +20,11 @@ from pydantic import BaseModel
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .config_manager import ConfigManager
+from .protocols import (
+    ConfigLoaderProtocol,
+    ConfigTransformerProtocol,
+    ConfigValidatorProtocol,
+)
 
 
 class SecureConfigManager(ConfigManager):
@@ -30,6 +36,9 @@ class SecureConfigManager(ConfigManager):
         self,
         config_path: Optional[str] = None,
         *,
+        loader: ConfigLoaderProtocol | None = None,
+        validator: ConfigValidatorProtocol | None = None,
+        transformer: ConfigTransformerProtocol | None = None,
         vault_addr: Optional[str] = None,
         vault_token: Optional[str] = None,
         fernet_key: Optional[str] = None,
@@ -65,7 +74,12 @@ class SecureConfigManager(ConfigManager):
             except Exception as exc:  # pragma: no cover - defensive
                 self.log.warning("Invalid Fernet key: %s", exc)
 
-        super().__init__(config_path=config_path)
+        super().__init__(
+            config_path=config_path,
+            loader=loader,
+            validator=validator,
+            transformer=transformer,
+        )
 
     # ------------------------------------------------------------------
     def reload_config(self) -> None:  # noqa: D401 - inherit docstring

@@ -15,6 +15,10 @@ class ConnectionValidationFailed(DatabaseError):
     """Raised when a connection health check fails."""
 
 
+class PoolExhaustedError(DatabaseError):
+    """Raised when a connection cannot be acquired within the timeout."""
+
+
 class UnicodeEncodingError(DatabaseError):
     """Raised when invalid Unicode is detected during SQL encoding."""
 
@@ -27,5 +31,6 @@ __all__ = [
     "DatabaseError",
     "ConnectionRetryExhausted",
     "ConnectionValidationFailed",
+    "PoolExhaustedError",
     "UnicodeEncodingError",
 ]

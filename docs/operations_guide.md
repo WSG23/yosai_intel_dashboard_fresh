@@ -75,6 +75,14 @@ Prometheus scrapes metrics from `/metrics` using the sample
 memory and request charts. Logs can be forwarded to Elasticsearch through
 `logging/logstash.conf` and visualized with Kibana.
 
+## Database Connection Logging
+
+The database connection factory logs warnings whenever connection attempts are
+retried and records errors if all retries are exhausted. The connection pool
+also emits warnings when it expands or drops unhealthy connections, including
+current pool sizes. Operators should monitor these log messages to diagnose
+connectivity issues early.
+
 ## Canary Deployments
 
 Production releases use a short canary phase before rolling out fully. The CI/CD pipeline first applies manifests from `k8s/canary` which deploy a single replica alongside the existing deployment. Kubernetes waits for the canary pod to become ready.

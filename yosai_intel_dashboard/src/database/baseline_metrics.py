@@ -9,10 +9,11 @@ historical performance metrics.
 """
 
 import logging
-from typing import Dict, List
+from typing import Dict
 
 from database.connection import create_database_connection
 from database.secure_exec import execute_command
+from database.types import DBRows
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class BaselineMetricsDB:
     # ------------------------------------------------------------------
     def get_baseline(self, entity_type: str, entity_id: str) -> Dict[str, float]:
         try:
-            rows: List[Dict] = execute_query(
+            rows: DBRows = execute_query(
                 self.conn,
                 f"SELECT metric, value FROM {self.table_name} WHERE entity_type=? AND entity_id=?",
                 (entity_type, entity_id),
