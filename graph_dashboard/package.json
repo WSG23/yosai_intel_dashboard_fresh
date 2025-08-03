@@ -1,0 +1,19 @@
+{
+  "name": "graph-dashboard",
+  "private": true,
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-force-graph": "^1.45.0",
+    "react-force-graph-3d": "^1.24.0",
+    "three": "^0.165.0",
+    "heatmap.js": "^2.0.5",
+    "rc-slider": "^10.3.1",
+    "graphql-request": "^7.1.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --watchAll=false"
+  }
+}
