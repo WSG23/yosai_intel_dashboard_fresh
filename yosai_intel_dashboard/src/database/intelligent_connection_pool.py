@@ -6,11 +6,16 @@ import threading
 import time
 from typing import Any, Callable, Dict, List, Tuple, Set
 
+
+from database.types import DatabaseConnection
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
     ConnectionValidationFailed,
-    PoolExhaustedError,
 )
-from database.types import DatabaseConnection
+from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.connection_pool import (
+    db_pool_active_connections,
+    db_pool_current_size,
+    db_pool_wait_seconds,
+)
 
 
 class CircuitBreaker:
@@ -96,11 +101,12 @@ class IntelligentConnectionPool:
             self._pool.append((conn, time.time()))
             self._active += 1
 
-        if self._shrink_interval > 0:
-            self._shrink_thread = threading.Thread(
-                target=self._periodic_shrink, daemon=True
-            )
-            self._shrink_thread.start()
+        self._update_metrics()
+
+    def _update_metrics(self) -> None:
+        db_pool_current_size.set(self._max_size)
+        db_pool_active_connections.set(self._active - len(self._pool))
+
 
     # ------------------------------------------------------------------
     def _maybe_expand(self) -> None:
@@ -110,6 +116,7 @@ class IntelligentConnectionPool:
         if usage >= self._threshold and self._max_size < self._max_pool_size:
             self._max_size = min(self._max_size * 2, self._max_pool_size)
             self.metrics["expansions"] += 1
+            self._update_metrics()
 
     # ------------------------------------------------------------------
     def _shrink_idle_connections(self) -> None:
@@ -124,6 +131,7 @@ class IntelligentConnectionPool:
             else:
                 new_pool.append((conn, ts))
         self._pool = new_pool
+        self._update_metrics()
 
     # ------------------------------------------------------------------
     def _periodic_shrink(self) -> None:
@@ -157,11 +165,15 @@ class IntelligentConnectionPool:
                         self.circuit_breaker.record_failure()
                         if not self.circuit_breaker.allows_request():
                             raise ConnectionValidationFailed("circuit open")
+                        self._update_metrics()
                         continue
                     self.metrics["acquired"] += 1
-                    self.metrics["acquire_times"].append(time.time() - start)
+                    wait = time.time() - start
+                    self.metrics["acquire_times"].append(wait)
                     self.circuit_breaker.record_success()
-                    self._in_use.add(conn)
+                    self._update_metrics()
+                    db_pool_wait_seconds.observe(wait)
+
                     self._condition.notify()
                     return conn
 
@@ -173,12 +185,15 @@ class IntelligentConnectionPool:
                         self.circuit_breaker.record_failure()
                         if not self.circuit_breaker.allows_request():
                             raise ConnectionValidationFailed("circuit open")
+                        self._update_metrics()
                         continue
                     self._active += 1
                     self.metrics["acquired"] += 1
-                    self.metrics["acquire_times"].append(time.time() - start)
+                    wait = time.time() - start
+                    self.metrics["acquire_times"].append(wait)
                     self.circuit_breaker.record_success()
-                    self._in_use.add(conn)
+                    self._update_metrics()
+                    db_pool_wait_seconds.observe(wait)
                     self._condition.notify()
                     return conn
 
@@ -186,7 +201,9 @@ class IntelligentConnectionPool:
                 if remaining <= 0:
                     self.metrics["timeouts"] += 1
                     self.circuit_breaker.record_failure()
-                    raise PoolExhaustedError("No available connection in pool")
+                    db_pool_wait_seconds.observe(time.time() - start)
+                    raise TimeoutError("No available connection in pool")
+
                 self._condition.wait(timeout=remaining)
 
     # ------------------------------------------------------------------
@@ -199,6 +216,7 @@ class IntelligentConnectionPool:
                 self._active -= 1
                 self.metrics["failed"] += 1
                 self.circuit_breaker.record_failure()
+                self._update_metrics()
                 return
 
             if self._max_size == 0:
@@ -212,6 +230,7 @@ class IntelligentConnectionPool:
             else:
                 self._pool.append((conn, time.time()))
             self.metrics["released"] += 1
+            self._update_metrics()
             self._condition.notify()
 
     # ------------------------------------------------------------------
@@ -236,6 +255,7 @@ class IntelligentConnectionPool:
                 self.circuit_breaker.record_failure()
             else:
                 self.circuit_breaker.record_success()
+            self._update_metrics()
             return healthy
 
     # ------------------------------------------------------------------

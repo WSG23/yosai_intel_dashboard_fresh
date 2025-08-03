@@ -11,6 +11,12 @@ from .database_exceptions import PoolExhaustedError
 
 logger = logging.getLogger(__name__)
 
+from ..monitoring.prometheus.connection_pool import (
+    db_pool_active_connections,
+    db_pool_current_size,
+    db_pool_wait_seconds,
+)
+
 
 class DatabaseConnectionPool:
     """Connection pool that can grow and shrink based on usage."""
@@ -50,11 +56,13 @@ class DatabaseConnectionPool:
             self._pool.append((conn, time.time()))
             self._active += 1
 
-        if self._shrink_interval > 0:
-            self._shrink_thread = threading.Thread(
-                target=self._periodic_shrink, daemon=True
-            )
-            self._shrink_thread.start()
+        self._update_metrics()
+
+    def _update_metrics(self) -> None:
+        """Update Prometheus gauges to reflect pool state."""
+        db_pool_current_size.set(self._max_size)
+        db_pool_active_connections.set(self._active - len(self._pool))
+
 
     def _maybe_expand(self) -> None:
         with self._lock:
@@ -62,13 +70,9 @@ class DatabaseConnectionPool:
                 return
             usage = (self._active - len(self._pool)) / self._max_size
             if usage >= self._threshold and self._max_size < self._max_pool_size:
-                new_size = min(self._max_size * 2, self._max_pool_size)
-                logger.warning(
-                    "Expanding connection pool to %d due to usage %.2f",
-                    new_size,
-                    usage,
-                )
-                self._max_size = new_size
+                self._max_size = min(self._max_size * 2, self._max_pool_size)
+                self._update_metrics()
+
 
     def _shrink_idle_connections(self) -> None:
         with self._lock:
@@ -88,6 +92,7 @@ class DatabaseConnectionPool:
                 else:
                     new_pool.append((conn, ts))
             self._pool = new_pool
+            self._update_metrics()
 
     def _periodic_shrink(self) -> None:
         while not self._shutdown:
@@ -100,7 +105,8 @@ class DatabaseConnectionPool:
             self._shrink_thread.join(timeout=0.1)
 
     def get_connection(self) -> DatabaseConnection:
-        deadline = time.time() + self._timeout
+        start = time.time()
+        deadline = start + self._timeout
         while True:
             with self._lock:
                 self._shrink_idle_connections()
@@ -113,22 +119,23 @@ class DatabaseConnectionPool:
                         logger.warning("Discarding unhealthy connection")
                         conn.close()
                         self._active -= 1
+                        self._update_metrics()
                         continue
-                    self._in_use.add(conn)
+                    self._update_metrics()
+                    db_pool_wait_seconds.observe(time.time() - start)
+
                     return conn
 
                 if self._active < self._max_size:
                     conn = self._factory()
                     self._active += 1
-                    self._in_use.add(conn)
+                    self._update_metrics()
+                    db_pool_wait_seconds.observe(time.time() - start)
                     return conn
 
             if time.time() >= deadline:
-                logger.error(
-                    "Timed out waiting for database connection (active=%d, pool=%d)",
-                    self._active,
-                    len(self._pool),
-                )
+                db_pool_wait_seconds.observe(time.time() - start)
+
                 raise TimeoutError("No available connection in pool")
 
 
@@ -142,6 +149,7 @@ class DatabaseConnectionPool:
                 logger.warning("Dropping unhealthy connection on release")
                 conn.close()
                 self._active -= 1
+                self._update_metrics()
                 return
 
             if self._max_size == 0:
@@ -156,6 +164,7 @@ class DatabaseConnectionPool:
                 self._active -= 1
             else:
                 self._pool.append((conn, time.time()))
+            self._update_metrics()
 
     def health_check(self) -> bool:
         with self._lock:
@@ -176,6 +185,7 @@ class DatabaseConnectionPool:
                     temp.append((conn, ts))
             for item in temp:
                 self.release_connection(item[0])
+            self._update_metrics()
             return healthy
 
     def close_all(self) -> None:
