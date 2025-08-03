@@ -9,14 +9,19 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  Brush,
 } from 'recharts';
 import Timeline from '../components/Timeline';
 import { graphsAPI, AvailableChart } from '../api/graphs';
+import { useSelection } from '../core/interaction/SelectionContext';
 
 const Graphs: React.FC = () => {
   const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
   const [selectedChart, setSelectedChart] = useState('');
   const [chartData, setChartData] = useState<any>(null);
+  const { select } = useSelection();
+  const [timelineRange, setTimelineRange] = useState({ startIndex: 0, endIndex: 23 });
+  const [patternsRange, setPatternsRange] = useState({ startIndex: 0, endIndex: 23 });
 
   useEffect(() => {
     const fetchCharts = async () => {
@@ -53,11 +58,34 @@ const Graphs: React.FC = () => {
     if (!chartData) return null;
 
     if (selectedChart === 'timeline' && chartData.hourly_distribution) {
-      const data = Object.entries(chartData.hourly_distribution).map(
-        ([hour, count]) => ({
-          time: hour,
-          value: Number(count),
-        }),
+      const data = Object.entries(chartData.hourly_distribution).map(([hour, count]) => ({
+        hour,
+        count: Number(count),
+      }));
+      return (
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={data.slice(timelineRange.startIndex, timelineRange.endIndex + 1)}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="hour" />
+            <YAxis />
+            <Tooltip />
+            <Brush
+              dataKey="hour"
+              height={20}
+              stroke="#8884d8"
+              startIndex={timelineRange.startIndex}
+              endIndex={timelineRange.endIndex}
+              onChange={(range) => setTimelineRange(range as any)}
+            />
+            <Line
+              type="monotone"
+              dataKey="count"
+              stroke="#8884d8"
+              onClick={(d: any) => select('hour', d.hour)}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+
       );
       return <Timeline data={data} />;
     }
@@ -74,12 +102,25 @@ const Graphs: React.FC = () => {
       );
       return (
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
+          <LineChart data={data.slice(patternsRange.startIndex, patternsRange.endIndex + 1)}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="hour" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="count" stroke="#82ca9d" />
+            <Brush
+              dataKey="hour"
+              height={20}
+              stroke="#82ca9d"
+              startIndex={patternsRange.startIndex}
+              endIndex={patternsRange.endIndex}
+              onChange={(range) => setPatternsRange(range as any)}
+            />
+            <Line
+              type="monotone"
+              dataKey="count"
+              stroke="#82ca9d"
+              onClick={(d: any) => select('hour', d.hour)}
+            />
           </LineChart>
         </ResponsiveContainer>
       );
