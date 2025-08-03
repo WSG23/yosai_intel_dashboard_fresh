@@ -55,7 +55,7 @@ class FileProcessorService(BaseService, BaseFileProcessor):
         BaseFileProcessor.__init__(self, chunk_size=chunk_size, decoder=decoder)
         self.start()
         self.config = config
-        self.max_file_size_mb = config.get_max_upload_size_mb()
+        self.max_file_size_mb = config.max_upload_size_mb
         self._validator = validator or FileValidator(
             max_size_mb=self.max_file_size_mb,
             allowed_ext=self.ALLOWED_EXTENSIONS,

@@ -14,12 +14,6 @@ from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     DynamicConfigManager,
     dynamic_config,
 )
-from yosai_intel_dashboard.src.infrastructure.config.utils import (
-    get_ai_confidence_threshold as _get_ai_confidence_threshold,
-)
-from yosai_intel_dashboard.src.infrastructure.config.utils import (
-    get_upload_chunk_size as _get_upload_chunk_size,
-)
 
 
 class DynamicConfigurationService(ConfigurationServiceProtocol):
@@ -29,7 +23,8 @@ class DynamicConfigurationService(ConfigurationServiceProtocol):
         self._cfg = manager
 
     # Simple pass-through wrappers
-    def get_max_upload_size_mb(self) -> int:
+    @property
+    def max_upload_size_mb(self) -> int:
         return self._cfg.get_max_upload_size_mb()
 
     def get_max_upload_size_bytes(self) -> int:
@@ -38,8 +33,9 @@ class DynamicConfigurationService(ConfigurationServiceProtocol):
     def validate_large_file_support(self) -> bool:
         return self._cfg.validate_large_file_support()
 
-    def get_upload_chunk_size(self) -> int:
-        return _get_upload_chunk_size(self._cfg)
+    @property
+    def upload_chunk_size(self) -> int:
+        return self._cfg.get_upload_chunk_size()
 
     def get_max_parallel_uploads(self) -> int:
         return self._cfg.get_max_parallel_uploads()
@@ -47,8 +43,9 @@ class DynamicConfigurationService(ConfigurationServiceProtocol):
     def get_validator_rules(self) -> Dict[str, Any]:
         return self._cfg.get_validator_rules()
 
-    def get_ai_confidence_threshold(self) -> int:
-        return _get_ai_confidence_threshold(self._cfg)
+    @property
+    def ai_confidence_threshold(self) -> int:
+        return self._cfg.get_ai_confidence_threshold()
 
     def get_db_pool_size(self) -> int:
         return self._cfg.get_db_pool_size()

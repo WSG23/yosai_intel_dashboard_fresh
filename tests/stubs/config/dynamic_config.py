@@ -2,37 +2,45 @@ class Security:
     max_upload_mb = 10
 
 
+from types import SimpleNamespace
+
+
 class Analytics:
     max_display_rows = 100
     chunk_size = 100
     max_memory_mb = 1024
 
 
-from yosai_intel_dashboard.src.infrastructure.config.utils import get_ai_confidence_threshold, get_upload_chunk_size
-from yosai_intel_dashboard.src.core.config import get_max_parallel_uploads, get_validator_rules
-
-
 class DynamicConfigManager:
+    def __init__(self) -> None:
+        self.security = SimpleNamespace(max_upload_mb=50)
+        self.performance = SimpleNamespace(ai_confidence_threshold=75)
+        self.uploads = SimpleNamespace(
+            DEFAULT_CHUNK_SIZE=1,
+            MAX_PARALLEL_UPLOADS=2,
+            VALIDATOR_RULES={},
+        )
+
     def get_max_upload_size_mb(self):
-        return Security.max_upload_mb
+        return self.security.max_upload_mb
 
     def get_max_upload_size_bytes(self):
-        return Security.max_upload_mb * 1024 * 1024
+        return self.security.max_upload_mb * 1024 * 1024
 
     def validate_large_file_support(self):
         return True
 
     def get_upload_chunk_size(self):
-        return get_upload_chunk_size()
+        return self.uploads.DEFAULT_CHUNK_SIZE
 
     def get_max_parallel_uploads(self):
-        return get_max_parallel_uploads()
+        return self.uploads.MAX_PARALLEL_UPLOADS
 
     def get_validator_rules(self):
-        return get_validator_rules()
+        return self.uploads.VALIDATOR_RULES
 
     def get_ai_confidence_threshold(self):
-        return get_ai_confidence_threshold()
+        return self.performance.ai_confidence_threshold
 
     def get_db_pool_size(self):
         return 10
