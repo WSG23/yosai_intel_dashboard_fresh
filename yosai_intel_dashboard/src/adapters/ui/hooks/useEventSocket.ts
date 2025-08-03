@@ -1,4 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { eventBus } from '../eventBus';
+
+export enum EventSocketState {
+  DISCONNECTED = 'DISCONNECTED',
+  CONNECTING = 'CONNECTING',
+  CONNECTED = 'CONNECTED',
+  RECONNECTING = 'RECONNECTING',
+}
 
 export const useEventSocket = (
   url: string,
@@ -6,13 +14,14 @@ export const useEventSocket = (
   jitter: boolean = true,
 ) => {
   const [data, setData] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [state, setState] = useState<EventSocketState>(EventSocketState.DISCONNECTED);
   const wsRef = useRef<WebSocket | null>(null);
   const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
   const stoppedRef = useRef(false);
 
   const connect = () => {
+
     const ws = socketFactory ? socketFactory(url) : new WebSocket(url);
     wsRef.current = ws;
 
@@ -30,6 +39,7 @@ export const useEventSocket = (
         attemptRef.current += 1;
         retryTimeout.current = setTimeout(connect, delay);
       }
+
     };
     ws.onmessage = (ev) => setData(ev.data);
   };
@@ -52,6 +62,7 @@ export const useEventSocket = (
   }, [url, socketFactory, jitter]);
 
   return { data, isConnected, cleanup };
+
 };
 
 export default useEventSocket;

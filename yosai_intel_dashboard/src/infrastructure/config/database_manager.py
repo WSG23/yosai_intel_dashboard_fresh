@@ -14,10 +14,10 @@ import threading
 import time
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
 from database.query_optimizer import DatabaseQueryOptimizer
-from database.secure_exec import execute_command, execute_query
+from database.secure_exec import execute_batch, execute_command, execute_query
 from database.types import DatabaseConnection
 from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 
@@ -145,6 +145,19 @@ class SQLiteConnection:
             logger.error(f"SQLite command error: {e}")
             raise DatabaseError(f"Command failed: {e}") from e
 
+    def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
+        """Execute a batch of SQLite commands"""
+        if not self._connection:
+            raise DatabaseError("No database connection")
+
+        try:
+            cursor = self._connection.cursor()
+            execute_batch(cursor, command, params_seq)
+            self._connection.commit()
+        except sqlite3.Error as e:
+            logger.error(f"SQLite batch error: {e}")
+            raise DatabaseError(f"Batch failed: {e}") from e
+
     def health_check(self) -> bool:
         """Check SQLite connection health"""
         try:
@@ -249,6 +262,21 @@ class PostgreSQLConnection:
             logger.error("PostgreSQL command error: %s", sanitized)
             self._connection.rollback()
             raise DatabaseError(f"Command failed: {sanitized}") from e
+
+    def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
+        """Execute PostgreSQL command for multiple parameter sets"""
+        if not self._connection:
+            raise DatabaseError("No database connection")
+
+        try:
+            with self._connection.cursor() as cursor:
+                execute_batch(cursor, command, params_seq)
+            self._connection.commit()
+        except psycopg2.Error as e:
+            sanitized = _scrub_password(str(e), self.config.password)
+            logger.error("PostgreSQL batch error: %s", sanitized)
+            self._connection.rollback()
+            raise DatabaseError(f"Batch failed: {sanitized}") from e
 
     def health_check(self) -> bool:
         """Check PostgreSQL connection health"""

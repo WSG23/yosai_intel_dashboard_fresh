@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { useEventSocket } from './useEventSocket';
+import { useEventSocket, EventSocketState } from './useEventSocket';
+import { eventBus } from '../eventBus';
 
 jest.useFakeTimers();
 
@@ -33,6 +34,7 @@ describe('useEventSocket', () => {
     );
 
     act(() => {
+      MockSocket.instance?.onopen?.();
       MockSocket.instance?.onmessage?.({ data: JSON.stringify({ a: 1 }) });
     });
 
@@ -128,5 +130,6 @@ describe('useEventSocket', () => {
     });
 
     expect(MockSocket.instances).toHaveLength(1);
+
   });
 });

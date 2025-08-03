@@ -6,7 +6,7 @@ import asyncio
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Set
 
 from database.types import DatabaseConnection
 
@@ -24,6 +24,7 @@ class MockConnection:
 
     def __init__(self) -> None:  # pragma: no cover - trivial
         self._connected = True
+        self._prepared: Dict[str, str] = {}
 
     def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         logger.debug("mock execute_query: %s", query)
@@ -34,6 +35,18 @@ class MockConnection:
 
     def fetch_results(self, query: str, params: Optional[tuple] = None) -> list:
         return self.execute_query(query, params)
+
+    def prepare_statement(self, name: str, query: str) -> None:
+        self._prepared[name] = query
+
+    def execute_prepared(self, name: str, params: tuple) -> list:
+        query = self._prepared.get(name)
+        if query is None:
+            raise KeyError(f"Statement {name} has not been prepared")
+        if query.lstrip().lower().startswith("select"):
+            return self.execute_query(query, params)
+        self.execute_command(query, params)
+        return []
 
     def health_check(self) -> bool:
         return self._connected
@@ -53,6 +66,7 @@ class SQLiteConnection:
             config.name, timeout=config.connection_timeout
         )
         self._connection.row_factory = sqlite3.Row
+        self._prepared: Dict[str, tuple[str, sqlite3.Cursor]] = {}
 
     def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         cursor = self._connection.cursor()
@@ -73,6 +87,20 @@ class SQLiteConnection:
 
     def fetch_results(self, query: str, params: Optional[tuple] = None) -> list:
         return self.execute_query(query, params)
+
+    def prepare_statement(self, name: str, query: str) -> None:
+        if name not in self._prepared:
+            cursor = self._connection.cursor()
+            self._prepared[name] = (query, cursor)
+
+    def execute_prepared(self, name: str, params: tuple) -> list:
+        query, cursor = self._prepared[name]
+        cursor.execute(query, params)
+        if cursor.description:
+            rows = cursor.fetchall()
+            return [dict(row) for row in rows]
+        self._connection.commit()
+        return []
 
     def health_check(self) -> bool:
         try:
@@ -108,6 +136,7 @@ class PostgreSQLConnection:
             cursor_factory=RealDictCursor,
             connect_timeout=config.connection_timeout,
         )
+        self._prepared: Set[str] = set()
 
     def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         with self._connection.cursor() as cursor:
@@ -121,6 +150,23 @@ class PostgreSQLConnection:
 
     def fetch_results(self, query: str, params: Optional[tuple] = None) -> list:
         return self.execute_query(query, params)
+
+    def prepare_statement(self, name: str, query: str) -> None:
+        if name in self._prepared:
+            return
+        with self._connection.cursor() as cursor:
+            cursor.execute(f"PREPARE {name} AS {query}")
+        self._prepared.add(name)
+
+    def execute_prepared(self, name: str, params: tuple) -> list:
+        placeholders = ", ".join(["%s"] * len(params))
+        sql = f"EXECUTE {name} ({placeholders})" if placeholders else f"EXECUTE {name}"
+        with self._connection.cursor() as cursor:
+            cursor.execute(sql, params if params else None)
+            if cursor.description:
+                return list(cursor.fetchall())
+            self._connection.commit()
+            return []
 
     def health_check(self) -> bool:
         try:
@@ -155,6 +201,14 @@ class PooledConnection:
     def fetch_results(self, query: str, params: Optional[tuple] = None) -> list:
         return self.execute_query(query, params)
 
+    def prepare_statement(self, name: str, query: str) -> None:
+        q = DatabaseConnectionFactory.encode_query(query)
+        self._conn.prepare_statement(name, q)
+
+    def execute_prepared(self, name: str, params: tuple) -> list:
+        p = DatabaseConnectionFactory.encode_params(params)
+        return self._conn.execute_prepared(name, p)
+
     def health_check(self) -> bool:
         return self._conn.health_check()
 
@@ -186,6 +240,14 @@ class AsyncPooledConnection:
 
     async def fetch_results(self, query: str, params: Optional[tuple] = None) -> list:
         return await self.execute_query(query, params)
+
+    async def prepare_statement(self, name: str, query: str) -> None:
+        q = DatabaseConnectionFactory.encode_query(query)
+        await asyncio.to_thread(self._conn.prepare_statement, name, q)
+
+    async def execute_prepared(self, name: str, params: tuple) -> list:
+        p = DatabaseConnectionFactory.encode_params(params)
+        return await asyncio.to_thread(self._conn.execute_prepared, name, p)
 
     async def health_check(self) -> bool:
         return await asyncio.to_thread(self._conn.health_check)

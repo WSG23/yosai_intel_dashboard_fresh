@@ -4,11 +4,16 @@ Import ``queries_total`` and ``query_errors_total`` to track how many
 database queries were executed and how many failed.
 """
 
-from prometheus_client import Counter, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 
 queries_total = Counter("database_queries_total", "Total database queries executed")
 query_errors_total = Counter(
     "database_query_errors_total", "Total database query errors"
+)
+
+query_execution_seconds = Histogram(
+    "database_query_execution_seconds",
+    "Time spent executing database queries",
 )
 
 # Connection pool metrics
@@ -28,6 +33,7 @@ health_check_retries_total = Counter(
 __all__ = [
     "queries_total",
     "query_errors_total",
+    "query_execution_seconds",
     "pool_utilization",
     "health_check_failures_total",
     "health_check_retries_total",

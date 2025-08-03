@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
+import { eventBus } from '../eventBus';
+
+export enum WebSocketState {
+  DISCONNECTED = 'DISCONNECTED',
+  CONNECTING = 'CONNECTING',
+  CONNECTED = 'CONNECTED',
+  RECONNECTING = 'RECONNECTING',
+}
 
 export const useWebSocket = (
   path: string,
   socketFactory?: (url: string) => WebSocket
 ) => {
   const [data, setData] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [state, setState] = useState<WebSocketState>(WebSocketState.DISCONNECTED);
   const wsRef = useRef<WebSocket | null>(null);
   const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
@@ -18,17 +26,27 @@ export const useWebSocket = (
     const ws = socketFactory ? socketFactory(fullUrl) : new WebSocket(fullUrl);
     wsRef.current = ws;
 
+    const nextState =
+      attemptRef.current > 0
+        ? WebSocketState.RECONNECTING
+        : WebSocketState.CONNECTING;
+    setState(nextState);
+    eventBus.emit('websocket_state', nextState);
+
     ws.onopen = () => {
-      setIsConnected(true);
+      setState(WebSocketState.CONNECTED);
+      eventBus.emit('websocket_state', WebSocketState.CONNECTED);
       attemptRef.current = 0;
     };
     ws.onclose = () => {
-      setIsConnected(false);
-      if (!stoppedRef.current) {
-        const delay = Math.min(1000 * 2 ** attemptRef.current, 30000);
-        attemptRef.current += 1;
-        retryTimeout.current = setTimeout(connect, delay);
+      if (stoppedRef.current) {
+        return;
       }
+      setState(WebSocketState.RECONNECTING);
+      eventBus.emit('websocket_state', WebSocketState.RECONNECTING);
+      const delay = Math.min(1000 * 2 ** attemptRef.current, 30000);
+      attemptRef.current += 1;
+      retryTimeout.current = setTimeout(connect, delay);
     };
     ws.onmessage = (ev: MessageEvent) => setData(ev.data as string);
   };
@@ -38,6 +56,8 @@ export const useWebSocket = (
     if (retryTimeout.current) {
       clearTimeout(retryTimeout.current);
     }
+    setState(WebSocketState.DISCONNECTED);
+    eventBus.emit('websocket_state', WebSocketState.DISCONNECTED);
     wsRef.current?.close();
   };
   useEffect(() => {
@@ -49,7 +69,8 @@ export const useWebSocket = (
     };
   }, [path, socketFactory]);
 
-  return { data, isConnected, cleanup };
+  const isConnected = state === WebSocketState.CONNECTED;
+  return { data, isConnected, state, cleanup };
 };
 
 export default useWebSocket;
