@@ -41,6 +41,7 @@ class DatabaseSettings(BaseModel):
     user: str = "user"
     password: str = ""
     url: str = ""
+    query_timeout_seconds: int = 600
 
 
 class SecuritySettings(BaseModel):
