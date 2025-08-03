@@ -119,6 +119,29 @@ class TimescaleDBManager:
             )
             """,
         )
+        await conn.execute(
+            """
+            CREATE MATERIALIZED VIEW IF NOT EXISTS access_event_hourly
+            WITH (timescaledb.continuous) AS
+            SELECT time_bucket('1 hour', time) AS bucket,
+                   facility_id,
+                   COUNT(*) AS event_count
+            FROM access_events
+            GROUP BY bucket, facility_id
+            WITH NO DATA
+            """,
+        )
+        await conn.execute(
+            """
+            SELECT add_continuous_aggregate_policy(
+                'access_event_hourly',
+                start_offset => INTERVAL '7 days',
+                end_offset => INTERVAL '1 hour',
+                schedule_interval => INTERVAL '1 hour',
+                if_not_exists => TRUE
+            )
+            """,
+        )
         compression_days = int(os.getenv("TIMESCALE_COMPRESSION_DAYS", "30"))
         retention_days = int(os.getenv("TIMESCALE_RETENTION_DAYS", "365"))
         await conn.execute(
@@ -210,6 +233,32 @@ class TimescaleDBManager:
                 logger.error(
                     "Continuous aggregate access_events_5min missing (%s)", agg_count
                 )
+            agg_count = await conn.fetchval(
+                """
+                SELECT COUNT(*) FROM timescaledb_information.continuous_aggregates
+                WHERE view_name = 'access_event_hourly'
+                """
+            )
+            if agg_count != 1:
+                logger.error(
+                    "Continuous aggregate access_event_hourly missing (%s)", agg_count
+                )
+
+    # ------------------------------------------------------------------
+    async def refresh_materialized_view(self, view: str) -> None:
+        """Refresh the specified continuous aggregate."""
+        if self.pool is None:
+            await self.connect()
+        assert self.pool is not None
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                "CALL refresh_continuous_aggregate($1, NULL, NULL)", view
+            )
+
+    async def refresh_dashboard_views(self) -> None:
+        """Refresh materialized views used by dashboards."""
+        for view in ("access_events_5min", "access_event_hourly"):
+            await self.refresh_materialized_view(view)
 
     # ------------------------------------------------------------------
     async def _health_monitor_loop(self, interval: int) -> None:
