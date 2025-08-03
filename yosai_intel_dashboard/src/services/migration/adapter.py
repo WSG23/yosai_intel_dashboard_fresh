@@ -17,11 +17,14 @@ logger = logging.getLogger(__name__)
 
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.services.feature_flags import feature_flags
-from yosai_intel_dashboard.src.core.interfaces.service_protocols import AnalyticsServiceProtocol
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
+    AnalyticsServiceProtocol,
+)
 from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
+from yosai_intel_dashboard.src.error_handling import ErrorHandler
 
 # Namespace for Kubernetes DNS lookups
 K8S_NAMESPACE = os.getenv("K8S_NAMESPACE", "yosai-dev")
@@ -133,6 +136,7 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         )
         self.use_microservice = feature_flags.is_enabled("use_analytics_microservice")
         self.circuit_breaker = CircuitBreaker(5, 60, name="analytics_service")
+        self.error_handler = ErrorHandler()
 
     async def call(self, method: str, **kwargs: Any) -> Any:
         if not self.use_microservice:
@@ -145,7 +149,8 @@ class AnalyticsServiceAdapter(ServiceAdapter, AnalyticsServiceProtocol):
         try:
             return await self._call_microservice(method, kwargs)
         except Exception as exc:
-            raise RuntimeError(f"Analytics microservice call failed: {exc}") from exc
+            self.error_handler.handle(exc)
+            return {}
 
     async def _call_microservice(self, method: str, params: Dict[str, Any]) -> Any:
         async with self.circuit_breaker:

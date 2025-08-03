@@ -8,8 +8,13 @@ import psutil
 
 from yosai_intel_dashboard.src.core.performance import (
     MetricType,
+    PerformanceProfiler,
     get_performance_monitor,
 )
+from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (
+    PerformanceProfiler,
+)
+
 
 
 _circuit_breaker_state = None
@@ -69,6 +74,7 @@ class CircuitBreaker:
         """Record a failed attempt and open the circuit if threshold exceeded."""
         async with self._lock:
             self._failures += 1
+            record_error(self._name)
             if self._failures >= self.failure_threshold and self._state != "open":
                 _get_circuit_breaker_state().labels(self._name, "open").inc()
                 self._state = "open"

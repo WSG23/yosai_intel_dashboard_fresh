@@ -18,7 +18,7 @@ from yosai_intel_dashboard.src.services.compliance.consent_service import Consen
 from yosai_intel_dashboard.src.services.compliance.dsar_service import DSARService
 from yosai_intel_dashboard.src.services.security import require_role
 from shared.errors.types import ErrorCode
-from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.security import validate_user_input
 from yosai_framework.errors import CODE_TO_STATUS
 from yosai_intel_dashboard.models.compliance import ConsentType, DSARRequestType
 
@@ -36,9 +36,7 @@ def _parse_int_param(param_name: str, default: int) -> int:
     if value is None:
         return default
 
-    validator = SecurityValidator()
-    result = validator.validate_input(str(value), param_name)
-    sanitized = str(result.get("sanitized", value))
+    sanitized = validate_user_input(str(value), param_name)
     return int(sanitized) if sanitized.isdigit() else default
 
 
@@ -85,10 +83,9 @@ def grant_consent():
     """
     try:
         data = request.get_json()
-        validator = SecurityValidator()
-
-        # Validate input
-        if not data or not validator.validate_input(str(data), "json_data"):
+        try:
+            validate_user_input(str(data), "json_data")
+        except Exception:
             return jsonify({"error": "Invalid request data"}), 400
 
         consent_type_str = data.get("consent_type")
@@ -98,10 +95,12 @@ def grant_consent():
             return jsonify({"error": "consent_type is required"}), 400
 
         try:
+            consent_type_str = validate_user_input(consent_type_str, "consent_type")
             consent_type = ConsentType(consent_type_str)
         except ValueError:
             return jsonify({"error": f"Invalid consent_type: {consent_type_str}"}), 400
 
+        jurisdiction = validate_user_input(jurisdiction, "jurisdiction")
         if jurisdiction not in ["EU", "JP", "US"]:
             return jsonify({"error": f"Invalid jurisdiction: {jurisdiction}"}), 400
 
@@ -307,10 +306,9 @@ def create_dsar_request():
     """
     try:
         data = request.get_json()
-        validator = SecurityValidator()
-
-        # Validate input
-        if not data or not validator.validate_input(str(data), "json_data"):
+        try:
+            validate_user_input(str(data), "json_data")
+        except Exception:
             return jsonify({"error": "Invalid request data"}), 400
 
         request_type_str = data.get("request_type")
@@ -321,9 +319,12 @@ def create_dsar_request():
         if not request_type_str or not email:
             return jsonify({"error": "request_type and email are required"}), 400
 
-        # Validate email format
-        if not validator.validate_input(email, "email"):
-            return jsonify({"error": "Invalid email format"}), 400
+        try:
+            email = validate_user_input(email, "email")
+            request_type_str = validate_user_input(request_type_str, "request_type")
+            jurisdiction = validate_user_input(jurisdiction, "jurisdiction")
+        except Exception:
+            return jsonify({"error": "Invalid request data"}), 400
 
         try:
             request_type = DSARRequestType(request_type_str)
@@ -484,10 +485,9 @@ def process_dsar_request(request_id: str):
           description: Request cannot be processed
     """
     try:
-        validator = SecurityValidator()
-
-        # Validate request ID format
-        if not validator.validate_input(request_id, "alphanumeric"):
+        try:
+            request_id = validate_user_input(request_id, "alphanumeric")
+        except Exception:
             return jsonify({"error": "Invalid request ID format"}), 400
 
         # Get services

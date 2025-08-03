@@ -7,39 +7,32 @@ from typing import Any, Callable, Iterable, Tuple
 
 from dash import Output, no_update
 
-from validation.security_validator import SecurityValidator
-
+from yosai_intel_dashboard.src.core.security import validate_user_input
 from .error_handling import ErrorSeverity, error_handler
 
 SafeReturn = Any
 
 
-def _sanitize_value(value: Any, name: str, validator: SecurityValidator) -> Any:
+def _sanitize_value(value: Any, name: str) -> Any:
     if isinstance(value, str):
-        result = validator.validate_input(value, name)
-        return result.get("sanitized", value)
+        return validate_user_input(value, name)
     return value
 
 
-def _sanitize_args(
-    args: Iterable[Any], validator: SecurityValidator
-) -> tuple[Any, ...]:
+def _sanitize_args(args: Iterable[Any]) -> tuple[Any, ...]:
     sanitized = []
     for i, val in enumerate(args):
-        sanitized.append(_sanitize_value(val, f"arg{i}", validator))
+        sanitized.append(_sanitize_value(val, f"arg{i}"))
     return tuple(sanitized)
 
 
-def _sanitize_kwargs(
-    kwargs: dict[str, Any], validator: SecurityValidator
-) -> dict[str, Any]:
-    return {k: _sanitize_value(v, k, validator) for k, v in kwargs.items()}
+def _sanitize_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    return {k: _sanitize_value(v, k) for k, v in kwargs.items()}
 
 
 def wrap_callback(
     func: Callable[..., Any],
     outputs: Tuple[Output, ...],
-    validator: SecurityValidator,
 ) -> Callable[..., SafeReturn]:
     """Wrap a Dash callback with validation and error logging."""
 
@@ -49,8 +42,8 @@ def wrap_callback(
 
     async def _async_wrapper(*args: Any, **kwargs: Any) -> SafeReturn:
         try:
-            s_args = _sanitize_args(args, validator)
-            s_kwargs = _sanitize_kwargs(kwargs, validator)
+            s_args = _sanitize_args(args)
+            s_kwargs = _sanitize_kwargs(kwargs)
             return await func(*s_args, **s_kwargs)
         except Exception as exc:  # noqa: BLE001
             error_handler.handle_error(
@@ -62,8 +55,8 @@ def wrap_callback(
 
     def _sync_wrapper(*args: Any, **kwargs: Any) -> SafeReturn:
         try:
-            s_args = _sanitize_args(args, validator)
-            s_kwargs = _sanitize_kwargs(kwargs, validator)
+            s_args = _sanitize_args(args)
+            s_kwargs = _sanitize_kwargs(kwargs)
             return func(*s_args, **s_kwargs)
         except Exception as exc:  # noqa: BLE001
             error_handler.handle_error(

@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 import importlib
 import pathlib
 import sys
+import time
 import types
 
 import httpx
 import pytest
 from fastapi import Depends, FastAPI, HTTPException
 from jose import jwt
-from tests.import_helpers import safe_import, import_optional
+
+from tests.import_helpers import import_optional, safe_import
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
@@ -20,7 +24,7 @@ def load_module():
     otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
         instrument_app=lambda *a, **k: None
     )
-    safe_import('opentelemetry.instrumentation.fastapi', otel_stub)
+    safe_import("opentelemetry.instrumentation.fastapi", otel_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
 
@@ -32,20 +36,21 @@ def load_module():
             return self
 
     prom_stub.Instrumentator = lambda: DummyInstr()
-    safe_import('prometheus_fastapi_instrumentator', prom_stub)
+    safe_import("prometheus_fastapi_instrumentator", prom_stub)
 
     health_stub = types.ModuleType(
         "yosai_intel_dashboard.src.infrastructure.discovery.health_check"
     )
     health_stub.register_health_check = lambda *a, **k: None
     health_stub.setup_health_checks = lambda app: None
-    safe_import('yosai_intel_dashboard.src.infrastructure.discovery.health_check', ()
-        health_stub
+    safe_import(
+        "yosai_intel_dashboard.src.infrastructure.discovery.health_check",
+        health_stub,
     )
 
     tracing_stub = types.ModuleType("tracing")
     tracing_stub.trace_async_operation = lambda *a, **k: a[-1]
-    safe_import('tracing', tracing_stub)
+    safe_import("tracing", tracing_stub)
 
     err_pkg = types.ModuleType("error_handling")
     err_mw = types.ModuleType("error_handling.middleware")
@@ -64,8 +69,8 @@ def load_module():
     err_mw.ErrorHandlingMiddleware = DummyMW
     err_pkg.middleware = err_mw
     err_pkg.api_error_response = types.SimpleNamespace()
-    safe_import('error_handling', err_pkg)
-    safe_import('error_handling.middleware', err_mw)
+    safe_import("error_handling", err_pkg)
+    safe_import("error_handling.middleware", err_mw)
     sys.modules.setdefault(
         "error_handling.api_error_response", err_pkg.api_error_response
     )
@@ -86,24 +91,29 @@ def load_module():
             pass
 
     streaming_stub.StreamingService = DummyStreamingService
-    safe_import('services.streaming.service', streaming_stub)
-    safe_import('services.streaming', types.ModuleType("services.streaming"))
+    safe_import("services.streaming.service", streaming_stub)
+    safe_import("services.streaming", types.ModuleType("services.streaming"))
     sys.modules["services.streaming"].service = streaming_stub
 
     core_stub = types.ModuleType("core.security")
 
     class DummyLimiter:
         def is_allowed(self, *a, **k):
-            return {"allowed": True}
+            return {
+                "allowed": True,
+                "limit": 100,
+                "remaining": 99,
+                "reset": time.time() + 60,
+            }
 
     core_stub.RateLimiter = DummyLimiter
-    safe_import('core.security', core_stub)
+    safe_import("core.security", core_stub)
 
-    safe_import('aiohttp', types.ModuleType("aiohttp"))
+    safe_import("aiohttp", types.ModuleType("aiohttp"))
 
     security_stub = types.ModuleType("services.security")
     security_stub.verify_service_jwt = lambda token: {"sub": "svc"}
-    safe_import('services.security', security_stub)
+    safe_import("services.security", security_stub)
 
     sys.path.insert(0, str(SERVICES_PATH / "event-ingestion"))
     sys.modules.get("services").__path__ = [str(SERVICES_PATH)]
@@ -144,7 +154,7 @@ def load_module():
             pass
 
     service_stub.BaseService = DummyService
-    safe_import('yosai_framework.service', service_stub)
+    safe_import("yosai_framework.service", service_stub)
 
     errors_stub = types.ModuleType("yosai_framework.errors")
 
@@ -157,7 +167,7 @@ def load_module():
             return {"code": self.code, "message": self.message}
 
     errors_stub.ServiceError = ServiceError
-    safe_import('yosai_framework.errors', errors_stub)
+    safe_import("yosai_framework.errors", errors_stub)
 
     return importlib.import_module("app")
 

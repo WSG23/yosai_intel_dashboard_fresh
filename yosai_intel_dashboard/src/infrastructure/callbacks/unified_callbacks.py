@@ -18,9 +18,9 @@ from typing import (
     List,
     Optional,
     Protocol,
-    Set,
     Tuple,
     Type,
+    TypedDict,
     TypeAlias,
     TypedDict,
 )
@@ -34,7 +34,6 @@ from .events import CallbackEvent
 # ---------------------------------------------------------------------------
 # Type aliases
 # ---------------------------------------------------------------------------
-CallbackHandler: TypeAlias = Callable[..., Any]
 Outputs: TypeAlias = Output | tuple[Output, ...]
 Inputs: TypeAlias = Input | tuple[Input, ...] | None
 States: TypeAlias = State | tuple[State, ...] | None
@@ -102,27 +101,26 @@ class TrulyUnifiedCallbacks:
 
     def __init__(
         self,
-        app: Optional[Dash] = None,
+        app: Dash | None = None,
         *,
-        security_validator: Optional["SecurityValidator"] = None,
+        security_validator: SecurityValidator | None = None,
     ) -> None:
-        self.app = app
+        self.app: Dash | None = app
         if security_validator is None:
             from validation.security_validator import SecurityValidator
 
-            self.security = SecurityValidator()
-        else:
-            self.security = security_validator
+            security_validator = SecurityValidator()
+        self.security: SecurityValidator = security_validator
         self._lock: threading.RLock = threading.RLock()
-        self._event_callbacks: Dict[CallbackEvent, List[EventCallback]] = defaultdict(
+        self._event_callbacks: dict[CallbackEvent, list[EventCallback]] = defaultdict(
             list
         )
-        self._dash_callbacks: Dict[str, DashCallbackRegistration] = {}
-        self._output_map: Dict[str, str] = {}
-        self._namespaces: Dict[str, List[str]] = defaultdict(list)
-        self._groups: Dict[str, List[Operation]] = defaultdict(list)
-        self._registered_components: Set[str] = set()
-        self._event_metrics: Dict[CallbackEvent, CallbackMetrics] = defaultdict(
+        self._dash_callbacks: dict[str, DashCallbackRegistration] = {}
+        self._output_map: dict[str, str] = {}
+        self._namespaces: dict[str, list[str]] = defaultdict(list)
+        self._groups: dict[str, list[Operation]] = defaultdict(list)
+        self._registered_components: set[str] = set()
+        self._event_metrics: dict[CallbackEvent, CallbackMetrics] = defaultdict(
             lambda: CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
         )
 
@@ -348,7 +346,7 @@ class TrulyUnifiedCallbacks:
             self._event_callbacks[event].sort(key=lambda c: c.priority)
 
     # ------------------------------------------------------------------
-    def unregister_event(self, event: CallbackEvent, func: Callable[..., Any]) -> None:
+    def unregister_event(self, event: CallbackEvent, func: CallbackHandler) -> None:
         """Remove a previously registered event callback.
 
         Thread-safe via an internal ``RLock``.
@@ -432,7 +430,7 @@ class TrulyUnifiedCallbacks:
         tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
         return await asyncio.gather(*tasks) if tasks else []
 
-    def get_event_callbacks(self, event: CallbackEvent) -> List[Callable[..., Any]]:
+    def get_event_callbacks(self, event: CallbackEvent) -> List[CallbackHandler]:
         """Return registered callbacks for *event*.
 
         Thread-safe via an internal ``RLock``.
@@ -440,14 +438,14 @@ class TrulyUnifiedCallbacks:
         with self._lock:
             return [cb.func for cb in self._event_callbacks.get(event, [])]
 
-    def get_event_metrics(self, event: CallbackEvent) -> Dict[str, float | int]:
+    def get_event_metrics(self, event: CallbackEvent) -> CallbackMetrics:
         """Return execution metrics for *event*.
 
         Thread-safe via an internal ``RLock``.
         """
 
         with self._lock:
-            return self._event_metrics.get(
+            return self._event_metrics.setdefault(
                 event, CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
             )
 
@@ -612,7 +610,7 @@ class TrulyUnifiedCallbacks:
                 inputs: Iterable[Input] | Input | None = None,
                 states: Iterable[State] | State | None = None,
                 **kwargs: Any,
-            ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+            ) -> Callable[[CallbackHandler], CallbackHandler]:
                 return self._coord.handle_register(outputs, inputs, states, **kwargs)
 
         for manager_cls in manager_classes:

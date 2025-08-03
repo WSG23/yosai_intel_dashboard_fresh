@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.util
 import os
 import pathlib
@@ -6,21 +8,28 @@ import types
 from typing import Any
 
 import pandas as pd
-from tests.import_helpers import safe_import, import_optional
+
+from tests.import_helpers import import_optional, safe_import
 
 # Provide a lightweight stub for services.interfaces to avoid heavy imports
 stub_pkg = types.ModuleType("services")
 stub_interfaces = types.ModuleType("services.interfaces")
 
+safe_import("services", lambda: stub_pkg)
+
 # Load the feature flag module so adapter imports succeed
 flags_spec = importlib.util.spec_from_file_location(
     "services.feature_flags",
-    pathlib.Path(__file__).resolve().parents[1] / "services" / "feature_flags.py",
+    pathlib.Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "services"
+    / "feature_flags.py",
 )
 flags_module = importlib.util.module_from_spec(flags_spec)
 flags_spec.loader.exec_module(flags_module)
 stub_pkg.feature_flags = flags_module
-safe_import('services.feature_flags', flags_module)
+safe_import("services.feature_flags", lambda: flags_module)
 
 # Minimal registry stub
 registry_stub = types.ModuleType("services.registry")
@@ -33,7 +42,7 @@ class ServiceDiscovery:
 
 registry_stub.ServiceDiscovery = ServiceDiscovery
 stub_pkg.registry = registry_stub
-safe_import('services.registry', registry_stub)
+safe_import("services.registry", lambda: registry_stub)
 
 # Minimal resilience.circuit_breaker stub
 resilience_pkg = types.ModuleType("services.resilience")
@@ -53,8 +62,8 @@ cb_module.CircuitBreaker = CircuitBreaker
 cb_module.CircuitBreakerOpen = CircuitBreakerOpen
 resilience_pkg.circuit_breaker = cb_module
 stub_pkg.resilience = resilience_pkg
-safe_import('services.resilience', resilience_pkg)
-safe_import('services.resilience.circuit_breaker', cb_module)
+safe_import("services.resilience", lambda: resilience_pkg)
+safe_import("services.resilience.circuit_breaker", lambda: cb_module)
 
 
 class AnalyticsServiceProtocol:
@@ -62,12 +71,13 @@ class AnalyticsServiceProtocol:
 
 
 stub_interfaces.AnalyticsServiceProtocol = AnalyticsServiceProtocol
-safe_import('services', stub_pkg)
-safe_import('services.interfaces', stub_interfaces)
+safe_import("services.interfaces", lambda: stub_interfaces)
 
 spec = importlib.util.spec_from_file_location(
     "migration_adapter",
     pathlib.Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard"
+    / "src"
     / "services"
     / "migration"
     / "adapter.py",
