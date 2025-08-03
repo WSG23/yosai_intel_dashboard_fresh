@@ -1,8 +1,10 @@
+import asyncio
+import json
 import logging
 import os
 import importlib.util
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, List, Optional, Set
 
 
 # Dynamically load the redis store located beside this module
@@ -12,12 +14,7 @@ redis_store = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(redis_store)  # type: ignore[arg-type]
 RedisFeatureFlagStore = redis_store.RedisFeatureFlagStore
 
-from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
-    CircuitBreaker,
-    CircuitBreakerOpen,
-)
-from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
-from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
+import aiofiles
 
 
 logger = logging.getLogger(__name__)
@@ -110,10 +107,11 @@ class FeatureFlagManager:
                     logger.warning("Feature flag callback failed: %s", exc)
 
     # ------------------------------------------------------------------
-    def _load_cache(self) -> None:
+    async def _load_cache_async(self) -> None:
         try:
-            if self.cache_file.is_file():
-                content = self.cache_file.read_text()
+            if await asyncio.to_thread(self.cache_file.is_file):
+                async with aiofiles.open(self.cache_file, "r") as fh:
+                    content = await fh.read()
                 cached = json.loads(content)
                 self._flags = {k: bool(v) for k, v in cached.items()}
                 for name, val in self._flags.items():
@@ -122,6 +120,10 @@ class FeatureFlagManager:
                     ] = val
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("Failed to load feature flag cache: %s", exc)
+
+    def _load_cache(self) -> None:
+        """Synchronous wrapper around :meth:`_load_cache_async`."""
+        asyncio.run(self._load_cache_async())
 
     # ------------------------------------------------------------------
     async def _save_cache(self) -> None:
