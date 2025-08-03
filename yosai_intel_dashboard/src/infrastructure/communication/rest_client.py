@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 import ssl
 from typing import Any, MutableMapping
@@ -12,12 +14,12 @@ from tenacity import (
     wait_exponential,
 )
 
+from tracing import propagate_context
 from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
-
-from .protocols import ServiceClient
+from yosai_intel_dashboard.src.services.resilience.recovery import monitor_dependency
 
 
 class RestClient:
@@ -31,6 +33,7 @@ class RestClient:
         *,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
+        check_interval: float = 30.0,
         retries: int = 3,
         timeout: float = 5.0,
         mtls_cert: str | None = None,
@@ -44,6 +47,18 @@ class RestClient:
         self.retries = retries
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._ssl = self._create_ssl_context(mtls_cert, mtls_key, verify_ssl)
+        self._session = aiohttp.ClientSession(timeout=self.timeout, ssl=self._ssl)
+        self._check_interval = check_interval
+        self._monitor_task = asyncio.create_task(
+            monitor_dependency(
+                base_url,
+                self.circuit_breaker,
+                self._health_check,
+                self._reset_session,
+                interval=check_interval,
+                logger=self.log,
+            )
+        )
 
     # ------------------------------------------------------------------
     def _create_ssl_context(
@@ -61,6 +76,21 @@ class RestClient:
         return None
 
     # ------------------------------------------------------------------
+    async def _health_check(self) -> bool:
+        try:
+            async with aiohttp.ClientSession(
+                timeout=self.timeout, ssl=self._ssl
+            ) as sess:
+                async with sess.head(self.base_url) as resp:
+                    return resp.status < 500
+        except Exception:
+            return False
+
+    async def _reset_session(self) -> None:
+        await self._session.close()
+        self._session = aiohttp.ClientSession(timeout=self.timeout, ssl=self._ssl)
+
+    # ------------------------------------------------------------------
     async def request(self, method: str, path: str, **kwargs: Any) -> Any:
         """Send an HTTP request with retries and tracing."""
 
@@ -71,32 +101,35 @@ class RestClient:
 
         async def _do_request() -> Any:
             async with self.circuit_breaker:
-                async with aiohttp.ClientSession() as session:
-                    async with session.request(
-                        method,
-                        url,
-                        timeout=self.timeout,
-                        ssl=self._ssl,
-                        **kwargs,
-                    ) as resp:
-                        self.log.info("%s %s -> %s", method, url, resp.status)
-                        resp.raise_for_status()
-                        ctype = resp.headers.get("Content-Type", "")
-                        if "application/json" in ctype:
-                            return await resp.json()
-                        return await resp.text()
+                async with self._session.request(
+                    method,
+                    url,
+                    timeout=self.timeout,
+                    ssl=self._ssl,
+                    **kwargs,
+                ) as resp:
+                    self.log.info("%s %s -> %s", method, url, resp.status)
+                    resp.raise_for_status()
+                    ctype = resp.headers.get("Content-Type", "")
+                    if "application/json" in ctype:
+                        return await resp.json()
+                    return await resp.text()
+
+        async for attempt in AsyncRetrying(
+            stop=stop_after_attempt(self.retries),
+            wait=wait_exponential(),
+            retry=retry_if_exception_type(aiohttp.ClientError),
+        ):
+            with attempt:
+                return await _do_request()
+
+    # ------------------------------------------------------------------
+    async def close(self) -> None:
+        if self._monitor_task:
+            self._monitor_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._monitor_task
+        await self._session.close()
 
 
-def create_service_client(service_name: str) -> ServiceClient:
-    """Create a service client resolving *service_name* URL from env vars."""
-    env = f"{service_name.upper()}_SERVICE_URL"
-    base_url = os.getenv(env, f"http://{service_name}")
-    return AsyncRestClient(base_url)
-
-
-__all__ = [
-    "AsyncRestClient",
-    "RetryPolicy",
-    "create_service_client",
-    "CircuitBreakerOpen",
-]
+__all__ = ["RestClient", "CircuitBreakerOpen"]
