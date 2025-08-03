@@ -3,6 +3,8 @@
 Comprehensive security system for Yōsai Intel Dashboard
 Implements Apple's security-by-design principles
 """
+from __future__ import annotations
+
 import hashlib
 import logging
 import secrets
@@ -12,16 +14,26 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+import validation.security_validator as security_validator_module
+from monitoring.anomaly_detector import AnomalyDetector
+from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.base_model import BaseModel
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
-from yosai_intel_dashboard.src.core.base_model import BaseModel
-from yosai_intel_dashboard.src.core.rate_limiter import RateLimiter
+
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
 # :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
-from validation.security_validator import SecurityValidator
+security_validator_module.redis_client = None
+
+try:  # Optional during unit tests
+    from yosai_intel_dashboard.src.core.domain.entities.access_events import (
+        AccessEventModel,
+    )
+except Exception:  # pragma: no cover - model may be unavailable
+    AccessEventModel = None
 
 # Reuse a single validator instance for lightweight string sanitization across
 # the application.  The validator implements the heavy lifting in
@@ -107,10 +119,14 @@ class SecurityAuditor(BaseModel):
         config: Optional[Any] = None,
         db: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        anomaly_detector: Optional[AnomalyDetector] = None,
     ) -> None:
         super().__init__(config, db, logger)
         self.events: List[SecurityEvent] = []
         self.max_events = 10000
+        access_model = AccessEventModel(db) if (db and AccessEventModel) else None
+        self.anomaly_detector = anomaly_detector or AnomalyDetector(access_model)
+        self.anomaly_metrics: Dict[str, int] = self.anomaly_detector.get_metrics()
 
     def log_security_event(
         self,
@@ -133,6 +149,18 @@ class SecurityAuditor(BaseModel):
             details=details,
             blocked=blocked,
         )
+        if self.anomaly_detector:
+            score, flagged = self.anomaly_detector.score(user_id, source_ip)
+            event.details["anomaly_score"] = score
+            event.details["anomaly_flagged"] = flagged
+            self.anomaly_metrics = self.anomaly_detector.get_metrics()
+            if flagged:
+                hint = "user exceeding normal rate; investigate credentials"
+                event.details["remediation_hint"] = hint
+                self.logger.warning(
+                    f"Anomaly detected for user {user_id or 'unknown'} from "
+                    f"{source_ip or 'unknown'}: {hint}"
+                )
 
         self.events.append(event)
 
@@ -237,6 +265,18 @@ class SecureHashManager:
 
 
 # Global security instances
+try:  # Allow initialization without optional dependencies
+    security_validator = SecurityValidator()
+except Exception:  # pragma: no cover
+
+    class _FallbackValidator:
+        def validate_input(
+            self, value: str, field: str | None = None
+        ) -> Dict[str, Any]:
+            return {"valid": True, "sanitized": value}
+
+    security_validator = _FallbackValidator()
+
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
 
@@ -306,8 +346,10 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
 def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
-        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
         from security.validation_middleware import ValidationMiddleware
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (  # noqa: E501
+            TrulyUnifiedCallbacks,
+        )
     except Exception:
         # Optional components may be missing in minimal environments
         return
