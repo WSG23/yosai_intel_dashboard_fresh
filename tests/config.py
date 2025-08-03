@@ -112,12 +112,21 @@ def register_dependency_stubs() -> None:
     sys.modules.setdefault(
         "asyncpg", _simple_module("asyncpg", create_pool=lambda *a, **k: None)
     )
-    register_stub(
-        "httpx", _simple_module("httpx", ASGITransport=object, AsyncClient=object)
-    )
-    sys.modules.setdefault(
-        "httpx", _simple_module("httpx", ASGITransport=object, AsyncClient=object)
-    )
+    try:
+        import httpx  # noqa: F401
+    except Exception:  # pragma: no cover - fallback when httpx unavailable
+        register_stub(
+            "httpx",
+            _simple_module(
+                "httpx", ASGITransport=object, AsyncClient=object, Response=object
+            ),
+        )
+        sys.modules.setdefault(
+            "httpx",
+            _simple_module(
+                "httpx", ASGITransport=object, AsyncClient=object, Response=object
+            ),
+        )
     register_stub("structlog", _simple_module("structlog", BoundLogger=object))
     sys.modules.setdefault("structlog", _simple_module("structlog", BoundLogger=object))
     register_stub("confluent_kafka", _simple_module("confluent_kafka"))
@@ -147,7 +156,27 @@ def register_dependency_stubs() -> None:
         "dash_bootstrap_components", _simple_module("dash_bootstrap_components")
     )
 
-    _redis = _simple_module("redis")
+    class _DummyRedis:
+        @classmethod
+        def from_url(cls, url):
+            return cls()
+
+        def pipeline(self):
+            return self
+
+        def incr(self, *a, **k):
+            pass
+
+        def expire(self, *a, **k):
+            pass
+
+        def execute(self):
+            return (0, None)
+
+        def ttl(self, key):
+            return 0
+
+    _redis = _simple_module("redis", Redis=_DummyRedis)
     _redis.asyncio = _simple_module("redis.asyncio")
     register_stub("redis", _redis)
     register_stub("redis.asyncio", _redis.asyncio)
