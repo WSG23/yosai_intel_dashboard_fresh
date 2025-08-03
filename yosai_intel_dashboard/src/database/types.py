@@ -27,8 +27,13 @@ class DatabaseConnection(Protocol):
         """Execute a command (INSERT, UPDATE, DELETE)"""
         ...
 
-    def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
-        """Execute a command against multiple parameter sets"""
+    def prepare_statement(self, name: str, query: str) -> None:
+        """Prepare ``query`` under ``name`` for later execution."""
+        ...
+
+    def execute_prepared(self, name: str, params: tuple) -> DBRows:
+        """Execute a previously prepared statement."""
+
         ...
 
     def health_check(self) -> bool:
