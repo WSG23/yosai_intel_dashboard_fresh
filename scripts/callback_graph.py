@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Generate a GraphViz diagram of registered Dash callbacks."""
 
-from __future__ import annotations
-
 import os
 
 from dash import Dash
@@ -10,7 +8,6 @@ from graphviz import Digraph
 
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 from yosai_intel_dashboard.src.services.upload.callbacks import UploadCallbacks
-
 
 def load_callbacks() -> TrulyUnifiedCallbacks:
     """Create app, register callbacks and return coordinator."""
