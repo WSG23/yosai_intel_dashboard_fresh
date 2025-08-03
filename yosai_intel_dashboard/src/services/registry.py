@@ -11,6 +11,7 @@ import aiohttp
 from tracing import propagate_context
 
 from .base_database_service import BaseDatabaseService
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,8 @@ class ServiceDiscovery:
         )
         self.base_url = url.rstrip("/")
         self.session = aiohttp.ClientSession()
+        self._cache: Dict[str, str] = {}
+        self._error_handler = ErrorHandler()
 
     async def resolve_async(self, name: str) -> Optional[str]:
         """Return ``host:port`` for *name* or ``None`` if lookup fails."""
@@ -70,12 +73,18 @@ class ServiceDiscovery:
                 resp.raise_for_status()
                 data = await resp.json()
                 if not data:
-                    return None
+                    raise RuntimeError("empty response")
                 svc = data[0]["Service"]
-                return f"{svc['Address']}:{svc['Port']}"
+                addr = f"{svc['Address']}:{svc['Port']}"
+                self._cache[name] = addr
+                return addr
         except Exception as exc:  # pragma: no cover - network failures
-            logger.warning("Service discovery failed for '%s': %s", name, exc)
-            return None
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+            cached = self._cache.get(name)
+            if cached is not None:
+                return cached
+            env = os.getenv(f"{name.upper()}_SERVICE_URL")
+            return env
 
     def resolve(self, name: str) -> Optional[str]:
         """Return ``host:port`` for *name* or ``None`` if lookup fails."""
