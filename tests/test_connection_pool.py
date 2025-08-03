@@ -3,7 +3,7 @@ import importlib.util
 from pathlib import Path
 
 spec_cp = importlib.util.spec_from_file_location(
-    "connection_pool",
+    "yosai_intel_dashboard.src.infrastructure.config.connection_pool",
     Path(__file__).resolve().parents[1]
     / "yosai_intel_dashboard"
     / "src"
@@ -102,3 +102,39 @@ def test_periodic_shrink_closes_idle_connections():
     assert pool._max_size == 1
     closed = sum(not c._connected for c in (c1, c2))
     assert closed == 1
+
+
+def test_warmup_prefills_pool():
+    class WarmConn:
+        def __init__(self):
+            self.warm_calls = 0
+            self._connected = True
+
+        def execute_query(self, query, params=None):
+            self.warm_calls += 1
+            return []
+
+        def execute_command(self, command, params=None):
+            return None
+
+        def health_check(self):
+            return True
+
+        def close(self):
+            self._connected = False
+
+    def warm_factory():
+        return WarmConn()
+
+    pool = DatabaseConnectionPool(warm_factory, 1, 2, timeout=1, shrink_timeout=1)
+    conn, _ = pool._pool[0]
+    assert conn.warm_calls == 1
+
+    conn.close()
+    pool._pool.clear()
+    pool._active = 0
+
+    pool.warmup()
+    assert pool._active == 1
+    conn, _ = pool._pool[0]
+    assert conn.warm_calls == 1
