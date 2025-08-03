@@ -21,6 +21,7 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypedDict,
     TypeAlias,
 
 )
@@ -442,14 +443,14 @@ class TrulyUnifiedCallbacks:
         with self._lock:
             return [cb.func for cb in self._event_callbacks.get(event, [])]
 
-    def get_event_metrics(self, event: CallbackEvent) -> Dict[str, float | int]:
+    def get_event_metrics(self, event: CallbackEvent) -> CallbackMetrics:
         """Return execution metrics for *event*.
 
         Thread-safe via an internal ``RLock``.
         """
 
         with self._lock:
-            return self._event_metrics.get(
+            return self._event_metrics.setdefault(
                 event, CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
             )
 
