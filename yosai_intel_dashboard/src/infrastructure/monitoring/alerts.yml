@@ -23,4 +23,14 @@ groups:
         annotations:
           summary: A performance budget was exceeded
           channels: performance-alerts
+  - name: error-budgets
+    rules:
+      - alert: ErrorBudgetExhausted
+        expr: service_error_budget_remaining <= 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Service error budget exhausted
+          channels: performance-alerts
 
