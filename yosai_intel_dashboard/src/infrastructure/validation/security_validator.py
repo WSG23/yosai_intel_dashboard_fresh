@@ -5,7 +5,12 @@ import os
 import re
 from typing import Iterable
 
-from yosai_intel_dashboard.src.core.exceptions import ValidationError
+try:  # pragma: no cover - allow using the validator without full core package
+    from yosai_intel_dashboard.src.core.exceptions import ValidationError
+except Exception:  # pragma: no cover
+    class ValidationError(Exception):
+        """Fallback validation error when core package is unavailable."""
+
 # Import dynamically inside methods to avoid circular imports during module init
 
 from .core import ValidationResult
@@ -14,6 +19,8 @@ from .rules import CompositeValidator, ValidationRule
 
 
 class XSSRule(ValidationRule):
+    """Reject common cross-site scripting payloads."""
+
     PATTERN = re.compile(r"(<script|onerror=|javascript:)", re.IGNORECASE)
 
     def validate(self, data: str) -> ValidationResult:
@@ -23,6 +30,8 @@ class XSSRule(ValidationRule):
 
 
 class SQLRule(ValidationRule):
+    """Detect basic SQL injection patterns."""
+
     PATTERN = re.compile(r"drop\s+table|delete\s+from|--", re.IGNORECASE)
 
     def validate(self, data: str) -> ValidationResult:
@@ -31,11 +40,53 @@ class SQLRule(ValidationRule):
         return ValidationResult(True, data)
 
 
+class InsecureDeserializationRule(ValidationRule):
+    """Identify inputs that attempt unsafe object deserialization."""
+
+    PATTERN = re.compile(r"(pickle\.loads|yaml\.load|!!python/object)", re.IGNORECASE)
+
+    def validate(self, data: str) -> ValidationResult:
+        if self.PATTERN.search(data):
+            return ValidationResult(False, data, ["insecure_deserialization"])
+        return ValidationResult(True, data)
+
+
+class SSRFRule(ValidationRule):
+    """Block URLs targeting internal services or local files."""
+
+    LOCAL_PATTERN = re.compile(
+        r"(?i)^(?:https?|ftp)://"
+        r"(?:localhost|127\.0\.0\.1|169\.254\.169\.254|0\.0\.0\.0|"
+        r"10\.|172\.(?:1[6-9]|2\d|3[0-1])|192\.168\.)"
+    )
+    SCHEME_PATTERN = re.compile(r"(?i)^(?:file|gopher|dict|smb)://")
+
+    def validate(self, data: str) -> ValidationResult:
+        if self.LOCAL_PATTERN.search(data) or self.SCHEME_PATTERN.search(data):
+            return ValidationResult(False, data, ["ssrf"])
+        return ValidationResult(True, data)
+
+
 class SecurityValidator(CompositeValidator):
-    """Validate input strings and file uploads."""
+    """Validate input strings and file uploads against common OWASP risks.
+
+    The validator combines multiple rules:
+    - ``XSSRule`` for cross-site scripting.
+    - ``SQLRule`` for SQL injection.
+    - ``InsecureDeserializationRule`` for unsafe object deserialization.
+    - ``SSRFRule`` for server-side request forgery.
+    """
 
     def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
-        base_rules = list(rules or [XSSRule(), SQLRule()])
+        base_rules = list(
+            rules
+            or [
+                XSSRule(),
+                SQLRule(),
+                InsecureDeserializationRule(),
+                SSRFRule(),
+            ]
+        )
         super().__init__(base_rules)
         self.file_validator = FileValidator()
 
@@ -83,5 +134,7 @@ __all__ = [
     "SecurityValidator",
     "XSSRule",
     "SQLRule",
+    "InsecureDeserializationRule",
+    "SSRFRule",
     "FileValidator",
 ]
