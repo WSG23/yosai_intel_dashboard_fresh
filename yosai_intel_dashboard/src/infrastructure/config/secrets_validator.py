@@ -110,7 +110,17 @@ class SecretsValidator:
                 issues.append("Secret uses forbidden prefix")
                 return
 
-    def validate_secret(self, secret: str) -> SecretValidationResult:
+    def validate_secret(
+        self, secret: str
+    ) -> tuple[SecretValidationResult, Optional[str]]:
+        """Validate ``secret`` and return the result and any generated secret.
+
+        In development environments an insecure secret will be replaced with a
+        newly generated value.  The caller may retrieve this value from the
+        second element of the returned tuple.  For all other environments the
+        second element will be ``None``.
+        """
+
         issues: List[str] = []
         secret_bytes = bytearray(secret.encode())
 
@@ -121,11 +131,13 @@ class SecretsValidator:
         recommendations = ["Rotate secret regularly"]
         severity = "info"
         is_valid = not issues
+        generated: Optional[str] = None
 
         if not is_valid:
             severity = "high" if self.environment == "production" else "medium"
             if self.environment == "development":
-                secret = self._generate_secret()
+                generated = self._generate_secret()
+                secret = generated
                 is_valid = True
                 recommendations.append("Auto-generated development secret")
                 issues.clear()
@@ -135,7 +147,8 @@ class SecretsValidator:
 
         for i in range(len(secret_bytes)):
             secret_bytes[i] = 0
-        return SecretValidationResult(is_valid, issues, severity, recommendations)
+        result = SecretValidationResult(is_valid, issues, severity, recommendations)
+        return result, generated
 
     def validate_production_secrets(
         self, source: Optional[SecretSource] = None
