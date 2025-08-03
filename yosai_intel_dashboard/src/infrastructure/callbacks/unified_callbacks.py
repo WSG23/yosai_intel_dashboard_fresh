@@ -21,13 +21,14 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TypedDict,
 )
 
 from dash import Dash
 from dash.dependencies import Input, Output, State
 
-from .events import CallbackEvent
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
+from .events import CallbackEvent
 
 logger = logging.getLogger(__name__)
 
@@ -71,10 +72,20 @@ class DashCallbackRegistration:
     states: Tuple[State, ...]
 
 
+class CallbackMetrics(TypedDict):
+    """Execution metrics for a callback event."""
+
+    calls: int
+    exceptions: int
+    total_time: float
+
+
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from validation.security_validator import SecurityValidator
 
-    from ...core.plugins.callback_unifier import CallbackUnifier  # noqa: F401
+    from ...core.plugins.callback_unifier import (  # noqa: F401
+        CallbackUnifier as _CallbackUnifier,
+    )
 
 
 class TrulyUnifiedCallbacks:
@@ -102,8 +113,8 @@ class TrulyUnifiedCallbacks:
         self._namespaces: Dict[str, List[str]] = defaultdict(list)
         self._groups: Dict[str, List[Operation]] = defaultdict(list)
         self._registered_components: Set[str] = set()
-        self._event_metrics: Dict[CallbackEvent, Dict[str, float | int]] = defaultdict(
-            lambda: {"calls": 0, "exceptions": 0, "total_time": 0.0}
+        self._event_metrics: Dict[CallbackEvent, CallbackMetrics] = defaultdict(
+            lambda: CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
         )
 
     # ------------------------------------------------------------------
@@ -390,10 +401,12 @@ class TrulyUnifiedCallbacks:
         with self._lock:
             return [cb.func for cb in self._event_callbacks.get(event, [])]
 
-    def get_event_metrics(self, event: CallbackEvent) -> Dict[str, float | int]:
+    def get_event_metrics(self, event: CallbackEvent) -> CallbackMetrics:
         """Return execution metrics for *event*."""
         with self._lock:
-            return dict(self._event_metrics.get(event, {}))
+            return self._event_metrics.get(
+                event, CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
+            )
 
     # Operation groups --------------------------------------------------
     def register_operation(
@@ -500,7 +513,7 @@ class TrulyUnifiedCallbacks:
 
         if controller is None:
             try:
-                from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import (
+                from ...services.upload.controllers.upload_controller import (
                     UnifiedUploadController,
                 )
             except Exception as exc:  # pragma: no cover - import errors logged
