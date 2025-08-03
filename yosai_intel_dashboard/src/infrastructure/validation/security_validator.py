@@ -1,10 +1,28 @@
 from __future__ import annotations
 
+"""Security validation utilities.
+
+This module exposes :class:`SecurityValidator` which can optionally incorporate
+an anomaly detection model such as scikit-learn's ``IsolationForest``. The model
+must implement a ``predict`` method returning ``1`` for normal inputs and ``-1``
+for anomalies.
+
+Example
+-------
+>>> from sklearn.ensemble import IsolationForest
+>>> from validation.security_validator import SecurityValidator
+>>> model = IsolationForest().fit([[1], [2], [3]])
+>>> validator = SecurityValidator(anomaly_model=model)
+>>> validator.validate_input("hello")  # doctest: +SKIP
+{"valid": True, "sanitized": "hello"}
+"""
+
 import html
 import json
 import os
 import re
-from typing import Callable, Iterable, Mapping
+from typing import Any, Iterable
+
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
@@ -55,31 +73,28 @@ class SQLRule(ValidationRule):
 class SecurityValidator(CompositeValidator):
     """Validate input strings and file uploads."""
 
-    def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
+    def __init__(
+        self,
+        rules: Iterable[ValidationRule] | None = None,
+        anomaly_model: Any | None = None,
+    ) -> None:
         base_rules = list(rules or [XSSRule(), SQLRule()])
         super().__init__(base_rules)
         self.file_validator = FileValidator()
-        self._type_validators: Mapping[str, Callable[[str], ValidationResult]] = {
-            "sql": _regex_validator(SQLRule.PATTERN, "sql_injection"),
-            "nosql": _regex_validator(
-                re.compile(r"\$(where|gt|lt|ne|eq|or)", re.IGNORECASE),
-                "nosql_injection",
-            ),
-            "ldap": _regex_validator(
-                re.compile(r"[\*\(\)\|&]", re.IGNORECASE),
-                "ldap_injection",
-            ),
-            "xpath": _regex_validator(
-                re.compile(r"[\"']\s*or\s*[\"']1\s*=\s*[\"']1", re.IGNORECASE),
-                "xpath_injection",
-            ),
-            "command": _regex_validator(
-                re.compile(r"[;&|`]"),
-                "command_injection",
-            ),
-            "html": lambda v: ValidationResult(True, html.escape(v)),
-            "json": _json_validator,
-        }
+        self.anomaly_model = anomaly_model
+
+    def _anomaly_check(self, value: str, field_name: str) -> None:
+        """Score ``value`` with ``anomaly_model`` if provided."""
+
+        if not self.anomaly_model:
+            return
+        try:
+            prediction = self.anomaly_model.predict([[len(value)]])
+        except Exception as exc:  # pragma: no cover - defensive
+            raise ValidationError("Anomaly check failed") from exc
+        if prediction[0] == -1:
+            raise ValidationError(f"Anomalous input detected in {field_name}")
+
 
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
@@ -108,16 +123,9 @@ class SecurityValidator(CompositeValidator):
 
         return {"valid": not issues, "issues": issues, "filename": sanitized}
 
-    def validate_input(
-        self, value: str, field_name: str = "input", *, input_type: str | None = None
-    ) -> dict:
-        if input_type:
-            validator = self._type_validators.get(input_type)
-            if validator:
-                specialized = validator(value)
-                if not specialized.valid:
-                    raise ValidationError("; ".join(specialized.issues or []))
-                value = specialized.sanitized or value
+    def validate_input(self, value: str, field_name: str = "input") -> dict:
+        self._anomaly_check(value, field_name)
+
         result = self.validate(value)
         if not result.valid:
             raise ValidationError("; ".join(result.issues or []))
