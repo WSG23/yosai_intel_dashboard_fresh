@@ -1,5 +1,6 @@
 from src.repository import InMemoryMetricsRepository
 from src.websocket.metrics_provider import MetricsProvider
+from src.common.config import ConfigService
 
 
 class DummyBus:

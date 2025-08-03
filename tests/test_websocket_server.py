@@ -10,6 +10,7 @@ from pathlib import Path
 import threading
 
 from src.websocket import metrics as websocket_metrics
+from src.common.config import ConfigService
 
 
 def _load_server():
@@ -93,7 +94,12 @@ def _create_server(event_bus: DummyBus) -> AnalyticsWebSocketServer:
     # avoid starting actual websocket server
     original = AnalyticsWebSocketServer._run
     AnalyticsWebSocketServer._run = lambda self: None  # type: ignore
-    server = AnalyticsWebSocketServer(event_bus, ping_interval=0.01, ping_timeout=0.01)
+    cfg = ConfigService({
+        'metrics_interval': 0.01,
+        'ping_interval': 0.01,
+        'ping_timeout': 0.01,
+    })
+    server = AnalyticsWebSocketServer(event_bus, config=cfg)
     AnalyticsWebSocketServer._run = original
     return server
 
