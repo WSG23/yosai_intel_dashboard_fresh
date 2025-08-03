@@ -35,6 +35,17 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
 )
 from shared.errors.types import ErrorCode, ErrorResponse
 
+from yosai_intel_dashboard.src.services.intel_analysis_service.core import (
+    AccessRecord,
+    Interaction,
+    TrustLink,
+    cluster_users_by_coaccess,
+    detect_behavioral_deviations,
+    detect_power_structures,
+    find_unusual_collaborations,
+    propagate_risk,
+)
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -145,6 +156,28 @@ class ReportRequest(BaseModel):
     params: dict[str, Any] | None = None
 
 
+class SocialNetworkRequest(BaseModel):
+    """Interaction data for social network analysis."""
+
+    interactions: list[Interaction]
+    min_occurrences: int = 3
+
+
+class AccessLogRequest(BaseModel):
+    """Access log for behavioural clique analysis."""
+
+    records: list[AccessRecord]
+
+
+class RiskPropagationRequest(BaseModel):
+    """Parameters for risk propagation analysis."""
+
+    base_risks: Dict[str, float]
+    links: list[TrustLink]
+    iterations: int = 1
+    decay: float = 0.5
+
+
 @app.get("/api/v1/analytics/patterns", responses=ERROR_RESPONSES)
 async def get_patterns_analysis(
     query: AnalyticsQuery = Depends(),
@@ -240,6 +273,48 @@ async def generate_report(
         )
 
     return JSONResponse(content=report)
+
+
+@app.post("/api/v1/investigate/social-network", responses=ERROR_RESPONSES)
+async def investigate_social_network(req: SocialNetworkRequest) -> JSONResponse:
+    """Analyse interactions to uncover power structures and unusual links."""
+
+    power = detect_power_structures(req.interactions)
+    unusual = find_unusual_collaborations(
+        req.interactions, min_occurrences=req.min_occurrences
+    )
+    return JSONResponse(
+        content={"power": power, "unusual": [list(p) for p in unusual]}
+    )
+
+
+@app.post("/api/v1/investigate/cliques", responses=ERROR_RESPONSES)
+async def investigate_cliques(req: AccessLogRequest) -> JSONResponse:
+    """Cluster users by co-access patterns and flag deviations."""
+
+    clusters = cluster_users_by_coaccess(req.records)
+    deviations = detect_behavioral_deviations(req.records, clusters)
+    clusters_serialisable = {"|".join(sorted(k)): sorted(v) for k, v in clusters.items()}
+    deviations_serialisable = {user: sorted(res) for user, res in deviations.items()}
+    return JSONResponse(
+        content={
+            "clusters": clusters_serialisable,
+            "deviations": deviations_serialisable,
+        }
+    )
+
+
+@app.post("/api/v1/investigate/risk", responses=ERROR_RESPONSES)
+async def investigate_risk(req: RiskPropagationRequest) -> JSONResponse:
+    """Propagate risk scores through a trust network."""
+
+    risks = propagate_risk(
+        req.base_risks,
+        req.links,
+        iterations=req.iterations,
+        decay=req.decay,
+    )
+    return JSONResponse(content={"risks": risks})
 
 
 # ---------------------------------------------------------------------------

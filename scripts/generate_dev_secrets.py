@@ -3,11 +3,11 @@
 
 Writes the values to an env file rather than printing them to stdout.
 """
+
 import argparse
 import logging
 import secrets
 from pathlib import Path
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate development secrets")
