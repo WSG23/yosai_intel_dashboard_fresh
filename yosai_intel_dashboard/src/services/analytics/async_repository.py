@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from yosai_intel_dashboard.src.database.async_engine_factory import build_async_engine
 from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.services.timescale.models import AccessEvent, Base
 
 # ---------------------------------------------------------------------------
@@ -16,6 +17,7 @@ from yosai_intel_dashboard.src.services.timescale.models import AccessEvent, Bas
 # ---------------------------------------------------------------------------
 _db_cfg = get_database_config()
 engine: AsyncEngine = build_async_engine(_db_cfg)
+
 
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 

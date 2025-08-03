@@ -42,6 +42,7 @@ def to_dataclasses(cfg: config_pb2.YosaiConfig) -> Config:
         async_pool_max_size=cfg.database.async_pool_max_size,
         async_connection_timeout=cfg.database.async_connection_timeout,
         shrink_timeout=cfg.database.shrink_timeout,
+        shrink_interval=getattr(cfg.database, "shrink_interval", 0),
         use_intelligent_pool=cfg.database.use_intelligent_pool,
     )
     sec = SecurityConfig(

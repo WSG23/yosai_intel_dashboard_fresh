@@ -134,12 +134,9 @@ def register_builtin_services() -> None:
     register_service("AccessEventModel", "models.base:AccessEventModel")
     register_service("AnomalyDetectionModel", "models.base:AnomalyDetectionModel")
     register_service("ModelFactory", "models.base:ModelFactory")
-    register_service("DatabaseManager", "config.database_manager:DatabaseManager")
-    register_service("DatabaseConnection", "config.database_manager:DatabaseConnection")
-    register_service("MockConnection", "config.database_manager:MockConnection")
     register_service(
-        "EnhancedPostgreSQLManager",
-        "config.database_manager:EnhancedPostgreSQLManager",
+        "DatabaseConnectionFactory",
+        "config.database_manager:DatabaseConnectionFactory",
     )
 
 

@@ -15,14 +15,13 @@ from .config_transformer import ConfigTransformer
 from .config_validator import ConfigValidator, ValidationResult
 from .environment import get_environment
 from .generated.protobuf.config.schema import config_pb2
-from .hierarchical_loader import HierarchicalLoader
 from .proto_adapter import to_dataclasses
 from .protocols import (
     ConfigLoaderProtocol,
     ConfigTransformerProtocol,
     ConfigValidatorProtocol,
 )
-from .pydantic_models import ConfigModel
+from .pydantic_models import ConfigModel, DatabaseConnectionFactoryConfig
 from .schema import (
     AnalyticsSettings,
     AppSettings,
@@ -52,23 +51,40 @@ class ConfigManager(ConfigurationProtocol):
         self.transformer: ConfigTransformerProtocol = transformer or ConfigTransformer()
         self.config: ConfigSchema = ConfigSchema()
         self.validation: ValidationResult | None = None
+        self.db_connection_factory_config: DatabaseConnectionFactoryConfig = (
+            DatabaseConnectionFactoryConfig()
+        )
         self.reload_config()
 
     def reload_config(self) -> None:
         """Reload configuration from source."""
         data = self.loader.load(self.config_path)
+        raw_data: Dict[str, Any] = {}
         if isinstance(data, config_pb2.YosaiConfig):
             cfg = to_dataclasses(data)
         elif isinstance(data, dict):
+            raw_data = data
             cfg = self.validator.validate(data)
         elif is_dataclass(data):
             cfg = data
+            raw_data = asdict(data)
         else:
             cfg = Config()
         cfg.environment = get_environment()
         self.transformer.transform(cfg)
+
+        factory_data = raw_data.get("database_connection_factory", {})
+        self.db_connection_factory_config = (
+            DatabaseConnectionFactoryConfig.model_validate(factory_data)
+        )
+
+        validation_data = asdict(cfg)
+        validation_data["database_connection_factory"] = (
+            self.db_connection_factory_config.model_dump()
+        )
+
         try:
-            ConfigModel.model_validate(asdict(cfg))
+            ConfigModel.model_validate(validation_data)
         except ValidationError as exc:
             raise ConfigurationError(f"Invalid configuration: {exc}") from exc
 
@@ -106,6 +122,10 @@ class ConfigManager(ConfigurationProtocol):
     def get_secret_validation_config(self) -> SecretValidationSettings:
         """Get secret validation configuration."""
         return self.config.secret_validation
+
+    def get_database_connection_factory_config(self) -> DatabaseConnectionFactoryConfig:
+        """Get database connection factory configuration."""
+        return self.db_connection_factory_config
 
     def get_plugin_config(self, name: str) -> Dict[str, Any]:
         """Get configuration for a specific plugin."""

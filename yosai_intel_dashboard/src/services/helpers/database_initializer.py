@@ -2,7 +2,10 @@ import logging
 from typing import Any, Optional, Tuple
 
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import DatabaseError
-from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, DatabaseSettings
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+    DatabaseConnectionFactory,
+    DatabaseSettings,
+)
 from yosai_intel_dashboard.src.services.db_analytics_helper import DatabaseAnalyticsHelper
 from yosai_intel_dashboard.src.services.summary_reporter import SummaryReporter
 
@@ -15,12 +18,12 @@ def initialize_database(
     settings: DatabaseSettings | None = None,
     settings_provider: callable | None = None,
 ) -> Tuple[Optional[Any], DatabaseAnalyticsHelper, SummaryReporter]:
-    """Return initialized database manager and helpers."""
+    """Return initialized database connection and helpers."""
     try:
         if database is not None:
-            database_manager = database
+            db_connection = database
             return (
-                database_manager,
+                db_connection,
                 DatabaseAnalyticsHelper(database),
                 SummaryReporter(database),
             )
@@ -31,12 +34,13 @@ def initialize_database(
             else:
                 settings = DatabaseSettings()
 
-        database_manager = DatabaseManager(settings)
-        logger.info("Database manager initialized")
+        factory = DatabaseConnectionFactory(settings)
+        db_connection = factory.create()
+        logger.info("Database connection initialized")
         return (
-            database_manager,
-            DatabaseAnalyticsHelper(database_manager),
-            SummaryReporter(database_manager),
+            db_connection,
+            DatabaseAnalyticsHelper(db_connection),
+            SummaryReporter(db_connection),
         )
     except (ImportError, DatabaseError) as exc:
         logger.warning("Database initialization failed: %s", exc)

@@ -6,3 +6,7 @@
   deprecated_since: 1.5.0
   removal_version: 2.1.0
   migration_path: docs/migration/new-dashboard.md
+- component: database-manager
+  deprecated_since: 2.4.0
+  removal_version: 3.0.0
+  migration_path: docs/migration/database_manager_to_factory.md

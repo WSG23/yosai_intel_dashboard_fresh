@@ -3,7 +3,9 @@ from __future__ import annotations
 """Helpers for analyzing and creating database indexes."""
 
 import logging
-from typing import Any, Dict, List, Sequence
+from typing import Any, List, Sequence
+
+from database.types import DBRows
 
 from .connection import create_database_connection
 from .secure_exec import execute_query
@@ -18,7 +20,7 @@ class IndexOptimizer:
         self.connection = connection or create_database_connection()
 
     # ------------------------------------------------------------------
-    def analyze_index_usage(self) -> List[Dict[str, Any]]:
+    def analyze_index_usage(self) -> DBRows:
         """Return index usage statistics for supported databases."""
         try:
             conn = self.connection
@@ -45,10 +47,10 @@ class IndexOptimizer:
             index_name = f"idx_{table}_{'_'.join(columns)}"
             existing: List[str] = []
             if conn_name == "SQLiteConnection":
-                rows = execute_query(conn, "PRAGMA index_list(?)", (table,))
+                rows: DBRows = execute_query(conn, "PRAGMA index_list(?)", (table,))
                 existing = [row.get("name") for row in rows]
             elif conn_name == "PostgreSQLConnection":
-                rows = execute_query(
+                rows: DBRows = execute_query(
                     conn,
                     "SELECT indexname FROM pg_indexes WHERE tablename=%s",
                     (table,),
