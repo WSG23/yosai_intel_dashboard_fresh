@@ -4,6 +4,8 @@ import time
 import types
 from pathlib import Path
 
+from src.common.config import ConfigService
+
 
 def _load_provider():
     pkg_names = [
@@ -54,7 +56,12 @@ def test_websocket_data_provider_publishes():
     bus = DummyBus()
     events = []
     bus.subscribe("analytics_update", lambda d: events.append(d))
-    provider = Provider(bus, interval=0.01)
+    cfg = ConfigService({
+        'metrics_interval': 0.01,
+        'ping_interval': 0.01,
+        'ping_timeout': 0.01,
+    })
+    provider = Provider(bus, config=cfg)
     time.sleep(0.05)
     provider.stop()
     assert events

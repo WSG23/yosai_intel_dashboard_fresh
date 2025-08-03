@@ -4,6 +4,9 @@ from __future__ import annotations
 import threading
 from typing import Any, Dict, Protocol
 
+from src.common.base import BaseComponent
+from src.common.config import ConfigProvider
+
 
 class EventBusProtocol(Protocol):
     def publish(self, event_type: str, data: Dict[str, Any]) -> None: ...
@@ -18,12 +21,19 @@ def generate_sample_metrics() -> Dict[str, Any]:
     }
 
 
-class MetricsProvider:
+class MetricsProvider(BaseComponent):
     """Publish metrics updates to an event bus periodically."""
 
-    def __init__(self, event_bus: EventBusProtocol, interval: float = 1.0) -> None:
+    def __init__(
+        self,
+        event_bus: EventBusProtocol,
+        config: ConfigProvider | None = None,
+        interval: float | None = None,
+    ) -> None:
+        super().__init__(config)
         self.event_bus = event_bus
-        self.interval = interval
+        # allow explicit override but fall back to configured interval
+        self.interval = interval if interval is not None else self.config.metrics_interval
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()

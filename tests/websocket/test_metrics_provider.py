@@ -1,6 +1,7 @@
 import time
 
 from src.websocket.metrics_provider import MetricsProvider
+from src.common.config import ConfigService
 
 
 class DummyBus:
@@ -19,7 +20,12 @@ def test_metrics_provider_publishes_updates():
     bus = DummyBus()
     events = []
     bus.subscribe('metrics_update', lambda data: events.append(data))
-    provider = MetricsProvider(bus, interval=0.01)
+    cfg = ConfigService({
+        'metrics_interval': 0.01,
+        'ping_interval': 0.01,
+        'ping_timeout': 0.01,
+    })
+    provider = MetricsProvider(bus, config=cfg)
     time.sleep(0.05)
     provider.stop()
     assert events
