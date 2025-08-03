@@ -23,7 +23,6 @@ from typing import (
     TypedDict,
     TypeAlias,
     TypedDict,
-
 )
 
 from dash import Dash
@@ -43,11 +42,10 @@ States: TypeAlias = State | tuple[State, ...] | None
 logger = logging.getLogger(__name__)
 
 
-class CallbackHandler(Protocol):
+class CallbackHandler(Protocol):  # noqa: F811
     """Protocol for synchronous or asynchronous callback handlers."""
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any | Awaitable[Any]:
-        ...
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | Awaitable[Any]: ...
 
 
 @dataclass
@@ -153,7 +151,6 @@ class TrulyUnifiedCallbacks:
 
         Thread-safe via an internal ``RLock``.
         """
-
 
         if self.app is None:
             raise RuntimeError("Dash app not configured for TrulyUnifiedCallbacks")
