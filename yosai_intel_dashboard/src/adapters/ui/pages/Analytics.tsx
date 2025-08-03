@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useAnalyticsStore } from '../state/store';
 import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
+import RiskDashboard from '../components/security/RiskDashboard';
 import { api } from '../api/client';
 import './Analytics.css';
 
@@ -29,6 +30,16 @@ const Analytics: React.FC = () => {
   const { analyticsCache, setAnalytics } = useAnalyticsStore();
   const [sourceType, setSourceType] = useState('all');
   const analyticsData = analyticsCache[sourceType] || null;
+
+  const riskData = {
+    score: 72,
+    history: [55, 60, 58, 65, 70, 72],
+    factors: [
+      { name: 'Malware', value: 80, benchmark: 60 },
+      { name: 'Phishing', value: 65, benchmark: 50 },
+      { name: 'Vulnerabilities', value: 55, benchmark: 45 },
+    ],
+  };
 
   useEffect(() => {
     if (analyticsData) {
@@ -98,8 +109,8 @@ const Analytics: React.FC = () => {
       <div className="analytics-header">
         <h1>Security Analytics</h1>
         <div className="header-actions">
-          <select 
-            value={sourceType} 
+          <select
+            value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             className="source-select"
           >
@@ -114,6 +125,12 @@ const Analytics: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <RiskDashboard
+        score={riskData.score}
+        history={riskData.history}
+        factors={riskData.factors}
+      />
 
       {analyticsData && (
         <>

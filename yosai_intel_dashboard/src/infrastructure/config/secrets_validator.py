@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .secure_config_manager import SecureConfigManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -163,8 +165,21 @@ class SecretsValidator:
         source = source or EnvSecretSource()
         missing: List[str] = []
         secrets: Dict[str, str] = {}
+        manager: SecureConfigManager | None = None
         for key in self.REQUIRED_PRODUCTION_SECRETS:
             value = source.get_secret(key)
+            if isinstance(value, str) and (
+                value.startswith("vault:") or value.startswith("aws-secrets:")
+            ):
+                if manager is None:
+                    manager = SecureConfigManager.__new__(SecureConfigManager)
+                    manager.client = None  # type: ignore[attr-defined]
+                    manager.aws_client = None  # type: ignore[attr-defined]
+                    manager.fernet = None  # type: ignore[attr-defined]
+                try:
+                    value = manager._resolve_secret_values(value)  # type: ignore[assignment]
+                except Exception:
+                    value = None
             if not value or len(value) < 32 or value.startswith("test-"):
                 missing.append(key)
             else:
