@@ -311,6 +311,14 @@ class ThreadSafeDatabaseManager(DatabaseManager):
             if self._pool:
                 self._pool.release_connection(conn)
 
+    def close(self) -> None:  # type: ignore[override]
+        """Close all pooled connections."""
+        with self._lock:
+            if self._pool:
+                self._pool.close_all()
+                self._pool = None
+        super().close()
+
 
 # Factory function
 def create_database_manager(config: DatabaseSettings) -> DatabaseManager:
@@ -403,3 +411,8 @@ class EnhancedPostgreSQLManager(DatabaseManager):
                 self.pool.release_connection(conn)
 
         return self.retry_manager.run_with_retry(run)
+
+    def close(self) -> None:  # type: ignore[override]
+        """Close all pool connections."""
+        self.pool.close_all()
+        super().close()
