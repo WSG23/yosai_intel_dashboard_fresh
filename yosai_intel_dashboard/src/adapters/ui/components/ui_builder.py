@@ -7,14 +7,18 @@ import dash.html as html
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from .file_preview import create_file_preview_ui
 from yosai_intel_dashboard.src.file_processing import create_file_preview
+
+from .file_preview import create_file_preview_ui
 
 logger = logging.getLogger(__name__)
 
 
 class UploadUIBuilder:
-    """Create UI elements for the upload workflow."""
+    """Create UI elements for the upload workflow.
+
+    Composes BaseComponent derivatives; see ADR-0001 for rationale.
+    """
 
     def build_success_alert(
         self,

@@ -1,8 +1,13 @@
-"""Repository interfaces for data access layer"""
+"""Repository interfaces for data access layer.
+
+See ADR-0004 for repository pattern rationale.
+"""
+
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from yosai_intel_dashboard.src.core.domain.entities import AccessEvent, Door, Person
 
