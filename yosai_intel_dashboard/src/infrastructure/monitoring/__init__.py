@@ -29,11 +29,9 @@ __all__ = [
     "InferenceDriftJob",
     "request_duration",
     "ABTest",
-    "flag_evaluations",
-    "variant_hits",
-    "cache_refreshes",
-    "flag_fallbacks",
-    "missing_dependencies",
+    "circuit_breaker_state",
+    "start_metrics_server",
+
 ]
 
 
@@ -128,19 +126,11 @@ def __getattr__(name: str):
         from .ab_testing import ABTest
 
         return ABTest
-    if name in {
-        "flag_evaluations",
-        "variant_hits",
-        "cache_refreshes",
-        "flag_fallbacks",
-        "missing_dependencies",
-    }:
-        from .flag_metrics import (  # noqa: F401
-            cache_refreshes,
-            flag_evaluations,
-            flag_fallbacks,
-            missing_dependencies,
-            variant_hits,
+    if name in {"circuit_breaker_state", "start_metrics_server"}:
+        from yosai_intel_dashboard.src.services.resilience.metrics import (
+            circuit_breaker_state,
+            start_metrics_server,
+
         )
 
         return locals()[name]

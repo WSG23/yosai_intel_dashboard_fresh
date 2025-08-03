@@ -12,11 +12,12 @@ from typing import Any, Callable, Dict, List, Optional
 import aiofiles
 import aiohttp
 
-try:  # pragma: no cover - optional dependency
-    import redis.asyncio as redis
-except Exception:  # pragma: no cover - fallback if redis not installed
-    redis = None  # type: ignore
-
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
+from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
+from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
 
 
 logger = logging.getLogger(__name__)
@@ -74,9 +75,10 @@ class FeatureFlagManager:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._last_mtime: float | None = None
-        self._fallback_mode = False
-        self._warned_fallback = False
-        self._redis: redis.Redis | None = None
+        self._circuit_breaker = CircuitBreaker(5, 30, name="feature_flags")
+        self._error_handler = ErrorHandler()
+        asyncio.run(self.load_flags())
+
 
         # Load cached flags before attempting any remote fetches
         self._load_cache()
@@ -102,10 +104,15 @@ class FeatureFlagManager:
             self.source.startswith("http://") or self.source.startswith("https://")
         ):
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(self.source, timeout=2) as resp:
-                        resp.raise_for_status()
-                        data = await resp.json()
+                async with self._circuit_breaker:
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(self.source, timeout=2) as resp:
+                            resp.raise_for_status()
+                            data = await resp.json()
+            except CircuitBreakerOpen as exc:  # pragma: no cover - circuit open
+                self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+                return
+
             except Exception as exc:  # pragma: no cover - network failures
                 logger.warning("Failed to fetch flags from %s: %s", self.source, exc)
                 return self._flags.copy()
