@@ -1,6 +1,4 @@
-"""Common utilities for the simplified dashboard package."""
+"""Common utilities package."""
 
-from .events import EventBus, EventPublisher
-
-__all__ = ["EventBus", "EventPublisher"]
+__all__ = []
 

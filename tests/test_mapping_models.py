@@ -1,11 +1,9 @@
-import tempfile
-
 import pandas as pd
 import yaml
 
 from yosai_intel_dashboard.src.core.performance import PerformanceMonitor
-from yosai_intel_dashboard.src.services.mapping.models import RuleBasedModel, load_model
-from yosai_intel_dashboard.src.services.mapping.models.base import MappingModel
+from yosai_intel_dashboard.src.mapping.models import RuleBasedModel, load_model
+from yosai_intel_dashboard.src.mapping.models.base import MappingModel
 
 
 def test_load_model_from_yaml(tmp_path):

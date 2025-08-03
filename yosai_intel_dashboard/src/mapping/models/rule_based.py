@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
+import pandas as pd
 import yaml
+
+from .base import MappingModel
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
@@ -23,14 +26,11 @@ def load_rules(data_dir: Path = DATA_DIR) -> ColumnRules:
         japanese = yaml.safe_load(f) or {}
     return ColumnRules(english=english, japanese=japanese)
 
-from typing import Any
-import pandas as pd
-
-from .base import MappingModel
-
 
 class RuleBasedModel(MappingModel):
     """Simple mapping model using explicit column mappings."""
+
+    registry_name = "rule_based"
 
     def __init__(self, mappings: Dict[str, str]) -> None:
         super().__init__()
