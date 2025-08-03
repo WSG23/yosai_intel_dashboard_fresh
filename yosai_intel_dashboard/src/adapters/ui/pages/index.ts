@@ -5,3 +5,4 @@ export { default as Export } from './Export';
 export { default as Settings } from './Settings';
 export { default as RealTimeAnalyticsPage } from './RealTimeAnalyticsPage';
 export { default as RealTimeMonitoring } from './RealTimeMonitoring';
+export { default as DashboardBuilder } from './DashboardBuilder';

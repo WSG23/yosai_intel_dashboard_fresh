@@ -6,6 +6,7 @@ const Analytics = React.lazy(() => import('./pages/Analytics'));
 const Graphs = React.lazy(() => import('./pages/Graphs'));
 const Export = React.lazy(() => import('./pages/Export'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const DashboardBuilder = React.lazy(() => import('./pages/DashboardBuilder'));
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
@@ -28,6 +29,7 @@ if (rootEl) {
               <Route path="/graphs" element={<Graphs />} />
               <Route path="/export" element={<Export />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/builder" element={<DashboardBuilder />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

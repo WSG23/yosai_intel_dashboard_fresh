@@ -9,7 +9,8 @@ import {
   Settings,
   Database,
   Shield,
-  Activity
+  Activity,
+  LayoutDashboard
 } from 'lucide-react';
 
 // Navigation items configuration
@@ -43,6 +44,12 @@ const navigationItems = [
     href: '/settings',
     icon: Settings,
     description: 'Application settings and preferences'
+  },
+  {
+    name: 'Builder',
+    href: '/builder',
+    icon: LayoutDashboard,
+    description: 'Custom dashboard builder'
   }
 ];
 
