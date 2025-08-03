@@ -1,3 +1,3 @@
 """Analytics utilities for the Yosai Intel Dashboard."""
 
-__all__ = ["feature_extraction"]
+__all__ = ["feature_extraction", "graph_analysis"]

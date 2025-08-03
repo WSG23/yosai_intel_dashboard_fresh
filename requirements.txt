@@ -65,3 +65,6 @@ tenacity==8.2.3
 shap==0.44.1
 lime==0.2.0.1
 fairlearn==0.10.0
+networkx==3.5
+neo4j==5.14.1
+python-louvain==0.16
