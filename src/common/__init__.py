@@ -1,4 +1,6 @@
-"""Common utilities for dependency injection components."""
-from .base import BaseComponent, LoggingMixin, EventDispatchMixin, handle_deprecated
+"""Common utilities for the simplified dashboard package."""
 
-__all__ = ["BaseComponent", "LoggingMixin", "EventDispatchMixin", "handle_deprecated"]
+from .events import EventBus, EventPublisher
+
+__all__ = ["EventBus", "EventPublisher"]
+
