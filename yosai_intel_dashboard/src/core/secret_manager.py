@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import warnings
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -93,7 +94,16 @@ def validate_secrets(manager: Optional[SecretsManager] = None) -> dict[str, Any]
     return summary
 
 
-# Backwards compatibility alias
-SecretManager = SecretsManager
+class SecretManager(SecretsManager):
+    """Deprecated alias for :class:`SecretsManager`."""
+
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore[override]
+        warnings.warn(
+            "SecretManager is deprecated; use SecretsManager",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)
+
 
 __all__ = ["SecretMetadata", "SecretsManager", "SecretManager", "validate_secrets"]

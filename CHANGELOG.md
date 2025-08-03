@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Updated `run_service_analysis` to use `analyze_data_with_service` and
   `create_analysis_results_display`.
+- Legacy API wrappers now emit `DeprecationWarning` and forward calls to
+  their relocated implementations.
 
 ### Fixed
 - Navigation bar icons failed to load when `app.get_asset_url` returned

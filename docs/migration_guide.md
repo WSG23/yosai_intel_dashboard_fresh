@@ -6,6 +6,27 @@ remains as a compatibility layer but will be removed in a future release.
 `unicode_toolkit` provides hardened text utilities, DataFrame
 sanitization helpers and SQL encoding functions.
 
+## Renamed and Relocated APIs
+
+Several legacy entry points were moved in this release. Importing the old
+names now triggers a `DeprecationWarning` but continues to work via shims.
+Update your code to use the new locations:
+
+| Legacy API | Replacement |
+|------------|-------------|
+| `services.upload_endpoint.create_upload_blueprint` | `services.upload.upload_endpoint.create_upload_blueprint` |
+| `infrastructure.config.env_overrides.apply_env_overrides` | `EnvironmentProcessor().apply` |
+| `infrastructure.communication.RestClient` | `AsyncRestClient` |
+| `core.secret_manager.SecretManager` | `SecretsManager` |
+| `services.upload.processor.UploadProcessingService` | `UploadOrchestrator` |
+| `services.upload.processing.UploadProcessingService` | `services.upload.core.processor.UploadProcessingService` |
+| `services.upload.validators.ClientSideValidator` | `services.upload.validator.ClientSideValidator` |
+| `core.container.Container` | `ServiceContainer` |
+| `mapping.models.load_model` | `load_model_from_config` |
+| `infrastructure.security.UnicodeSecurityHandler` | `UnicodeSecurityProcessor` |
+
+These shims will be removed in a future major release.
+
 ## Quick Migration Reference
 
 ### Text Processing Migration
