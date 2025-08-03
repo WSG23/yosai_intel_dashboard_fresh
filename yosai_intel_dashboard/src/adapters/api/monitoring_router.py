@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Query
+from monitoring.request_metrics import model_monitoring_requests_total
 
 from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
 
@@ -22,6 +23,7 @@ async def get_model_monitoring_events(
 
     Optionally filter by ``start`` and ``end`` timestamps.
     """
+    model_monitoring_requests_total.inc()
     manager = TimescaleDBManager()
     await manager.connect()
     assert manager.pool is not None

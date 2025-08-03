@@ -28,6 +28,11 @@ from api.monitoring_router import router as monitoring_router
 from api.routes.feature_flags import router as feature_flags_router
 from middleware.performance import TimingMiddleware
 from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
+from prometheus_fastapi_instrumentator import Instrumentator
+from monitoring.request_metrics import (
+    upload_file_bytes,
+    upload_files_total,
+)
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
@@ -194,6 +199,8 @@ def create_api_app() -> "FastAPI":
                 if not upload.filename:
                     continue
                 file_bytes = await upload.read()
+                upload_files_total.inc()
+                upload_file_bytes.observe(len(file_bytes))
                 try:
                     validator.validate_file_upload(upload.filename, file_bytes)
                 except Exception:
@@ -281,6 +288,8 @@ def create_api_app() -> "FastAPI":
         return schema
 
     service.app.openapi = custom_openapi
+
+    Instrumentator().instrument(service.app).expose(service.app)
 
     return service.app
 

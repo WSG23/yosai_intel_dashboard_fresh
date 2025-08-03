@@ -73,9 +73,63 @@ else:  # pragma: no cover - defensive in tests
         registry=CollectorRegistry(),
     )
 
+# Additional custom API metrics
+if "api_upload_files_total" not in REGISTRY._names_to_collectors:
+    upload_files_total = Counter(
+        "api_upload_files_total",
+        "Total number of files uploaded via the API",
+    )
+else:  # pragma: no cover - defensive in tests
+    upload_files_total = Counter(
+        "api_upload_files_total",
+        "Total number of files uploaded via the API",
+        registry=CollectorRegistry(),
+    )
+
+if "api_upload_file_bytes" not in REGISTRY._names_to_collectors:
+    upload_file_bytes = Histogram(
+        "api_upload_file_bytes",
+        "Size of uploaded files in bytes",
+        buckets=(
+            1024,
+            10 * 1024,
+            100 * 1024,
+            1024 * 1024,
+            10 * 1024 * 1024,
+        ),
+    )
+else:  # pragma: no cover - defensive in tests
+    upload_file_bytes = Histogram(
+        "api_upload_file_bytes",
+        "Size of uploaded files in bytes",
+        buckets=(
+            1024,
+            10 * 1024,
+            100 * 1024,
+            1024 * 1024,
+            10 * 1024 * 1024,
+        ),
+        registry=CollectorRegistry(),
+    )
+
+if "api_model_monitoring_requests_total" not in REGISTRY._names_to_collectors:
+    model_monitoring_requests_total = Counter(
+        "api_model_monitoring_requests_total",
+        "Total model monitoring retrieval requests",
+    )
+else:  # pragma: no cover - defensive in tests
+    model_monitoring_requests_total = Counter(
+        "api_model_monitoring_requests_total",
+        "Total model monitoring retrieval requests",
+        registry=CollectorRegistry(),
+    )
+
 __all__ = [
     "request_duration",
     "async_task_duration",
     "request_retry_count",
     "request_retry_delay",
+    "upload_files_total",
+    "upload_file_bytes",
+    "model_monitoring_requests_total",
 ]
