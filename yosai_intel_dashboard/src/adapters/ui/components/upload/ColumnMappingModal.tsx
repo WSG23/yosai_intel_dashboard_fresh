@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
-import { ExclamationTriangleIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { AlertTriangle, Check } from 'lucide-react';
 import { Button } from '../shared/Button';
 import { Select } from '../select/Select';
 import { Badge } from '../shared/Badge';
@@ -133,7 +133,7 @@ export const ColumnMappingModal: React.FC<Props> = ({
           <div className="p-6 overflow-y-auto max-h-[60vh]">
             {/* Info Alert */}
             <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-start gap-3">
-              <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="text-sm text-blue-800 dark:text-blue-200">
                 <p className="font-medium mb-1">AI has analyzed your columns and made suggestions.</p>
                 <p>Review and correct any mistakes. Your corrections help improve future suggestions.</p>
@@ -205,7 +205,7 @@ export const ColumnMappingModal: React.FC<Props> = ({
             <Button 
               variant="primary" 
               onClick={handleConfirm}
-              icon={<CheckIcon className="h-5 w-5" />}
+              icon={<Check className="h-5 w-5" />}
             >
               Confirm & Continue
             </Button>
