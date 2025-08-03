@@ -39,9 +39,11 @@ Import validators from the `validation` package rather than accessing the
 modules directly:
 
 ```python
+from sklearn.ensemble import IsolationForest
 from validation import SecurityValidator, FileValidator
 
-validator = SecurityValidator()
+model = IsolationForest().fit([[1], [2], [3]])
+validator = SecurityValidator(anomaly_model=model)
 file_validator = FileValidator()
 ```
 
@@ -81,10 +83,12 @@ def test_health():
 
 ### Validation Rules
 ```python
+from sklearn.ensemble import IsolationForest
 from validation import SecurityValidator, FileValidator
 
 def test_validation():
-    sv = SecurityValidator()
+    model = IsolationForest().fit([[1], [2], [3]])
+    sv = SecurityValidator(anomaly_model=model)
     fv = FileValidator()
     result = sv.validate_input("SELECT 1", "query")
     assert result["valid"]

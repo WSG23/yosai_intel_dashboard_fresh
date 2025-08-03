@@ -72,6 +72,7 @@ class ClamAVValidator(SecurityValidator):
 Any exception raised from `_virus_scan` is surfaced as a validation issue,
 allowing applications to block infected uploads.
 
+
 ## Migration from Deprecated Classes
 
 All legacy validators have been removed. Update your code to use
