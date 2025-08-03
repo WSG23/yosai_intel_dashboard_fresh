@@ -14,6 +14,8 @@ def load_app(jwt_secret: str):
 
 @pytest.mark.asyncio
 async def test_startup_fails_on_placeholder():
-    module, _, _ = load_app(jwt_secret="change-me")
+    module, _, _ = load_app(
+        jwt_secret="vault:secret/data/dev#JWT_SECRET"
+    )
     with pytest.raises(RuntimeError):
         await module._startup()

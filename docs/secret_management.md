@@ -25,6 +25,14 @@ raises a `RuntimeError` if `SECRET_KEY` is not set. When
 `YOSAI_ENV=production` the configuration validation step will also refuse
 to start if `DB_PASSWORD` is missing.
 
+### Environment-specific Injection
+
+Configuration files, tests and helper scripts reference secrets using
+`vault:` or `aws-secrets:` URIs. During deployment the active
+`YOSAI_ENV` determines which values are injected, keeping raw secrets out
+of version control while still allowing each environment to load its own
+credentials.
+
 ## Secure Factory Integration
 
 The configuration factory (`create_config_manager`) uses the
@@ -43,6 +51,13 @@ appear in logs.
 
 Routine rotation should be scheduled at least every 90 days or according
 to your organization policy.
+
+### Automated Key Management
+
+The :mod:`security.key_management` module implements HKDF-based key
+derivation and a `KeyManager` that stores rotated values in Vault or AWS
+Secrets Manager. Kubernetes CronJobs can invoke these helpers to refresh
+keys automatically without exposing them in logs or configuration files.
 
 ### Rotation Script
 

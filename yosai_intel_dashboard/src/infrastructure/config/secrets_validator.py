@@ -79,6 +79,19 @@ class SecretsValidator:
         self.forbidden_prefixes = {"dev-", "test-"}
 
     @staticmethod
+    def mask_secret(value: str, visible: int = 4) -> str:
+        """Return a masked representation of ``value`` for logging.
+
+        Only the last ``visible`` characters remain in clear text to help
+        operators identify which credential is being referenced.
+        """
+        if not value:
+            return ""
+        if len(value) <= visible:
+            return "*" * len(value)
+        return "*" * (len(value) - visible) + value[-visible:]
+
+    @staticmethod
     def _shannon_entropy(data: str) -> float:
         if not data:
             return 0.0
@@ -138,12 +151,24 @@ class SecretsValidator:
         return SecretValidationResult(is_valid, issues, severity, recommendations)
 
     def validate_production_secrets(
-        self, source: Optional[SecretSource] = None
+        self,
+        source: Optional[SecretSource] = None,
+        *,
+        mask: bool = True,
     ) -> Dict[str, str]:
         """Validate critical secrets for a production environment.
 
         Raises a ``ValueError`` if any required secret is missing or insecure.
+
+        Parameters
+        ----------
+        source:
+            Optional :class:`SecretSource` to retrieve secrets from.
+        mask:
+            When ``True`` the returned values are masked using
+            :meth:`mask_secret` so that callers can safely log the result.
         """
+
         source = source or EnvSecretSource()
         missing: List[str] = []
         secrets: Dict[str, str] = {}
@@ -155,6 +180,8 @@ class SecretsValidator:
                 secrets[key] = value
         if missing:
             raise ValueError("Invalid production secrets: " + ", ".join(missing))
+        if mask:
+            return {k: self.mask_secret(v) for k, v in secrets.items()}
         return secrets
 
     @staticmethod
