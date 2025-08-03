@@ -10,13 +10,16 @@ import logging
 import secrets
 import time
 from concurrent.futures import ProcessPoolExecutor
-
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from argon2 import PasswordHasher
+from argon2 import exceptions as argon2_exceptions
+
 _executor = ProcessPoolExecutor()
+_ph = PasswordHasher()
 
 
 def _pbkdf2_sha256(password: bytes, salt: bytes, iterations: int) -> bytes:
@@ -27,6 +30,7 @@ def _pbkdf2_sha256(password: bytes, salt: bytes, iterations: int) -> bytes:
 def _sha256_bytes(data: bytes) -> str:
     """Compute SHA256 digest of ``data``."""
     return hashlib.sha256(data).hexdigest()
+
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
@@ -279,30 +283,32 @@ class SecureHashManager:
     """Secure hashing for sensitive data"""
 
     @staticmethod
-    def hash_password(password: str, salt: Optional[bytes] = None) -> Dict[str, str]:
-        """Hash password with salt"""
-        if salt is None:
-            salt = secrets.token_bytes(dynamic_config.security.salt_bytes)
-
-        # Use PBKDF2 with SHA256
-        future = _executor.submit(
-            _pbkdf2_sha256,
-            password.encode(),
-            salt,
-            dynamic_config.security.pbkdf2_iterations,
-        )
-        hash_bytes = future.result()
-
-        return {
-            "hash": hash_bytes.hex(),
-            "salt": salt.hex(),
-            "algorithm": "pbkdf2_sha256",
-            "iterations": dynamic_config.security.pbkdf2_iterations,
-        }
+    def hash_password(password: str) -> Dict[str, str]:
+        """Hash password using Argon2."""
+        hashed = _ph.hash(password)
+        return {"hash": hashed, "algorithm": "argon2"}
 
     @staticmethod
-    def verify_password(password: str, stored_hash: str, stored_salt: str) -> bool:
-        """Verify password against stored hash"""
+    def verify_password(
+        password: str,
+        stored_hash: str,
+        stored_salt: str | None = None,
+        algorithm: str | None = None,
+    ) -> tuple[bool, str]:
+        """Verify password and migrate legacy hashes.
+
+        Returns tuple of verification result and current hash.
+        """
+        algo = algorithm or "argon2"
+        if algo == "argon2":
+            try:
+                _ph.verify(stored_hash, password)
+                return True, stored_hash
+            except argon2_exceptions.VerifyMismatchError:
+                return False, stored_hash
+        # Legacy PBKDF2 verification
+        if stored_salt is None:
+            return False, stored_hash
         salt = bytes.fromhex(stored_salt)
         future = _executor.submit(
             _pbkdf2_sha256,
@@ -311,7 +317,11 @@ class SecureHashManager:
             dynamic_config.security.pbkdf2_iterations,
         )
         hash_bytes = future.result()
-        return hash_bytes.hex() == stored_hash
+        if hash_bytes.hex() == stored_hash:
+            # migrate to argon2
+            new_hash = _ph.hash(password)
+            return True, new_hash
+        return False, stored_hash
 
     @staticmethod
     def hash_sensitive_data(data: str) -> str:

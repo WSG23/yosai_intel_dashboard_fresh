@@ -28,6 +28,7 @@ from api.monitoring_router import router as monitoring_router
 from api.routes.feature_flags import router as feature_flags_router
 from middleware.performance import TimingMiddleware
 from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
+from middleware.security_headers import SecurityHeadersMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from monitoring.request_metrics import (
     upload_file_bytes,
@@ -80,12 +81,13 @@ def create_api_app() -> "FastAPI":
     )
 
     settings = get_security_config()
+    service.app.add_middleware(SecurityHeadersMiddleware)
     service.app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
     )
 
     # Initialize RBAC service
