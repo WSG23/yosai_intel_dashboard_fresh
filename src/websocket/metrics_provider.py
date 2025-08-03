@@ -1,6 +1,7 @@
 """Background publisher streaming metric updates over an event bus."""
 from __future__ import annotations
 
+import logging
 import threading
 from typing import Any, Dict, Protocol
 
@@ -34,6 +35,7 @@ class MetricsProvider(BaseComponent):
         self.event_bus = event_bus
         # allow explicit override but fall back to configured interval
         self.interval = interval if interval is not None else self.config.metrics_interval
+
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -41,7 +43,8 @@ class MetricsProvider(BaseComponent):
     def _run(self) -> None:
         while not self._stop.is_set():
             payload = generate_sample_metrics()
-            self.event_bus.publish('metrics_update', payload)
+            self.dispatch_event('metrics_update', payload)
+            self.log(logging.DEBUG, "metrics_update dispatched")
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
