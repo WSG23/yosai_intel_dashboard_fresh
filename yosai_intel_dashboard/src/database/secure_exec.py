@@ -1,7 +1,9 @@
-"""Secure wrappers for database execution."""
+"""Secure wrappers for database execution with optional query caching."""
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from typing import Any, Iterable, Optional
 
@@ -15,8 +17,33 @@ except Exception:  # pragma: no cover - fallback when config imports fail
             pass
 
 from database.types import DBRows
+from database.query_cache import QueryCache
+from yosai_intel_dashboard.src.core.cache_manager import RedisCacheManager
 
 logger = logging.getLogger(__name__)
+
+_QUERY_CACHE: QueryCache | None = None
+
+
+def get_query_cache(
+    cache_manager: RedisCacheManager | None = None,
+    *,
+    ttl: int | None = None,
+) -> QueryCache:
+    """Return a shared :class:`QueryCache` instance.
+
+    Parameters
+    ----------
+    cache_manager:
+        Optional custom :class:`RedisCacheManager` to use as backend.
+    ttl:
+        Optional time-to-live override for cached results in seconds.
+    """
+
+    global _QUERY_CACHE
+    if _QUERY_CACHE is None or cache_manager is not None or ttl is not None:
+        _QUERY_CACHE = QueryCache(cache_manager=cache_manager, ttl=ttl)
+    return _QUERY_CACHE
 
 
 def _infer_db_type(obj: Any) -> str:
@@ -62,7 +89,9 @@ def execute_query(
     *,
     timeout: Optional[int] = None,
 ):
+
     """Validate, optimize and execute a SELECT query on ``conn``."""
+
 
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
@@ -106,11 +135,12 @@ def execute_query(
         _reset_timeout()
 
 
+
 def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
     """Execute a parameterized SELECT query enforcing provided params."""
     if params is None:
         raise ValueError("params must be provided for execute_secure_query")
-    return execute_query(conn, sql, params)
+    return execute_query(conn, sql, params, optimize=False)
 
 
 def execute_command(
@@ -163,4 +193,43 @@ def execute_command(
         _reset_timeout()
 
 
-__all__ = ["execute_query", "execute_command", "execute_secure_query"]
+def prepare_statement(conn: Any, name: str, sql: str) -> None:
+    """Prepare ``sql`` on ``conn`` under identifier ``name``."""
+    if not isinstance(name, str) or not isinstance(sql, str):
+        raise TypeError("name and sql must be strings")
+    optimized_sql = _get_optimizer(conn).optimize_query(sql)
+    logger.debug("Preparing statement %s: %s", name, optimized_sql)
+    if hasattr(conn, "prepare_statement"):
+        conn.prepare_statement(name, optimized_sql)
+        return
+    cache = getattr(conn, "_prepared_statements", None)
+    if cache is None:
+        cache = {}
+        try:
+            setattr(conn, "_prepared_statements", cache)
+        except Exception:
+            pass
+    cache[name] = optimized_sql
+
+
+def execute_prepared(conn: Any, name: str, params: Optional[Iterable[Any]] = None):
+    """Execute a previously prepared statement."""
+    p = _validate_params(params)
+    if hasattr(conn, "execute_prepared"):
+        return conn.execute_prepared(name, p if p is not None else tuple())
+    cache = getattr(conn, "_prepared_statements", {})
+    sql = cache.get(name)
+    if sql is None:
+        raise AttributeError(f"Statement {name!r} has not been prepared")
+    if sql.lstrip().lower().startswith("select"):
+        return execute_query(conn, sql, p)
+    return execute_command(conn, sql, p)
+
+
+__all__ = [
+    "execute_query",
+    "execute_command",
+    "execute_secure_query",
+    "prepare_statement",
+    "execute_prepared",
+]
