@@ -9,6 +9,9 @@ properties:
     type: string
   tracing_endpoint:
     type: string
+  tracing_exporter:
+    type: string
+    default: jaeger
   enable_profiling:
     type: boolean
     default: false

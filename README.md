@@ -680,9 +680,12 @@ Example Prometheus expressions:
 
 ### Tracing Setup
 
-All services use OpenTelemetry with Jaeger for distributed tracing. Set the
-`JAEGER_ENDPOINT` environment variable to the collector endpoint
-(`http://localhost:14268/api/traces` by default) before starting a service.
+All services use OpenTelemetry and can export traces to Jaeger or Zipkin.
+Select the backend by setting `TRACING_EXPORTER` to `jaeger` or `zipkin`
+(`jaeger` is the default). Configure the collector endpoint via
+`JAEGER_ENDPOINT` or `ZIPKIN_ENDPOINT` environment variables
+(`http://localhost:14268/api/traces` and `http://localhost:9411/api/v2/spans`
+by default).
 
 ```python
 from tracing import init_tracing
@@ -701,7 +704,10 @@ This ensures traces from Python and Go components are reported consistently.
 
 Set the following variables to configure tracing and metrics endpoints:
 
-- `JAEGER_ENDPOINT` – URL of the Jaeger collector (defaults to `http://localhost:14268/api/traces`).
+- `TRACING_EXPORTER` – `jaeger` or `zipkin` (defaults to `jaeger`).
+- `JAEGER_ENDPOINT` / `ZIPKIN_ENDPOINT` – URL of the respective collector
+  (defaults to `http://localhost:14268/api/traces` and
+  `http://localhost:9411/api/v2/spans`).
 - `REPLICATION_METRICS_PORT` – Port used by `scripts/replicate_to_timescale.py` to expose Prometheus metrics (defaults to `8004`).
 - All services expose Prometheus metrics at the `/metrics` endpoint. No additional configuration is required.
 

@@ -1,4 +1,5 @@
 import logging
+import os
 import signal
 from typing import Any
 
@@ -6,6 +7,7 @@ import structlog
 from fastapi import FastAPI
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.exporter.zipkin.json import ZipkinExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -21,6 +23,7 @@ from yosai_intel_dashboard.src.error_handling import http_error
 from shared.errors.types import ErrorCode
 
 from .config import ServiceConfig, load_config
+from tracing.config import DEFAULT_JAEGER_ENDPOINT, DEFAULT_ZIPKIN_ENDPOINT
 
 
 class BaseService:
@@ -134,9 +137,14 @@ class BaseService:
             start_http_server(int(port_str), addr=host or "0.0.0.0")
 
     def _setup_tracing(self) -> None:
-        """Initialize OpenTelemetry tracing exported to Jaeger."""
-        endpoint = self.config.tracing_endpoint or "http://localhost:14268/api/traces"
-        exporter = JaegerExporter(collector_endpoint=endpoint)
+        """Initialize OpenTelemetry tracing exported to Jaeger or Zipkin."""
+        exporter_type = os.getenv("TRACING_EXPORTER", self.config.tracing_exporter).lower()
+        if exporter_type == "zipkin":
+            endpoint = self.config.tracing_endpoint or DEFAULT_ZIPKIN_ENDPOINT
+            exporter = ZipkinExporter(endpoint=endpoint)
+        else:
+            endpoint = self.config.tracing_endpoint or DEFAULT_JAEGER_ENDPOINT
+            exporter = JaegerExporter(collector_endpoint=endpoint)
         provider = TracerProvider(resource=Resource.create({"service.name": self.name}))
         provider.add_span_processor(BatchSpanProcessor(exporter))
         trace.set_tracer_provider(provider)

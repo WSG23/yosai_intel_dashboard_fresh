@@ -1,2 +1,10 @@
+"""Configuration constants for tracing backends."""
+
+TRACING_EXPORTER_ENV = "TRACING_EXPORTER"
+DEFAULT_TRACING_EXPORTER = "jaeger"
+
 JAEGER_ENDPOINT_ENV = "JAEGER_ENDPOINT"
 DEFAULT_JAEGER_ENDPOINT = "http://localhost:14268/api/traces"
+
+ZIPKIN_ENDPOINT_ENV = "ZIPKIN_ENDPOINT"
+DEFAULT_ZIPKIN_ENDPOINT = "http://localhost:9411/api/v2/spans"
