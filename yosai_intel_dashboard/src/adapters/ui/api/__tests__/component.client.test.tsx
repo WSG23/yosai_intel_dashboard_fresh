@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-jest.mock('axios', () => require('axios/dist/node/axios.cjs'));
-import { api, apiClient } from '../client';
+import { api } from '../client';
 import { toast } from 'react-hot-toast';
 
 jest.mock('react-hot-toast', () => ({ toast: { error: jest.fn() } }));
@@ -23,22 +22,26 @@ describe('component using api client', () => {
   });
 
   it('renders data on success', async () => {
-    jest.spyOn(api, 'get').mockResolvedValueOnce({ message: 'hi' } as any);
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: 'success', data: { message: 'hi' } }),
+    }) as any;
     render(<Greeting />);
     expect(await screen.findByText('hi')).toBeInTheDocument();
   });
 
   it('shows toast on failure', async () => {
-    const error = {
-      config: { url: '/greeting', headers: {} },
-      response: { status: 500, data: { code: 'internal', message: 'oops' }, config: {}, headers: {} },
-    } as any;
-    jest.spyOn(api, 'get').mockRejectedValueOnce(error);
-    const handler = apiClient.interceptors.response.handlers[0].rejected!;
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ code: 'internal', message: 'oops' }),
+    }) as any;
     render(<Greeting />);
-    await handler(error).catch(() => {});
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Server error. Please try again later.');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Server error. Please try again later.'
+      );
     });
   });
 });
+

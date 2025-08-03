@@ -9,9 +9,17 @@ can highlight unusual behaviour worthy of further investigation.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Dict, Iterable, List, Set, Tuple
+from datetime import datetime, timedelta
+from typing import Any, Dict, Iterable, List, Set, Tuple
+
+try:  # pragma: no cover - optional dependency
+    from integrations.weather.etl import WeatherEvent
+except Exception:  # pragma: no cover - fallback when integration missing
+    WeatherEvent = Any  # type: ignore
 
 AccessRecord = Tuple[str, str]
+# Access record with timestamp for correlation against weather events
+TimedAccessRecord = Tuple[datetime, str, str]
 
 
 def cluster_users_by_coaccess(records: Iterable[AccessRecord]) -> Dict[frozenset[str], Set[str]]:
@@ -48,5 +56,43 @@ def detect_behavioral_deviations(
     return {user: res for user, res in deviations.items()}
 
 
-__all__ = ["cluster_users_by_coaccess", "detect_behavioral_deviations", "AccessRecord"]
+def correlate_access_with_weather(
+    access_records: Iterable[TimedAccessRecord],
+    weather_events: Iterable[WeatherEvent],
+    window: timedelta,
+    spike_threshold: int,
+) -> List[datetime]:
+    """Flag weather events that coincide with access spikes.
+
+    The function joins ``access_records`` with ``weather_events`` within the
+    provided time ``window``.  For each weather event, if the number of access
+    records in the surrounding window meets or exceeds ``spike_threshold`` the
+    event timestamp is returned.  Callers can use this to highlight anomalous
+    activity such as login spikes during storms.
+    """
+
+    times = sorted(ts for ts, _u, _r in access_records)
+    flagged: List[datetime] = []
+    for event in weather_events:
+        start = event.timestamp - window
+        end = event.timestamp + window
+        count = 0
+        for t in times:
+            if t < start:
+                continue
+            if t > end:
+                break
+            count += 1
+        if count >= spike_threshold:
+            flagged.append(event.timestamp)
+    return flagged
+
+
+__all__ = [
+    "cluster_users_by_coaccess",
+    "detect_behavioral_deviations",
+    "correlate_access_with_weather",
+    "AccessRecord",
+    "TimedAccessRecord",
+]
 
