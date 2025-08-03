@@ -1,26 +1,20 @@
-import time
-
+from src.repository import InMemoryMetricsRepository
 from src.websocket.metrics_provider import MetricsProvider
 
 
 class DummyBus:
     def __init__(self) -> None:
-        self._subs = {}
+        self.events = []
 
-    def publish(self, event_type: str, data):
-        for handler in self._subs.get(event_type, []):
-            handler(data)
-
-    def subscribe(self, event_type: str, handler):
-        self._subs.setdefault(event_type, []).append(handler)
+    def publish(self, event_type: str, data, source=None) -> None:
+        self.events.append((event_type, data))
 
 
-def test_metrics_provider_publishes_updates():
+def test_metrics_provider_publishes_snapshot() -> None:
+    repo = InMemoryMetricsRepository(performance={"throughput": 1})
     bus = DummyBus()
-    events = []
-    bus.subscribe('metrics_update', lambda data: events.append(data))
-    provider = MetricsProvider(bus, interval=0.01)
-    time.sleep(0.05)
+    provider = MetricsProvider(bus, repo, interval=0.01)
+    import time
+    time.sleep(0.02)
     provider.stop()
-    assert events
-    assert 'performance' in events[0]
+    assert ("metrics_update", repo.snapshot()) in bus.events
