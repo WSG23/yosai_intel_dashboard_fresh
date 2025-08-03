@@ -13,30 +13,27 @@ from typing import Any, Dict
 
 from src.common.base import BaseComponent
 from src.common.config import ConfigProvider, ConfigService
-from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
+from src.common.events import EventBus, EventPublisher
 from yosai_intel_dashboard.src.services.analytics_summary import (
     generate_sample_analytics,
 )
 
 
-class WebSocketDataProvider(BaseComponent):
+class WebSocketDataProvider(EventPublisher, BaseComponent):
     """Publish sample analytics updates to an event bus periodically."""
 
     def __init__(
         self,
-        event_bus: EventBusProtocol,
+        event_bus: EventBus,
         *,
         config: ConfigProvider | None = None,
         interval: float | None = None,
     ) -> None:
-        config = config or ConfigService()
-        interval = interval if interval is not None else config.metrics_interval
-        super().__init__(
-            component_id="WebSocketDataProvider",
-            event_bus=event_bus,
-            config=config,
-            interval=interval,
-        )
+        BaseComponent.__init__(self, component_id="WebSocketDataProvider")
+        EventPublisher.__init__(self, event_bus)
+        self.config = config or ConfigService()
+        self.interval = interval if interval is not None else self.config.metrics_interval
+
 
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -46,12 +43,8 @@ class WebSocketDataProvider(BaseComponent):
     def _run(self) -> None:
         while not self._stop.is_set():
             payload: Dict[str, Any] = generate_sample_analytics()
-            if hasattr(self.event_bus, "publish"):
-                self.event_bus.publish("analytics_update", payload)
-            else:  # pragma: no cover - alternative EventBus API
-                self.event_bus.emit(
-                    "analytics_update", payload
-                )  # type: ignore[attr-defined]
+            self.publish_event("analytics_update", payload)
+
             logging.debug("analytics_update dispatched")
             self._stop.wait(self.interval)
 

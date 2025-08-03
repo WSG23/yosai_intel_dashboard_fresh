@@ -6,6 +6,7 @@ import types
 import time
 from collections import deque
 from pathlib import Path
+from typing import Any
 
 import pytest
 import websockets
@@ -32,12 +33,19 @@ def _load_server():
         def __init__(self):
             self._subs: dict[str, list] = {}
 
-        def publish(self, event_type: str, data: dict) -> None:
+        def emit(self, event_type: str, data: dict) -> None:
             for handler in self._subs.get(event_type, []):
                 handler(data)
 
-        def subscribe(self, event_type: str, handler, priority: int = 0) -> None:
+        def subscribe(self, event_type: str, handler, priority: int = 0) -> str:
             self._subs.setdefault(event_type, []).append(handler)
+            return handler
+
+        def unsubscribe(self, token: Any) -> None:
+            for handlers in self._subs.values():
+                if token in handlers:
+                    handlers.remove(token)
+                    break
 
     events_mod.EventBus = EventBus
     sys.modules["yosai_intel_dashboard.src.core.events"] = events_mod
@@ -84,6 +92,6 @@ async def test_websocket_event_flow(websocket_server):
     async with websockets.connect("ws://127.0.0.1:8770") as ws:
         await asyncio.sleep(0.05)
         payload = {"value": 42}
-        websocket_server.publish("analytics_update", payload)
+        websocket_server.emit("analytics_update", payload)
         message = await asyncio.wait_for(ws.recv(), timeout=5)
         assert json.loads(message) == payload

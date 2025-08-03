@@ -7,7 +7,7 @@ class DummyBus:
     def __init__(self) -> None:
         self.events = []
 
-    def publish(self, event_type: str, data, source=None) -> None:
+    def emit(self, event_type: str, data, source=None) -> None:
         self.events.append((event_type, data))
 
 

@@ -29,15 +29,19 @@ def _load_server():
         def __init__(self):
             self._subs: dict[str, list] = {}
 
-        def publish(self, event_type: str, data: dict) -> None:
+        def emit(self, event_type: str, data: dict) -> None:
             for handler in self._subs.get(event_type, []):
                 handler(data)
 
-        def subscribe(self, event_type: str, handler, priority: int = 0) -> None:
+        def subscribe(self, event_type: str, handler, priority: int = 0) -> str:
             self._subs.setdefault(event_type, []).append(handler)
+            return handler
 
         def unsubscribe(self, sub_id: str) -> None:  # pragma: no cover - stub
-            pass
+            for handlers in self._subs.values():
+                if sub_id in handlers:
+                    handlers.remove(sub_id)
+                    break
 
     events_mod.EventBus = DummyEventBus
     sys.modules["yosai_intel_dashboard.src.core.events"] = events_mod
@@ -81,7 +85,7 @@ def test_websocket_events_broadcast():
 
             task = asyncio.create_task(client())
             await asyncio.sleep(0.1)
-            event_bus.publish("analytics_update", {"value": 42})
+            event_bus.emit("analytics_update", {"value": 42})
             return await asyncio.wait_for(task, timeout=5)
 
         data = asyncio.run(runner())

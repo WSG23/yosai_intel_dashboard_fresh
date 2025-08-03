@@ -33,12 +33,12 @@ class DummyBus:
     def __init__(self):
         self.events = []
 
-    def publish(self, event_type: str, data, source=None):
+    def emit(self, event_type: str, data, source=None):
         self.events.append((event_type, data))
 
 
 class FailingBus(DummyBus):
-    def publish(self, event_type: str, data, source=None):
+    def emit(self, event_type: str, data, source=None):
         raise RuntimeError("boom")
 
 

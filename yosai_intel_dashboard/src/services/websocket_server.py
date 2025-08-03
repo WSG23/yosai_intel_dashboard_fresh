@@ -78,7 +78,7 @@ class AnalyticsWebSocketServer(BaseComponent):
             self._queue.clear()
             for event in queued:
                 if self.event_bus:
-                    self.event_bus.publish("analytics_update", event)
+                    self.event_bus.emit("analytics_update", event)
 
         try:
             async for _ in websocket:
@@ -101,14 +101,14 @@ class AnalyticsWebSocketServer(BaseComponent):
             pong_waiter = ws.ping()
             await asyncio.wait_for(pong_waiter, timeout=self.ping_timeout)
             if self.event_bus:
-                self.event_bus.publish(
+                self.event_bus.emit(
                     "websocket_heartbeat",
                     {"client": id(ws), "status": "alive"},
                 )
         except asyncio.TimeoutError:
             websocket_metrics.record_ping_failure()
             if self.event_bus:
-                self.event_bus.publish(
+                self.event_bus.emit(
                     "websocket_heartbeat",
                     {"client": id(ws), "status": "timeout"},
                 )

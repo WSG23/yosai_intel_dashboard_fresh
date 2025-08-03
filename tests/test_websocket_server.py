@@ -27,10 +27,13 @@ def _load_server():
         def __init__(self, *a, **kw):
             pass
 
-        def publish(self, *a, **kw):
+        def emit(self, *a, **kw):
             pass
 
-        def subscribe(self, *a, **kw):
+        def subscribe(self, event_type, handler):
+            return handler
+
+        def unsubscribe(self, token):
             pass
 
     events_mod.EventBus = EventBus
@@ -82,12 +85,19 @@ class DummyBus:
     def __init__(self) -> None:
         self.subs = {}
 
-    def publish(self, event_type, data):
+    def emit(self, event_type, data):
         for h in self.subs.get(event_type, []):
             h(data)
 
     def subscribe(self, event_type, handler):
         self.subs.setdefault(event_type, []).append(handler)
+        return handler
+
+    def unsubscribe(self, token):
+        for handlers in self.subs.values():
+            if token in handlers:
+                handlers.remove(token)
+                break
 
 
 def _create_server(event_bus: DummyBus) -> AnalyticsWebSocketServer:

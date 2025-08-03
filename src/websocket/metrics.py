@@ -8,20 +8,20 @@ can register an arbitrary event bus via :func:`set_event_bus`; whenever one of
 the ``record_*`` helpers is invoked the counters are incremented and the current
 snapshot is published on that bus.
 
-The tests use a very small stand‑in bus which exposes a ``publish`` method.  In
-the actual application an ``EventBus`` with an ``emit`` method is used.  To keep
-the implementation flexible we simply check for either name when dispatching
-events.
+The tests use a very small stand‑in bus exposing ``emit`` consistent with the
+``EventBus`` interface.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Dict
+
+from src.common.events import EventBus
 
 from prometheus_client import REGISTRY, Counter, start_http_server
 from prometheus_client.core import CollectorRegistry
 
-_event_bus: Any | None = None
+_event_bus: EventBus | None = None
 _metrics_started = False
 
 # Avoid duplicate registration when the module is imported multiple times.
@@ -68,13 +68,10 @@ def _publish_snapshot() -> None:
     if _event_bus is None:
         return
     payload = _snapshot()
-    if hasattr(_event_bus, "publish"):
-        _event_bus.publish("metrics_update", payload)
-    else:  # pragma: no cover - alternative API
-        _event_bus.emit("metrics_update", payload)  # type: ignore[attr-defined]
+    _event_bus.emit("metrics_update", payload)
 
 
-def set_event_bus(bus: Any) -> None:
+def set_event_bus(bus: EventBus) -> None:
     """Configure the event bus used for publishing updates."""
     global _event_bus
     _event_bus = bus

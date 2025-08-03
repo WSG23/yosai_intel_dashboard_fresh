@@ -95,7 +95,7 @@ class SamplePlugin:
         def handle_upload(filename, contents):
             if not contents:
                 raise PreventUpdate
-            event_bus.publish("analytics_update", {"file": filename})
+            event_bus.emit("analytics_update", {"file": filename})
             self.called = True
             return f"plugin:{filename}"
         return True

@@ -21,7 +21,7 @@ def test_chart_bad_type():
 def test_websocket_updates():
     client = TestClient(app)
     with client.websocket_connect("/ws/analytics") as ws:
-        event_bus.publish("analytics_update", {"a": 1})
+        event_bus.emit("analytics_update", {"a": 1})
         data = ws.receive_text()
         assert json.loads(data)["a"] == 1
 

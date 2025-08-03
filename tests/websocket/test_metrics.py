@@ -7,7 +7,7 @@ class DummyBus:
     def __init__(self) -> None:
         self.events = []
 
-    def publish(
+    def emit(
         self, event_type: str, data, source=None
     ) -> None:  # pragma: no cover - simple bus
         self.events.append((event_type, data))
