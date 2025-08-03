@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import threading
 import time
+from contextlib import asynccontextmanager, contextmanager
 from typing import Callable, List, Tuple
 
 from database.types import DatabaseConnection
@@ -60,8 +62,8 @@ class DatabaseConnectionPool:
                     new_pool.append((conn, ts))
             self._pool = new_pool
 
-    def get_connection(self) -> DatabaseConnection:
-        deadline = time.time() + self._timeout
+    def get_connection(self, *, timeout: float | None = None) -> DatabaseConnection:
+        deadline = time.time() + (timeout if timeout is not None else self._timeout)
         while True:
             with self._lock:
                 self._shrink_idle_connections()
@@ -117,3 +119,21 @@ class DatabaseConnectionPool:
             for item in temp:
                 self.release_connection(item[0])
             return healthy
+
+    @contextmanager
+    def acquire(self, *, timeout: float | None = None):
+        """Context manager to acquire a connection with optional timeout."""
+        conn = self.get_connection(timeout=timeout)
+        try:
+            yield conn
+        finally:
+            self.release_connection(conn)
+
+    @asynccontextmanager
+    async def acquire_async(self, *, timeout: float | None = None):
+        """Async context manager for acquiring a connection without blocking the loop."""
+        conn = await asyncio.to_thread(self.get_connection, timeout=timeout)
+        try:
+            yield conn
+        finally:
+            await asyncio.to_thread(self.release_connection, conn)
