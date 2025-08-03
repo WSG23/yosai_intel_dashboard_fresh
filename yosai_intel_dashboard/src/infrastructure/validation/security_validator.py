@@ -18,13 +18,18 @@ Example
 """
 
 import html
-import json
+import logging
 import os
 import re
 from typing import Any, Iterable
 
+from yosai_intel_dashboard.src.core.exceptions import (
+    PermanentBanError,
+    TemporaryBlockError,
+    ValidationError,
+)
+# Import dynamically inside methods to avoid circular imports during module init
 
-from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
 from .core import ValidationResult
 from .file_validator import FileValidator
@@ -76,24 +81,48 @@ class SecurityValidator(CompositeValidator):
     def __init__(
         self,
         rules: Iterable[ValidationRule] | None = None,
-        anomaly_model: Any | None = None,
+        redis_client: Any | None = None,
+        rate_limit: int | None = None,
+        window_seconds: int | None = None,
+
     ) -> None:
         base_rules = list(rules or [XSSRule(), SQLRule()])
         super().__init__(base_rules)
         self.file_validator = FileValidator()
-        self.anomaly_model = anomaly_model
+        self.redis = redis_client
+        if rate_limit is None or window_seconds is None:
+            from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+                dynamic_config,
+            )
 
-    def _anomaly_check(self, value: str, field_name: str) -> None:
-        """Score ``value`` with ``anomaly_model`` if provided."""
+            rate_limit = rate_limit or dynamic_config.security.rate_limit_requests
+            window_seconds = (
+                window_seconds
+                or dynamic_config.security.rate_limit_window_minutes * 60
+            )
+        self.rate_limit = rate_limit
+        self.window_seconds = window_seconds
+        self.logger = logging.getLogger(__name__)
 
-        if not self.anomaly_model:
+    def _check_rate_limit(self, identifier: str) -> None:
+        if not self.redis:
             return
-        try:
-            prediction = self.anomaly_model.predict([[len(value)]])
-        except Exception as exc:  # pragma: no cover - defensive
-            raise ValidationError("Anomaly check failed") from exc
-        if prediction[0] == -1:
-            raise ValidationError(f"Anomalous input detected in {field_name}")
+        key = f"rl:{identifier}"
+        count = self.redis.incr(key)
+        if count == 1:
+            self.redis.expire(key, self.window_seconds)
+        if count <= self.rate_limit:
+            return
+        esc_key = f"rl:esc:{identifier}"
+        level = self.redis.incr(esc_key)
+        if level == 1:
+            self.logger.warning("Rate limit exceeded for %s", identifier)
+        elif level == 2:
+            self.logger.warning("Temporary block for %s", identifier)
+            raise TemporaryBlockError("Rate limit exceeded")
+        else:
+            self.logger.error("Permanent ban for %s", identifier)
+            raise PermanentBanError("Rate limit exceeded")
 
 
     def sanitize_filename(self, filename: str) -> str:
@@ -123,8 +152,10 @@ class SecurityValidator(CompositeValidator):
 
         return {"valid": not issues, "issues": issues, "filename": sanitized}
 
-    def validate_input(self, value: str, field_name: str = "input") -> dict:
-        self._anomaly_check(value, field_name)
+    def validate_input(
+        self, value: str, field_name: str = "input", identifier: str | None = None
+    ) -> dict:
+        self._check_rate_limit(identifier or "global")
 
         result = self.validate(value)
         if not result.valid:

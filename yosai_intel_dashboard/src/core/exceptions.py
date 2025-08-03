@@ -53,3 +53,17 @@ class ServiceUnavailableError(YosaiBaseException):
 
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
         super().__init__(message, details, ErrorCode.UNAVAILABLE)
+
+
+class TemporaryBlockError(SecurityError):
+    """Temporary block due to excessive requests"""
+
+    def __init__(self, message: str = "Temporarily blocked", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
+
+
+class PermanentBanError(SecurityError):
+    """Permanent ban due to repeated abuse"""
+
+    def __init__(self, message: str = "Permanently banned", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
