@@ -13,10 +13,9 @@ from prometheus_client import Gauge, start_http_server
 from psycopg2.extras import DictCursor, execute_values
 
 from database.secure_exec import execute_command, execute_query
+from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 LOG = logging.getLogger(__name__)
-
-from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 
 def _resolve_dsn(value: str | None, field: str) -> str:
@@ -92,9 +91,9 @@ def fetch_new_rows(cur: DictCursor, last_ts: datetime) -> list[dict[str, Any]]:
 def insert_rows(cur: DictCursor, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
-    values = [tuple(row[f] for f in FIELDS) for row in rows]
+    values = (tuple(row[f] for f in FIELDS) for row in rows)
     cols = ",".join(FIELDS)
-    placeholders = ",".join(["%s"] * len(FIELDS))
+    placeholders = ",".join("%s" for _ in FIELDS)
     query = (
         f"INSERT INTO access_events ({cols}) VALUES ({placeholders})"
         " ON CONFLICT (event_id) DO NOTHING"

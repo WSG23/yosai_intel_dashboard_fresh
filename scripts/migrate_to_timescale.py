@@ -281,9 +281,9 @@ def insert_rows(cur: cursor, table: str, rows: List[dict[str, Any]]) -> None:
     if not rows:
         return
     columns = rows[0].keys()
-    values = [tuple(row[col] for col in columns) for row in rows]
+    values = (tuple(row[col] for col in columns) for row in rows)
     cols = ",".join(columns)
-    placeholders = ",".join(["%s"] * len(columns))
+    placeholders = ",".join("%s" for _ in columns)
     query = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
     execute_batch(cur, query, values)
 
@@ -394,8 +394,7 @@ def run_verification(target_conn: connection) -> None:
             "SELECT table_name FROM information_schema.tables "
             "WHERE table_schema='public'",
         )
-        tables = [r[0] for r in cur.fetchall()]
-        LOG.info("Tables: %s", ", ".join(tables))
+        LOG.info("Tables: %s", ", ".join(r[0] for r in cur.fetchall()))
         execute_query(
             cur, "SELECT * FROM timescaledb_information.compressed_hypertables"
         )
