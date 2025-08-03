@@ -15,7 +15,7 @@ from websockets import WebSocketServerProtocol, serve
 from src.websocket import metrics as websocket_metrics
 from yosai_intel_dashboard.src.core.events import EventBus
 from src.common.base import BaseComponent
-from src.common.config import ConfigProvider
+from src.common.config import ConfigProvider, ConfigService
 
 from .websocket_pool import WebSocketConnectionPool
 
@@ -38,7 +38,8 @@ class AnalyticsWebSocketServer(BaseComponent):
         compression_threshold: int = 0,
 
     ) -> None:
-        super().__init__(config)
+        super().__init__(component_id="AnalyticsWebSocketServer")
+        self.config = config or ConfigService()
         self.host = host
         self.port = port
         self.event_bus = event_bus or EventBus()
@@ -56,7 +57,6 @@ class AnalyticsWebSocketServer(BaseComponent):
         self.pool = WebSocketConnectionPool()
         self._queue: Deque[dict] = deque(maxlen=queue_size)
 
-
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -71,7 +71,7 @@ class AnalyticsWebSocketServer(BaseComponent):
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         await self.pool.acquire(websocket)
         self.clients.add(websocket)
-        await self.pool.acquire(websocket)
+        websocket_metrics.record_connection()
 
         if self._queue:
             queued = list(self._queue)
@@ -116,6 +116,8 @@ class AnalyticsWebSocketServer(BaseComponent):
                 await ws.close()
             finally:
                 self.clients.discard(ws)
+        except Exception:  # pragma: no cover - connection closed or other errors
+            self.clients.discard(ws)
 
     async def _heartbeat(self) -> None:
         while True:
