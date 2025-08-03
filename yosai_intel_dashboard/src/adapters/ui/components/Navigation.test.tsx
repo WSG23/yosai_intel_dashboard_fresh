@@ -20,6 +20,7 @@ test('renders navigation links', () => {
   );
   expect(screen.getByText('Upload')).toBeInTheDocument();
   expect(screen.getByText('Analytics')).toBeInTheDocument();
+  expect(screen.getByText('Builder')).toBeInTheDocument();
 });
 
 test('header shows title', () => {
