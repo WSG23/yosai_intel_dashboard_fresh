@@ -22,6 +22,7 @@ from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
 
+
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
 # :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
@@ -108,73 +109,6 @@ class SecurityEvent:
     user_id: Optional[str]
     details: Dict[str, Any]
     blocked: bool = False
-
-
-class RateLimiter:
-    """Rate limiting to prevent abuse"""
-
-    def __init__(
-        self,
-        max_requests: int = dynamic_config.security.rate_limit_requests,
-        window_minutes: int = dynamic_config.security.rate_limit_window_minutes,
-    ):
-        self.max_requests = max_requests
-        self.window_seconds = window_minutes * 60
-        self.requests: Dict[str, List[float]] = {}
-        self.blocked_ips: Dict[str, float] = {}
-        self.logger = logging.getLogger(__name__)
-
-    def is_allowed(
-        self, identifier: str, source_ip: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """Check if request is allowed"""
-        current_time = time.time()
-
-        # Check if IP is blocked
-        if source_ip and source_ip in self.blocked_ips:
-            if current_time < self.blocked_ips[source_ip]:
-                return {
-                    "allowed": False,
-                    "reason": "IP temporarily blocked",
-                    "retry_after": self.blocked_ips[source_ip] - current_time,
-                }
-            else:
-                # Unblock IP
-                del self.blocked_ips[source_ip]
-
-        # Initialize or clean old requests
-        if identifier not in self.requests:
-            self.requests[identifier] = []
-
-        # Remove old requests outside the window
-        cutoff_time = current_time - self.window_seconds
-        self.requests[identifier] = [
-            req_time for req_time in self.requests[identifier] if req_time > cutoff_time
-        ]
-
-        # Check if under limit
-        if len(self.requests[identifier]) >= self.max_requests:
-            # Block IP if provided
-            if source_ip:
-                self.blocked_ips[source_ip] = current_time + (self.window_seconds * 2)
-                self.logger.warning(f"Rate limit exceeded, blocking IP: {source_ip}")
-
-            return {
-                "allowed": False,
-                "reason": "Rate limit exceeded",
-                "requests_in_window": len(self.requests[identifier]),
-                "max_requests": self.max_requests,
-                "window_seconds": self.window_seconds,
-            }
-
-        # Record this request
-        self.requests[identifier].append(current_time)
-
-        return {
-            "allowed": True,
-            "requests_in_window": len(self.requests[identifier]),
-            "remaining": self.max_requests - len(self.requests[identifier]),
-        }
 
 
 class SecurityAuditor(BaseModel):
