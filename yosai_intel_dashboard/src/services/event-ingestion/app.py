@@ -6,14 +6,15 @@ import os
 import pathlib
 from typing import Any, Dict
 
-from fastapi import FastAPI, Header, Request, status
+from fastapi import Header, status
+
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
-from yosai_intel_dashboard.src.core.security import RateLimiter
+import redis
+from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
 from yosai_intel_dashboard.src.services.security import verify_service_jwt
@@ -59,27 +60,11 @@ register_health_check(app, "message_broker", _broker_health)
 register_health_check(app, "database", _database_health)
 register_health_check(app, "external_api", _external_api_health)
 
-rate_limiter = RateLimiter()
+# Configure rate limiter
+redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
+app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
 
-
-@app.middleware("http")
-async def rate_limit(request: Request, call_next):
-    auth = request.headers.get("Authorization", "")
-    identifier = (
-        auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
-    )
-    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
-    if not result["allowed"]:
-        headers = {}
-        retry = result.get("retry_after")
-        if retry:
-            headers["Retry-After"] = str(int(retry))
-        return JSONResponse(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content={"detail": "rate limit exceeded"},
-            headers=headers,
-        )
-    return await call_next(request)
 
 
 def verify_token(authorization: str = Header("")) -> dict:
