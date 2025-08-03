@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 import threading
-from typing import Any, Dict, Protocol
+from typing import Any, Dict
 
-
-class EventBusProtocol(Protocol):
-    def publish(self, event_type: str, data: Dict[str, Any]) -> None: ...
+from src.common.events import EventBus, EventPublisher
 
 
 def generate_sample_metrics() -> Dict[str, Any]:
@@ -18,11 +16,11 @@ def generate_sample_metrics() -> Dict[str, Any]:
     }
 
 
-class MetricsProvider:
+class MetricsProvider(EventPublisher):
     """Publish metrics updates to an event bus periodically."""
 
-    def __init__(self, event_bus: EventBusProtocol, interval: float = 1.0) -> None:
-        self.event_bus = event_bus
+    def __init__(self, event_bus: EventBus, interval: float = 1.0) -> None:
+        super().__init__(event_bus)
         self.interval = interval
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -31,7 +29,7 @@ class MetricsProvider:
     def _run(self) -> None:
         while not self._stop.is_set():
             payload = generate_sample_metrics()
-            self.event_bus.publish('metrics_update', payload)
+            self.publish_event('metrics_update', payload)
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
