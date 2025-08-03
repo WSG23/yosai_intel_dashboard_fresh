@@ -5,6 +5,15 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, Optional
 
+try:  # pragma: no cover - optional import
+    from config import DatabaseSettings
+except Exception:  # pragma: no cover - fallback when config imports fail
+    class DatabaseSettings:  # type: ignore[override]
+        query_timeout_seconds = 600
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401
+            """Fallback placeholder."""
+            pass
+
 from database.types import DBRows
 
 logger = logging.getLogger(__name__)
@@ -46,7 +55,13 @@ def _validate_params(params: Optional[Iterable[Any]]) -> Optional[tuple]:
     raise TypeError("params must be a tuple/list or None")
 
 
-def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
+def execute_query(
+    conn: Any,
+    sql: str,
+    params: Optional[Iterable[Any]] = None,
+    *,
+    timeout: Optional[int] = None,
+):
     """Validate, optimize and execute a SELECT query on ``conn``."""
 
     if not isinstance(sql, str):
@@ -54,13 +69,41 @@ def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing query: %s", optimized_sql)
-    if hasattr(conn, "execute_query"):
-        return conn.execute_query(optimized_sql, p)
-    if hasattr(conn, "execute"):
-        if p is not None:
-            return conn.execute(optimized_sql, p)
-        return conn.execute(optimized_sql)
-    raise AttributeError("Object has no execute or execute_query method")
+
+    db_type = _infer_db_type(conn)
+    effective_timeout = (
+        timeout
+        if timeout is not None
+        else DatabaseSettings().query_timeout_seconds
+    )
+    timeout_ms = int(effective_timeout * 1000)
+
+    def _set_timeout():
+        if db_type == "postgresql":
+            conn.execute(f"SET LOCAL statement_timeout = {timeout_ms}")
+        elif db_type == "sqlite":
+            conn.execute(f"PRAGMA busy_timeout = {timeout_ms}")
+
+    def _reset_timeout():
+        try:
+            if db_type == "postgresql":
+                conn.execute("SET LOCAL statement_timeout = DEFAULT")
+            elif db_type == "sqlite":
+                conn.execute("PRAGMA busy_timeout = 0")
+        except Exception:
+            logger.exception("Failed to reset timeout")
+
+    try:
+        _set_timeout()
+        if hasattr(conn, "execute_query"):
+            return conn.execute_query(optimized_sql, p)
+        if hasattr(conn, "execute"):
+            if p is not None:
+                return conn.execute(optimized_sql, p)
+            return conn.execute(optimized_sql)
+        raise AttributeError("Object has no execute or execute_query method")
+    finally:
+        _reset_timeout()
 
 
 def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
@@ -70,20 +113,54 @@ def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
     return execute_query(conn, sql, params)
 
 
-def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
+def execute_command(
+    conn: Any,
+    sql: str,
+    params: Optional[Iterable[Any]] = None,
+    *,
+    timeout: Optional[int] = None,
+):
     """Validate, optimize and execute a modification command on ``conn``."""
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing command: %s", optimized_sql)
-    if hasattr(conn, "execute_command"):
-        return conn.execute_command(optimized_sql, p)
-    if hasattr(conn, "execute"):
-        if p is not None:
-            return conn.execute(optimized_sql, p)
-        return conn.execute(optimized_sql)
-    raise AttributeError("Object has no execute or execute_command method")
+
+    db_type = _infer_db_type(conn)
+    effective_timeout = (
+        timeout
+        if timeout is not None
+        else DatabaseSettings().query_timeout_seconds
+    )
+    timeout_ms = int(effective_timeout * 1000)
+
+    def _set_timeout():
+        if db_type == "postgresql":
+            conn.execute(f"SET LOCAL statement_timeout = {timeout_ms}")
+        elif db_type == "sqlite":
+            conn.execute(f"PRAGMA busy_timeout = {timeout_ms}")
+
+    def _reset_timeout():
+        try:
+            if db_type == "postgresql":
+                conn.execute("SET LOCAL statement_timeout = DEFAULT")
+            elif db_type == "sqlite":
+                conn.execute("PRAGMA busy_timeout = 0")
+        except Exception:
+            logger.exception("Failed to reset timeout")
+
+    try:
+        _set_timeout()
+        if hasattr(conn, "execute_command"):
+            return conn.execute_command(optimized_sql, p)
+        if hasattr(conn, "execute"):
+            if p is not None:
+                return conn.execute(optimized_sql, p)
+            return conn.execute(optimized_sql)
+        raise AttributeError("Object has no execute or execute_command method")
+    finally:
+        _reset_timeout()
 
 
 __all__ = ["execute_query", "execute_command", "execute_secure_query"]

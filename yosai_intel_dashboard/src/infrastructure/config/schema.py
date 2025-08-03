@@ -51,6 +51,7 @@ class DatabaseSettings(BaseModel):
     shrink_timeout: int = 60
     shrink_interval: int = 0
     use_intelligent_pool: bool = False
+    query_timeout_seconds: int = 600
 
     @model_validator(mode="after")
     def populate_url(cls, values: "DatabaseSettings") -> "DatabaseSettings":
