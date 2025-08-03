@@ -6,11 +6,11 @@ Main Compliance Plugin Class - Extracted from __init__.py
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from yosai_intel_dashboard.src.core.plugins.base import BasePlugin
 from plugins.common_callbacks import csv_pre_process_callback
+
+from yosai_intel_dashboard.src.core.plugins.base import BasePlugin
 
 from .api import ComplianceAPI
 from .config import ComplianceConfig
@@ -46,13 +46,13 @@ class CompliancePlugin(BasePlugin):
         self.is_initialized = False
         self.is_database_ready = False
 
-    def initialize(self, container: Container, config: Dict[str, Any]) -> bool:
+    def initialize(self, container: Any, config: Dict[str, Any]) -> bool:
         """Initialize the compliance plugin"""
         try:
             logger.info("Initializing Compliance Plugin v%s", self.version)
 
             # 1. Load plugin configuration
-            self.config = ComplianceConfig(config.get("compliance", {}))
+            self.config = ComplianceConfig.from_dict(config.get("compliance", {}))
 
             if not self.config.enabled:
                 logger.info("Compliance plugin is disabled in configuration")
@@ -293,7 +293,7 @@ class CompliancePlugin(BasePlugin):
 
         return {"deleted_records": deleted_count if "deleted_count" in locals() else 0}
 
-    def _register_services_with_container(self, container: Container) -> None:
+    def _register_services_with_container(self, container: Any) -> None:
         """Register compliance services with the DI container"""
         if not self.services:
             return

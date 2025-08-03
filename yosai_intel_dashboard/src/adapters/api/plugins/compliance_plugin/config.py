@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Any, Dict
 
 
-@dataclass
+@dataclass(frozen=True)
 class ComplianceConfig:
     """Configuration for compliance plugin"""
 
@@ -57,15 +57,18 @@ class ComplianceConfig:
     csv_auto_classification: bool = True
     csv_consent_checking: bool = True
 
-    def __init__(self, config_dict: Dict[str, Any]):
-        """Initialize from configuration dictionary"""
-        for key, value in config_dict.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "ComplianceConfig":
+        """Create a configuration object from a dictionary."""
+        valid_fields = {f.name for f in fields(cls)}
+        filtered = filter(lambda item: item[0] in valid_fields, config_dict.items())
+        return cls(**dict(filtered))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            field.name: getattr(self, field.name)
-            for field in self.__dataclass_fields__.values()
+            name: value
+            for name, value in map(
+                lambda f: (f.name, getattr(self, f.name)), fields(self)
+            )
         }
