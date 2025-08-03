@@ -1,4 +1,13 @@
-"""Common utilities package."""
+"""Common utilities and shared abstractions."""
 
-__all__ = []
+from .base import BaseComponent
+from .mixins import LoggingMixin, SerializationMixin, Loggable, Serializable
+
+__all__ = [
+    "BaseComponent",
+    "LoggingMixin",
+    "SerializationMixin",
+    "Loggable",
+    "Serializable",
+]
 
