@@ -7,6 +7,7 @@ from typing import Optional, Set
 from websockets import WebSocketServerProtocol, serve
 
 from yosai_intel_dashboard.src.core.events import EventBus
+from src.websocket import metrics as websocket_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,8 @@ class AnalyticsWebSocketServer:
         self.host = host
         self.port = port
         self.event_bus = event_bus or EventBus()
+        websocket_metrics.set_event_bus(self.event_bus)
+        websocket_metrics.start_metrics_server()
         self.clients: Set[WebSocketServerProtocol] = set()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -33,6 +36,7 @@ class AnalyticsWebSocketServer:
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         self.clients.add(websocket)
+        websocket_metrics.record_connection()
         try:
             async for _ in websocket:
                 pass  # Server is broadcast-only
