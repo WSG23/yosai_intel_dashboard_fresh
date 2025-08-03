@@ -1,6 +1,6 @@
 """Database connection - compatible with existing codebase"""
 
-from typing import Optional, Protocol
+from typing import Iterable, Optional, Protocol
 
 from opentelemetry import trace
 
@@ -22,6 +22,10 @@ class DatabaseConnection(Protocol):
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute INSERT/UPDATE/DELETE"""
+        ...
+
+    def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
+        """Execute batch INSERT/UPDATE/DELETE"""
         ...
 
     def health_check(self) -> bool:
@@ -63,6 +67,15 @@ def create_database_connection() -> DatabaseConnection:
                 queries_total.inc()
                 try:
                     return conn.execute_command(command, params)
+                except Exception:
+                    query_errors_total.inc()
+                    raise
+
+        def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
+            with tracer.start_as_current_span("execute_batch"):
+                queries_total.inc()
+                try:
+                    return conn.execute_batch(command, params_seq)
                 except Exception:
                     query_errors_total.inc()
                     raise

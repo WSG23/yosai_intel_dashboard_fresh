@@ -26,6 +26,9 @@ class SQLiteConn:
     def execute_command(self, command: str, params: tuple | None = None) -> None:
         pass
 
+    def execute_batch(self, command: str, params_seq):
+        pass
+
     def health_check(self) -> bool:
         return True
 
@@ -41,6 +44,9 @@ class DummyPostgres:
         return []
 
     def execute_command(self, command: str, params: tuple | None = None) -> None:
+        pass
+
+    def execute_batch(self, command: str, params_seq):
         pass
 
     def health_check(self) -> bool:

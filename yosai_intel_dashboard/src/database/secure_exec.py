@@ -73,14 +73,18 @@ def _validate_params(params: Optional[Iterable[Any]]) -> Optional[tuple]:
     raise TypeError("params must be a tuple/list or None")
 
 
-def execute_query(
-    conn: Any,
-    sql: str,
-    params: Optional[Iterable[Any]] = None,
-    *,
-    optimize: bool = True,
-):
-    """Validate, optionally optimize and execute a SELECT query with caching."""
+def _validate_params_seq(params_seq: Iterable[Iterable[Any]]) -> tuple[tuple[Any, ...], ...]:
+    if not isinstance(params_seq, Iterable):
+        raise TypeError("params_seq must be an iterable of parameter sequences")
+    validated = []
+    for params in params_seq:
+        validated.append(_validate_params(params) or ())
+    return tuple(validated)
+
+
+def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
+    """Validate, optimize and execute a SELECT query on ``conn``."""
+
 
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
@@ -141,4 +145,21 @@ def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None)
     raise AttributeError("Object has no execute or execute_command method")
 
 
-__all__ = ["execute_query", "execute_command", "execute_secure_query", "get_query_cache"]
+def execute_batch(conn: Any, sql: str, params_seq: Iterable[Iterable[Any]]):
+    """Validate, optimize and execute a batch command on ``conn``."""
+    if not isinstance(sql, str):
+        raise TypeError("sql must be a string")
+    if params_seq is None:
+        raise ValueError("params_seq must be provided")
+    p_seq = _validate_params_seq(params_seq)
+    optimized_sql = _get_optimizer(conn).optimize_query(sql)
+    logger.debug("Executing batch command: %s", optimized_sql)
+    if hasattr(conn, "execute_batch"):
+        return conn.execute_batch(optimized_sql, p_seq)
+    if hasattr(conn, "executemany"):
+        return conn.executemany(optimized_sql, p_seq)
+    raise AttributeError("Object has no execute_batch or executemany method")
+
+
+__all__ = ["execute_query", "execute_command", "execute_secure_query", "execute_batch"]
+

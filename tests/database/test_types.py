@@ -20,6 +20,9 @@ def _create_dummy_conn():
         def execute_command(self, *args, **kwargs):
             return None
 
+        def execute_batch(self, *args, **kwargs):
+            return None
+
         def health_check(self) -> bool:  # pragma: no cover - simple stub
             return True
 

@@ -52,6 +52,9 @@ class MockConnection:
     def execute_command(self, command, params=None):
         return None
 
+    def execute_batch(self, command, params_seq):
+        return None
+
     def health_check(self):
         return self._connected
 
