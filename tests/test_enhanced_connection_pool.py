@@ -1,14 +1,49 @@
 import threading
 import time
 
+import threading
+import time
+import importlib.util
+import types
+from pathlib import Path
+import sys
+
 import pytest
 
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionValidationFailed
-from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
-from yosai_intel_dashboard.src.services.database.intelligent_connection_pool import (
+# Provide lightweight database_exceptions without triggering heavy config imports
+exc_spec = importlib.util.spec_from_file_location(
+    "yosai_intel_dashboard.src.infrastructure.config.database_exceptions",
+    Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard/src/infrastructure/config/database_exceptions.py",
+)
+db_exc = importlib.util.module_from_spec(exc_spec)
+exc_spec.loader.exec_module(db_exc)
+sys.modules["yosai_intel_dashboard.src.infrastructure.config.database_exceptions"] = db_exc
+
+# Stub the parent package to bypass its __init__
+config_pkg = types.ModuleType("yosai_intel_dashboard.src.infrastructure.config")
+config_pkg.__path__ = []  # mark as package
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.infrastructure", types.ModuleType("yosai_intel_dashboard.src.infrastructure")
+)
+sys.modules["yosai_intel_dashboard.src.infrastructure.config"] = config_pkg
+ConnectionValidationFailed = db_exc.ConnectionValidationFailed
+
+from yosai_intel_dashboard.src.database.intelligent_connection_pool import (
     CircuitBreaker,
     IntelligentConnectionPool,
 )
+
+
+class MockConnection:
+    def __init__(self):
+        self._connected = True
+
+    def health_check(self):
+        return self._connected
+
+    def close(self):
+        self._connected = False
 
 
 def factory():
