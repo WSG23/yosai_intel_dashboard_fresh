@@ -19,6 +19,13 @@ manager.run_full_pipeline(raw_data)
 finally emit a `pipeline_complete` event using
 `TrulyUnifiedCallbacks`.
 
+## Degraded Mode
+
+When the analytics microservice cannot be reached the
+``AnalyticsServiceAdapter`` now logs the exception via ``ErrorHandler`` and
+returns an empty result. Callers should treat an empty dictionary as a signal to
+display placeholder analytics in the UI.
+
 ## Removing Legacy Details
 
 Previous documentation describing individual service classes has been removed.

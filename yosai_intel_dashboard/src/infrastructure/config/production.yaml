@@ -49,7 +49,15 @@ security:
     - ${FRONTEND_URL:https://dashboard.yourdomain.com}
     - ${API_URL:https://api.yourdomain.com}
   rate_limiting_enabled: ${RATE_LIMITING:true}
-  rate_limit_per_minute: ${RATE_LIMIT:120}
+  rate_limits:
+    free:
+      requests: ${RATE_LIMIT_FREE_REQUESTS:60}
+      window_minutes: ${RATE_LIMIT_FREE_WINDOW:1}
+      burst: ${RATE_LIMIT_FREE_BURST:0}
+    pro:
+      requests: ${RATE_LIMIT_PRO_REQUESTS:120}
+      window_minutes: ${RATE_LIMIT_PRO_WINDOW:1}
+      burst: ${RATE_LIMIT_PRO_BURST:20}
 
 analytics:
   cache_timeout_seconds: ${ANALYTICS_CACHE_TIMEOUT:600}

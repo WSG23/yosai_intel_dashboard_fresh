@@ -6,6 +6,8 @@ from typing import Callable, Dict, List, Optional
 
 from scipy import stats
 
+from monitoring import variant_hits
+
 
 class ABTest:
     """Simple A/B testing utility.
@@ -42,8 +44,11 @@ class ABTest:
         value = int(digest, 16) / 2**128
         for threshold, variant in self._thresholds:
             if value < threshold:
+                variant_hits.labels(variant=variant).inc()
                 return variant
-        return self._thresholds[-1][1]
+        variant = self._thresholds[-1][1]
+        variant_hits.labels(variant=variant).inc()
+        return variant
 
     def log_metric(self, variant: str, value: float) -> None:
         """Record a metric value for the given variant."""
@@ -66,7 +71,11 @@ class ABTest:
             data1, data2 = self.metrics[variants[0]], self.metrics[variants[1]]
             stat, p_value = stats.ttest_ind(data1, data2, equal_var=False)
             if p_value < self.significance_level:
-                winner = variants[0] if sum(data1) / len(data1) > sum(data2) / len(data2) else variants[1]
+                winner = (
+                    variants[0]
+                    if sum(data1) / len(data1) > sum(data2) / len(data2)
+                    else variants[1]
+                )
             else:
                 winner = None
         else:  # binary

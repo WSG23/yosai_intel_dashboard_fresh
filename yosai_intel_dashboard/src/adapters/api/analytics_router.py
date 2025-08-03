@@ -9,6 +9,7 @@ from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCa
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
 from yosai_intel_dashboard.src.services.security import require_permission
+from yosai_intel_dashboard.src.core.security import validate_user_input
 from shared.errors.types import ErrorCode
 
 # Routes now use an unversioned prefix and are mounted under /v1 by the
@@ -48,7 +49,9 @@ async def get_patterns_analysis(
     Fetch aggregated analytics for the requested ``facility_id`` and time ``range``
     and return the cached summary payload.
     """
-    data = _cached_service.get_analytics_summary_sync(query.facility_id, query.range)
+    facility_id = validate_user_input(query.facility_id or "", "facility_id")
+    range_val = validate_user_input(query.range or "", "range")
+    data = _cached_service.get_analytics_summary_sync(facility_id, range_val)
     return JSONResponse(content=data)
 
 
@@ -87,7 +90,10 @@ async def get_chart_data(
     - **query**: Common analytics filters including ``facility_id`` and
       reporting ``range``.
     """
-    data = _cached_service.get_analytics_summary_sync(query.facility_id, query.range)
+    chart_type = validate_user_input(chart_type, "chart_type")
+    facility_id = validate_user_input(query.facility_id or "", "facility_id")
+    range_val = validate_user_input(query.range or "", "range")
+    data = _cached_service.get_analytics_summary_sync(facility_id, range_val)
     if chart_type == "patterns":
         return JSONResponse(content={"type": "patterns", "data": data})
     if chart_type == "timeline":

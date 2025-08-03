@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useWebSocket } from './useWebSocket';
+import { useWebSocket } from '.';
 
 export interface RealTimeAnalytics {
   [key: string]: any;

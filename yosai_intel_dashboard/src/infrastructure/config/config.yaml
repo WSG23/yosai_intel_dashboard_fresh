@@ -29,6 +29,14 @@ security:
     - .json
     - .xlsx
     - .xls
+  rate_limits:
+    free:
+      requests: 100
+      window_minutes: 1
+    pro:
+      requests: 1000
+      window_minutes: 1
+      burst: 200
 
 sample_files:
   csv_path: "data/sample_data.csv"
