@@ -3,9 +3,23 @@ from __future__ import annotations
 
 import importlib.util
 import warnings
+from contextlib import contextmanager
+from typing import Callable, Iterator, List
+
 import pytest
+from database.types import DatabaseConnection
 
 pytest_plugins = ["tests.config"]
+
+
+DatabaseConnectionFactory = Callable[[], Iterator[DatabaseConnection]]
+
+
+def _close_pool(pool) -> None:
+    """Close all connections in the given pool."""
+    while pool._pool:
+        conn, _ = pool._pool.pop()
+        conn.close()
 
 
 _missing_packages = [
@@ -38,3 +52,148 @@ def fake_unicode_processor():
     from .fake_unicode_processor import FakeUnicodeProcessor
 
     return FakeUnicodeProcessor()
+
+
+@pytest.fixture
+def mock_db_factory() -> Iterator[DatabaseConnectionFactory]:
+    """Factory yielding connections to the in-memory mock database.
+
+    Use as::
+
+        with mock_db_factory() as conn:
+            ...
+    """
+
+    from yosai_intel_dashboard.src.infrastructure.config.connection_pool import (
+        DatabaseConnectionPool,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+        ThreadSafeDatabaseManager,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.schema import DatabaseSettings
+
+    config = DatabaseSettings(type="mock")
+    manager = ThreadSafeDatabaseManager(config)
+    pool = DatabaseConnectionPool(manager._create_connection, 1, 2, 30, 1)
+    checked_out: List[DatabaseConnection] = []
+
+    @contextmanager
+    def factory() -> Iterator[DatabaseConnection]:
+        conn = pool.get_connection()
+        checked_out.append(conn)
+        try:
+            yield conn
+        finally:
+            checked_out.remove(conn)
+            pool.release_connection(conn)
+
+    yield factory
+
+    for conn in list(checked_out):
+        try:
+            pool.release_connection(conn)
+        except Exception:
+            pass
+    _close_pool(pool)
+    manager.close()
+
+
+@pytest.fixture
+def sqlite_connection_factory(
+    tmp_path,
+) -> Iterator[DatabaseConnectionFactory]:
+    """Factory yielding SQLite connections backed by a temporary file.
+
+    Use as::
+
+        with sqlite_connection_factory() as conn:
+            conn.execute_query("SELECT 1")
+    """
+
+    from yosai_intel_dashboard.src.infrastructure.config.connection_pool import (
+        DatabaseConnectionPool,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+        ThreadSafeDatabaseManager,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.schema import DatabaseSettings
+
+    db_path = tmp_path / "test.db"
+    config = DatabaseSettings(type="sqlite", name=str(db_path))
+    manager = ThreadSafeDatabaseManager(config)
+    pool = DatabaseConnectionPool(manager._create_connection, 1, 2, 30, 1)
+    checked_out: List[DatabaseConnection] = []
+
+    @contextmanager
+    def factory() -> Iterator[DatabaseConnection]:
+        conn = pool.get_connection()
+        checked_out.append(conn)
+        try:
+            yield conn
+        finally:
+            checked_out.remove(conn)
+            pool.release_connection(conn)
+
+    yield factory
+
+    for conn in list(checked_out):
+        try:
+            pool.release_connection(conn)
+        except Exception:
+            pass
+    _close_pool(pool)
+    manager.close()
+
+
+@pytest.fixture
+def postgres_connection_factory() -> Iterator[DatabaseConnectionFactory]:
+    """Factory yielding PostgreSQL connections using ``testcontainers``.
+
+    This fixture requires the ``testcontainers`` package. Use as::
+
+        with postgres_connection_factory() as conn:
+            conn.execute_query("SELECT 1")
+    """
+
+    pytest.importorskip("testcontainers.postgres")
+    from testcontainers.postgres import PostgresContainer
+    from yosai_intel_dashboard.src.infrastructure.config.connection_pool import (
+        DatabaseConnectionPool,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+        ThreadSafeDatabaseManager,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.schema import DatabaseSettings
+
+    with PostgresContainer("postgres:15-alpine") as pg:
+        config = DatabaseSettings(
+            type="postgresql",
+            host=pg.get_container_host_ip(),
+            port=int(pg.get_exposed_port(5432)),
+            name=pg.dbname,
+            user=pg.username,
+            password=pg.password,
+        )
+        manager = ThreadSafeDatabaseManager(config)
+        pool = DatabaseConnectionPool(manager._create_connection, 1, 2, 30, 1)
+        checked_out: List[DatabaseConnection] = []
+
+        @contextmanager
+        def factory() -> Iterator[DatabaseConnection]:
+            conn = pool.get_connection()
+            checked_out.append(conn)
+            try:
+                yield conn
+            finally:
+                checked_out.remove(conn)
+                pool.release_connection(conn)
+
+        yield factory
+
+        for conn in list(checked_out):
+            try:
+                pool.release_connection(conn)
+            except Exception:
+                pass
+        _close_pool(pool)
+        manager.close()
