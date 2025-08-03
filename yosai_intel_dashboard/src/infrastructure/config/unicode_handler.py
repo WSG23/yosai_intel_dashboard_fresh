@@ -11,9 +11,10 @@ from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 
 from .unicode_processor import (
     FileUnicodeHandler,
-    QueryUnicodeHandler,
     UnicodeSecurityValidator,
 )
+from .unicode_processor import encode_params as _encode_params
+from .unicode_processor import encode_query as _encode_query
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +44,7 @@ class UnicodeHandler:
         *,
         on_surrogate: Callable[[str], None] | None = None,
     ) -> str:
-        return QueryUnicodeHandler.handle_unicode_query(
-            query,
-            processor=self.processor,
-            on_surrogate=on_surrogate,
-        )
+        return _encode_query(query, processor=self.processor, on_surrogate=on_surrogate)
 
     def encode_params(
         self,
@@ -55,10 +52,8 @@ class UnicodeHandler:
         *,
         on_surrogate: Callable[[str], None] | None = None,
     ) -> Any:
-        return QueryUnicodeHandler.handle_query_parameters(
-            params,
-            processor=self.processor,
-            on_surrogate=on_surrogate,
+        return _encode_params(
+            params, processor=self.processor, on_surrogate=on_surrogate
         )
 
     # ------------------------------------------------------------------
