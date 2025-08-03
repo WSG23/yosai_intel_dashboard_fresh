@@ -260,6 +260,68 @@ def setup_timescale(conn: connection) -> None:
             )
             """
         )
+        # anomaly detections hypertable
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS anomaly_detections (
+                anomaly_id UUID PRIMARY KEY,
+                event_id UUID REFERENCES access_events(event_id),
+                anomaly_type VARCHAR(50) NOT NULL,
+                severity VARCHAR(20) NOT NULL,
+                confidence_score FLOAT NOT NULL,
+                description TEXT,
+                detected_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ai_model_version VARCHAR(50),
+                additional_context JSONB,
+                is_verified BOOLEAN,
+                verified_by VARCHAR(50),
+                verified_at TIMESTAMPTZ
+            )
+            """
+        )
+        cur.execute(
+            """
+            SELECT create_hypertable(
+                'anomaly_detections',
+                'detected_at',
+                chunk_time_interval => INTERVAL '1 day',
+                if_not_exists => TRUE
+            )
+            """
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_anomaly_detections_type ON anomaly_detections(anomaly_type)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_anomaly_detections_time ON anomaly_detections(detected_at)"
+        )
+        cur.execute(
+            """
+            ALTER TABLE anomaly_detections
+                SET (
+                    timescaledb.compress,
+                    timescaledb.compress_orderby = 'detected_at DESC'
+                )
+            """
+        )
+        cur.execute(
+            """
+            SELECT add_compression_policy(
+                'anomaly_detections',
+                INTERVAL '30 days',
+                if_not_exists => TRUE
+            )
+            """
+        )
+        cur.execute(
+            """
+            SELECT add_retention_policy(
+                'anomaly_detections',
+                INTERVAL '180 days',
+                if_not_exists => TRUE
+            )
+            """
+        )
     conn.commit()
 
 

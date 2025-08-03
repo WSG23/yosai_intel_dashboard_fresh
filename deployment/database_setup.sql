@@ -3,6 +3,7 @@
 
 -- Enable query statistics extension for profiling and optimization
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+CREATE EXTENSION IF NOT EXISTS timescaledb;
 
 -- Create facilities table
 CREATE TABLE IF NOT EXISTS facilities (
@@ -51,7 +52,7 @@ CREATE TABLE IF NOT EXISTS people (
 -- Create access_events table (main table)
 CREATE TABLE IF NOT EXISTS access_events (
     event_id VARCHAR(50) PRIMARY KEY,
-    timestamp TIMESTAMP NOT NULL,
+    time TIMESTAMPTZ NOT NULL,
     person_id VARCHAR(50),
     door_id VARCHAR(50) REFERENCES doors(door_id),
     badge_id VARCHAR(50),
@@ -63,6 +64,15 @@ CREATE TABLE IF NOT EXISTS access_events (
     raw_data JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE);
+ALTER TABLE access_events
+  SET (
+       timescaledb.compress,
+       timescaledb.compress_orderby = 'time DESC',
+       timescaledb.compress_segmentby = 'door_id'
+  );
+SELECT add_compression_policy('access_events', INTERVAL '30 days');
+SELECT add_retention_policy('access_events', INTERVAL '365 days');
 
 -- Create anomaly_detections table
 CREATE TABLE IF NOT EXISTS anomaly_detections (
@@ -72,13 +82,21 @@ CREATE TABLE IF NOT EXISTS anomaly_detections (
     severity VARCHAR(20) NOT NULL,
     confidence_score FLOAT NOT NULL,
     description TEXT,
-    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    detected_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ai_model_version VARCHAR(50),
     additional_context JSONB,
     is_verified BOOLEAN,
     verified_by VARCHAR(50),
-    verified_at TIMESTAMP
+    verified_at TIMESTAMPTZ
 );
+SELECT create_hypertable('anomaly_detections', 'detected_at', if_not_exists => TRUE);
+ALTER TABLE anomaly_detections
+  SET (
+       timescaledb.compress,
+       timescaledb.compress_orderby = 'detected_at DESC'
+  );
+SELECT add_compression_policy('anomaly_detections', INTERVAL '30 days');
+SELECT add_retention_policy('anomaly_detections', INTERVAL '180 days');
 
 -- Create incident_tickets table
 CREATE TABLE IF NOT EXISTS incident_tickets (
@@ -99,7 +117,7 @@ CREATE TABLE IF NOT EXISTS incident_tickets (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_access_events_timestamp ON access_events(timestamp);
+CREATE INDEX IF NOT EXISTS idx_access_events_time ON access_events(time);
 CREATE INDEX IF NOT EXISTS idx_access_events_person_id ON access_events(person_id);
 CREATE INDEX IF NOT EXISTS idx_access_events_door_id ON access_events(door_id);
 CREATE INDEX IF NOT EXISTS idx_anomaly_detections_detected_at ON anomaly_detections(detected_at);

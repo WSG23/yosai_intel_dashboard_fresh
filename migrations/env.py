@@ -42,6 +42,11 @@ def _ensure_timescale(connection) -> None:
     connection.execute(
         text("SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE)")
     )
+    connection.execute(
+        text(
+            "SELECT create_hypertable('anomaly_detections', 'detected_at', if_not_exists => TRUE)"
+        )
+    )
 
 
 def run_migrations_offline() -> None:
