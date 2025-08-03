@@ -1,6 +1,6 @@
 """Database connection - compatible with existing codebase"""
 
-from typing import Optional, Protocol
+from typing import Iterable, Optional, Protocol
 
 from opentelemetry import trace
 
@@ -31,6 +31,7 @@ class DatabaseConnection(Protocol):
 
     def execute_prepared(self, name: str, params: tuple) -> DBRows:
         """Execute a previously prepared statement."""
+
         ...
 
     def health_check(self) -> bool:
@@ -85,6 +86,7 @@ def create_database_connection() -> DatabaseConnection:
                 queries_total.inc()
                 try:
                     return conn.execute_prepared(name, params)
+
                 except Exception:
                     query_errors_total.inc()
                     raise

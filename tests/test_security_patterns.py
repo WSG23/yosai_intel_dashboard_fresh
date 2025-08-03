@@ -13,6 +13,9 @@ def test_analyze_failed_access_returns_expected_keys(monkeypatch):
         def execute_command(self, *a, **kw):
             return 0
 
+        def execute_batch(self, *a, **kw):
+            return 0
+
         def health_check(self) -> bool:
             return True
 

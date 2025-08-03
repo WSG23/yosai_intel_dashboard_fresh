@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { useEventSocket } from './useEventSocket';
+import { useEventSocket, EventSocketState } from './useEventSocket';
+import { eventBus } from '../eventBus';
 
 class MockSocket {
   public onmessage: ((ev: { data: string }) => void) | null = null;
@@ -19,6 +20,7 @@ describe('useEventSocket', () => {
     );
 
     act(() => {
+      MockSocket.instance?.onopen?.();
       MockSocket.instance?.onmessage?.({ data: JSON.stringify({ a: 1 }) });
     });
 
@@ -26,5 +28,29 @@ describe('useEventSocket', () => {
 
     unmount();
     expect(MockSocket.instance?.close).toHaveBeenCalled();
+  });
+
+  it('emits state changes via EventBus', () => {
+    const states: EventSocketState[] = [];
+    const unsubscribe = eventBus.on('event_socket_state', (s: EventSocketState) => {
+      states.push(s);
+    });
+
+    const { unmount } = renderHook(() =>
+      useEventSocket('ws://test', url => new MockSocket(url) as unknown as WebSocket)
+    );
+
+    act(() => {
+      MockSocket.instance?.onopen?.();
+    });
+
+    unmount();
+    unsubscribe();
+
+    expect(states).toEqual([
+      EventSocketState.CONNECTING,
+      EventSocketState.CONNECTED,
+      EventSocketState.DISCONNECTED,
+    ]);
   });
 });

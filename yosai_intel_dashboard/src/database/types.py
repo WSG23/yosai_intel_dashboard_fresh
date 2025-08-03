@@ -6,7 +6,7 @@ The :class:`DatabaseConnection` protocol describes the minimal interface
 expected by the connection pools and helpers in this package.
 """
 
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, Iterable, List, Optional, Protocol
 
 
 # ---------------------------------------------------------------------------
@@ -33,6 +33,7 @@ class DatabaseConnection(Protocol):
 
     def execute_prepared(self, name: str, params: tuple) -> DBRows:
         """Execute a previously prepared statement."""
+
         ...
 
     def health_check(self) -> bool:

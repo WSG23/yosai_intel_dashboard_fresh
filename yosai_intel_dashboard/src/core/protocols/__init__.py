@@ -11,6 +11,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     List,
     Optional,
     Protocol,
@@ -45,6 +46,7 @@ class DatabaseProtocol(Protocol):
     @abstractmethod
     def execute_prepared(self, name: str, params: tuple) -> pd.DataFrame:
         """Execute a previously prepared statement."""
+
         ...
 
     @abstractmethod

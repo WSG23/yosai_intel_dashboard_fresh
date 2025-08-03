@@ -12,6 +12,10 @@ class DummyConn:
         self.called_with = (query, params)
         return "ok"
 
+    def execute_batch(self, command: str, params_seq):
+        self.called_with = (command, list(params_seq))
+        return "ok"
+
 
 def test_execute_secure_query_basic():
     conn = DummyConn()
