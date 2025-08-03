@@ -1,26 +1,60 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
+import os
 import ssl
+from dataclasses import dataclass
 from typing import Any, MutableMapping
 
 import aiohttp
+from tracing import propagate_context
 from tenacity import (
     AsyncRetrying,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
+    wait_random,
 )
+
+try:  # pragma: no cover - tracing is optional in tests
+    from tracing import propagate_context
+except Exception:  # pragma: no cover - graceful fallback when tracing deps missing
+    def propagate_context(headers: MutableMapping[str, str]) -> None:  # type: ignore
+        return None
+
 
 from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
+from ..monitoring.request_metrics import request_retry_count, request_retry_delay
 
-from .protocols import ServiceClient
 
 
-class RestClient:
+@dataclass
+class RetryPolicy:
+    """Configuration for async retry behaviour."""
+
+    max_attempts: int = 3
+    initial_delay: float = 0.1
+    max_delay: float = 60.0
+    exp_base: float = 2.0
+    jitter: float = 0.1
+
+    def build_wait(self):
+        wait = wait_exponential(
+            multiplier=self.initial_delay,
+            max=self.max_delay,
+            exp_base=self.exp_base,
+        )
+        if self.jitter:
+            wait = wait + wait_random(0, self.jitter)
+        return wait
+
+
+class AsyncRestClient:
     """Asynchronous HTTP client with circuit breaker and retries."""
 
     log = logging.getLogger(__name__)
@@ -31,8 +65,10 @@ class RestClient:
         *,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
+        check_interval: float = 30.0,
         retries: int = 3,
         timeout: float = 5.0,
+        retry_policy: RetryPolicy | None = None,
         mtls_cert: str | None = None,
         mtls_key: str | None = None,
         verify_ssl: bool = True,
@@ -41,9 +77,11 @@ class RestClient:
         self.circuit_breaker = CircuitBreaker(
             failure_threshold, recovery_timeout, name=base_url
         )
-        self.retries = retries
+        self.retry_policy = retry_policy or RetryPolicy(max_attempts=retries)
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._ssl = self._create_ssl_context(mtls_cert, mtls_key, verify_ssl)
+        self._error_handler = ErrorHandler()
+
 
     # ------------------------------------------------------------------
     def _create_ssl_context(
@@ -59,6 +97,21 @@ class RestClient:
         if not verify_ssl:
             return False
         return None
+
+    # ------------------------------------------------------------------
+    async def _health_check(self) -> bool:
+        try:
+            async with aiohttp.ClientSession(
+                timeout=self.timeout, ssl=self._ssl
+            ) as sess:
+                async with sess.head(self.base_url) as resp:
+                    return resp.status < 500
+        except Exception:
+            return False
+
+    async def _reset_session(self) -> None:
+        await self._session.close()
+        self._session = aiohttp.ClientSession(timeout=self.timeout, ssl=self._ssl)
 
     # ------------------------------------------------------------------
     async def request(self, method: str, path: str, **kwargs: Any) -> Any:
@@ -86,8 +139,28 @@ class RestClient:
                             return await resp.json()
                         return await resp.text()
 
+        wait = self.retry_policy.build_wait()
 
-def create_service_client(service_name: str) -> ServiceClient:
+
+        async for attempt in AsyncRetrying(
+            retry=retry_if_exception_type(aiohttp.ClientError),
+            stop=stop_after_attempt(self.retry_policy.max_attempts),
+            wait=wait,
+            reraise=True,
+            before_sleep=self._record_retry,
+        ):
+            with attempt:
+                return await _do_request()
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _record_retry(retry_state) -> None:
+        request_retry_count.inc()
+        if retry_state.next_action:
+            request_retry_delay.observe(retry_state.next_action.sleep)
+
+
+def create_service_client(service_name: str) -> "AsyncRestClient":
     """Create a service client resolving *service_name* URL from env vars."""
     env = f"{service_name.upper()}_SERVICE_URL"
     base_url = os.getenv(env, f"http://{service_name}")
@@ -99,4 +172,8 @@ __all__ = [
     "RetryPolicy",
     "create_service_client",
     "CircuitBreakerOpen",
+    "RestClient",
 ]
+
+# Backwards compatibility
+RestClient = AsyncRestClient

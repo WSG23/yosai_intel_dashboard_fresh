@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import asyncio
+import gzip
 import json
 import logging
 import threading
 from collections import deque
+from contextlib import suppress
 from typing import Optional, Set, Deque
 
 
 from websockets import WebSocketServerProtocol, serve
 
-from yosai_intel_dashboard.src.core.events import EventBus
 from src.websocket import metrics as websocket_metrics
+from yosai_intel_dashboard.src.core.events import EventBus
 
 from .websocket_pool import WebSocketConnectionPool
 
@@ -37,6 +39,10 @@ class AnalyticsWebSocketServer:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
 
+        self.pool = WebSocketConnectionPool()
+        self._queue: Deque[dict] = deque()
+
+
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -49,7 +55,10 @@ class AnalyticsWebSocketServer:
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
+        await self.pool.acquire(websocket)
         self.clients.add(websocket)
+        await self.pool.acquire(websocket)
+
         if self._queue:
             queued = list(self._queue)
             self._queue.clear()
@@ -64,6 +73,7 @@ class AnalyticsWebSocketServer:
             logger.debug("WebSocket connection error: %s", exc)
         finally:
             await self.pool.release(websocket)
+            self.clients.discard(websocket)
 
     async def _serve(self) -> None:
         self._loop = asyncio.get_running_loop()
@@ -82,6 +92,7 @@ class AnalyticsWebSocketServer:
                     {"client": id(ws), "status": "alive"},
                 )
         except asyncio.TimeoutError:
+            websocket_metrics.record_ping_failure()
             if self.event_bus:
                 self.event_bus.publish(
                     "websocket_heartbeat",
@@ -110,10 +121,13 @@ class AnalyticsWebSocketServer:
             message = json.dumps(data)
             if self._loop is not None:
                 asyncio.run_coroutine_threadsafe(
-                    self._broadcast_async(message), self._loop
+                    self.pool.broadcast(message), self._loop
                 )
         else:
             self._queue.append(data)
+
+    async def _broadcast_async(self, message: str) -> None:
+        await self.pool.broadcast(message)
 
 
     def stop(self) -> None:
@@ -122,8 +136,21 @@ class AnalyticsWebSocketServer:
             self.event_bus.unsubscribe(self._subscription_id)
             self._subscription_id = None
         if self._loop is not None:
-            if self._heartbeat_task is not None:
-                self._loop.call_soon_threadsafe(self._heartbeat_task.cancel)
+            async def _shutdown() -> None:
+                for ws in list(self.clients):
+                    try:
+                        await ws.close()
+                    finally:
+                        await self.pool.release(ws)
+                self.clients.clear()
+                self._queue.clear()
+                if self._heartbeat_task is not None:
+                    self._heartbeat_task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await self._heartbeat_task
+                    self._heartbeat_task = None
+
+            asyncio.run_coroutine_threadsafe(_shutdown(), self._loop).result()
 
             self._loop.call_soon_threadsafe(self._loop.stop)
             self._thread.join(timeout=1)

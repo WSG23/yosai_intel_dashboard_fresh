@@ -20,8 +20,10 @@ from typing import (
     Protocol,
     Tuple,
     Type,
+    TypedDict,
     TypeAlias,
     TypedDict,
+
 )
 
 from dash import Dash
@@ -33,7 +35,6 @@ from .events import CallbackEvent
 # ---------------------------------------------------------------------------
 # Type aliases
 # ---------------------------------------------------------------------------
-CallbackHandler: TypeAlias = Callable[..., Any]
 Outputs: TypeAlias = Output | tuple[Output, ...]
 Inputs: TypeAlias = Input | tuple[Input, ...] | None
 States: TypeAlias = State | tuple[State, ...] | None
@@ -348,7 +349,7 @@ class TrulyUnifiedCallbacks:
             self._event_callbacks[event].sort(key=lambda c: c.priority)
 
     # ------------------------------------------------------------------
-    def unregister_event(self, event: CallbackEvent, func: Callable[..., Any]) -> None:
+    def unregister_event(self, event: CallbackEvent, func: CallbackHandler) -> None:
         """Remove a previously registered event callback.
 
         Thread-safe via an internal ``RLock``.
@@ -432,7 +433,7 @@ class TrulyUnifiedCallbacks:
         tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
         return await asyncio.gather(*tasks) if tasks else []
 
-    def get_event_callbacks(self, event: CallbackEvent) -> List[Callable[..., Any]]:
+    def get_event_callbacks(self, event: CallbackEvent) -> List[CallbackHandler]:
         """Return registered callbacks for *event*.
 
         Thread-safe via an internal ``RLock``.
@@ -440,14 +441,14 @@ class TrulyUnifiedCallbacks:
         with self._lock:
             return [cb.func for cb in self._event_callbacks.get(event, [])]
 
-    def get_event_metrics(self, event: CallbackEvent) -> Dict[str, float | int]:
+    def get_event_metrics(self, event: CallbackEvent) -> CallbackMetrics:
         """Return execution metrics for *event*.
 
         Thread-safe via an internal ``RLock``.
         """
 
         with self._lock:
-            return self._event_metrics.get(
+            return self._event_metrics.setdefault(
                 event, CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
             )
 
@@ -612,7 +613,7 @@ class TrulyUnifiedCallbacks:
                 inputs: Iterable[Input] | Input | None = None,
                 states: Iterable[State] | State | None = None,
                 **kwargs: Any,
-            ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+            ) -> Callable[[CallbackHandler], CallbackHandler]:
                 return self._coord.handle_register(outputs, inputs, states, **kwargs)
 
         for manager_cls in manager_classes:

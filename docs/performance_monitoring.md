@@ -111,6 +111,33 @@ counts as JSON and the same metrics are also available via `/metrics` for
 Prometheus scraping. Configuration for the breakers lives in
 `config/circuit-breakers.yaml` and is loaded by both services.
 
+### Error Budget Metrics
+
+Each service can expose its remaining error budget via the
+`service_error_budget_remaining` gauge and track total errors with
+`service_errors_total`. Budgets are configured through the `ERROR_BUDGETS`
+environment variable using a comma separated list such as
+`api=1000,worker=500`. A default budget of 1000 errors applies when a service
+is not explicitly configured.
+
+Applications call `monitoring.error_budget.record_error("service-name")` when
+handling exceptions or circuit breaker failures. The helper updates both
+metrics and exposes utility functions like `get_remaining_budget` and
+`alert_if_exhausted` to integrate with custom alerting systems.
+
+An example Prometheus rule to alert when any service exhausts its error budget
+is included in `monitoring/prometheus/rules/app_alerts.yml`:
+
+```yaml
+- alert: ErrorBudgetExhausted
+  expr: service_error_budget_remaining <= 0
+  for: 1m
+  labels:
+    severity: critical
+  annotations:
+    summary: Service error budget exhausted
+```
+
 ### Replication Lag Metric
 
 `scripts/replicate_to_timescale.py` exposes a gauge named

@@ -2,14 +2,19 @@
 import base64
 
 from flask import Blueprint, jsonify, request
+import os
+import redis
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
 from pydantic import BaseModel, ConfigDict
 
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 
+from middleware.rate_limit import RedisRateLimiter, rate_limit
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
+redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
 
 
 class UploadRequestSchema(BaseModel):
@@ -71,6 +76,7 @@ def create_upload_blueprint(
     )
     @validate_input(UploadRequestSchema)
     @validate_output(UploadResponseSchema)
+    @rate_limit(rate_limiter)
     def upload_files(payload: UploadRequestSchema):
         """Process an uploaded file.
 

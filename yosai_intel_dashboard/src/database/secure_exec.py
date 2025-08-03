@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import time
+from functools import lru_cache
 from typing import Any, Iterable, Optional
 
 try:  # optional import to avoid heavy dependency chain
@@ -27,6 +28,15 @@ except Exception:  # pragma: no cover - metrics are optional
     query_execution_seconds = None  # type: ignore
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def _get_security_validator():
+    from validation import security_validator as sv_mod
+
+    if not hasattr(sv_mod, "redis_client"):
+        sv_mod.redis_client = None  # type: ignore[attr-defined]
+    return sv_mod.SecurityValidator(rate_limit=0, window_seconds=1, redis_client=None)
 
 performance_analyzer = DatabasePerformanceAnalyzer()
 query_metrics = performance_analyzer.query_metrics
@@ -85,6 +95,7 @@ def execute_query(
 
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
+    _get_security_validator().scan_query(sql)
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing query: %s", optimized_sql)
@@ -111,7 +122,8 @@ def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
     """Execute a parameterized SELECT query enforcing provided params."""
     if params is None:
         raise ValueError("params must be provided for execute_secure_query")
-    return execute_query(conn, sql, params, optimize=False)
+    _get_security_validator().scan_query(sql)
+    return execute_query(conn, sql, params)
 
 
 def execute_command(
@@ -124,6 +136,7 @@ def execute_command(
     """Validate, optimize and execute a modification command on ``conn``."""
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
+    _get_security_validator().scan_query(sql)
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing command: %s", optimized_sql)
