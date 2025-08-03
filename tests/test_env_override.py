@@ -1,4 +1,5 @@
 import importlib.util
+import importlib.util
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
@@ -7,17 +8,21 @@ from alembic import context as alembic_context
 
 def load_env_module() -> ModuleType:
     path = Path(__file__).resolve().parents[1] / "migrations" / "env.py"
-    text = path.read_text()
-    idx = text.rfind("\nif context.is_offline_mode():")
-    if idx != -1:
-        text = text[:idx]
+    spec = importlib.util.spec_from_file_location("alembic_env", path)
+    module = importlib.util.module_from_spec(spec)
     alembic_context.config = SimpleNamespace(
         config_file_name=str(
             Path(__file__).resolve().parents[1] / "migrations" / "alembic.ini"
         )
     )
-    module = ModuleType("alembic_env")
-    exec(compile(text, str(path), "exec"), module.__dict__)
+    alembic_context.configure = lambda *a, **k: None
+    alembic_context.begin_transaction = lambda: SimpleNamespace(
+        __enter__=lambda self: None,
+        __exit__=lambda self, exc_type, exc, tb: None,
+    )
+    alembic_context.run_migrations = lambda: None
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
     return module
 
 

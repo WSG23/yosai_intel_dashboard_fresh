@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+
 import ErrorBoundary from '../components/ErrorBoundary';
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -11,27 +16,73 @@ import {
   PieChart,
   Pie,
   Cell,
+  Brush,
 } from 'recharts';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
 import { AccessibleVisualization } from '../components/accessibility';
+
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 const RealTimeAnalyticsPage: React.FC = () => {
   const { data } = useRealTimeAnalytics();
+  const { variant, isMobile } = useResponsiveChart();
+  const [showDetails, setShowDetails] = useState(!isMobile);
+
+  useEffect(() => {
+    setShowDetails(!isMobile);
+  }, [isMobile]);
+
+  const useLazyRender = () => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      });
+      if (ref.current) observer.observe(ref.current);
+      return () => observer.disconnect();
+    }, []);
+    return { ref, visible } as const;
+  };
+
+  const usersLazy = useLazyRender();
+  const doorsLazy = useLazyRender();
+  const patternsLazy = useLazyRender();
+
 
   if (!data) {
     return <div>Waiting for analytics...</div>;
   }
 
-  const topUsers = Array.isArray(data.top_users) ? data.top_users : [];
-  const topDoors = Array.isArray(data.top_doors) ? data.top_doors : [];
-  const patterns = data.access_patterns
+  const topUsersRaw = Array.isArray(data.top_users) ? data.top_users : [];
+  const topDoorsRaw = Array.isArray(data.top_doors) ? data.top_doors : [];
+  const patternsRaw = data.access_patterns
+
     ? Object.entries(data.access_patterns).map(([pattern, count]) => ({
         pattern,
         count: Number(count),
       }))
     : [];
+
+  const maxBars = isMobile ? 5 : 10;
+  const topUsers = useMemo(() => {
+    if (topUsersRaw.length <= maxBars) return topUsersRaw;
+    const step = Math.ceil(topUsersRaw.length / maxBars);
+    return topUsersRaw.filter((_, i) => i % step === 0).slice(0, maxBars);
+  }, [topUsersRaw, maxBars]);
+  const topDoors = useMemo(() => {
+    if (topDoorsRaw.length <= maxBars) return topDoorsRaw;
+    const step = Math.ceil(topDoorsRaw.length / maxBars);
+    return topDoorsRaw.filter((_, i) => i % step === 0).slice(0, maxBars);
+  }, [topDoorsRaw, maxBars]);
+  const patterns = useMemo(() => {
+    const limit = isMobile ? 5 : patternsRaw.length;
+    return patternsRaw.slice(0, limit);
+  }, [patternsRaw, isMobile]);
 
   return (
     <div className="p-3">
@@ -107,6 +158,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
             <ResponsiveContainer>
               <PieChart>
                 <Pie data={patterns} dataKey="count" nameKey="pattern" label>
+
                   {patterns.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
@@ -116,6 +168,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
             </ResponsiveContainer>
           </div>
         </AccessibleVisualization>
+
       )}
     </div>
   );
