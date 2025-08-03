@@ -1,11 +1,12 @@
 import importlib.util
+import importlib.util
 import types
 from pathlib import Path
 import sys
 import pytest
 
 spec = importlib.util.spec_from_file_location(
-    "connection_pool",
+    "yosai_intel_dashboard.src.infrastructure.config.connection_pool",
     Path(__file__).resolve().parents[1]
     / "yosai_intel_dashboard/src/infrastructure/config/connection_pool.py",
 )

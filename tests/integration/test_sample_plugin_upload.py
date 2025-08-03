@@ -1,4 +1,3 @@
-from tests.import_helpers import safe_import, import_optional
 # flake8: noqa: E402
 from __future__ import annotations
 
@@ -14,6 +13,8 @@ import dash_bootstrap_components as dbc
 import pytest
 from dash import dcc, html
 
+from tests.import_helpers import import_optional, safe_import
+
 # Stub heavy optional analytics dependencies
 for _mod in (
     "scipy",
@@ -26,16 +27,20 @@ for _mod in (
 ):
     sys.modules.setdefault(_mod, types.ModuleType(_mod))
 if "scipy" not in sys.modules:
-    safe_import('scipy', types.ModuleType("scipy"))
-safe_import('scipy.stats', types.ModuleType("scipy.stats"))
+    safe_import("scipy", types.ModuleType("scipy"))
+safe_import("scipy.stats", types.ModuleType("scipy.stats"))
 sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 
 from config import create_config_manager
+from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from yosai_intel_dashboard.src.core.events import EventBus
 from yosai_intel_dashboard.src.core.plugins.auto_config import setup_plugins
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 pytestmark = pytest.mark.usefixtures("fake_dash", "fake_dbc")
 
@@ -138,7 +143,9 @@ def test_plugin_upload_event_sse_ws(
     cfg = create_config_manager()
     cfg.config.plugin_settings["sample_plugin"] = {"enabled": True}
 
-    from yosai_intel_dashboard.src.services.websocket_server import AnalyticsWebSocketServer
+    from yosai_intel_dashboard.src.services.websocket_server import (
+        AnalyticsWebSocketServer,
+    )
 
     ws_server = AnalyticsWebSocketServer(
         event_bus=event_bus, host="127.0.0.1", port=8765
@@ -150,7 +157,9 @@ def test_plugin_upload_event_sse_ws(
         async def _run():
             import websockets
 
-            async with websockets.connect("ws://127.0.0.1:8765") as ws:
+            async with websockets.connect(
+                "ws://127.0.0.1:8765", compression="deflate"
+            ) as ws:
                 msg = await ws.recv()
                 messages.append(msg)
 

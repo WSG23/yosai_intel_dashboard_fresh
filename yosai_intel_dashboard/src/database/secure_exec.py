@@ -1,7 +1,9 @@
-"""Secure wrappers for database execution."""
+"""Secure wrappers for database execution with optional query caching."""
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
 import time
@@ -14,7 +16,10 @@ except Exception:  # pragma: no cover - default if core package unavailable
         SLOW_QUERY_SECONDS = 1.0
 
 from database.performance_analyzer import DatabasePerformanceAnalyzer
+
 from database.types import DBRows
+from database.query_cache import QueryCache
+from yosai_intel_dashboard.src.core.cache_manager import RedisCacheManager
 
 try:  # optional Prometheus integration
     from database.metrics import query_execution_seconds
@@ -28,6 +33,7 @@ query_metrics = performance_analyzer.query_metrics
 SLOW_QUERY_THRESHOLD = float(
     os.getenv("DB_SLOW_QUERY_THRESHOLD", PerformanceThresholds.SLOW_QUERY_SECONDS)
 )
+
 
 
 def _infer_db_type(obj: Any) -> str:
@@ -66,8 +72,16 @@ def _validate_params(params: Optional[Iterable[Any]]) -> Optional[tuple]:
     raise TypeError("params must be a tuple/list or None")
 
 
-def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
+def execute_query(
+    conn: Any,
+    sql: str,
+    params: Optional[Iterable[Any]] = None,
+    *,
+    timeout: Optional[int] = None,
+):
+
     """Validate, optimize and execute a SELECT query on ``conn``."""
+
 
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
@@ -76,6 +90,7 @@ def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
     logger.debug("Executing query: %s", optimized_sql)
     start = time.perf_counter()
     try:
+
         if hasattr(conn, "execute_query"):
             return conn.execute_query(optimized_sql, p)
         if hasattr(conn, "execute"):
@@ -96,10 +111,16 @@ def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
     """Execute a parameterized SELECT query enforcing provided params."""
     if params is None:
         raise ValueError("params must be provided for execute_secure_query")
-    return execute_query(conn, sql, params)
+    return execute_query(conn, sql, params, optimize=False)
 
 
-def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
+def execute_command(
+    conn: Any,
+    sql: str,
+    params: Optional[Iterable[Any]] = None,
+    *,
+    timeout: Optional[int] = None,
+):
     """Validate, optimize and execute a modification command on ``conn``."""
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
@@ -108,6 +129,7 @@ def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None)
     logger.debug("Executing command: %s", optimized_sql)
     start = time.perf_counter()
     try:
+
         if hasattr(conn, "execute_command"):
             return conn.execute_command(optimized_sql, p)
         if hasattr(conn, "execute"):
@@ -130,4 +152,5 @@ __all__ = [
     "execute_secure_query",
     "query_metrics",
     "performance_analyzer",
+
 ]

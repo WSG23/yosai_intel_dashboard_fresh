@@ -7,7 +7,6 @@ import json
 from typing import Sequence
 
 from database.index_optimizer import IndexOptimizer
-from database.secure_exec import execute_command
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -34,8 +33,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             return
         for sql in statements:
             print(f"Executing: {sql}")
-            execute_command(optimizer.connection, sql)
-            print("Created")
+        optimizer.apply_recommendations(args.table, args.columns)
+        print("Created")
 
 
 if __name__ == "__main__":  # pragma: no cover - manual execution

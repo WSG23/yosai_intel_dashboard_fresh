@@ -3,7 +3,7 @@ import importlib.util
 from pathlib import Path
 
 spec_cp = importlib.util.spec_from_file_location(
-    "connection_pool",
+    "yosai_intel_dashboard.src.infrastructure.config.connection_pool",
     Path(__file__).resolve().parents[1]
     / "yosai_intel_dashboard"
     / "src"
@@ -24,6 +24,9 @@ class MockConnection:
         return []
 
     def execute_command(self, command, params=None):
+        return None
+
+    def execute_batch(self, command, params_seq):
         return None
 
     def health_check(self):

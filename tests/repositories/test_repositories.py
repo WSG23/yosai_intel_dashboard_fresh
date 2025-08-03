@@ -33,6 +33,12 @@ class _SQLiteConn:
         self.conn.commit()
         return cur.rowcount
 
+    def execute_batch(self, command: str, params_seq):
+        cur = self.conn.cursor()
+        cur.executemany(self._adapt(command), params_seq)
+        self.conn.commit()
+        return cur.rowcount
+
     def health_check(self) -> bool:
         try:
             self.conn.execute("SELECT 1")
