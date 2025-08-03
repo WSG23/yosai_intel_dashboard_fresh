@@ -29,6 +29,7 @@ from yosai_intel_dashboard.src.services.upload.protocols import (
     UploadStorageProtocol,
 )
 from yosai_intel_dashboard.src.services.upload.upload_queue_manager import UploadQueueManager
+from yosai_intel_dashboard.src.core.security import validate_user_input
 from validation.security_validator import SecurityValidator
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,8 @@ class UploadCore:
         self.ai = AISuggestionService()
         self.modal = ModalService()
         self.client_validator = ClientSideValidator()
+        # Validator used for file uploads; string inputs are sanitized via
+        # ``validate_user_input`` helper from :mod:`core.security`.
         self.validator = SecurityValidator()
         self.chunked = ChunkedUploadManager()
         self.queue = UploadQueueManager()
@@ -96,15 +99,16 @@ class UploadCore:
         valid_filenames: list[str] = []
         alerts: list[Any] = []
         for content, fname in zip(contents_list, filenames_list):
+            sanitized_name = validate_user_input(str(fname), "filename")
             res = self.validator.validate_file_upload(content)
             ok, msg = res.valid, res.message
             if not ok:
                 alerts.append(self.processing.build_failure_alert(msg))
             else:
                 valid_contents.append(content)
-                valid_filenames.append(fname)
-                self.chunked.start_file(fname)
-                self.queue.add_file(fname)
+                valid_filenames.append(sanitized_name)
+                self.chunked.start_file(sanitized_name)
+                self.queue.add_file(sanitized_name)
 
         if not valid_contents:
             return alerts, [], {}, [], {}, no_update, no_update
@@ -128,6 +132,7 @@ class UploadCore:
             contents_list = [contents_list]
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
+        filenames_list = [validate_user_input(str(f), "filename") for f in filenames_list]
         async_coro = self.processing.process_files(contents_list, filenames_list)
         if self.rabbitmq:
             payload = {"contents": contents_list, "filenames": filenames_list}
@@ -145,6 +150,7 @@ class UploadCore:
         return 0, "0%", False
 
     def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str, Any]:
+        task_id = validate_user_input(str(task_id), "task_id")
         if self.rabbitmq:
             progress = 0
         else:
@@ -167,6 +173,7 @@ class UploadCore:
     def finalize_upload_results(
         self, _n: int, task_id: str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
+        task_id = validate_user_input(str(task_id), "task_id")
         if self.rabbitmq:
             return (
                 no_update,
