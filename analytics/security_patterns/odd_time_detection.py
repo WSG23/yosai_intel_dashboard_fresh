@@ -22,23 +22,39 @@ def detect_odd_time(df: pd.DataFrame) -> List[Threat]:
     if df.empty:
         return []
 
-    threats: List[Threat] = []
     db = BaselineMetricsDB()
-    for person, group in df.groupby("person_id"):
-        baseline = db.get_baseline(person) or {}
-        mean_hour = baseline.get("mean_hour")
-        std_hour = baseline.get("std_hour", 0)
-        if mean_hour is None:
-            continue
-        hours = group["hour"].tolist()
-        if std_hour == 0:
-            if any(h != mean_hour for h in hours):
-                threats.append(Threat("odd_time_access", {"person_id": person}))
-            continue
-        for h in hours:
-            if abs(h - mean_hour) > 2 * std_hour:
-                threats.append(Threat("odd_time_access", {"person_id": person, "hour": int(h)}))
-                break
+    baselines = {pid: db.get_baseline(pid) or {} for pid in df["person_id"].unique()}
+    if not baselines:
+        return []
+
+    baseline_df = pd.DataFrame.from_dict(baselines, orient="index")
+    baseline_df["person_id"] = baseline_df.index
+
+    frame = df.merge(baseline_df, on="person_id", how="left")
+    frame = frame.dropna(subset=["mean_hour"])
+    if frame.empty:
+        return []
+
+    frame["std_hour"] = frame["std_hour"].fillna(0)
+
+    no_std_mask = frame["std_hour"] == 0
+    mismatched = frame[no_std_mask & (frame["hour"] != frame["mean_hour"])]
+    threats = [
+        Threat("odd_time_access", {"person_id": person})
+        for person in mismatched["person_id"].unique()
+    ]
+
+    varied = frame[~no_std_mask]
+    deviations = varied[
+        (varied["hour"] - varied["mean_hour"]).abs() > 2 * varied["std_hour"]
+    ]
+    first_offenders = (
+        deviations.sort_index().drop_duplicates("person_id")[["person_id", "hour"]]
+    )
+    threats.extend(
+        Threat("odd_time_access", {"person_id": row.person_id, "hour": int(row.hour)})
+        for row in first_offenders.itertuples(index=False)
+    )
     return threats
 
 
