@@ -2,9 +2,12 @@
 """
 Comprehensive error handling system with Apple-style resilience patterns
 """
+from __future__ import annotations
+
 import functools
 import logging
 import time
+from bisect import bisect_left
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -176,7 +179,9 @@ class ErrorHandler(BaseModel):
     def get_error_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get error summary for the last N hours"""
         cutoff = datetime.now() - timedelta(hours=hours)
-        recent_errors = [e for e in self.error_history if e.timestamp >= cutoff]
+        timestamps = [e.timestamp for e in self.error_history]
+        idx = bisect_left(timestamps, cutoff)
+        recent_errors = self.error_history[idx:]
 
         return {
             "total_errors": len(recent_errors),
