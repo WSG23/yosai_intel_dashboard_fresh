@@ -23,6 +23,45 @@ jobs:
         run: |
           ./scripts/run_tests_and_smoke.sh
 
+  security-scan:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Run vulnerability scan
+        run: python scripts/security_scan.py
+      - name: Scan for secrets
+        run: python scripts/security_scan_secrets.py
+      - name: Generate security report
+        id: report
+        continue-on-error: true
+        run: python security/reporting.py
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: |
+            security-report.md
+            security-report.html
+      - name: Comment remediation steps
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('security-report.md', 'utf8');
+            github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+      - name: Fail on high or critical
+        if: steps.report.outputs.severity == 'HIGH' || steps.report.outputs.severity == 'CRITICAL'
+        run: exit 1
+
   trivy-scan:
     needs: build-test
     runs-on: ubuntu-latest
@@ -57,7 +96,7 @@ jobs:
           path: snyk-results.json
 
   release:
-    needs: [trivy-scan, snyk-scan]
+    needs: [trivy-scan, snyk-scan, security-scan]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
