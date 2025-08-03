@@ -88,3 +88,4 @@ def test_validate_resource_id():
     bad = validator.validate_resource_id("../etc/passwd")
     assert good.valid is True
     assert bad.valid is False
+

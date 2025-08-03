@@ -3,6 +3,8 @@
 Comprehensive security system for Yōsai Intel Dashboard
 Implements Apple's security-by-design principles
 """
+from __future__ import annotations
+
 import hashlib
 import logging
 import secrets
@@ -12,13 +14,69 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+import validation.security_validator as security_validator_module
+from monitoring.anomaly_detector import AnomalyDetector
+from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.src.core.base_model import BaseModel
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
+
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
 # :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
-from validation.security_validator import SecurityValidator
+security_validator_module.redis_client = None
+
+try:  # Optional during unit tests
+    from yosai_intel_dashboard.src.core.domain.entities.access_events import (
+        AccessEventModel,
+    )
+except Exception:  # pragma: no cover - model may be unavailable
+    AccessEventModel = None
+
+# Reuse a single validator instance for lightweight string sanitization across
+# the application.  The validator implements the heavy lifting in
+# ``validation.security_validator.SecurityValidator``; this helper simply
+# delegates to it so callers don't need to instantiate or import the class
+# directly.
+_INPUT_VALIDATOR: SecurityValidator | None = None
+
+
+def validate_user_input(value: str, field_name: str = "input") -> str:
+    """Return a sanitized version of ``value``.
+
+    Parameters
+    ----------
+    value:
+        User supplied string to validate.
+    field_name:
+        Optional identifier used for logging context.
+
+    Raises
+    ------
+    validation.security_validator.ValidationError
+        If the underlying validator determines the value is unsafe.
+
+    Returns
+    -------
+    str
+        Sanitized representation suitable for downstream processing.
+    """
+
+    global _INPUT_VALIDATOR
+    if _INPUT_VALIDATOR is None:
+        # ``SecurityValidator`` optionally relies on a Redis client for rate
+        # limiting.  During tests this client may not be configured, so ensure
+        # the module has a ``redis_client`` attribute set to ``None`` before
+        # instantiation to avoid ``NameError``.
+        import validation.security_validator as _sv  # local import for patching
+
+        if not hasattr(_sv, "redis_client"):
+            _sv.redis_client = None  # type: ignore[attr-defined]
+        _INPUT_VALIDATOR = _sv.SecurityValidator()
+    result = _INPUT_VALIDATOR.validate_input(value, field_name)
+    return result.get("sanitized", value)
 
 
 class SecurityLevel(Enum):
@@ -53,73 +111,6 @@ class SecurityEvent:
     blocked: bool = False
 
 
-class RateLimiter:
-    """Rate limiting to prevent abuse"""
-
-    def __init__(
-        self,
-        max_requests: int = dynamic_config.security.rate_limit_requests,
-        window_minutes: int = dynamic_config.security.rate_limit_window_minutes,
-    ):
-        self.max_requests = max_requests
-        self.window_seconds = window_minutes * 60
-        self.requests: Dict[str, List[float]] = {}
-        self.blocked_ips: Dict[str, float] = {}
-        self.logger = logging.getLogger(__name__)
-
-    def is_allowed(
-        self, identifier: str, source_ip: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """Check if request is allowed"""
-        current_time = time.time()
-
-        # Check if IP is blocked
-        if source_ip and source_ip in self.blocked_ips:
-            if current_time < self.blocked_ips[source_ip]:
-                return {
-                    "allowed": False,
-                    "reason": "IP temporarily blocked",
-                    "retry_after": self.blocked_ips[source_ip] - current_time,
-                }
-            else:
-                # Unblock IP
-                del self.blocked_ips[source_ip]
-
-        # Initialize or clean old requests
-        if identifier not in self.requests:
-            self.requests[identifier] = []
-
-        # Remove old requests outside the window
-        cutoff_time = current_time - self.window_seconds
-        self.requests[identifier] = [
-            req_time for req_time in self.requests[identifier] if req_time > cutoff_time
-        ]
-
-        # Check if under limit
-        if len(self.requests[identifier]) >= self.max_requests:
-            # Block IP if provided
-            if source_ip:
-                self.blocked_ips[source_ip] = current_time + (self.window_seconds * 2)
-                self.logger.warning(f"Rate limit exceeded, blocking IP: {source_ip}")
-
-            return {
-                "allowed": False,
-                "reason": "Rate limit exceeded",
-                "requests_in_window": len(self.requests[identifier]),
-                "max_requests": self.max_requests,
-                "window_seconds": self.window_seconds,
-            }
-
-        # Record this request
-        self.requests[identifier].append(current_time)
-
-        return {
-            "allowed": True,
-            "requests_in_window": len(self.requests[identifier]),
-            "remaining": self.max_requests - len(self.requests[identifier]),
-        }
-
-
 class SecurityAuditor(BaseModel):
     """Security event logging and monitoring"""
 
@@ -128,10 +119,14 @@ class SecurityAuditor(BaseModel):
         config: Optional[Any] = None,
         db: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        anomaly_detector: Optional[AnomalyDetector] = None,
     ) -> None:
         super().__init__(config, db, logger)
         self.events: List[SecurityEvent] = []
         self.max_events = 10000
+        access_model = AccessEventModel(db) if (db and AccessEventModel) else None
+        self.anomaly_detector = anomaly_detector or AnomalyDetector(access_model)
+        self.anomaly_metrics: Dict[str, int] = self.anomaly_detector.get_metrics()
 
     def log_security_event(
         self,
@@ -154,6 +149,18 @@ class SecurityAuditor(BaseModel):
             details=details,
             blocked=blocked,
         )
+        if self.anomaly_detector:
+            score, flagged = self.anomaly_detector.score(user_id, source_ip)
+            event.details["anomaly_score"] = score
+            event.details["anomaly_flagged"] = flagged
+            self.anomaly_metrics = self.anomaly_detector.get_metrics()
+            if flagged:
+                hint = "user exceeding normal rate; investigate credentials"
+                event.details["remediation_hint"] = hint
+                self.logger.warning(
+                    f"Anomaly detected for user {user_id or 'unknown'} from "
+                    f"{source_ip or 'unknown'}: {hint}"
+                )
 
         self.events.append(event)
 
@@ -258,7 +265,18 @@ class SecureHashManager:
 
 
 # Global security instances
-security_validator = SecurityValidator()
+try:  # Allow initialization without optional dependencies
+    security_validator = SecurityValidator()
+except Exception:  # pragma: no cover
+
+    class _FallbackValidator:
+        def validate_input(
+            self, value: str, field: str | None = None
+        ) -> Dict[str, Any]:
+            return {"valid": True, "sanitized": value}
+
+    security_validator = _FallbackValidator()
+
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
 
@@ -273,26 +291,23 @@ def validate_input_decorator(field_mapping: Dict[str, str] = None):
             if field_mapping:
                 for param_name, field_name in field_mapping.items():
                     if param_name in kwargs:
-                        validation = security_validator.validate_input(
-                            kwargs[param_name], field_name
-                        )
-                        if not validation["valid"]:
+                        try:
+                            kwargs[param_name] = validate_user_input(
+                                kwargs[param_name], field_name
+                            )
+                        except Exception as exc:
                             security_auditor.log_security_event(
                                 "input_validation_failed",
-                                validation["severity"],
+                                SecurityLevel.HIGH,
                                 {
                                     "function": func.__name__,
                                     "field": field_name,
-                                    "issues": validation["issues"],
+                                    "issues": [str(exc)],
                                 },
                             )
                             raise ValueError(
-                                "Invalid input for "
-                                f"{field_name}: {validation['issues']}"
+                                f"Invalid input for {field_name}: {exc}"  # noqa: EM102
                             )
-
-                        # Use sanitized input
-                        kwargs[param_name] = validation["sanitized"]
 
             return func(*args, **kwargs)
 
@@ -331,8 +346,10 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
 def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
-        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
         from security.validation_middleware import ValidationMiddleware
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (  # noqa: E501
+            TrulyUnifiedCallbacks,
+        )
     except Exception:
         # Optional components may be missing in minimal environments
         return

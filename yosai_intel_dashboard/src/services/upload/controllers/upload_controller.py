@@ -2,9 +2,10 @@ import base64
 import io
 import json
 import logging
-from typing import List, Optional
+from typing import List, Optional, Any
 
 import pandas as pd
+from validation.security_validator import SecurityValidator
 
 logger = logging.getLogger(__name__)
 
@@ -12,14 +13,20 @@ logger = logging.getLogger(__name__)
 class UnifiedUploadController:
     """Handle core upload parsing logic independent of Dash."""
 
-    def __init__(self) -> None:
+    def __init__(self, validator: SecurityValidator | None = None) -> None:
         self._progress = 0
         self._files: List[str] = []
+        self._validator = validator or SecurityValidator()
 
-    def parse_upload(self, contents: str, filename: str) -> Optional[pd.DataFrame]:
+    def parse_upload(
+        self, contents: str, filename: str, user: Any | None = None
+    ) -> Optional[pd.DataFrame]:
         """Return parsed DataFrame from uploaded *contents*."""
         if not contents or not filename:
             return None
+
+        if user is not None:
+            self._validator.validate_resource_id(user, filename)
 
         try:
             _type, content_string = contents.split(",", 1)

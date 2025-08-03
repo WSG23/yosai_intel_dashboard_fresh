@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
+import os
 import ssl
 from typing import Any, MutableMapping
 
 import aiohttp
+from tracing import propagate_context
 from tenacity import (
     AsyncRetrying,
     retry_if_exception_type,
@@ -12,10 +16,13 @@ from tenacity import (
     wait_exponential,
 )
 
+from tracing import propagate_context
 from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
+from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
+from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
 
 from .protocols import ServiceClient
 
@@ -31,6 +38,7 @@ class RestClient:
         *,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
+        check_interval: float = 30.0,
         retries: int = 3,
         timeout: float = 5.0,
         mtls_cert: str | None = None,
@@ -44,6 +52,8 @@ class RestClient:
         self.retries = retries
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._ssl = self._create_ssl_context(mtls_cert, mtls_key, verify_ssl)
+        self._error_handler = ErrorHandler()
+
 
     # ------------------------------------------------------------------
     def _create_ssl_context(
@@ -59,6 +69,21 @@ class RestClient:
         if not verify_ssl:
             return False
         return None
+
+    # ------------------------------------------------------------------
+    async def _health_check(self) -> bool:
+        try:
+            async with aiohttp.ClientSession(
+                timeout=self.timeout, ssl=self._ssl
+            ) as sess:
+                async with sess.head(self.base_url) as resp:
+                    return resp.status < 500
+        except Exception:
+            return False
+
+    async def _reset_session(self) -> None:
+        await self._session.close()
+        self._session = aiohttp.ClientSession(timeout=self.timeout, ssl=self._ssl)
 
     # ------------------------------------------------------------------
     async def request(self, method: str, path: str, **kwargs: Any) -> Any:
@@ -86,6 +111,18 @@ class RestClient:
                             return await resp.json()
                         return await resp.text()
 
+        try:
+            async for attempt in AsyncRetrying(
+                retry=retry_if_exception_type(aiohttp.ClientError),
+                stop=stop_after_attempt(self.retries),
+                wait=wait_exponential(multiplier=0.2, min=0.1, max=2),
+            ):
+                with attempt:
+                    return await _do_request()
+        except CircuitBreakerOpen as exc:
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+            raise
+
 
 def create_service_client(service_name: str) -> ServiceClient:
     """Create a service client resolving *service_name* URL from env vars."""
@@ -100,3 +137,4 @@ __all__ = [
     "create_service_client",
     "CircuitBreakerOpen",
 ]
+

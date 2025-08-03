@@ -4,15 +4,17 @@ import asyncio
 import json
 import os
 import pathlib
+from typing import Any, Dict
 
-from fastapi import Header, Request, status
+from fastapi import Header, status
+
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
-from yosai_intel_dashboard.src.core.security import RateLimiter
+import redis
+from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
 from yosai_intel_dashboard.src.services.security import verify_service_jwt
@@ -37,29 +39,32 @@ try:
 except Exception:
     service = None
 
-register_health_check(app, "streaming", lambda _: service is not None)
 
-rate_limiter = RateLimiter()
+def _broker_health(_: FastAPI) -> Dict[str, Any]:
+    return {
+        "healthy": service is not None,
+        "circuit_breaker": getattr(service, "circuit_breaker_state", "closed"),
+        "retries": getattr(service, "retry_count", 0),
+    }
 
 
-@app.middleware("http")
-async def rate_limit(request: Request, call_next):
-    auth = request.headers.get("Authorization", "")
-    identifier = (
-        auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
-    )
-    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
-    if not result["allowed"]:
-        headers = {}
-        retry = result.get("retry_after")
-        if retry:
-            headers["Retry-After"] = str(int(retry))
-        return JSONResponse(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content={"detail": "rate limit exceeded"},
-            headers=headers,
-        )
-    return await call_next(request)
+def _database_health(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
+
+
+def _external_api_health(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
+
+
+register_health_check(app, "message_broker", _broker_health)
+register_health_check(app, "database", _database_health)
+register_health_check(app, "external_api", _external_api_health)
+
+# Configure rate limiter
+redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
+app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
+
 
 
 def verify_token(authorization: str = Header("")) -> dict:

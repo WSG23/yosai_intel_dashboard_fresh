@@ -20,6 +20,7 @@ Example
 import html
 import json
 import logging
+import mimetypes
 import os
 import re
 from functools import lru_cache
@@ -28,11 +29,30 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 
+
 try:  # pragma: no cover - allow using the validator without full core package
-    from yosai_intel_dashboard.src.core.exceptions import ValidationError
+    from yosai_intel_dashboard.src.core.exceptions import (
+        ValidationError,
+        TemporaryBlockError,
+        PermanentBanError,
+    )
 except Exception:  # pragma: no cover
     class ValidationError(Exception):
         """Fallback validation error when core package is unavailable."""
+
+    class TemporaryBlockError(Exception):
+        pass
+
+    class PermanentBanError(Exception):
+        pass
+
+try:  # pragma: no cover
+    from yosai_intel_dashboard.src.infrastructure.cache import redis_client
+except Exception:  # pragma: no cover
+    redis_client = None
+
+rate_limit = None
+window_seconds = None
 
 
 # Import dynamically inside methods to avoid circular imports during module init
@@ -136,6 +156,19 @@ class SSRFRule(ValidationRule):
         return ValidationResult(True, data)
 
 
+class IDORRule(ValidationRule):
+    """Verify a user is authorized to access a given resource ID."""
+
+    def __init__(self, user: Any, authorizer: Callable[[Any, str], bool]) -> None:
+        self.user = user
+        self.authorizer = authorizer
+
+    def validate(self, data: str) -> ValidationResult:
+        if not self.authorizer(self.user, data):
+            return ValidationResult(False, data, ["unauthorized"])
+        return ValidationResult(True, data)
+
+
 class SecurityValidator(CompositeValidator):
     """Validate input strings and file uploads against common OWASP risks.
 
@@ -155,6 +188,7 @@ class SecurityValidator(CompositeValidator):
         redis_client: Any | None = None,
         rate_limit: int | None = None,
         window_seconds: int | None = None,
+
     ) -> None:
         base_rules = list(
             rules
@@ -171,19 +205,20 @@ class SecurityValidator(CompositeValidator):
         self.secret_scan_hook = secret_scan_hook
         self.anomaly_hook = anomaly_hook
         self.redis = redis_client
-        if rate_limit is None or window_seconds is None:
+        rl = rate_limit
+        ws = window_seconds
+        if rl is None or ws is None:
             from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
                 dynamic_config,
             )
 
-            rate_limit = rate_limit or dynamic_config.security.rate_limit_requests
-            window_seconds = (
-                window_seconds
-                or dynamic_config.security.rate_limit_window_minutes * 60
-            )
-        self.rate_limit = rate_limit
-        self.window_seconds = window_seconds
+            rl = rl or dynamic_config.security.rate_limit_requests
+            ws = ws or dynamic_config.security.rate_limit_window_minutes * 60
+        self.rate_limit = rl
+        self.window_seconds = ws
+
         self.logger = logging.getLogger(__name__)
+        self._authorize_resource = authorize_resource or (lambda _u, _r: True)
 
     def _check_rate_limit(self, identifier: str) -> None:
         if not self.redis:
@@ -235,6 +270,14 @@ class SecurityValidator(CompositeValidator):
             )
         return self._augment(ValidationResult(True, name))
 
+    def validate_resource_id(self, user: Any, resource_id: Any) -> Any:
+        """Validate that ``user`` is authorized for ``resource_id``."""
+        rule = IDORRule(user, self._authorize_resource)
+        result = rule.validate(str(resource_id))
+        if not result.valid:
+            raise ValidationError("Unauthorized resource access")
+        return result.sanitized
+
     # ------------------------------------------------------------------
     def _virus_scan(self, content: bytes) -> None:
         """Hook for virus scanning.
@@ -243,6 +286,22 @@ class SecurityValidator(CompositeValidator):
         scanner. The hook should raise :class:`ValidationError` if malicious
         content is detected.
         """
+        try:  # pragma: no cover - optional dependency
+            import clamd
+        except Exception as exc:  # pragma: no cover
+            logger.debug("clamd not available: %s", exc)
+            return None
+
+        try:  # pragma: no cover - network interaction
+            scanner = clamd.ClamdNetworkSocket()
+            result = scanner.instream(io.BytesIO(content))
+        except Exception as exc:  # pragma: no cover
+            logger.warning("Virus scan failed: %s", exc)
+            return None
+
+        status, signature = result.get("stream", ("OK", None))
+        if status == "FOUND":
+            raise ValidationError(f"Virus detected: {signature}")
 
         return None
 
@@ -271,6 +330,7 @@ class SecurityValidator(CompositeValidator):
                     raise ValidationError("File extension does not match content")
 
     def validate_file_meta(self, filename: str, content: bytes) -> ValidationResult:
+
         """Validate filename, size limits and basic file signatures."""
         issues: list[str] = []
         size_bytes = len(content)
@@ -308,6 +368,7 @@ class SecurityValidator(CompositeValidator):
             self.handle_secret_scan(result)
         if not result.valid:
             self.notify_anomaly(filename, result)
+
         return result
 
     def validate_input(self, value: str, field_name: str = "input") -> ValidationResult:
@@ -354,6 +415,7 @@ class SecurityValidator(CompositeValidator):
     def validate_file_upload(self, filename: str, content: bytes) -> ValidationResult:
         result_dict = self.file_validator.validate_file_upload(filename, content)
         if not result_dict["valid"]:
+
             logger.warning(
                 "File '%s' failed validation: %s",
                 filename,
