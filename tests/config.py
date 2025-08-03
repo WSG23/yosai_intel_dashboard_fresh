@@ -156,6 +156,41 @@ def register_dependency_stubs() -> None:
     sys.modules.setdefault("redis.asyncio", _redis.asyncio)
     sys.modules.setdefault("requests", _simple_module("requests"))
 
+    config_pkg = _simple_module("yosai_intel_dashboard.src.infrastructure.config")
+    config_pkg.__path__ = [
+        str(PROJECT_ROOT / "yosai_intel_dashboard" / "src" / "infrastructure" / "config")
+    ]
+    sys.modules.setdefault(
+        "yosai_intel_dashboard.src.infrastructure.config", config_pkg
+    )
+
+    services_db_pkg = _simple_module("yosai_intel_dashboard.src.services.database")
+    services_db_pkg.__path__ = [
+        str(PROJECT_ROOT / "yosai_intel_dashboard" / "src" / "database")
+    ]
+    sys.modules.setdefault(
+        "yosai_intel_dashboard.src.services.database", services_db_pkg
+    )
+
+    class _MockConnection:
+        def __init__(self):
+            self._connected = True
+
+        def health_check(self):
+            return self._connected
+
+        def close(self):
+            self._connected = False
+
+    db_manager_stub = _simple_module(
+        "yosai_intel_dashboard.src.infrastructure.config.database_manager",
+        MockConnection=_MockConnection,
+    )
+    sys.modules.setdefault(
+        "yosai_intel_dashboard.src.infrastructure.config.database_manager",
+        db_manager_stub,
+    )
+
 
 # Run configuration steps on import
 set_test_environment()
