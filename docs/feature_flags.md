@@ -46,3 +46,18 @@ if feature_flags.is_enabled("use_timescaledb"):
 
 Callbacks can be registered with `register_callback` to respond to
 updates.
+
+## Managing Flags via API
+
+Administrative clients may modify flags through HTTP endpoints. These
+operations require the `feature_admin` role, which must be supplied via
+the `X-Roles` header.
+
+```
+GET    /v1/flags             # list all flags
+GET    /v1/flags/<name>      # retrieve a single flag
+PUT    /v1/flags/<name>      # create or update a flag
+DELETE /v1/flags/<name>      # remove a flag
+```
+
+Only users with the `feature_admin` role can call these endpoints.

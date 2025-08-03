@@ -1,15 +1,38 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import aiofiles
 import aiohttp
 
 logger = logging.getLogger(__name__)
+
+
+def get_evaluation_context() -> Dict[str, Any]:
+    """Return context for flag evaluation including user roles.
+
+    The current ``User`` from :mod:`core.auth` may expose a ``roles``
+    attribute.  These roles are included so that flag rules can target
+    specific groups.
+    """
+
+    roles: List[str] = []
+    user_id: Optional[str] = None
+    try:  # pragma: no cover - no request active during some tests
+        from flask_login import current_user  # type: ignore
+
+        if getattr(current_user, "is_authenticated", False):
+            user_id = getattr(current_user, "id", None)
+            roles = getattr(current_user, "roles", []) or []
+    except Exception:  # pragma: no cover - best effort
+        pass
+    return {"user_id": user_id, "roles": roles}
 
 
 class FeatureFlagManager:
@@ -90,9 +113,37 @@ class FeatureFlagManager:
             if self._stop.wait(self.poll_interval):
                 break
 
-    def is_enabled(self, name: str, default: bool = False) -> bool:
+    def is_enabled(
+        self, name: str, default: bool = False, context: Dict[str, Any] | None = None
+    ) -> bool:
         """Return True if *name* flag is enabled."""
+        ctx = context or get_evaluation_context()
+        logger.debug("Evaluating flag %s with context %s", name, ctx)
         return self._flags.get(name, default)
+
+    def set_flag(self, name: str, value: bool) -> None:
+        """Create or update a flag and persist it."""
+        self._flags[name] = bool(value)
+        self._persist_flags()
+
+    def delete_flag(self, name: str) -> bool:
+        """Delete *name* flag.  Returns ``True`` if removed."""
+        removed = self._flags.pop(name, None) is not None
+        if removed:
+            self._persist_flags()
+        return removed
+
+    def _persist_flags(self) -> None:
+        """Persist current flags to the JSON source if possible."""
+        if self.source.startswith("http://") or self.source.startswith("https://"):
+            return
+        try:
+            path = Path(self.source)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(self._flags, fh)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Failed to persist flags to %s: %s", self.source, exc)
 
     def register_callback(self, cb: Callable[[Dict[str, bool]], Any]) -> None:
         """Register *cb* to be called when flags change."""
