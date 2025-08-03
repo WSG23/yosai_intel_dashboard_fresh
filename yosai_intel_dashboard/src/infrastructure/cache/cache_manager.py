@@ -8,11 +8,12 @@ import json
 import logging
 import os
 import time
+import weakref
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
-import redis.asyncio as redis
+import redis.asyncio as aioredis
 
 from yosai_intel_dashboard.src.core.performance import cache_monitor
 
@@ -99,11 +100,21 @@ class InMemoryCacheManager(CacheManager):
         if expiry is not None and time.time() > expiry:
             del self._cache[key]
             return None
+        if isinstance(value, weakref.ReferenceType):
+            value = value()
+            if value is None:
+                self._cache.pop(key, None)
+                return None
         return value
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         expiry = time.time() + ttl if ttl else None
-        self._cache[key] = (value, expiry)
+        try:
+            ref = weakref.ref(value, lambda _, k=key: self._cache.pop(k, None))
+            stored: Any = ref
+        except TypeError:
+            stored = value
+        self._cache[key] = (stored, expiry)
 
     async def delete(self, key: str) -> bool:
         return self._cache.pop(key, None) is not None
@@ -124,12 +135,12 @@ class RedisCacheManager(CacheManager):
 
     def __init__(self, config: CacheConfig) -> None:
         super().__init__(config)
-        self._redis: Optional[redis.Redis] = None
+        self._redis: Optional[aioredis.Redis] = None
         self._fallback = InMemoryCacheManager(config)
 
     async def start(self) -> None:
         if self._redis is None:
-            self._redis = redis.Redis(
+            self._redis = aioredis.Redis(
                 host=self.config.host,
                 port=self.config.port,
                 db=self.config.db,
