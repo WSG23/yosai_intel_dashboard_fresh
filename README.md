@@ -521,6 +521,9 @@ Use the provided environment template for tests:
 ```bash
 cp .env.test .env
 ```
+Set `USE_MOCK_DB=1` to force the configuration factory to use a lightweight
+mock database instead of a real database connection. This is helpful when
+running tests or developing locally without a database server.
 For minimal CI environments you can run `./scripts/install_test_deps.sh` which
 only installs the Python dependencies required for the tests.
 ### Test Requirements

@@ -51,6 +51,18 @@ bandit -r .
 
 Run `isort .` to automatically sort imports before committing changes.
 
+### Database Query Helpers
+
+When executing SQL, always acquire connections using the factory context manager:
+
+```python
+with factory.get_connection() as conn:
+    execute_query(conn, sql)
+```
+
+Direct calls like `execute_query(factory.get_connection(), ...)` are flagged by
+a custom linter that runs via `make lint` and `pytest`.
+
 See [docs/test_architecture.md](docs/test_architecture.md) and
 [docs/testing_with_protocols.md](docs/testing_with_protocols.md) for details on
 the testing protocols, container builder and available test doubles.
@@ -95,3 +107,8 @@ from yosai_intel_dashboard.src.infrastructure.config.settings import Settings
 ```
 
 Run `isort .` to automatically sort imports before committing changes.
+
+## Developer Guides
+
+Refer to [docs/developer_guides.rst](docs/developer_guides.rst) for instructions on
+the test migration script and reviewing any items flagged as ``needs manual review``.

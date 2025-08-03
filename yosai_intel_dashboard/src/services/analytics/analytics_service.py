@@ -14,7 +14,18 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Protocol
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    NamedTuple,
+    Optional,
+    Protocol,
+    Tuple,
+    Union,
+    cast,
+)
 
 import requests
 
@@ -29,20 +40,16 @@ try:
 except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
 
+from pandas import DataFrame, Series
 import pandas as pd
 
 from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from yosai_intel_dashboard.src.core.di_decorators import inject, injectable
 from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
-from yosai_intel_dashboard.src.core.interfaces.protocols import (
-    AnalyticsServiceProtocol,
-    DatabaseProtocol,
-    EventBusProtocol,
-    StorageProtocol,
-)
 from yosai_intel_dashboard.src.services.analytics.calculator import Calculator
 from yosai_intel_dashboard.src.services.analytics.orchestrator import AnalyticsOrchestrator
 from yosai_intel_dashboard.src.services.analytics.protocols import (
+    AnalyticsServiceProtocol,
     CalculatorProtocol,
     DataProcessorProtocol,
     PublishingProtocol,
@@ -74,15 +81,67 @@ _cache_manager = InMemoryCacheManager(CacheConfig())
 class AnalyticsProviderProtocol(Protocol):
     """Basic analytics provider interface."""
 
-    @override
-    def process_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def process_dataframe(self, df: DataFrame) -> Dict[str, Any]:
         """Process ``df`` and return analytics metrics."""
         ...
 
-    @override
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         ...
+
+
+# ----------------------------------------------------------------------
+# Dependency protocol definitions
+# ----------------------------------------------------------------------
+
+class Database(Protocol):
+    """Database dependency interface."""
+
+    def execute_query(
+        self, query: str, params: Optional[Tuple[Any, ...]] = None
+    ) -> DataFrame:
+        """Execute ``query`` and return a :class:`~pandas.DataFrame`."""
+
+    def execute_command(
+        self, command: str, params: Optional[Tuple[Any, ...]] = None
+    ) -> None:
+        """Execute a database command."""
+
+
+class DataProcessor(DataProcessorProtocol, Protocol):
+    """Data processor dependency interface."""
+
+
+class Config(Protocol):
+    """Configuration provider interface."""
+
+    analytics: Any
+    database: Any
+    security: Any
+
+
+class EventBus(Protocol):
+    """Event bus dependency interface."""
+
+    def publish(self, event: str, payload: Dict[str, Any]) -> None:
+        """Publish ``payload`` under ``event`` name."""
+
+
+class Template(Protocol):
+    """Minimal template interface used for report rendering."""
+
+    def render(self, context: Dict[str, Any]) -> str:
+        """Render template using ``context``."""
+
+
+class Storage(Protocol):
+    """Storage dependency interface."""
+
+    def save(self, name: str, data: Union[DataFrame, Series, Iterable[bytes]]) -> None:
+        """Persist ``data`` under ``name``."""
+
+    def load(self, name: str) -> Union[DataFrame, Series, bytes, Template]:
+        """Load object previously saved under ``name``."""
 
 
 logger = logging.getLogger(__name__)
@@ -92,7 +151,7 @@ class DataSourceRouter:
     """Helper to route analytics requests based on source."""
 
     def __init__(self, orchestrator: AnalyticsOrchestrator) -> None:
-        self.orchestrator = orchestrator
+        self.orchestrator: AnalyticsOrchestrator = orchestrator
 
     @with_error_handling(
         category=ErrorCategory.ANALYTICS,
@@ -115,17 +174,17 @@ class DataSourceRouter:
 
 
 @injectable
-class AnalyticsService(AnalyticsServiceProtocol):
+class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
     """Analytics service implementing ``AnalyticsServiceProtocol``."""
 
     @inject
     def __init__(
         self,
-        database: DatabaseProtocol | None = None,
-        data_processor: DataProcessorProtocol | None = None,
-        config: ConfigProviderProtocol | None = None,
-        event_bus: EventBusProtocol | None = None,
-        storage: StorageProtocol | None = None,
+        database: Database | None = None,
+        data_processor: DataProcessor | None = None,
+        config: Config | None = None,
+        event_bus: EventBus | None = None,
+        storage: Storage | None = None,
         upload_data_service: UploadDataServiceProtocol | None = None,
         model_registry: ModelRegistry | None = None,
         *,
@@ -137,29 +196,43 @@ class AnalyticsService(AnalyticsServiceProtocol):
         upload_controller: UploadProcessingControllerProtocol | None = None,
         upload_processor: UploadAnalyticsProtocol | None = None,
     ) -> None:
-        self.database = database
-        self.data_processor = data_processor
-        self.config = config
-        self.event_bus = event_bus
-        self.storage = storage
-        self.upload_data_service = upload_data_service
-        self.model_registry = model_registry
-        self.validation_service = SecurityValidator()
-        self.processor = data_processor
+        self.database: Database | None = database
+        if data_processor is None:
+            raise ValueError("data_processor is required")
+        self.data_processor: DataProcessor = data_processor
+        self.config: Config | None = config
+        self.event_bus: EventBus | None = event_bus
+        self.storage: Storage | None = storage
+        self.upload_data_service: UploadDataServiceProtocol | None = upload_data_service
+        self.model_registry: ModelRegistry | None = model_registry
+        self.validation_service: SecurityValidator = SecurityValidator()
+        self.processor: DataProcessor = data_processor
         # Legacy attribute aliases
-        self.data_loading_service = self.processor
+        self.data_loading_service: DataProcessor = self.processor
         from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 
-        self.file_handler = FileHandler()
+        self.file_handler: FileHandler = FileHandler()
 
-        self.upload_processor = upload_processor
-        self.upload_controller = upload_controller
-        self.report_generator = report_generator
+        self.upload_processor: UploadAnalyticsProtocol | None = upload_processor
+        self.upload_controller: UploadProcessingControllerProtocol | None = upload_controller
+        self.report_generator: ReportGeneratorProtocol | None = report_generator
+        self.database_manager: Any
+        self.db_helper: Any
+        self.summary_reporter: Any
+        self.database_retriever: DatabaseAnalyticsRetrieverProtocol
+        self.data_loader: AnalyticsDataLoaderProtocol
+        self.calculator: CalculatorProtocol
+        self.publisher: PublishingProtocol
+        self.orchestrator: AnalyticsOrchestrator
+        self.router: DataSourceRouter
+
         self._setup_database(db_retriever)
+        if loader is None or calculator is None or publisher is None:
+            raise ValueError("loader, calculator and publisher are required")
         self.data_loader = loader
         self.calculator = calculator
         self.publisher = publisher
-        self._create_orchestrator(self.data_loader, self.calculator, self.publisher)
+        self._create_orchestrator(loader, calculator, publisher)
         self.router = DataSourceRouter(self.orchestrator)
 
     def _setup_database(
@@ -313,6 +386,28 @@ class AnalyticsService(AnalyticsServiceProtocol):
             self.data_loader.load_patterns_dataframe, data_source
         )
 
+    def _calculate_anomaly_score(self, values: Series) -> float:
+        """Compute a basic anomaly score from numeric ``values``."""
+        if values.empty:
+            return 0.0
+        return float(values.mean())
+
+    def _get_template(self, name: str) -> Optional[Template]:
+        """Retrieve a template named ``name`` from storage if available."""
+        if self.storage is None:
+            return None
+        obj = self.storage.load(name)
+        if isinstance(obj, (DataFrame, Series, bytes)):
+            return None
+        return cast(Template, obj)
+
+    def _gather_report_data(self, df: DataFrame) -> Dict[str, Any]:
+        """Collect summary and anomaly metrics for ``df``."""
+        summary = self.summarize_dataframe(df)
+        numeric = df.select_dtypes(include=["number"]).mean()
+        anomaly = self._calculate_anomaly_score(numeric)
+        return {"summary": summary, "anomaly_score": anomaly}
+
     # ------------------------------------------------------------------
     # Pattern analysis helpers
     # ------------------------------------------------------------------
@@ -440,7 +535,7 @@ class AnalyticsService(AnalyticsServiceProtocol):
             return None
         models_path = getattr(self.config, "analytics", None)
         models_path = getattr(models_path, "ml_models_path", "models/ml")
-        dest = Path(destination_dir or models_path)
+        dest = Path(destination_dir or str(models_path))
         dest = dest / name / record.version
         dest.mkdir(parents=True, exist_ok=True)
         local_path = dest / os.path.basename(record.storage_uri)

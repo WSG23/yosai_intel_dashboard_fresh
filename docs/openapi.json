@@ -1,72 +1,25 @@
 {
-  "openapi": "3.1.0",
   "info": {
-    "title": "Yosai Dashboard API",
+    "description": "Auto-generated API documentation.",
+    "title": "Yosai API",
     "version": "1.0.0"
   },
-  "paths": {
-    "/health": {
-      "get": {
-        "summary": " Health",
-        "operationId": "_health_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
+  "paths": {},
+  "openapi": "3.0.2",
+  "components": {
+    "responses": {
+      "UnauthorizedError": {
+        "description": "JWT token missing or invalid"
+      },
+      "ForbiddenError": {
+        "description": "Permission denied"
       }
     },
-    "/health/live": {
-      "get": {
-        "summary": " Health Live",
-        "operationId": "_health_live_health_live_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health/ready": {
-      "get": {
-        "summary": " Health Ready",
-        "operationId": "_health_ready_health_ready_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health/startup": {
-      "get": {
-        "summary": " Health Startup",
-        "operationId": "_health_startup_health_startup_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   }

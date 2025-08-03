@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 import logging
 from dataclasses import dataclass
@@ -290,6 +291,33 @@ class ServiceContainer(BaseModel):
             asyncio.run(warmer.warm())
         else:
             asyncio.run_coroutine_threadsafe(warmer.warm(), loop).result()
+
+    # ------------------------------------------------------------------
+    async def initialize_async(self) -> None:
+        """Asynchronously initialize services that provide warm-up hooks.
+
+        For each registered service, if it defines an ``initialize_async``
+        coroutine it will be awaited. If it instead exposes a synchronous
+        ``initialize`` method, that method is executed in the default
+        executor so it does not block the event loop. All initialization
+        tasks run concurrently to minimize startup time.
+        """
+
+        loop = asyncio.get_running_loop()
+        tasks = []
+
+        for key in list(self._services.keys()):
+            svc = self.get(key)
+            init_async = getattr(svc, "initialize_async", None)
+            init_sync = getattr(svc, "initialize", None)
+
+            if callable(init_async):
+                tasks.append(init_async())
+            elif callable(init_sync):
+                tasks.append(loop.run_in_executor(None, init_sync))
+
+        if tasks:
+            await asyncio.gather(*tasks)
 
     # ------------------------------------------------------------------
     def validate_registrations(self) -> Dict[str, List[str]]:
