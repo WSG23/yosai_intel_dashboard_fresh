@@ -1026,17 +1026,46 @@ The `/v1/plugins/performance` endpoint exposes metrics for dashboards.
 - Retry logic via `connection_retry.py` with exponential backoff
  - Safe Unicode handling using `UnicodeSQLProcessor` for queries and
    `UnicodeProcessor` for parameters
-- Connection pooling through `connection_pool.py`
+- Database connections through `DatabaseConnectionFactory` with pooling,
+  retry logic, async support, health checks, and Unicode-safe queries
+
+Configuration example:
+
+```yaml
+database:
+  type: postgresql
+  pool_size: 20
+  max_overflow: 40
+  retries:
+    attempts: 5
+    backoff_seconds: 1.5
+```
+
 ```python
-# Legacy path
-from config.database_manager import EnhancedPostgreSQLManager, DatabaseConfig
-# New path
-from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
-    EnhancedPostgreSQLManager,
+from yosai_intel_dashboard.src.infrastructure.database import (
+    DatabaseConnectionFactory,
     DatabaseConfig,
 )
-manager = EnhancedPostgreSQLManager(DatabaseConfig(type="postgresql"))
-manager.execute_query_with_retry("SELECT 1")
+
+config = DatabaseConfig(
+    type="postgresql",
+    pool_size=20,
+    max_overflow=40,
+    retry_attempts=5,
+    retry_backoff=1.5,
+)
+factory = DatabaseConnectionFactory(config)
+
+# Synchronous query
+with factory.connection() as conn:
+    conn.execute("SELECT 1")
+
+# Asynchronous query
+async with factory.async_connection() as conn:
+    await conn.execute("SELECT 1")
+
+# Built-in health check
+factory.health_check()
 ```
 
 ### Models Layer (`models/`)
