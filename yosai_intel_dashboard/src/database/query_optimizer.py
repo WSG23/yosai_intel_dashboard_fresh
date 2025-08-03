@@ -22,8 +22,17 @@ class DatabaseQueryOptimizer:
     # ------------------------------------------------------------------
     @lru_cache(maxsize=128)
     def optimize_query(self, query: str) -> str:
-        """Return the optimized query with any hints applied."""
-        return self._hint_func(query)
+        """Return the optimized query with any hints applied.
+
+        The query is first sanitized via :class:`UnicodeSQLProcessor` to
+        ensure any surrogate or invalid Unicode data is handled safely
+        before optimizer hints are injected.
+        """
+
+        from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
+
+        sanitized = UnicodeSQLProcessor.encode_query(query)
+        return self._hint_func(sanitized)
 
     # ------------------------------------------------------------------
     def _postgres_hint(self, query: str) -> str:

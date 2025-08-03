@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
+from database.utils import parse_connection_string
+
 from .app_config import UploadConfig
 from .base import Config as DataclassConfig
 from .base import require_env_var
@@ -47,11 +49,24 @@ class DatabaseSettings(BaseModel):
     async_pool_max_size: int = dynamic_config.get_db_pool_size() * 2
     async_connection_timeout: int = dynamic_config.get_db_connection_timeout()
     shrink_timeout: int = 60
+    shrink_interval: int = 0
     use_intelligent_pool: bool = False
 
     @model_validator(mode="after")
     def populate_url(cls, values: "DatabaseSettings") -> "DatabaseSettings":
-        if not values.url:
+        if values.url:
+            info = parse_connection_string(values.url)
+            values.type = info.dialect
+            if info.dialect == "sqlite":
+                values.name = info.path.lstrip("/") if info.path else values.name
+            else:
+                values.host = info.host or values.host
+                values.port = info.port or values.port
+                values.name = info.database or values.name
+                values.user = info.user or values.user
+                values.password = info.password or values.password
+            values.url = info.build_url()
+        else:
             if values.type == "sqlite":
                 values.url = f"sqlite:///{values.name}"
             elif values.type == "postgresql":
@@ -75,14 +90,8 @@ class DatabaseSettings(BaseModel):
         return values
 
     def get_connection_string(self) -> str:  # pragma: no cover - util
-        if self.type == "postgresql":
-            return (
-                f"postgresql://{self.user}:{self.password}"
-                f"@{self.host}:{self.port}/{self.name}"
-            )
-        if self.type == "sqlite":
-            return f"sqlite:///{self.name}"
-        return f"mock://{self.name}"
+        parse_connection_string(self.url)
+        return self.url
 
 
 class SecuritySettings(BaseModel):

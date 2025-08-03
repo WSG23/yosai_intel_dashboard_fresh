@@ -48,6 +48,23 @@ limits are approached. Example rules:
     summary: Pod memory usage above 90% of limit
 ```
 
+### Connection Pool Monitoring
+
+Database connection pool health is exported via Prometheus metrics:
+
+- `db_pool_current_size` – current maximum pool size
+- `db_pool_active_connections` – connections in use
+- `db_pool_wait_seconds` – histogram of wait time to obtain a connection
+
+Example queries:
+
+```promql
+db_pool_active_connections
+histogram_quantile(0.95, rate(db_pool_wait_seconds_bucket[5m]))
+```
+
+Set alerts if active connections approach the pool size or wait times grow.
+
 Import `monitoring/grafana/dashboards/unified-platform.json` into Grafana to view
 CPU and memory graphs based on these metrics.
 
@@ -57,6 +74,14 @@ Prometheus scrapes metrics from `/metrics` using the sample
 `monitoring/prometheus.yml`. Import this data source into Grafana to build CPU,
 memory and request charts. Logs can be forwarded to Elasticsearch through
 `logging/logstash.conf` and visualized with Kibana.
+
+## Database Connection Logging
+
+The database connection factory logs warnings whenever connection attempts are
+retried and records errors if all retries are exhausted. The connection pool
+also emits warnings when it expands or drops unhealthy connections, including
+current pool sizes. Operators should monitor these log messages to diagnose
+connectivity issues early.
 
 ## Canary Deployments
 

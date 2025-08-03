@@ -25,6 +25,14 @@ raises a `RuntimeError` if `SECRET_KEY` is not set. When
 `YOSAI_ENV=production` the configuration validation step will also refuse
 to start if `DB_PASSWORD` is missing.
 
+## Secure Factory Integration
+
+The configuration factory (`create_config_manager`) uses the
+`SecureConfigManager` to resolve `vault:` and `aws-secrets:` references
+before services start. Database managers consume the retrieved credentials
+and scrub passwords from connection errors so sensitive values never
+appear in logs.
+
 ## Rotation Procedures
 
 1. Generate a new secret using your preferred password manager.

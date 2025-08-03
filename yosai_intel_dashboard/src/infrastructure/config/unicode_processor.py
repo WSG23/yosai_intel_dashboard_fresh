@@ -18,6 +18,7 @@ except Exception:  # pragma: no cover
     def emit_security_event(event: SecurityEvent, data: dict | None = None) -> None:
         pass
 
+
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
     from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
     from yosai_intel_dashboard.src.core.unicode import (  # noqa: F401
@@ -35,16 +36,21 @@ class QueryUnicodeHandler:
 
     @staticmethod
     def _encode(value: Any, processor: UnicodeProcessorProtocol) -> Any:
-        if isinstance(value, str):
+        if isinstance(value, (str, bytes, bytearray)):
             from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 
-            clean = processor.safe_encode_text(value)
-            if contains_surrogates(value):
+            # ``safe_decode_text`` also accepts ``str`` and returns a cleaned str
+            text = (
+                processor.safe_decode_text(value)
+                if isinstance(value, (bytes, bytearray))
+                else processor.safe_encode_text(value)
+            )
+            if contains_surrogates(text):
                 emit_security_event(
                     SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_query"}
                 )
                 logger.info("Surrogate characters removed from query value")
-            return clean
+            return processor.safe_encode_text(text)
         if isinstance(value, dict):
             return {
                 k: QueryUnicodeHandler._encode(v, processor) for k, v in value.items()
@@ -170,8 +176,52 @@ class UnicodeSecurityValidator:
         return normalised != sanitized
 
 
+def encode_query(
+    query: str | bytes,
+    *,
+    processor: "UnicodeProcessorProtocol" | None = None,
+    on_surrogate: Callable[[str], None] | None = None,
+) -> str:
+    """Public wrapper for :class:`QueryUnicodeHandler` query encoding.
+
+    Parameters
+    ----------
+    query:
+        The SQL query to sanitise.  ``bytes`` inputs are decoded using the
+        provided processor.
+    processor:
+        Optional processor instance.  Falls back to the global container if
+        omitted.
+    on_surrogate:
+        Optional callback invoked when surrogate code points are detected.
+    """
+
+    return QueryUnicodeHandler.handle_unicode_query(
+        query, processor=processor, on_surrogate=on_surrogate
+    )
+
+
+def encode_params(
+    params: Any,
+    *,
+    processor: "UnicodeProcessorProtocol" | None = None,
+    on_surrogate: Callable[[str], None] | None = None,
+) -> Any:
+    """Recursively encode SQL parameters.
+
+    Non-string objects are returned unchanged. ``bytes`` are decoded using the
+    processor and nested containers are traversed.
+    """
+
+    return QueryUnicodeHandler.handle_query_parameters(
+        params, processor=processor, on_surrogate=on_surrogate
+    )
+
+
 __all__ = [
     "QueryUnicodeHandler",
     "FileUnicodeHandler",
     "UnicodeSecurityValidator",
+    "encode_query",
+    "encode_params",
 ]

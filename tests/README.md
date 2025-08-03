@@ -33,6 +33,28 @@ and registers lightweight stubs for optional dependencies like `hvac`,
 fixtures it exposes (for example `fake_unicode_processor` and `temp_dir`) are
 available to all tests.
 
+## Database Fixtures
+
+`tests/conftest.py` also provides database connection factories for common
+backends. Each fixture yields a callable that returns a connection wrapped in a
+context manager. Acquire and release connections using the `with` statement:
+
+```python
+def test_example(sqlite_connection_factory):
+    with sqlite_connection_factory() as conn:
+        conn.execute_query("SELECT 1")
+```
+
+Available fixtures:
+
+* `mock_db_factory` – in-memory mock database.
+* `sqlite_connection_factory` – SQLite database stored in a temporary file.
+* `postgres_connection_factory` – PostgreSQL database started with
+  `testcontainers` (skipped if the dependency is missing).
+
+Connections are automatically returned to their pools on context exit and pools
+are cleaned up when the test finishes.
+
 ## Migrating Test Imports
 
 The helper script `tools/migrate_tests.py` updates test files to use the

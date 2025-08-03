@@ -4,7 +4,7 @@ import logging
 import sqlite3
 from typing import Any, Dict, Optional
 
-import pandas as pd
+from database.types import DBRows
 
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
 
@@ -38,10 +38,10 @@ class MockDatabaseManager(IDatabaseManager):
         self._connected = False
         logger.info("Mock database connection closed")
 
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[Dict] = None) -> DBRows:
         """Execute mock query"""
         logger.debug(f"Mock query executed: {query}")
-        return f"Mock result for: {query}"
+        return [{"result": f"Mock result for: {query}"}]
 
 
 class SQLiteDatabaseManager(IDatabaseManager):
@@ -100,7 +100,7 @@ class SQLiteDatabaseManager(IDatabaseManager):
         self.connection = None
         logger.info("SQLite connection closed")
 
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[Dict] = None) -> DBRows:
         """Execute SQLite query"""
         result = self.get_connection()
         if not result.success or not result.connection:
@@ -112,11 +112,9 @@ class SQLiteDatabaseManager(IDatabaseManager):
             cur = conn.cursor()
             cur.execute(query, params or [])
             if cur.description:
-                rows = [dict(row) for row in cur.fetchall()]
-                df = pd.DataFrame(rows)
-                return df
+                return [dict(row) for row in cur.fetchall()]
             conn.commit()
-            return cur.rowcount
+            return []
         except Exception as e:
             logger.error(f"SQLite query failed: {e}")
             raise

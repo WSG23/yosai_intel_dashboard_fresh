@@ -521,6 +521,9 @@ Use the provided environment template for tests:
 ```bash
 cp .env.test .env
 ```
+Set `USE_MOCK_DB=1` to force the configuration factory to use a lightweight
+mock database instead of a real database connection. This is helpful when
+running tests or developing locally without a database server.
 For minimal CI environments you can run `./scripts/install_test_deps.sh` which
 only installs the Python dependencies required for the tests.
 ### Test Requirements
@@ -1024,9 +1027,24 @@ The `/v1/plugins/performance` endpoint exposes metrics for dashboards.
 - Supports PostgreSQL, SQLite, and Mock databases
 - Type-safe connection management
 - Retry logic via `connection_retry.py` with exponential backoff
+- Customizable retry strategies via `DatabaseConnectionFactory`
  - Safe Unicode handling using `UnicodeSQLProcessor` for queries and
    `UnicodeProcessor` for parameters
-- Connection pooling through `connection_pool.py`
+- Database connections through `DatabaseConnectionFactory` with pooling,
+  retry logic, async support, health checks, and Unicode-safe queries
+
+Configuration example:
+
+```yaml
+database:
+  type: postgresql
+  pool_size: 20
+  max_overflow: 40
+  retries:
+    attempts: 5
+    backoff_seconds: 1.5
+```
+
 ```python
 # Legacy path
 from config.database_manager import DatabaseConnectionFactory, DatabaseSettings
@@ -1053,6 +1071,7 @@ with factory.get_connection() as conn:
 # Asynchronous usage
 async with factory.get_async_connection() as conn:
     await conn.execute_query("SELECT 1")
+
 ```
 
 **Configuration fields:**
