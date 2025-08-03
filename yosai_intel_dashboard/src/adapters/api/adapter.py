@@ -146,6 +146,22 @@ def create_api_app() -> "FastAPI":
 
     serializer = URLSafeTimedSerializer(secret_key)
 
+    @service.app.middleware("http")
+    async def enforce_csrf(request: Request, call_next):
+        if request.method not in {"GET", "HEAD", "OPTIONS", "TRACE"}:
+            token = (
+                request.headers.get("X-CSRFToken")
+                or request.headers.get("X-CSRF-Token")
+                or request.cookies.get("csrf_token")
+            )
+            if not token:
+                raise HTTPException(status_code=400, detail="Missing CSRF token")
+            try:
+                serializer.loads(token, max_age=3600)
+            except BadSignature:
+                raise HTTPException(status_code=400, detail="Invalid CSRF token")
+        return await call_next(request)
+
     from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
         StatusSchema,
         UploadRequestSchema,
