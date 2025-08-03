@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import logging
 import time
 from datetime import datetime
@@ -29,8 +30,8 @@ from yosai_intel_dashboard.src.services.upload.protocols import (
     UploadStorageProtocol,
 )
 from yosai_intel_dashboard.src.services.upload.upload_queue_manager import UploadQueueManager
-from yosai_intel_dashboard.src.core.security import validate_user_input
-from validation.security_validator import SecurityValidator
+from validation.security_validator import SecurityValidator, ValidationError
+
 
 logger = logging.getLogger(__name__)
 
@@ -99,11 +100,15 @@ class UploadCore:
         valid_filenames: list[str] = []
         alerts: list[Any] = []
         for content, fname in zip(contents_list, filenames_list):
-            sanitized_name = validate_user_input(str(fname), "filename")
-            res = self.validator.validate_file_upload(content)
-            ok, msg = res.valid, res.message
-            if not ok:
-                alerts.append(self.processing.build_failure_alert(msg))
+            try:
+                data = base64.b64decode(content.split(",", 1)[1])
+                self.validator.validate_file_upload(fname, data)
+            except ValidationError as exc:
+                alerts.append(self.processing.build_failure_alert(str(exc)))
+            except Exception as exc:  # pragma: no cover - unexpected decoding issues
+                logger.error("Failed to validate %s: %s", fname, exc)
+                alerts.append(self.processing.build_failure_alert("Invalid file data"))
+
             else:
                 valid_contents.append(content)
                 valid_filenames.append(sanitized_name)
