@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+"""Security validation utilities.
+
+This module exposes :class:`SecurityValidator` which can optionally incorporate
+an anomaly detection model such as scikit-learn's ``IsolationForest``. The model
+must implement a ``predict`` method returning ``1`` for normal inputs and ``-1``
+for anomalies.
+
+Example
+-------
+>>> from sklearn.ensemble import IsolationForest
+>>> from validation.security_validator import SecurityValidator
+>>> model = IsolationForest().fit([[1], [2], [3]])
+>>> validator = SecurityValidator(anomaly_model=model)
+>>> validator.validate_input("hello")  # doctest: +SKIP
+{"valid": True, "sanitized": "hello"}
+"""
+
 import html
 import logging
 import os
@@ -13,9 +30,31 @@ from yosai_intel_dashboard.src.core.exceptions import (
 )
 # Import dynamically inside methods to avoid circular imports during module init
 
+
 from .core import ValidationResult
 from .file_validator import FileValidator
 from .rules import CompositeValidator, ValidationRule
+
+# Import dynamically inside methods to avoid circular imports during module init
+
+
+def _regex_validator(
+    pattern: re.Pattern[str], issue: str
+) -> Callable[[str], ValidationResult]:
+    def _validate(data: str) -> ValidationResult:
+        if pattern.search(data):
+            return ValidationResult(False, data, [issue])
+        return ValidationResult(True, data)
+
+    return _validate
+
+
+def _json_validator(data: str) -> ValidationResult:
+    try:
+        parsed = json.loads(data)
+    except Exception:
+        return ValidationResult(False, data, ["json"])
+    return ValidationResult(True, json.dumps(parsed, ensure_ascii=False))
 
 
 class XSSRule(ValidationRule):
@@ -45,6 +84,7 @@ class SecurityValidator(CompositeValidator):
         redis_client: Any | None = None,
         rate_limit: int | None = None,
         window_seconds: int | None = None,
+
     ) -> None:
         base_rules = list(rules or [XSSRule(), SQLRule()])
         super().__init__(base_rules)
@@ -84,6 +124,7 @@ class SecurityValidator(CompositeValidator):
             self.logger.error("Permanent ban for %s", identifier)
             raise PermanentBanError("Rate limit exceeded")
 
+
     def sanitize_filename(self, filename: str) -> str:
         """Return a safe filename stripped of path components."""
         name = os.path.basename(filename)
@@ -115,6 +156,7 @@ class SecurityValidator(CompositeValidator):
         self, value: str, field_name: str = "input", identifier: str | None = None
     ) -> dict:
         self._check_rate_limit(identifier or "global")
+
         result = self.validate(value)
         if not result.valid:
             raise ValidationError("; ".join(result.issues or []))
