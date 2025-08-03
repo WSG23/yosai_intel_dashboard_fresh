@@ -1,38 +1,30 @@
-import threading
+from __future__ import annotations
+
 import importlib.util
+import threading
+import time
 from pathlib import Path
 
-spec_cp = importlib.util.spec_from_file_location(
+spec = importlib.util.spec_from_file_location(
     "connection_pool",
     Path(__file__).resolve().parents[1]
-    / "yosai_intel_dashboard"
-    / "src"
-    / "infrastructure"
-    / "config"
-    / "connection_pool.py",
+    / "yosai_intel_dashboard/src/infrastructure/config/connection_pool.py",
 )
-cp_module = importlib.util.module_from_spec(spec_cp)
-spec_cp.loader.exec_module(cp_module)  # type: ignore
-DatabaseConnectionPool = cp_module.DatabaseConnectionPool
-
+connection_pool = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(connection_pool)  # type: ignore[attr-defined]
+DatabaseConnectionPool = connection_pool.DatabaseConnectionPool
 
 
 class MockConnection:
-    def __init__(self):
-        self._connected = True
+    def __init__(self) -> None:
+        self.closed = False
 
-    def execute_query(self, query, params=None):
-        return []
+    def health_check(self) -> bool:
+        return not self.closed
 
-    def execute_command(self, command, params=None):
-        return None
+    def close(self) -> None:
+        self.closed = True
 
-
-    def health_check(self):
-        return self._connected
-
-    def close(self):
-        self._connected = False
 
 
 def factory():
@@ -44,9 +36,14 @@ def test_pool_thread_safety():
         factory, initial_size=1, max_size=3, timeout=10, shrink_timeout=10
     )
     results = []
+    max_active = []
+    lock = threading.Lock()
 
     def worker():
         conn = pool.get_connection()
+        with lock:
+            max_active.append(pool._active)
+        time.sleep(0.05)
         results.append(conn)
         pool.release_connection(conn)
 
@@ -57,4 +54,27 @@ def test_pool_thread_safety():
         t.join()
 
     assert len(results) == 10
-    assert pool._active <= pool._max_pool_size
+    assert max(max_active) <= pool._max_pool_size
+
+
+def test_pool_blocks_until_connection_available():
+    pool = DatabaseConnectionPool(
+        factory, initial_size=1, max_size=1, timeout=5, shrink_timeout=10
+    )
+
+    def worker():
+        conn = pool.get_connection()
+        time.sleep(0.1)
+        pool.release_connection(conn)
+
+    threads = [threading.Thread(target=worker) for _ in range(3)]
+    start = time.time()
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    duration = time.time() - start
+
+    # With only one connection available, the total duration should reflect
+    # sequential access by each thread.
+    assert duration >= 0.25

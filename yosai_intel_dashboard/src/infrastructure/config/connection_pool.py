@@ -21,7 +21,13 @@ from ..monitoring.prometheus.connection_pool import (
 
 
 class DatabaseConnectionPool:
-    """Connection pool that can grow and shrink based on usage."""
+    """Connection pool that can grow and shrink based on usage.
+
+    This class is thread-safe: access to the internal state is
+    synchronised by a re-entrant lock and a condition variable which
+    allows threads to block while waiting for a connection to become
+    available.
+    """
 
     def __init__(
         self,
@@ -35,7 +41,10 @@ class DatabaseConnectionPool:
         idle_timeout: int | None = None,
         threshold: float = 0.8,
     ) -> None:
+        # Re-entrant lock protects all mutable internal state.  A dedicated
+        # condition is used to signal threads waiting for a connection.
         self._lock = threading.RLock()
+        self._condition = threading.Condition(self._lock)
         self._factory = factory
         self._initial_size = initial_size
         self._max_pool_size = max(max_size, initial_size)
@@ -67,50 +76,42 @@ class DatabaseConnectionPool:
 
 
     def _maybe_expand(self) -> None:
-        with self._lock:
-            if self._max_size == 0:
-                return
-            usage = (self._active - len(self._pool)) / self._max_size
-            if usage >= self._threshold and self._max_size < self._max_pool_size:
-                self._max_size = min(self._max_size * 2, self._max_pool_size)
-                self._update_metrics()
+        """Increase ``_max_size`` if current usage exceeds the threshold.
 
+        Caller must hold ``_lock`` before invoking this method.
+        """
+        if self._max_size == 0:
+            return
+        usage = (self._active - len(self._pool)) / self._max_size
+        if usage >= self._threshold and self._max_size < self._max_pool_size:
+            self._max_size = min(self._max_size * 2, self._max_pool_size)
 
     def _shrink_idle_connections(self) -> None:
-        with self._lock:
-            now = time.time()
-            new_pool: List[Tuple[DatabaseConnection, float]] = []
-            for conn, ts in self._pool:
-                if (
-                    now - ts > self._idle_timeout
-                    and self._max_size > self._initial_size
-                ):
-                    logger.warning(
-                        "Closing idle connection after %.2fs", now - ts
-                    )
-                    conn.close()
-                    self._active -= 1
-                    self._max_size -= 1
-                else:
-                    new_pool.append((conn, ts))
-            self._pool = new_pool
-            self._update_metrics()
+        """Remove idle connections that have exceeded ``shrink_timeout``.
 
-    def _periodic_shrink(self) -> None:
-        while not self._shutdown:
-            time.sleep(self._shrink_interval)
-            self._shrink_idle_connections()
+        Caller must hold ``_lock`` before invoking this method.
+        """
+        now = time.time()
+        new_pool: List[Tuple[DatabaseConnection, float]] = []
+        for conn, ts in self._pool:
+            if now - ts > self._shrink_timeout and self._max_size > self._initial_size:
+                conn.close()
+                self._active -= 1
+                self._max_size -= 1
+            else:
+                new_pool.append((conn, ts))
+        self._pool = new_pool
 
-    def close(self) -> None:
-        self._shutdown = True
-        if self._shrink_thread is not None:
-            self._shrink_thread.join(timeout=0.1)
+    def get_connection(self) -> DatabaseConnection:
+        """Acquire a connection from the pool in a thread-safe manner.
 
-    def get_connection(self, *, timeout: float | None = None) -> DatabaseConnection:
-        deadline = time.time() + (timeout if timeout is not None else self._timeout)
+        Threads block on the condition variable until a connection is
+        available or the ``timeout`` expires.
+        """
+        deadline = time.time() + self._timeout
+        with self._condition:
+            while True:
 
-        while True:
-            with self._lock:
                 self._shrink_idle_connections()
                 # Check if pool usage is high before handing out a connection
                 self._maybe_expand()
@@ -135,41 +136,38 @@ class DatabaseConnectionPool:
                     db_pool_wait_seconds.observe(time.time() - start)
                     return conn
 
-            if time.time() >= deadline:
-                db_pool_wait_seconds.observe(time.time() - start)
+                remaining = deadline - time.time()
+                if remaining <= 0:
+                    raise TimeoutError("No available connection in pool")
 
-                raise TimeoutError("No available connection in pool")
+                # Wait a short interval to allow other threads to release
+                # connections while respecting the overall timeout.
+                self._condition.wait(timeout=min(0.05, remaining))
 
-
-            time.sleep(0.05)
 
     def release_connection(self, conn: DatabaseConnection) -> None:
-        with self._lock:
+        """Return a connection to the pool and notify waiting threads."""
+        with self._condition:
             self._shrink_idle_connections()
             self._in_use.discard(conn)
             if not conn.health_check():
                 logger.warning("Dropping unhealthy connection on release")
                 conn.close()
                 self._active -= 1
-                self._update_metrics()
-                return
+            elif len(self._pool) >= self._max_size:
 
-            if self._max_size == 0:
-                conn.close()
-                return
-
-            if len(self._pool) >= self._max_size:
-                logger.warning(
-                    "Connection pool full; closing returned connection"
-                )
                 conn.close()
                 self._active -= 1
             else:
                 self._pool.append((conn, time.time()))
-            self._update_metrics()
+            # Wake one waiting thread (if any) since the pool size or
+            # availability may have changed.
+            self._condition.notify()
+
 
     def health_check(self) -> bool:
-        with self._lock:
+        """Check the health of all idle connections."""
+        with self._condition:
             temp: List[Tuple[DatabaseConnection, float]] = []
             healthy = True
             while self._pool:
