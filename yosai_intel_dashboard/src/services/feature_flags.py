@@ -17,6 +17,7 @@ except Exception:  # pragma: no cover - fallback if redis not installed
     redis = None  # type: ignore
 
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -127,6 +128,7 @@ class FeatureFlagManager:
             self._warned_fallback = False
 
     # ------------------------------------------------------------------
+
     def load_flags(self) -> None:
         """Synchronous wrapper for :meth:`load_flags_async`."""
         asyncio.run(self.load_flags_async())
@@ -158,6 +160,7 @@ class FeatureFlagManager:
     # ------------------------------------------------------------------
     def is_enabled(self, name: str, default: bool = False) -> bool:
         """Return True if *name* flag is enabled."""
+
 
         if self._fallback_mode and not self._warned_fallback:
             logger.warning("FeatureFlagManager operating in fallback mode")
