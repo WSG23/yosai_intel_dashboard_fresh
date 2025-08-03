@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { useWebSocket } from './useWebSocket';
+import { useWebSocket, WebSocketState } from './useWebSocket';
+import { eventBus } from '../eventBus';
 
 jest.useFakeTimers();
 
@@ -29,6 +30,7 @@ describe('useWebSocket', () => {
     );
 
     act(() => {
+      MockSocket.instance?.onopen?.();
       MockSocket.instance?.onmessage?.({ data: JSON.stringify({ a: 1 }) });
     });
 
@@ -87,5 +89,30 @@ describe('useWebSocket', () => {
     });
 
     expect(MockSocket.instances).toHaveLength(1);
+  });
+
+  it('emits state changes via EventBus', () => {
+    const states: WebSocketState[] = [];
+    const unsubscribe = eventBus.on('websocket_state', (s: WebSocketState) => {
+      states.push(s);
+    });
+    const { unmount } = renderHook(() =>
+      useWebSocket('ws://test', url => new MockSocket(url) as unknown as WebSocket)
+    );
+
+    act(() => {
+      MockSocket.instance?.onopen?.();
+      MockSocket.instance?.onclose?.();
+    });
+
+    unmount();
+    unsubscribe();
+
+    expect(states).toEqual([
+      WebSocketState.CONNECTING,
+      WebSocketState.CONNECTED,
+      WebSocketState.RECONNECTING,
+      WebSocketState.DISCONNECTED,
+    ]);
   });
 });
