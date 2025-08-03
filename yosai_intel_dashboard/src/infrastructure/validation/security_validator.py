@@ -23,15 +23,33 @@ import os
 import re
 from functools import lru_cache
 
-from typing import Iterable
+from typing import Iterable, Callable, Any
 import logging
 
 
 try:  # pragma: no cover - allow using the validator without full core package
-    from yosai_intel_dashboard.src.core.exceptions import ValidationError
+    from yosai_intel_dashboard.src.core.exceptions import (
+        ValidationError,
+        TemporaryBlockError,
+        PermanentBanError,
+    )
 except Exception:  # pragma: no cover
     class ValidationError(Exception):
         """Fallback validation error when core package is unavailable."""
+
+    class TemporaryBlockError(Exception):
+        pass
+
+    class PermanentBanError(Exception):
+        pass
+
+try:  # pragma: no cover
+    from yosai_intel_dashboard.src.infrastructure.cache import redis_client
+except Exception:  # pragma: no cover
+    redis_client = None
+
+rate_limit = None
+window_seconds = None
 
 
 # Import dynamically inside methods to avoid circular imports during module init
@@ -115,6 +133,19 @@ class SSRFRule(ValidationRule):
         return ValidationResult(True, data)
 
 
+class IDORRule(ValidationRule):
+    """Verify a user is authorized to access a given resource ID."""
+
+    def __init__(self, user: Any, authorizer: Callable[[Any, str], bool]) -> None:
+        self.user = user
+        self.authorizer = authorizer
+
+    def validate(self, data: str) -> ValidationResult:
+        if not self.authorizer(self.user, data):
+            return ValidationResult(False, data, ["unauthorized"])
+        return ValidationResult(True, data)
+
+
 class SecurityValidator(CompositeValidator):
     """Validate input strings and file uploads against common OWASP risks.
 
@@ -125,7 +156,11 @@ class SecurityValidator(CompositeValidator):
     - ``SSRFRule`` for server-side request forgery.
     """
 
-    def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
+    def __init__(
+        self,
+        rules: Iterable[ValidationRule] | None = None,
+        authorize_resource: Callable[[Any, Any], bool] | None = None,
+    ) -> None:
         base_rules = list(
             rules
             or [
@@ -139,19 +174,10 @@ class SecurityValidator(CompositeValidator):
         super().__init__(base_rules)
         self.file_validator = FileValidator()
         self.redis = redis_client
-        if rate_limit is None or window_seconds is None:
-            from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-                dynamic_config,
-            )
-
-            rate_limit = rate_limit or dynamic_config.security.rate_limit_requests
-            window_seconds = (
-                window_seconds
-                or dynamic_config.security.rate_limit_window_minutes * 60
-            )
-        self.rate_limit = rate_limit
-        self.window_seconds = window_seconds
+        self.rate_limit = rate_limit or 0
+        self.window_seconds = window_seconds or 0
         self.logger = logging.getLogger(__name__)
+        self._authorize_resource = authorize_resource or (lambda _u, _r: True)
 
     def _check_rate_limit(self, identifier: str) -> None:
         if not self.redis:
@@ -184,6 +210,14 @@ class SecurityValidator(CompositeValidator):
         if name != filename or not name or name in {".", ".."}:
             raise ValidationError("Invalid filename")
         return name
+
+    def validate_resource_id(self, user: Any, resource_id: Any) -> Any:
+        """Validate that ``user`` is authorized for ``resource_id``."""
+        rule = IDORRule(user, self._authorize_resource)
+        result = rule.validate(str(resource_id))
+        if not result.valid:
+            raise ValidationError("Unauthorized resource access")
+        return result.sanitized
 
     # ------------------------------------------------------------------
     def _virus_scan(self, content: bytes) -> None:
