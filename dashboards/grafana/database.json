@@ -25,6 +25,30 @@
       "targets": [
         {"expr": "rate(database_query_errors_total[5m])", "legendFormat": "errors/sec"}
       ]
+    },
+    {
+      "type": "graph",
+      "title": "Pool Utilization",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "database_pool_utilization", "legendFormat": "utilization"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Health Check Failures",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "database_health_check_failures_total", "legendFormat": "failures"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Health Check Retries",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "database_health_check_retries_total", "legendFormat": "retries"}
+      ]
     }
   ]
 }
