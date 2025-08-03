@@ -11,7 +11,10 @@ from yosai_intel_dashboard.src.core.performance import (
     PerformanceProfiler,
     get_performance_monitor,
 )
-from monitoring.error_budget import record_error
+from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (
+    PerformanceProfiler,
+)
+
 
 
 _circuit_breaker_state = None

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from prometheus_client import REGISTRY, Histogram
+from prometheus_client import REGISTRY, Counter, Histogram
 from prometheus_client.core import CollectorRegistry
 
 _DEFAULT_BUCKETS = (
@@ -47,4 +47,35 @@ else:  # pragma: no cover - defensive in tests
         registry=CollectorRegistry(),
     )
 
-__all__ = ["request_duration", "async_task_duration"]
+if "api_request_retry_total" not in REGISTRY._names_to_collectors:
+    request_retry_count = Counter(
+        "api_request_retry_total",
+        "Total number of HTTP request retries",
+    )
+else:  # pragma: no cover - defensive in tests
+    request_retry_count = Counter(
+        "api_request_retry_total",
+        "Total number of HTTP request retries",
+        registry=CollectorRegistry(),
+    )
+
+if "api_request_retry_delay_seconds" not in REGISTRY._names_to_collectors:
+    request_retry_delay = Histogram(
+        "api_request_retry_delay_seconds",
+        "Delay before HTTP request retries in seconds",
+        buckets=_DEFAULT_BUCKETS,
+    )
+else:  # pragma: no cover - defensive in tests
+    request_retry_delay = Histogram(
+        "api_request_retry_delay_seconds",
+        "Delay before HTTP request retries in seconds",
+        buckets=_DEFAULT_BUCKETS,
+        registry=CollectorRegistry(),
+    )
+
+__all__ = [
+    "request_duration",
+    "async_task_duration",
+    "request_retry_count",
+    "request_retry_delay",
+]

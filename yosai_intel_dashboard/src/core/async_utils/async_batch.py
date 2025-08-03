@@ -11,6 +11,9 @@ from yosai_intel_dashboard.src.core.performance import (
     PerformanceProfiler,
     get_performance_monitor,
 )
+from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (
+    PerformanceProfiler,
+)
 
 
 T = TypeVar("T")
