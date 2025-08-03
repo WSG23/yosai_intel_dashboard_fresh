@@ -25,7 +25,9 @@ from api.analytics_router import init_cache_manager
 from api.analytics_router import router as analytics_router
 from api.explanations import router as explanations_router
 from api.monitoring_router import router as monitoring_router
+from api.routes.feature_flags import router as feature_flags_router
 from middleware.performance import TimingMiddleware
+from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
@@ -61,6 +63,13 @@ def create_api_app() -> "FastAPI":
     service._add_health_routes()
     service.start()
     service.app.add_middleware(TimingMiddleware)
+
+    # Apply rate limiting
+    import redis
+
+    redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+    limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
+    service.app.add_middleware(RateLimitMiddleware, limiter=limiter)
     build_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, "build")
     )
@@ -108,6 +117,7 @@ def create_api_app() -> "FastAPI":
     api_v1.include_router(analytics_router)
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)
+    api_v1.include_router(feature_flags_router)
 
     service.app.include_router(api_v1, dependencies=[Depends(verify_token)])
 
@@ -115,6 +125,7 @@ def create_api_app() -> "FastAPI":
     legacy_router.include_router(analytics_router)
     legacy_router.include_router(monitoring_router)
     legacy_router.include_router(explanations_router)
+    legacy_router.include_router(feature_flags_router)
 
     service.app.include_router(
         legacy_router,
