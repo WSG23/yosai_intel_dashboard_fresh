@@ -1,5 +1,7 @@
 """Persistent uploaded data store module."""
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -11,13 +13,23 @@ from typing import Any, Dict, List, Optional, Protocol
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
-from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
-from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
-from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 from unicode_toolkit import safe_encode_text
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+)
+from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
+from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
+from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 
-_cache_manager = InMemoryCacheManager(CacheConfig())
+_cache_manager: InMemoryCacheManager | None = None
+
+
+def _get_cache_manager() -> InMemoryCacheManager:
+    global _cache_manager
+    if _cache_manager is None:
+        _cache_manager = InMemoryCacheManager(CacheConfig())
+    return _cache_manager
 
 
 class UploadStoreProtocol(Protocol):
@@ -167,7 +179,7 @@ class UploadedDataStore(UploadStorageProtocol):
         try:
 
             try:
-                asyncio.run(_cache_manager.clear())
+                asyncio.run(_get_cache_manager().clear())
             except Exception:
                 pass
 
@@ -258,7 +270,7 @@ class UploadedDataStore(UploadStorageProtocol):
         try:
 
             try:
-                asyncio.run(_cache_manager.clear())
+                asyncio.run(_get_cache_manager().clear())
             except Exception:
                 pass
 
@@ -277,10 +289,19 @@ class UploadedDataStore(UploadStorageProtocol):
         self._save_futures.clear()
 
 
-# Global persistent storage instance
-uploaded_data_store = UploadedDataStore()
+# Lazy global persistent storage instance
+_uploaded_data_store: UploadedDataStore | None = None
+
+
+def get_uploaded_data_store() -> UploadedDataStore:
+    """Return the singleton :class:`UploadedDataStore` instance."""
+    global _uploaded_data_store
+    if _uploaded_data_store is None:
+        _uploaded_data_store = UploadedDataStore()
+    return _uploaded_data_store
+
 
 __all__ = [
     "UploadedDataStore",
-    "uploaded_data_store",
+    "get_uploaded_data_store",
 ]

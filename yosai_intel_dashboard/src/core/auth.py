@@ -24,6 +24,7 @@ from flask_login import (
     login_required,
     login_user,
     logout_user,
+    current_user,
 )
 from jose import jwt
 
@@ -33,6 +34,7 @@ from yosai_intel_dashboard.src.infrastructure.config import (
 )
 
 from .secret_manager import SecretsManager
+from .session_store import InMemorySessionStore, MemcachedSessionStore
 
 auth_bp = Blueprint("auth", __name__)
 login_manager = LoginManager()
@@ -48,7 +50,7 @@ class User(UserMixin):
         self.roles = roles
 
 
-_users: dict[str, User] = {}
+session_store: MemcachedSessionStore | InMemorySessionStore = MemcachedSessionStore()
 
 # Cached JWKS per domain: {domain: (jwks_dict, fetch_timestamp)}
 _jwks_cache: dict[str, tuple[dict, float]] = {}
@@ -56,14 +58,17 @@ _jwks_cache: dict[str, tuple[dict, float]] = {}
 
 @login_manager.user_loader
 def load_user(user_id: str) -> Optional[User]:
-    return _users.get(user_id)
+    data = session_store.get(user_id)
+    if data is None:
+        return None
+    return User(data["id"], data.get("name", ""), data.get("email", ""), data.get("roles", []))
 
 
 @login_manager.request_loader
 def load_user_from_request(request):
     user_id = session.get("user_id")
     if user_id:
-        return _users.get(user_id)
+        return load_user(user_id)
     return None
 
 
@@ -193,9 +198,14 @@ def callback():
         claims.get("email", ""),
         claims.get("https://yosai-intel.io/roles", []),
     )
-    _users[user.id] = user
     login_user(user)
     _apply_session_timeout(user)
+    ttl = _determine_session_timeout(user.roles)
+    session_store.set(
+        user.id,
+        {"id": user.id, "name": user.name, "email": user.email, "roles": user.roles},
+        ttl=ttl,
+    )
     session["roles"] = user.roles
     session["user_id"] = user.id
     return redirect("/")
@@ -214,8 +224,11 @@ def logout():
     """
     manager = SecretsManager()
     domain = manager.get("AUTH0_DOMAIN")
+    user_id = session.get("user_id")
     logout_user()
     session.clear()
+    if user_id:
+        session_store.delete(user_id)
     return redirect(
         f"https://{domain}/v2/logout?returnTo="
         f"{url_for('auth.login', _external=True)}"

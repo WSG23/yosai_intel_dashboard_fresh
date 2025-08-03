@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Awaitable, Callable, Dict
 
 from yosai_intel_dashboard.src.services.task_queue_protocol import TaskQueueProtocol
@@ -8,7 +10,10 @@ class StubTaskQueue(TaskQueueProtocol):
         self.created = []
 
     def create_task(
-        self, func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any]
+        self,
+        func: Callable[[Callable[[int], None]], Awaitable[Any]] | Awaitable[Any],
+        *,
+        idempotency_key: str | None = None,
     ) -> str:
         if hasattr(func, "close"):
             func.close()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import mmap
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ def read_csv(
     path: str | Path, *, processor: Any | None = None, **kwargs: Any
 ) -> pd.DataFrame:
     """Read a CSV file and sanitize Unicode."""
+    kwargs.setdefault("memory_map", True)
     df = pd.read_csv(path, **kwargs)
     return _sanitize(df, processor)
 
@@ -40,13 +42,14 @@ def read_json(
     **kwargs: Any,
 ) -> pd.DataFrame:
     """Read a JSON file and sanitize Unicode."""
-    with open(path, "r", encoding="utf-8", errors="replace") as fh:
-        text = fh.read()
-    try:
-        data = json.loads(text)
-        df = pd.json_normalize(data)
-    except json.JSONDecodeError:
-        df = pd.read_json(text, lines=True)
+    with open(path, "rb") as fh:
+        with mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+            try:
+                data = json.loads(mm)
+                df = pd.json_normalize(data)
+            except json.JSONDecodeError:
+                mm.seek(0)
+                df = pd.read_json(mm, lines=True, **kwargs)
     return _sanitize(df, processor)
 
 

@@ -2,8 +2,15 @@
 
 from .mock_database import MockDatabase
 from .protocols import ConnectionProtocol
+from .shard_resolver import ShardResolver
 
-__all__ = ["DatabaseManager", "MockConnection", "MockDatabase", "ConnectionProtocol"]
+__all__ = [
+    "DatabaseManager",
+    "MockConnection",
+    "MockDatabase",
+    "ConnectionProtocol",
+    "ShardResolver",
+]
 
 
 def __getattr__(name: str):

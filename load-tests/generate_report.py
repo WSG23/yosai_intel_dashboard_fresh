@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
 
 """Generate JSON and HTML regression reports from Locust stats."""
 
@@ -12,7 +11,7 @@ from typing import Dict
 
 def load_current(csv_path: str) -> Dict[str, Dict[str, float]]:
     stats = {}
-    with open(csv_path, newline="") as f:
+    with pathlib.Path(csv_path).open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             name = row["Name"]
@@ -46,7 +45,7 @@ def compare(
 def write_html(
     report: Dict[str, Dict[str, Dict[str, float]]], out_file: pathlib.Path
 ) -> None:
-    with out_file.open("w") as f:
+    with out_file.open("w", encoding="utf-8") as f:
         f.write("<html><body><table border='1'>")
         f.write(
             "<tr><th>Endpoint</th><th>Metric</th><th>Current</th><th>Baseline</th><th>Delta</th></tr>"
@@ -71,12 +70,12 @@ def main() -> int:
     current = load_current(csv_path)
     baseline = {}
     if pathlib.Path(baseline_path).exists():
-        with open(baseline_path) as f:
+        with pathlib.Path(baseline_path).open(encoding="utf-8") as f:
             baseline = json.load(f)
 
     report = compare(current, baseline)
 
-    with open(out_dir / "regression_report.json", "w") as f:
+    with (out_dir / "regression_report.json").open("w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 
     write_html(report, out_dir / "regression_report.html")

@@ -38,6 +38,7 @@ class UploadQueueManager:
         self._queue: Deque[Tuple[int, float, Any]] = deque()
         self._tasks: Dict[str, asyncio.Task] = {}
         self.files: List[Any] = []
+        self._file_set: set[Any] = set()
         self.completed: set[Any] = set()
         self._paused = False
         self._state = state if state is not None else {}
@@ -51,6 +52,7 @@ class UploadQueueManager:
         self._queue = deque(sorted(data.get("queue", [])))
         self._paused = data.get("paused", False)
         self.files = list(data.get("files", []))
+        self._file_set = set(self.files)
         self.completed = set(data.get("completed", []))
 
     def _save_state(self) -> None:
@@ -92,7 +94,9 @@ class UploadQueueManager:
             for f in files:
                 self._queue.append((priority, ts, f))
                 if f not in self.files:
+
                     self.files.append(f)
+                    self._file_set.add(f)
                 ts += 1e-6  # ensure stable ordering
             self._queue = deque(sorted(self._queue))
             self._save_state()

@@ -159,6 +159,22 @@ func TestAuthBlacklistedToken(t *testing.T) {
 	}
 }
 
+func TestTokenCacheBloomFilter(t *testing.T) {
+	srv, client := newRedis(t)
+	cache := NewTokenCache(client)
+	// Closing Redis should not affect a lookup for an ID that was never
+	// blacklisted because the bloom filter allows skipping the Redis call.
+	srv.Close()
+
+	ok, err := cache.IsBlacklisted(context.Background(), "unknown")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatalf("expected not blacklisted")
+	}
+}
+
 func TestAuthTokenRefresh(t *testing.T) {
 	srv, client := newRedis(t)
 	priv, pub := genKeys(t)

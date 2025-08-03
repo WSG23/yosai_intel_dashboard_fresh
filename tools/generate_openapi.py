@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
@@ -25,7 +27,7 @@ def main() -> None:
             else swagger.template
         )
         Path("docs").mkdir(exist_ok=True)
-        with open(Path("docs") / "openapi.json", "w") as fh:
+        with (Path("docs") / "openapi.json").open("w", encoding="utf-8") as fh:
             json.dump(spec, fh, indent=2)
 
 

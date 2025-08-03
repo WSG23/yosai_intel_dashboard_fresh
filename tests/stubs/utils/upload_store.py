@@ -1,3 +1,10 @@
+from __future__ import annotations
+
 from tests.fakes import FakeUploadStore
 
-uploaded_data_store = FakeUploadStore()
+_fake_store = FakeUploadStore()
+uploaded_data_store = _fake_store
+
+
+def get_uploaded_data_store() -> FakeUploadStore:
+    return _fake_store

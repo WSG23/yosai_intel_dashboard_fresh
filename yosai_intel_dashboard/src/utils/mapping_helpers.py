@@ -55,7 +55,12 @@ def map_and_clean(
 def standardize_column_names(
     df: pd.DataFrame, rules: ColumnRules | None = None
 ) -> pd.DataFrame:
-    """Return a new DataFrame with normalized column names."""
+    """Return a new DataFrame with normalized column names.
+
+    Column lookups are handled via a reverse hash map of all known aliases
+    to their canonical headers, avoiding repeated nested iteration when
+    resolving names.
+    """
 
     if rules is None:
         from yosai_intel_dashboard.src.mapping.models import load_rules
@@ -67,11 +72,14 @@ def standardize_column_names(
     for key, vals in rules.japanese.items():
         mappings.setdefault(key, []).extend(vals)
 
-    reverse: Dict[str, str] = {}
-    for canon, aliases in mappings.items():
-        reverse[canon.lower()] = canon
-        for alias in aliases:
-            reverse[str(alias).lower()] = canon
+    # Build reverse lookup using a flattened hash map of all aliases.
+    # Using a set union avoids nested loops when adding the canonical
+    # header alongside its aliases.
+    reverse: Dict[str, str] = {
+        alias.lower(): canon
+        for canon, aliases in mappings.items()
+        for alias in {canon, *aliases}
+    }
 
     renamed: Dict[str, str] = {}
     for col in df_out.columns:

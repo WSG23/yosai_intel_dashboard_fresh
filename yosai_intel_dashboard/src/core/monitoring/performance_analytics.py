@@ -3,7 +3,7 @@ from __future__ import annotations
 """Utilities for analyzing performance trends over time."""
 
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -44,7 +44,16 @@ class PerformanceAnalytics(BaseModel):
         values = [m.value for m in self.monitor.metrics if m.name == metric_name]
         if not values:
             return []
-        return pd.Series(values).rolling(window=window, min_periods=1).mean().tolist()
+        averages: List[float] = []
+        window_vals: deque[float] = deque()
+        running_sum = 0.0
+        for value in values:
+            window_vals.append(value)
+            running_sum += value
+            if len(window_vals) > window:
+                running_sum -= window_vals.popleft()
+            averages.append(running_sum / len(window_vals))
+        return averages
 
     # ------------------------------------------------------------------
     def summarize_by_type(self) -> Dict[str, float]:
