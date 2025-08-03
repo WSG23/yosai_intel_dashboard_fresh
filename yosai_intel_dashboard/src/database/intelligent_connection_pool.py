@@ -8,6 +8,8 @@ import time
 from contextlib import asynccontextmanager, contextmanager
 from typing import Any, Callable, Dict, List, Tuple
 
+from monitoring.error_budget import record_error
+
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
     ConnectionValidationFailed,
 )
@@ -26,12 +28,15 @@ from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.connection_p
 class CircuitBreaker:
     """Simple circuit breaker implementation."""
 
-    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 30) -> None:
+    def __init__(
+        self, failure_threshold: int = 5, recovery_timeout: int = 30, name: str = "connection_pool"
+    ) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self._failures = 0
         self._opened_at: float | None = None
         self._lock = threading.Lock()
+        self._name = name
 
     def record_success(self) -> None:
         with self._lock:
@@ -41,6 +46,7 @@ class CircuitBreaker:
     def record_failure(self) -> None:
         with self._lock:
             self._failures += 1
+            record_error(self._name)
             if self._failures >= self.failure_threshold:
                 self._opened_at = time.time()
 

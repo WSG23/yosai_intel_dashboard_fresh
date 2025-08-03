@@ -1,15 +1,9 @@
 import asyncio
 import pathlib
 import sys
-import types
+from unittest.mock import MagicMock
 
 import pytest
-from tests.import_helpers import safe_import, import_optional
-
-services_path = pathlib.Path(__file__).resolve().parents[1] / "services"
-stub_pkg = types.ModuleType("services")
-stub_pkg.__path__ = [str(services_path)]
-safe_import('services', stub_pkg)
 
 from yosai_intel_dashboard.src.services.common.model_registry import ModelRegistry
 
@@ -45,3 +39,20 @@ def test_get_active_version_async(monkeypatch):
     monkeypatch.setattr(registry, "_session", DummySession())
     version = asyncio.run(registry.get_active_version_async("foo"))
     assert version == "v1"
+
+
+class FailSession(DummySession):
+    def get(self, url, timeout=None):  # type: ignore[override]
+        raise RuntimeError("boom")
+
+
+def test_get_active_version_fallback(monkeypatch):
+    registry = ModelRegistry("http://example.com")
+    monkeypatch.setattr(registry, "_session", DummySession())
+    assert asyncio.run(registry.get_active_version_async("foo")) == "v1"
+    handler = MagicMock()
+    registry._error_handler = handler
+    monkeypatch.setattr(registry, "_session", FailSession())
+    version = asyncio.run(registry.get_active_version_async("foo"))
+    assert version == "v1"
+    assert handler.handle.called

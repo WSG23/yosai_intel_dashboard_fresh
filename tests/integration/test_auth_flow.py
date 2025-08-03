@@ -64,18 +64,17 @@ sys.modules["authlib.integrations.flask_client"] = authlib_flask_stub
 # Patch werkzeug.urls for compatibility
 werkzeug_urls = importlib.import_module("werkzeug.urls")
 if not hasattr(werkzeug_urls, "url_decode"):
-    werkzeug_urls.url_decode = lambda *a, **k: None
+    werkzeug_urls.url_decode = lambda *a, **k: {}
 if not hasattr(werkzeug_urls, "url_encode"):
     werkzeug_urls.url_encode = lambda *a, **k: ""
 
 from yosai_intel_dashboard.src.core import auth  # noqa: E402
 
 
-@pytest.mark.integration
-def test_auth_login_flow(monkeypatch):
-    """User can login and access protected endpoint."""
+@pytest.fixture
+def auth_app(monkeypatch):
+    """Create Flask app with stubbed Auth0 integration."""
 
-    # Stub secrets manager to return auth0 config
     class DummySecretsManager:
         def get(self, key):
             return {
@@ -89,7 +88,6 @@ def test_auth_login_flow(monkeypatch):
     monkeypatch.setattr(auth, "_users", {})
     monkeypatch.setattr(auth, "_apply_session_timeout", lambda user: None)
 
-    # Stub OAuth client
     class DummyAuth0:
         def authorize_redirect(self, redirect_uri=None, audience=None):
             return redirect("/callback?code=fake")
@@ -106,7 +104,6 @@ def test_auth_login_flow(monkeypatch):
 
     monkeypatch.setattr(auth, "oauth", DummyOAuth())
 
-    # Bypass JWT decoding
     monkeypatch.setattr(
         auth,
         "_decode_jwt",
@@ -127,22 +124,25 @@ def test_auth_login_flow(monkeypatch):
     def protected():
         return "ok"
 
-    client = app.test_client()
+    return app
 
-    # Begin login flow
+
+@pytest.mark.integration
+def test_auth_login_flow(auth_app) -> None:
+    """User can login and access protected endpoint."""
+
+    client = auth_app.test_client()
+
     resp = client.get("/login")
     assert resp.status_code == 302
 
-    # Simulate callback with token exchange
     resp = client.get("/callback?code=fake")
     assert resp.status_code == 302
 
-    # Session data should be set
     with client.session_transaction() as sess:
         assert sess["user_id"] == "user123"
         assert sess["roles"] == ["admin"]
 
-    # Protected endpoint accessible after login
     resp = client.get("/protected")
     assert resp.status_code == 200
     assert resp.data == b"ok"

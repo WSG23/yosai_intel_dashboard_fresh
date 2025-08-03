@@ -9,6 +9,7 @@ class ValidationResult:
     valid: bool
     sanitized: Any | None = None
     issues: list[str] | None = None
+    remediation: list[str] | None = None
 
 
 class Validator(Protocol):

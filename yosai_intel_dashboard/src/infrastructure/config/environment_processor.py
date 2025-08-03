@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from typing import Any, Mapping, Optional
+from .constants import RateLimitConfig
 
 
 class EnvironmentProcessor:
@@ -104,6 +106,34 @@ class EnvironmentProcessor:
                     sec.max_file_size_mb = val
             if (val := self._to_int("MAX_UPLOAD_BYTES")) is not None:
                 sec.max_upload_mb = val // (1024 * 1024)
+            if hasattr(sec, "rate_limits"):
+                for key, value in self.env.items():
+                    match = re.match(r"RATE_LIMIT_(.+)_REQUESTS$", key)
+                    if not match:
+                        continue
+                    tier = match.group(1).lower()
+                    rl = sec.rate_limits.setdefault(
+                        tier,
+                        RateLimitConfig(
+                            sec.rate_limit_requests,
+                            sec.rate_limit_window_minutes,
+                            0,
+                        ),
+                    )
+                    try:
+                        rl.requests = int(value)
+                    except ValueError:
+                        continue
+                    if tier == "default":
+                        sec.rate_limit_requests = rl.requests
+                    if (win := self._to_int(f"RATE_LIMIT_{tier.upper()}_WINDOW")) is not None:
+                        rl.window_minutes = win
+                        if tier == "default":
+                            sec.rate_limit_window_minutes = win
+                    if (
+                        burst := self._to_int(f"RATE_LIMIT_{tier.upper()}_BURST")
+                    ) is not None:
+                        rl.burst = burst
 
         if hasattr(config, "performance"):
             perf = config.performance

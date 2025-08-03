@@ -121,3 +121,4 @@ async def create_rate_limiter(
     except Exception:  # pragma: no cover - best effort
         redis_client = None
     return RateLimiter(redis_client, tier_config, window, limit, burst)
+
