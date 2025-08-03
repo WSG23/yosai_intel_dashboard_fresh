@@ -9,6 +9,7 @@ import types
 from pathlib import Path
 
 
+
 class DummyEventBus:
     def __init__(self) -> None:
         self._subs: list[tuple[str, callable]] = []
@@ -58,11 +59,13 @@ services_pkg.__path__ = [
     )
 ]
 
+
 sys.modules["yosai_intel_dashboard"] = root_pkg
 sys.modules["yosai_intel_dashboard.src"] = src_pkg
 sys.modules["yosai_intel_dashboard.src.core"] = core_pkg
 sys.modules["yosai_intel_dashboard.src.core.events"] = events_module
 sys.modules["yosai_intel_dashboard.src.services"] = services_pkg
+
 
 # Load the websocket server module directly
 spec = importlib.util.spec_from_file_location(
@@ -97,9 +100,7 @@ def _run_client(port: int, expected: int) -> list[dict]:
 
 def test_buffered_events_flushed_on_client_connect() -> None:
     event_bus = EventBus()
-    server = AnalyticsWebSocketServer(
-        event_bus=event_bus, host="127.0.0.1", port=8766, queue_size=10
-    )
+    server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8766)
 
     time.sleep(0.1)
 
@@ -153,3 +154,4 @@ def test_compressed_broadcast() -> None:
     assert messages[0] == payload
 
     server.stop()
+

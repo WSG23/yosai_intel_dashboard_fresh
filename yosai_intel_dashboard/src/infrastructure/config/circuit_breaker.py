@@ -4,6 +4,8 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional, TypeVar
 
+from monitoring.error_budget import record_error
+
 T = TypeVar("T")
 
 
@@ -24,6 +26,7 @@ class CircuitBreaker:
     failure_threshold: int = 5
     recovery_timeout: float = 30.0
     fallback: Optional[Callable[[], T]] = None
+    name: str = "circuit"
 
     def __post_init__(self) -> None:
         self._failure_count = 0
@@ -51,6 +54,7 @@ class CircuitBreaker:
             result = func()
         except Exception:
             self._failure_count += 1
+            record_error(self.name)
             if self._failure_count >= self.failure_threshold:
                 self._state = "open"
                 self._opened_at = time.monotonic()
@@ -59,3 +63,10 @@ class CircuitBreaker:
             self._failure_count = 0
             self._state = "closed"
             return result
+
+    # ------------------------------------------------------------------
+    def reset(self) -> None:
+        """Force the circuit breaker into the closed state."""
+        self._failure_count = 0
+        self._state = "closed"
+        self._opened_at = None

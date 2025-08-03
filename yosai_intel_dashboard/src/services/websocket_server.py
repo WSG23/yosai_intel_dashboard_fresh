@@ -30,6 +30,7 @@ class AnalyticsWebSocketServer:
         ping_timeout: float = 10.0,
         queue_size: int = 0,
         compression_threshold: int | None = None,
+
     ) -> None:
         self.host = host
         self.port = port
@@ -41,6 +42,7 @@ class AnalyticsWebSocketServer:
         self.pool = WebSocketConnectionPool()
         self._queue: Deque[dict] = deque(maxlen=queue_size or None)
         self.compression_threshold = compression_threshold
+
 
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
@@ -54,6 +56,7 @@ class AnalyticsWebSocketServer:
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
+        await self.pool.acquire(websocket)
         self.clients.add(websocket)
         await self.pool.acquire(websocket)
         if self._queue:
@@ -70,6 +73,7 @@ class AnalyticsWebSocketServer:
             logger.debug("WebSocket connection error: %s", exc)
         finally:
             await self.pool.release(websocket)
+            self.clients.discard(websocket)
 
     async def _serve(self) -> None:
         self._loop = asyncio.get_running_loop()
@@ -116,7 +120,7 @@ class AnalyticsWebSocketServer:
             message = json.dumps(data)
             if self._loop is not None:
                 asyncio.run_coroutine_threadsafe(
-                    self._broadcast_async(message), self._loop
+                    self.pool.broadcast(message), self._loop
                 )
         else:
             self._queue.append(data)
@@ -126,6 +130,7 @@ class AnalyticsWebSocketServer:
         if self.compression_threshold and len(message) > self.compression_threshold:
             payload = gzip.compress(message.encode("utf-8"))
         await self.pool.broadcast(payload)
+
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""
