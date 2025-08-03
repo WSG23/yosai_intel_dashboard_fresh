@@ -10,6 +10,8 @@ from .base import MappingModel
 class HeuristicMappingModel(MappingModel):
     """Simple heuristic-based mapping model."""
 
+    registry_name = "heuristic"
+
     def suggest(self, df: pd.DataFrame, filename: str) -> Dict[str, Dict[str, Any]]:
         suggestions: Dict[str, Dict[str, Any]] = {}
         for column in df.columns:

@@ -14,33 +14,47 @@ from websockets import WebSocketServerProtocol, serve
 
 from src.websocket import metrics as websocket_metrics
 from yosai_intel_dashboard.src.core.events import EventBus
+from src.common.base import BaseComponent
+from src.common.config import ConfigProvider
 
 from .websocket_pool import WebSocketConnectionPool
 
 logger = logging.getLogger(__name__)
 
 
-class AnalyticsWebSocketServer:
+class AnalyticsWebSocketServer(BaseComponent):
     """Simple WebSocket server broadcasting analytics updates."""
 
     def __init__(
         self,
         event_bus: Optional[EventBus] = None,
+        *,
+        config: ConfigProvider | None = None,
         host: str = "0.0.0.0",
         port: int = 6789,
-        ping_interval: float = 30.0,
-        ping_timeout: float = 10.0,
+        ping_interval: float | None = None,
+        ping_timeout: float | None = None,
+        queue_size: int = 100,
+        compression_threshold: int = 0,
 
     ) -> None:
+        super().__init__(config)
         self.host = host
         self.port = port
         self.event_bus = event_bus or EventBus()
         self.clients: Set[WebSocketServerProtocol] = set()
-        self.ping_interval = ping_interval
-        self.ping_timeout = ping_timeout
+        # fall back to configured ping settings when not explicitly provided
+        self.ping_interval = (
+            ping_interval if ping_interval is not None else self.config.ping_interval
+        )
+        self.ping_timeout = (
+            ping_timeout if ping_timeout is not None else self.config.ping_timeout
+        )
+
+        self.compression_threshold = compression_threshold
 
         self.pool = WebSocketConnectionPool()
-        self._queue: Deque[dict] = deque()
+        self._queue: Deque[dict] = deque(maxlen=queue_size)
 
 
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -119,9 +133,16 @@ class AnalyticsWebSocketServer:
     def broadcast(self, data: dict) -> None:
         if self.clients:
             message = json.dumps(data)
+            if (
+                self.compression_threshold
+                and len(message) > self.compression_threshold
+            ):
+                payload: bytes | str = gzip.compress(message.encode("utf-8"))
+            else:
+                payload = message
             if self._loop is not None:
                 asyncio.run_coroutine_threadsafe(
-                    self.pool.broadcast(message), self._loop
+                    self.pool.broadcast(payload), self._loop
                 )
         else:
             self._queue.append(data)

@@ -1,8 +1,11 @@
 """Background publisher streaming metric updates over an event bus."""
 from __future__ import annotations
 
+import logging
 import threading
-from typing import Any, Dict, Protocol
+from typing import Any, Dict
+
+from src.repository import MetricsRepository
 
 from src.common.base import BaseComponent
 from src.common.mixins import LoggingMixin, SerializationMixin
@@ -26,8 +29,12 @@ class MetricsProvider(LoggingMixin, SerializationMixin, BaseComponent):
 
     def __init__(self, event_bus: EventBusProtocol, interval: float = 1.0) -> None:
         super().__init__(component_id="metrics_provider")
+
         self.event_bus = event_bus
+        self.repo = repo
+
         self.interval = interval
+
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -38,6 +45,7 @@ class MetricsProvider(LoggingMixin, SerializationMixin, BaseComponent):
             payload = generate_sample_metrics()
             self.event_bus.publish('metrics_update', payload)
             self.log("Published metrics update")
+
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
@@ -49,4 +57,4 @@ class MetricsProvider(LoggingMixin, SerializationMixin, BaseComponent):
         return {"interval": self.interval}
 
 
-__all__ = ['MetricsProvider', 'generate_sample_metrics']
+__all__ = ["MetricsProvider"]

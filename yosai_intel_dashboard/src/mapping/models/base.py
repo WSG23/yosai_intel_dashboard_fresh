@@ -5,15 +5,18 @@ import json
 import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Type
 
 import pandas as pd
 import yaml
 
+from src.common.meta import AutoRegister
 
 
-class MappingModel(ABC):
+class MappingModel(ABC, metaclass=AutoRegister):
     """Abstract base class for column mapping models."""
+
+    REGISTRY: Dict[str, Type["MappingModel"]] = {}
 
     CACHE_SIZE = 128
 
@@ -49,7 +52,7 @@ class MappingModel(ABC):
         from yosai_intel_dashboard.src.core.performance import MetricType
 
         self.monitor.record_metric(
-            "mapping.suggest.latency", duration, MetricType.FILE_PROCESSING
+            "services.mapping.suggest.latency", duration, MetricType.FILE_PROCESSING
         )
         accuracy = 0.0
         if df.columns.size:
@@ -57,7 +60,7 @@ class MappingModel(ABC):
                 df.columns
             )
         self.monitor.record_metric(
-            "mapping.suggest.accuracy", accuracy, MetricType.FILE_PROCESSING
+            "services.mapping.suggest.accuracy", accuracy, MetricType.FILE_PROCESSING
         )
         if len(self._cache) >= self.CACHE_SIZE:
             self._cache.popitem(last=False)
