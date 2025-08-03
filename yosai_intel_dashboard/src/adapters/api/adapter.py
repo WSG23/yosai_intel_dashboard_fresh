@@ -25,6 +25,7 @@ from api.analytics_router import init_cache_manager
 from api.analytics_router import router as analytics_router
 from api.explanations import router as explanations_router
 from api.monitoring_router import router as monitoring_router
+from api.routes import router as feature_flags_router
 from middleware.performance import TimingMiddleware
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.src.core.container import container
@@ -108,6 +109,7 @@ def create_api_app() -> "FastAPI":
     api_v1.include_router(analytics_router)
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)
+    api_v1.include_router(feature_flags_router)
 
     service.app.include_router(api_v1, dependencies=[Depends(verify_token)])
 

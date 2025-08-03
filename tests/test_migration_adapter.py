@@ -15,7 +15,12 @@ stub_interfaces = types.ModuleType("services.interfaces")
 # Load the feature flag module so adapter imports succeed
 flags_spec = importlib.util.spec_from_file_location(
     "services.feature_flags",
-    pathlib.Path(__file__).resolve().parents[1] / "services" / "feature_flags.py",
+    pathlib.Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "services"
+    / "feature_flags"
+    / "__init__.py",
 )
 flags_module = importlib.util.module_from_spec(flags_spec)
 flags_spec.loader.exec_module(flags_module)

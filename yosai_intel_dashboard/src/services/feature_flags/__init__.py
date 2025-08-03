@@ -23,7 +23,7 @@ class FeatureFlagManager:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._last_mtime: float | None = None
-        asyncio.run(self.load_flags())
+        self.load_flags()
 
     async def load_flags_async(self) -> None:
         """Asynchronously load flags from the configured source."""
