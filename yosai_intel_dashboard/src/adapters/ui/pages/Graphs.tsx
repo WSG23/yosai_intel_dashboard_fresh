@@ -10,6 +10,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from 'recharts';
+import Timeline from '../components/Timeline';
 import { graphsAPI, AvailableChart } from '../api/graphs';
 
 const Graphs: React.FC = () => {
@@ -52,21 +53,13 @@ const Graphs: React.FC = () => {
     if (!chartData) return null;
 
     if (selectedChart === 'timeline' && chartData.hourly_distribution) {
-      const data = Object.entries(chartData.hourly_distribution).map(([hour, count]) => ({
-        hour,
-        count: Number(count),
-      }));
-      return (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="hour" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="count" stroke="#8884d8" />
-          </LineChart>
-        </ResponsiveContainer>
+      const data = Object.entries(chartData.hourly_distribution).map(
+        ([hour, count]) => ({
+          time: hour,
+          value: Number(count),
+        }),
       );
+      return <Timeline data={data} />;
     }
 
     if (
