@@ -24,3 +24,22 @@ groups:
           summary: A performance budget was exceeded
           channels: performance-alerts
 
+  - name: feature-flags
+    rules:
+      - alert: HighFeatureFlagFallbackRate
+        expr: rate(feature_flag_fallback_total[5m]) / rate(feature_flag_evaluations_total[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High feature flag fallback rate detected
+          channels: performance-alerts
+      - alert: MissingOptionalDependencies
+        expr: optional_dependency_missing_total > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Optional dependency missing
+          channels: performance-alerts
+

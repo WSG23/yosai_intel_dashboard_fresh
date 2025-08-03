@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -8,6 +10,8 @@ from typing import Any, Callable, Dict, List
 
 import aiofiles
 import aiohttp
+
+from monitoring import cache_refreshes, flag_evaluations, flag_fallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +63,7 @@ class FeatureFlagManager:
             new_flags = {k: bool(v) for k, v in data.items()}
             if new_flags != self._flags:
                 self._flags = new_flags
+                cache_refreshes.inc()
                 for cb in list(self._callbacks):
                     try:
                         cb(self._flags.copy())
@@ -92,6 +97,9 @@ class FeatureFlagManager:
 
     def is_enabled(self, name: str, default: bool = False) -> bool:
         """Return True if *name* flag is enabled."""
+        flag_evaluations.inc()
+        if name not in self._flags:
+            flag_fallbacks.inc()
         return self._flags.get(name, default)
 
     def register_callback(self, cb: Callable[[Dict[str, bool]], Any]) -> None:
