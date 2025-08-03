@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
 from yosai_intel_dashboard.src.core.security import RateLimiter
@@ -193,8 +194,10 @@ async def _startup() -> None:
         raise RuntimeError("invalid JWT secret")
 
     cfg = get_database_config()
+    dsn = cfg.get_connection_string()
+    parse_connection_string(dsn)
     pool = await create_pool(
-        cfg.get_connection_string(),
+        dsn,
         min_size=cfg.initial_pool_size,
         max_size=cfg.max_pool_size,
         timeout=cfg.connection_timeout,

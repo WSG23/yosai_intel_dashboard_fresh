@@ -5,8 +5,12 @@ from typing import Optional, Protocol
 import pandas as pd
 from opentelemetry import trace
 
-from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, MockConnection
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+    DatabaseManager,
+    MockConnection,
+)
 from database.metrics import queries_total, query_errors_total
+from database.utils import parse_connection_string
 
 
 class DatabaseConnection(Protocol):
@@ -33,12 +37,10 @@ def create_database_connection() -> DatabaseConnection:
     config_manager = get_config()
     db_config = config_manager.get_database_config()
 
+    # Validate connection string before creating manager
+    parse_connection_string(db_config.get_connection_string())
     # Create database manager with existing config
-    db_manager = DatabaseManager(
-        db_type=db_config.type,
-        connection_string=getattr(db_config, "connection_string", ""),
-        **db_config.__dict__,
-    )
+    db_manager = DatabaseManager(db_config)
 
     conn = db_manager.get_connection()
 

@@ -7,6 +7,8 @@ import warnings
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from database.utils import parse_connection_string
+
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .app_config import UploadConfig
@@ -63,8 +65,22 @@ class DatabaseConfig:
     use_intelligent_pool: bool = False
 
     def __post_init__(self) -> None:
-        """Auto-generate connection URL if not explicitly provided."""
-        if not self.url:
+        """Auto-generate or validate the connection URL."""
+        if self.url:
+            info = parse_connection_string(self.url)
+            # Normalize fields from parsed connection info
+            self.type = info.dialect
+            if info.dialect == "sqlite":
+                self.name = info.path.lstrip("/") if info.path else self.name
+            else:
+                self.host = info.host or self.host
+                self.port = info.port or self.port
+                self.name = info.database or self.name
+                self.user = info.user or self.user
+                self.password = info.password or self.password
+            # ensure url is normalized (build_url may adjust formatting)
+            self.url = info.build_url()
+        else:
             if self.type == "sqlite":
                 self.url = f"sqlite:///{self.name}"
             elif self.type == "postgresql":
@@ -85,15 +101,10 @@ class DatabaseConfig:
                     self.url = f"mysql://{self.host}:{self.port}/{self.name}"
 
     def get_connection_string(self) -> str:
-        """Return a database connection string."""
-        if self.type == "postgresql":
-            return (
-                f"postgresql://{self.user}:{self.password}"
-                f"@{self.host}:{self.port}/{self.name}"
-            )
-        if self.type == "sqlite":
-            return f"sqlite:///{self.name}"
-        return f"mock://{self.name}"
+        """Return a validated database connection string."""
+        # Ensure the URL is valid before returning
+        parse_connection_string(self.url)
+        return self.url
 
 
 @dataclass
