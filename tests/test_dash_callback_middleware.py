@@ -5,7 +5,6 @@ from dash import Output
 
 from yosai_intel_dashboard.src.core.dash_callback_middleware import wrap_callback
 from yosai_intel_dashboard.src.core.error_handling import error_handler
-from validation.security_validator import SecurityValidator
 
 
 def test_wrap_callback_validation(monkeypatch):
@@ -16,7 +15,7 @@ def test_wrap_callback_validation(monkeypatch):
         called["v"] = value
         return value
 
-    wrapper = wrap_callback(cb, outputs, SecurityValidator())
+    wrapper = wrap_callback(cb, outputs)
     # valid input
     assert wrapper("ok") == "ok"
     assert called["v"] == "ok"
@@ -40,7 +39,7 @@ def test_wrap_callback_error_logged(monkeypatch):
         recorded["ctx"] = context
 
     monkeypatch.setattr(error_handler, "handle_error", fake_handle_error)
-    wrapper = wrap_callback(cb, outputs, SecurityValidator())
+    wrapper = wrap_callback(cb, outputs)
     out = wrapper("ok")
     assert out is dash.no_update
     assert isinstance(recorded.get("exc"), RuntimeError)

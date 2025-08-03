@@ -18,20 +18,47 @@ Example
 """
 
 import html
+import io
+
+import json
 import logging
+import mimetypes
 import os
 import re
 from functools import lru_cache
-
+from pathlib import Path
 from typing import Iterable
-import logging
+
+
+redis_client = None
+rate_limit = None
+window_seconds = None
+
 
 
 try:  # pragma: no cover - allow using the validator without full core package
-    from yosai_intel_dashboard.src.core.exceptions import ValidationError
+    from yosai_intel_dashboard.src.core.exceptions import (
+        ValidationError,
+        TemporaryBlockError,
+        PermanentBanError,
+    )
 except Exception:  # pragma: no cover
     class ValidationError(Exception):
         """Fallback validation error when core package is unavailable."""
+
+    class TemporaryBlockError(Exception):
+        pass
+
+    class PermanentBanError(Exception):
+        pass
+
+try:  # pragma: no cover
+    from yosai_intel_dashboard.src.infrastructure.cache import redis_client
+except Exception:  # pragma: no cover
+    redis_client = None
+
+rate_limit = None
+window_seconds = None
 
 
 # Import dynamically inside methods to avoid circular imports during module init
@@ -115,6 +142,19 @@ class SSRFRule(ValidationRule):
         return ValidationResult(True, data)
 
 
+class IDORRule(ValidationRule):
+    """Verify a user is authorized to access a given resource ID."""
+
+    def __init__(self, user: Any, authorizer: Callable[[Any, str], bool]) -> None:
+        self.user = user
+        self.authorizer = authorizer
+
+    def validate(self, data: str) -> ValidationResult:
+        if not self.authorizer(self.user, data):
+            return ValidationResult(False, data, ["unauthorized"])
+        return ValidationResult(True, data)
+
+
 class SecurityValidator(CompositeValidator):
     """Validate input strings and file uploads against common OWASP risks.
 
@@ -125,7 +165,15 @@ class SecurityValidator(CompositeValidator):
     - ``SSRFRule`` for server-side request forgery.
     """
 
-    def __init__(self, rules: Iterable[ValidationRule] | None = None) -> None:
+    def __init__(
+        self,
+        rules: Iterable[ValidationRule] | None = None,
+        *,
+        rate_limit: int | None = None,
+        window_seconds: int | None = None,
+        redis_client: Any | None = None,
+
+    ) -> None:
         base_rules = list(
             rules
             or [
@@ -139,19 +187,20 @@ class SecurityValidator(CompositeValidator):
         super().__init__(base_rules)
         self.file_validator = FileValidator()
         self.redis = redis_client
-        if rate_limit is None or window_seconds is None:
+        rl = rate_limit
+        ws = window_seconds
+        if rl is None or ws is None:
             from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
                 dynamic_config,
             )
 
-            rate_limit = rate_limit or dynamic_config.security.rate_limit_requests
-            window_seconds = (
-                window_seconds
-                or dynamic_config.security.rate_limit_window_minutes * 60
-            )
-        self.rate_limit = rate_limit
-        self.window_seconds = window_seconds
+            rl = rl or dynamic_config.security.rate_limit_requests
+            ws = ws or dynamic_config.security.rate_limit_window_minutes * 60
+        self.rate_limit = rl
+        self.window_seconds = ws
+
         self.logger = logging.getLogger(__name__)
+        self._authorize_resource = authorize_resource or (lambda _u, _r: True)
 
     def _check_rate_limit(self, identifier: str) -> None:
         if not self.redis:
@@ -185,6 +234,14 @@ class SecurityValidator(CompositeValidator):
             raise ValidationError("Invalid filename")
         return name
 
+    def validate_resource_id(self, user: Any, resource_id: Any) -> Any:
+        """Validate that ``user`` is authorized for ``resource_id``."""
+        rule = IDORRule(user, self._authorize_resource)
+        result = rule.validate(str(resource_id))
+        if not result.valid:
+            raise ValidationError("Unauthorized resource access")
+        return result.sanitized
+
     # ------------------------------------------------------------------
     def _virus_scan(self, content: bytes) -> None:
         """Hook for virus scanning.
@@ -193,6 +250,22 @@ class SecurityValidator(CompositeValidator):
         scanner. The hook should raise :class:`ValidationError` if malicious
         content is detected.
         """
+        try:  # pragma: no cover - optional dependency
+            import clamd
+        except Exception as exc:  # pragma: no cover
+            logger.debug("clamd not available: %s", exc)
+            return None
+
+        try:  # pragma: no cover - network interaction
+            scanner = clamd.ClamdNetworkSocket()
+            result = scanner.instream(io.BytesIO(content))
+        except Exception as exc:  # pragma: no cover
+            logger.warning("Virus scan failed: %s", exc)
+            return None
+
+        status, signature = result.get("stream", ("OK", None))
+        if status == "FOUND":
+            raise ValidationError(f"Virus detected: {signature}")
 
         return None
 
@@ -220,6 +293,18 @@ class SecurityValidator(CompositeValidator):
                 if header.startswith(expected_sig):
                     raise ValidationError("File extension does not match content")
 
+        guessed, _ = mimetypes.guess_type(filename)
+        actual: str | None = None
+        try:  # pragma: no cover - optional dependency
+            import magic  # type: ignore
+
+            actual = magic.from_buffer(content, mime=True)
+        except Exception:
+            actual = None
+
+        if actual and guessed and actual != guessed:
+            raise ValidationError("MIME type mismatch")
+
     def validate_file_meta(self, filename: str, content: bytes) -> dict:
         """Validate filename, size limits and basic file signatures."""
         issues: list[str] = []
@@ -238,6 +323,10 @@ class SecurityValidator(CompositeValidator):
         max_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
         if size_bytes > max_bytes:
             issues.append("File too large")
+
+        if not issues:
+            self._check_magic(filename, content)
+            self._virus_scan(content)
 
         result = {"valid": not issues, "issues": issues, "filename": sanitized}
         if result["valid"]:
@@ -263,7 +352,25 @@ class SecurityValidator(CompositeValidator):
         logger.info("Validation succeeded for %s", field_name)
         return {"valid": True, "sanitized": result.sanitized or value}
 
+    def scan_query(self, sql: str) -> None:
+        """Apply :class:`SQLRule` to ``sql`` and log call site on failure."""
+
+        check = SQLRule().validate(sql)
+        if check.valid:
+            return
+        frame = inspect.stack()[1]
+        logger.warning(
+            "SQL injection detected in %s:%s", frame.filename, frame.lineno
+        )
+        raise ValidationError(
+            "Potential SQL injection detected. Use parameterized statements."
+        )
+
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
+        meta = self.validate_file_meta(filename, content)
+        if not meta["valid"]:
+            raise ValidationError("; ".join(meta["issues"]))
+
         result = self.file_validator.validate_file_upload(filename, content)
         if not result["valid"]:
             logger.warning(

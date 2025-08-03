@@ -13,7 +13,7 @@ from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCa
 from yosai_intel_dashboard.src.core.plugins.performance_manager import EnhancedThreadSafePluginManager
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from shared.errors.types import ErrorCode
-from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.security import validate_user_input
 from yosai_framework.errors import CODE_TO_STATUS
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
@@ -40,8 +40,9 @@ class PluginPerformanceAPI:
     def get_plugin_performance():
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         name = request.args.get("plugin", "")
-        result = SecurityValidator().validate_input(name, "plugin")
-        if not result["valid"]:
+        try:
+            name = validate_user_input(name, "plugin")
+        except Exception:
             err = handler.handle(
                 ValueError("Invalid plugin"), ErrorCategory.INVALID_INPUT
             )
@@ -57,9 +58,11 @@ class PluginPerformanceAPI:
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         if request.method == "POST":
             payload = request.json or {}
+            sanitized = {}
             for k, v in payload.items():
-                check = SecurityValidator().validate_input(str(v), k)
-                if not check["valid"]:
+                try:
+                    sanitized[k] = validate_user_input(str(v), k)
+                except Exception:
                     err = handler.handle(
                         ValueError("Invalid payload"), ErrorCategory.INVALID_INPUT
                     )
@@ -67,7 +70,7 @@ class PluginPerformanceAPI:
                         jsonify(err.to_dict()),
                         CODE_TO_STATUS[ErrorCode.INVALID_INPUT],
                     )
-            manager.performance_manager.performance_thresholds.update(payload)
+            manager.performance_manager.performance_thresholds.update(sanitized)
             return jsonify({"status": "updated"})
         history = manager.performance_manager.alert_history
         safe_history = api_adapter.unicode_processor.process_dict(history)
@@ -86,9 +89,11 @@ class PluginPerformanceAPI:
         manager: EnhancedThreadSafePluginManager = app._yosai_plugin_manager  # type: ignore[attr-defined]
         if request.method == "PUT":
             payload = request.json or {}
+            sanitized = {}
             for k, v in payload.items():
-                check = SecurityValidator().validate_input(str(v), k)
-                if not check["valid"]:
+                try:
+                    sanitized[k] = validate_user_input(str(v), k)
+                except Exception:
                     err = handler.handle(
                         ValueError("Invalid payload"), ErrorCategory.INVALID_INPUT
                     )
@@ -96,7 +101,7 @@ class PluginPerformanceAPI:
                         jsonify(err.to_dict()),
                         CODE_TO_STATUS[ErrorCode.INVALID_INPUT],
                     )
-            manager.performance_manager.performance_thresholds.update(payload)
+            manager.performance_manager.performance_thresholds.update(sanitized)
             return jsonify({"status": "updated"})
         cfg = manager.performance_manager.performance_thresholds
         safe_cfg = api_adapter.unicode_processor.process_dict(cfg)
