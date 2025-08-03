@@ -7,7 +7,12 @@ import pytest
 
 spec = importlib.util.spec_from_file_location(
     "async_db",
-    Path(__file__).resolve().parents[1] / "services" / "common" / "async_db.py",
+    Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "services"
+    / "common"
+    / "async_db.py",
 )
 async_db = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(async_db)  # type: ignore
@@ -52,22 +57,24 @@ def test_pool_creation(monkeypatch):
     asyncio.run(async_db.close_pool())
 
 
-@pytest.mark.asyncio
-async def test_health_check(monkeypatch):
+def test_health_check(monkeypatch):
     pool = DummyPool()
 
     async def fake_create_pool(**_):
         return pool
 
-    monkeypatch.setattr(async_db.asyncpg, "create_pool", fake_create_pool)
-    await async_db.create_pool("postgresql://")
-    ok = await async_db.health_check()
-    assert ok is True
-    await async_db.close_pool()
+    async def run():
+        monkeypatch.setattr(async_db.asyncpg, "create_pool", fake_create_pool)
+        await async_db.create_pool("postgresql://")
+        ok = await async_db.health_check()
+        assert isinstance(ok, async_db.DBHealthStatus)
+        assert ok.healthy is True
+        await async_db.close_pool()
+
+    asyncio.run(run())
 
 
-@pytest.mark.asyncio
-async def test_health_check_failure(monkeypatch):
+def test_health_check_failure(monkeypatch):
     async def fake_create_pool(**_):
         class BadPool(DummyPool):
             async def execute(self, _query: str):
@@ -78,7 +85,10 @@ async def test_health_check_failure(monkeypatch):
 
         return BadPool()
 
-    monkeypatch.setattr(async_db.asyncpg, "create_pool", fake_create_pool)
-    await async_db.create_pool("postgresql://")
-    assert await async_db.health_check() is False
-    await async_db.close_pool()
+    async def run():
+        monkeypatch.setattr(async_db.asyncpg, "create_pool", fake_create_pool)
+        await async_db.create_pool("postgresql://")
+        assert (await async_db.health_check()).healthy is False
+        await async_db.close_pool()
+
+    asyncio.run(run())

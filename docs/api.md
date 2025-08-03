@@ -95,6 +95,10 @@ Factory class for creating database connections.
 - `create_connection(config) -> DatabaseConnection`: Create database connection
 - `test_connection(config) -> bool`: Test database connectivity
 
+For local testing or development, set the `USE_MOCK_DB` environment variable to
+force the factory to return a `MockDatabaseManager` instead of a real database
+connection.
+
 ## Analytics Service
 
 ### `AnalyticsService`
