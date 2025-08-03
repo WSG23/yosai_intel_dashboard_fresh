@@ -22,11 +22,13 @@ class UploadQueueManager:
 
     def __init__(self) -> None:
         self.files: list[str] = []
+        self._file_set: set[str] = set()
         self.completed: set[str] = set()
 
     def add_file(self, filename: str) -> None:
-        if filename not in self.files:
+        if filename not in self._file_set:
             self.files.append(filename)
+            self._file_set.add(filename)
 
     def mark_complete(self, filename: str) -> None:
         self.completed.add(filename)

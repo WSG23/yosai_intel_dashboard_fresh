@@ -36,6 +36,7 @@ class UploadQueueManager:
         self._queue: List[Tuple[int, float, Any]] = []
         self._tasks: Dict[str, asyncio.Task] = {}
         self.files: List[Any] = []
+        self._file_set: set[Any] = set()
         self.completed: set[Any] = set()
         self._paused = False
         self._state = state if state is not None else {}
@@ -50,6 +51,7 @@ class UploadQueueManager:
             heapq.heappush(self._queue, (priority, ts, item))
         self._paused = data.get("paused", False)
         self.files = list(data.get("files", []))
+        self._file_set = set(self.files)
         self.completed = set(data.get("completed", []))
 
     def _save_state(self) -> None:
@@ -90,8 +92,9 @@ class UploadQueueManager:
             ts = time.time()
             for f in files:
                 heapq.heappush(self._queue, (priority, ts, f))
-                if f not in self.files:
+                if f not in self._file_set:
                     self.files.append(f)
+                    self._file_set.add(f)
                 ts += 1e-6  # ensure stable ordering
             self._save_state()
 
