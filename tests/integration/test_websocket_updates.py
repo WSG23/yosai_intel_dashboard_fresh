@@ -55,7 +55,7 @@ class DummyBus:
     def __init__(self):
         self.events = []
 
-    def publish(self, event_type, data):
+    def emit(self, event_type, data):
         self.events.append((event_type, data))
 
     def subscribe(self, event_type, handler):

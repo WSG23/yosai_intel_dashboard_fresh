@@ -6,7 +6,7 @@ from collections import defaultdict
 from copy import deepcopy
 from threading import RLock
 from types import MappingProxyType
-from typing import Any, Callable, Dict, Mapping
+from typing import Any, Callable, Dict, List, Mapping
 
 
 class EventBus:
@@ -17,7 +17,7 @@ class EventBus:
     accidental mutation of shared state.
     """
 
-    __slots__ = ("_subscribers", "_lock", "_counter")
+    __slots__ = ("_subscribers", "_lock", "_counter", "_history")
 
     def __init__(self) -> None:
         self._subscribers: Dict[str, Dict[str, Callable[[Mapping[str, Any]], None]]] = (
@@ -25,6 +25,7 @@ class EventBus:
         )
         self._lock = RLock()
         self._counter = 0
+        self._history: List[Dict[str, Any]] = []
 
     def subscribe(
         self, event_type: str, handler: Callable[[Mapping[str, Any]], None]
@@ -54,8 +55,24 @@ class EventBus:
         with self._lock:
             handlers = list(self._subscribers.get(event_type, {}).values())
         immutable_payload = MappingProxyType(deepcopy(dict(payload)))
+        self._history.append({"type": event_type, "data": dict(immutable_payload)})
         for handler in handlers:
             handler(immutable_payload)
+
+    def publish(self, event_type: str, payload: Mapping[str, Any]) -> None:
+        """Alias for :meth:`emit` for backwards compatibility."""
+        self.emit(event_type, payload)
+
+    def get_event_history(
+        self, event_type: str | None = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Return recent events optionally filtered by ``event_type``."""
+        history = (
+            self._history
+            if event_type is None
+            else [e for e in self._history if e["type"] == event_type]
+        )
+        return history[-limit:]
 
 
 class EventPublisher:

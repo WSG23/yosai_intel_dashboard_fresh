@@ -30,7 +30,7 @@ def test_prometheus_exposure_and_db_persistence(monkeypatch):
     os.environ["JWKS_CACHE_TTL"] = "1"
 
     class _EventBus:
-        def publish(self, event, payload):
+        def emit(self, event, payload):
             pass
 
         def subscribe(self, *a, **k):

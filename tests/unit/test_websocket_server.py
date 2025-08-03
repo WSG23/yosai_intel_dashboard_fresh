@@ -17,7 +17,7 @@ class DummyEventBus:
         self._subs: list[tuple[str, callable]] = []
         self._history: list[dict] = []
 
-    def publish(self, event_type: str, data: dict, source: str | None = None) -> None:
+    def emit(self, event_type: str, data: dict, source: str | None = None) -> None:
         self._history.append({"type": event_type, "data": data, "source": source})
         for etype, handler in list(self._subs):
             if etype == event_type:
@@ -108,7 +108,7 @@ def test_buffered_events_flushed_on_client_connect() -> None:
     time.sleep(0.1)
 
     for i in range(3):
-        event_bus.publish("analytics_update", {"idx": i})
+        event_bus.emit("analytics_update", {"idx": i})
 
     messages = _run_client(8766, 3)
     assert [m["idx"] for m in messages] == [0, 1, 2]
@@ -129,7 +129,7 @@ def test_queue_bound() -> None:
     time.sleep(0.1)
 
     for i in range(3):
-        event_bus.publish("analytics_update", {"idx": i})
+        event_bus.emit("analytics_update", {"idx": i})
 
     messages = _run_client(8767, 2)
     assert [m["idx"] for m in messages] == [1, 2]
@@ -154,7 +154,7 @@ def test_compressed_broadcast() -> None:
     time.sleep(0.1)
 
     payload = {"data": "x" * 100}
-    event_bus.publish("analytics_update", payload)
+    event_bus.emit("analytics_update", payload)
 
     messages = _run_client(8768, 1)
     assert messages[0] == payload

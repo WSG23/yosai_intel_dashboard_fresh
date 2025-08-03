@@ -44,7 +44,7 @@ def _load_provider():
 class DummyBus:
     def __init__(self) -> None:
         self._subs = {}
-    def publish(self, event_type, data):
+    def emit(self, event_type, data):
         for h in self._subs.get(event_type, []):
             h(data)
     def subscribe(self, event_type, handler):

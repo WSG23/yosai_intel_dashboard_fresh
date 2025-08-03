@@ -5,8 +5,8 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict
 
+from src.common.events import EventBus
 from yosai_intel_dashboard.src.core.cache_manager import CacheManager
-from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
 from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
 
 
@@ -17,7 +17,7 @@ class CachedAnalyticsService:
         self,
         cache_manager: CacheManager,
         ttl_seconds: int = 300,
-        event_bus: EventBusProtocol | None = None,
+        event_bus: EventBus | None = None,
     ) -> None:
         self.cache_manager = cache_manager
         self.ttl_seconds = ttl_seconds
@@ -44,7 +44,7 @@ class CachedAnalyticsService:
         await self.cache_manager.set(key, metrics, self.ttl_seconds)
         if self.event_bus:
             try:
-                self.event_bus.publish("analytics_update", metrics)
+                self.event_bus.emit("analytics_update", metrics)
             except Exception:  # pragma: no cover - best effort
                 pass
         return metrics

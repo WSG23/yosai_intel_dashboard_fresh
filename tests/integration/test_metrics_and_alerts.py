@@ -12,7 +12,7 @@ def test_metrics_update_triggers_alerts(monkeypatch):
     """Prometheus gauges update and alerts fire on threshold breach."""
 
     class DummyEventBus:
-        def publish(self, event, payload):
+        def emit(self, event, payload):
             pass
 
         def subscribe(self, *a, **k):

@@ -341,11 +341,17 @@ class EventBusProtocol(Protocol):
     """Protocol for simple event bus operations."""
 
     @abstractmethod
+    def emit(
+        self, event_type: str, data: Dict[str, Any], source: str | None = None
+    ) -> None:
+        """Emit event to bus."""
+        ...
+
     def publish(
         self, event_type: str, data: Dict[str, Any], source: str | None = None
     ) -> None:
-        """Publish event to bus."""
-        ...
+        """Backward compatible alias for :meth:`emit`."""
+        self.emit(event_type, data, source)
 
     @abstractmethod
     def subscribe(self, event_type: str, handler: Callable, priority: int = 0) -> str:

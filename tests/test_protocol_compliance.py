@@ -116,7 +116,7 @@ class DummyProcessor(DataProcessorProtocol):
 
 
 class DummyEventBus(EventBusProtocol):
-    def publish(
+    def emit(
         self, event_type: str, data: Dict[str, Any], source: str | None = None
     ) -> None:
         pass

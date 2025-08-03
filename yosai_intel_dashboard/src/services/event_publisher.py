@@ -1,20 +1,20 @@
 import logging
-from typing import Any, Dict
+from typing import Dict
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
+from src.common.events import EventBus
 
 logger = logging.getLogger(__name__)
 
 
 def publish_event(
-    event_bus: EventBusProtocol | None,
+    event_bus: EventBus | None,
     payload: Dict[str, Any],
     event: str = "analytics_update",
 ) -> None:
     """Safely publish ``payload`` to ``event_bus`` if available."""
     if event_bus:
         try:
-            event_bus.publish(event, payload)
+            event_bus.emit(event, payload)
         except Exception as exc:  # pragma: no cover - best effort
             logger.debug("Event bus publish failed: %s", exc)
 
