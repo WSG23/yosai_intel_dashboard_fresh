@@ -84,7 +84,7 @@ def backup_requirements():
     try:
         subprocess.run(
             [sys.executable, "-m", "pip", "freeze"],
-            stdout=open("requirements_backup.txt", "w"),
+            stdout=Path("requirements_backup.txt").open("w", encoding="utf-8"),
             check=True,
         )
         logger.info("✅ Requirements backed up to requirements_backup.txt")

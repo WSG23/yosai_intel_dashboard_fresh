@@ -7,6 +7,7 @@ from typing import Callable, Dict, List, Optional
 from scipy import stats
 
 from monitoring import variant_hits
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_label
 
 
 class ABTest:
@@ -44,11 +45,13 @@ class ABTest:
         value = int(digest, 16) / 2**128
         for threshold, variant in self._thresholds:
             if value < threshold:
-                variant_hits.labels(variant=variant).inc()
-                return variant
+                clean = sanitize_label(variant)
+                variant_hits.labels(variant=clean).inc()
+                return clean
         variant = self._thresholds[-1][1]
-        variant_hits.labels(variant=variant).inc()
-        return variant
+        clean = sanitize_label(variant)
+        variant_hits.labels(variant=clean).inc()
+        return clean
 
     def log_metric(self, variant: str, value: float) -> None:
         """Record a metric value for the given variant."""
