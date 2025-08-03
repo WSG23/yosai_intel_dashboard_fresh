@@ -25,8 +25,13 @@ class FeatureFlagManager:
         self._last_mtime: float | None = None
         asyncio.run(self.load_flags())
 
-    async def load_flags_async(self) -> None:
-        """Asynchronously load flags from the configured source."""
+    async def load_flags_async(self) -> Dict[str, bool]:
+        """Asynchronously load flags from the configured source.
+
+        Returns the currently cached flags. If fetching from an HTTP source
+        fails, the error is logged and the existing flag set is returned
+        unchanged.
+        """
 
         data: Dict[str, Any] = {}
         if self.source.startswith("http://") or self.source.startswith("https://"):
@@ -38,14 +43,14 @@ class FeatureFlagManager:
                         data = await resp.json()
             except Exception as exc:  # pragma: no cover - network failures
                 logger.warning("Failed to fetch flags from %s: %s", self.source, exc)
-                return
+                return self._flags.copy()
         else:
             path = Path(self.source)
             if not path.is_file():
-                return
+                return self._flags.copy()
             mtime = path.stat().st_mtime
             if self._last_mtime and mtime == self._last_mtime:
-                return
+                return self._flags.copy()
             self._last_mtime = mtime
             try:
                 async with aiofiles.open(path) as fh:
@@ -53,7 +58,7 @@ class FeatureFlagManager:
                     data = json.loads(content)
             except Exception as exc:  # pragma: no cover - bad file
                 logger.warning("Failed to read %s: %s", path, exc)
-                return
+                return self._flags.copy()
 
         if isinstance(data, dict):
             new_flags = {k: bool(v) for k, v in data.items()}
@@ -65,9 +70,11 @@ class FeatureFlagManager:
                     except Exception as exc:  # pragma: no cover - callback errors
                         logger.warning("Feature flag callback failed: %s", exc)
 
-    def load_flags(self) -> None:
+        return self._flags.copy()
+
+    def load_flags(self) -> Dict[str, bool]:
         """Synchronous wrapper for :meth:`load_flags_async`."""
-        asyncio.run(self.load_flags_async())
+        return asyncio.run(self.load_flags_async())
 
     def start(self) -> None:
         """Start background watcher for flag changes."""
