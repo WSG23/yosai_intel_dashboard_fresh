@@ -7,11 +7,11 @@ from __future__ import annotations
 import functools
 import logging
 import time
-from bisect import bisect_left
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Deque, Dict, List, Optional
 
 from prometheus_client import REGISTRY, Counter
 from prometheus_client.core import CollectorRegistry
@@ -116,8 +116,8 @@ class ErrorHandler(BaseModel):
         logger: Optional[logging.Logger] = None,
     ) -> None:
         super().__init__(config, db, logger)
-        self.error_history: List[ErrorContext] = []
         self.max_history = 1000
+        self.error_history: Deque[ErrorContext] = deque(maxlen=self.max_history)
 
     def handle_error(
         self,
@@ -173,8 +173,6 @@ class ErrorHandler(BaseModel):
     def _add_to_history(self, error_context: ErrorContext) -> None:
         """Add error to history with size limit"""
         self.error_history.append(error_context)
-        if len(self.error_history) > self.max_history:
-            self.error_history.pop(0)
 
     def get_error_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get error summary for the last N hours"""
