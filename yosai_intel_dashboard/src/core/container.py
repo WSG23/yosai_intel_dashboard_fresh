@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+import warnings
 
 from .protocols import (
     AnalyticsServiceProtocol,
@@ -46,4 +47,15 @@ def get_unicode_processor() -> UnicodeProcessorProtocol:
 
 
 # Backwards compatibility -------------------------------------------------
-Container = ServiceContainer
+
+
+class Container(ServiceContainer):
+    """Deprecated alias for :class:`ServiceContainer`."""
+
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore[override]
+        warnings.warn(
+            "Container is deprecated; use ServiceContainer",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

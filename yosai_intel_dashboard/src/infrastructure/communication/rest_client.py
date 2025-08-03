@@ -7,6 +7,7 @@ import os
 import ssl
 from dataclasses import dataclass
 from typing import Any, MutableMapping
+import warnings
 
 import aiohttp
 from tracing import propagate_context
@@ -175,5 +176,14 @@ __all__ = [
     "RestClient",
 ]
 
-# Backwards compatibility
-RestClient = AsyncRestClient
+
+class RestClient(AsyncRestClient):
+    """Deprecated synchronous-style client alias for :class:`AsyncRestClient`."""
+
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore[override]
+        warnings.warn(
+            "RestClient is deprecated; use AsyncRestClient",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

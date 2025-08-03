@@ -3,6 +3,7 @@ from __future__ import annotations
 """Security-focused Unicode handling utilities."""
 
 from typing import Any
+import warnings
 
 import pandas as pd
 
@@ -11,6 +12,13 @@ from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe, sanitize_
 
 class UnicodeSecurityHandler:
     """Backward compatibility wrapper for :class:`UnicodeSecurityProcessor`."""
+
+    def __init__(self) -> None:
+        warnings.warn(
+            "UnicodeSecurityHandler is deprecated; use UnicodeSecurityProcessor",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     @staticmethod
     def sanitize_unicode_input(text: Any) -> str:

@@ -7,6 +7,7 @@ from typing import Dict, Type
 from .base import MappingModel
 from .heuristic import HeuristicMappingModel
 from .rule_based import ColumnRules, RuleBasedModel, load_rules
+import warnings
 
 
 class MLMappingModel(HeuristicMappingModel):
@@ -29,7 +30,13 @@ def load_model_from_config(path: str) -> MappingModel:
 
 
 # Backwards compatibility
-load_model = load_model_from_config
+def load_model(*args, **kwargs) -> MappingModel:
+    warnings.warn(
+        "load_model is deprecated; use load_model_from_config",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return load_model_from_config(*args, **kwargs)
 
 __all__ = [
     "ColumnRules",
