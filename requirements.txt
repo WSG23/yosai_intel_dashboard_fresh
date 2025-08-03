@@ -46,6 +46,7 @@ RapidFuzz==3.13.0
 pymemcache==4.0.0
 
 # Kafka integration
+apache-flink==1.18.0
 confluent-kafka==2.11.0
 fastavro==1.11.1
 
