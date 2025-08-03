@@ -39,6 +39,7 @@ pytest-cov==6.2.1
 hvac==2.3.0
 cryptography==45.0.5
 kafka-python==2.2.15
+hyperloglog==0.0.14
 pulsar-client==3.8.0
 dask==2024.4.1
 RapidFuzz==3.13.0
