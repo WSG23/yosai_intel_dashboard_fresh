@@ -2,22 +2,22 @@
 
 from typing import Optional, Protocol
 
-import pandas as pd
 from opentelemetry import trace
 
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseManager, MockConnection
 from database.metrics import queries_total, query_errors_total
+from database.types import DBRows
 
 
 class DatabaseConnection(Protocol):
     """Database connection protocol"""
 
-    def execute_query(self, query: str, params: Optional[tuple] = None) -> pd.DataFrame:
-        """Execute SELECT query and return DataFrame"""
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> DBRows:
+        """Execute SELECT query and return rows"""
         ...
 
-    def execute_command(self, command: str, params: Optional[tuple] = None) -> int:
-        """Execute INSERT/UPDATE/DELETE and return affected rows"""
+    def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
+        """Execute INSERT/UPDATE/DELETE"""
         ...
 
     def health_check(self) -> bool:
@@ -47,7 +47,7 @@ def create_database_connection() -> DatabaseConnection:
     class InstrumentedConnection:
         def execute_query(
             self, query: str, params: Optional[tuple] = None
-        ) -> pd.DataFrame:
+        ) -> DBRows:
             with tracer.start_as_current_span("execute_query"):
                 queries_total.inc()
                 try:
@@ -56,7 +56,7 @@ def create_database_connection() -> DatabaseConnection:
                     query_errors_total.inc()
                     raise
 
-        def execute_command(self, command: str, params: Optional[tuple] = None) -> int:
+        def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
             with tracer.start_as_current_span("execute_command"):
                 queries_total.inc()
                 try:

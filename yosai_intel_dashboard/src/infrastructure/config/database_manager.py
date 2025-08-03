@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 from database.query_optimizer import DatabaseQueryOptimizer
 from database.secure_exec import execute_command, execute_query
-from database.types import DatabaseConnection
+from database.types import DBRows, DatabaseConnection
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
@@ -36,7 +36,7 @@ class MockConnection:
         self._connected = True
         logger.info("Mock database connection created")
 
-    def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> DBRows:
         """Execute mock query"""
         logger.debug(f"Mock query: {query}")
         return [{"id": 1, "result": "mock_data"}]
@@ -80,7 +80,7 @@ class SQLiteConnection:
             logger.error(f"Failed to connect to SQLite: {e}")
             raise DatabaseError(f"SQLite connection failed: {e}") from e
 
-    def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> DBRows:
         """Execute SQLite query"""
         if not self._connection:
             raise DatabaseError("No database connection")
@@ -173,7 +173,7 @@ class PostgreSQLConnection:
             logger.error(f"Failed to connect to PostgreSQL: {e}")
             raise DatabaseError(f"PostgreSQL connection failed: {e}") from e
 
-    def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> DBRows:
         """Execute PostgreSQL query"""
         if not self._connection:
             raise DatabaseError("No database connection")
@@ -369,7 +369,7 @@ class EnhancedPostgreSQLManager(DatabaseManager):
             self.config.shrink_timeout,
         )
 
-    def execute_query_with_retry(self, query: str, params: Optional[Dict] = None):
+    def execute_query_with_retry(self, query: str, params: Optional[Dict] = None) -> DBRows:
         encoded_query = UnicodeSQLProcessor.encode_query(query)
         optimized_query = self.optimizer.optimize_query(encoded_query)
 
