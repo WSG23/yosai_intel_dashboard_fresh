@@ -1,0 +1,12 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  receiver: default
+
+receivers:
+  - name: default
+    webhook_configs:
+      - url: http://notification-service/alert
+
