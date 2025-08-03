@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 from filelock import FileLock
 from flask import Blueprint, jsonify, request
@@ -19,11 +20,13 @@ class SettingsSchema(BaseModel):
     itemsPerPage: int | None = None
 
 
-SETTINGS_FILE = os.getenv(
-    "YOSAI_SETTINGS_FILE",
-    os.path.join(os.path.dirname(__file__), "user_settings.json"),
+SETTINGS_FILE = Path(
+    os.getenv(
+        "YOSAI_SETTINGS_FILE",
+        Path(__file__).with_name("user_settings.json"),
+    )
 )
-LOCK_FILE = f"{SETTINGS_FILE}.lock"
+LOCK_FILE = SETTINGS_FILE.with_suffix(SETTINGS_FILE.suffix + ".lock")
 DEFAULT_SETTINGS = {
     "theme": "light",
     "itemsPerPage": 10,
@@ -31,11 +34,12 @@ DEFAULT_SETTINGS = {
 
 
 def _load_settings():
-    if os.path.exists(SETTINGS_FILE):
-        lock = FileLock(LOCK_FILE)
+    path = Path(SETTINGS_FILE)
+    if path.exists():
+        lock = FileLock(Path(LOCK_FILE))
         try:
             with lock:
-                with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+                with path.open("r", encoding="utf-8") as f:
                     return json.load(f)
         except Exception:
             pass
@@ -43,10 +47,11 @@ def _load_settings():
 
 
 def _save_settings(settings: dict) -> None:
-    os.makedirs(os.path.dirname(SETTINGS_FILE), exist_ok=True)
-    lock = FileLock(LOCK_FILE)
+    path = Path(SETTINGS_FILE)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock = FileLock(Path(LOCK_FILE))
     with lock:
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(settings, f)
 
 
