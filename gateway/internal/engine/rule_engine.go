@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/WSG23/resilience"
@@ -20,13 +22,17 @@ type AccessRequest struct {
 	DoorID   string
 }
 
+const (
+	queryEvaluate = `SELECT person_id, door_id, decision FROM evaluate_access($1,$2)`
+	queryWarm     = `SELECT person_id, door_id, decision FROM warm_cache($1)`
+)
+
 // RuleEngine evaluates access control rules using a SQL backend.
 // It keeps prepared statements and protects queries with a circuit breaker.
 type RuleEngine struct {
-	db         *sql.DB
-	stmtSingle *sql.Stmt
-	stmtWarm   *sql.Stmt
-	breaker    *gobreaker.CircuitBreaker
+	db      *sql.DB
+	stmts   *StmtCache
+	breaker *gobreaker.CircuitBreaker
 }
 
 // NewRuleEngine constructs a RuleEngine from an existing DB handle.
@@ -36,31 +42,40 @@ func NewRuleEngine(db *sql.DB) (*RuleEngine, error) {
 		Timeout:     5 * time.Second,
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 5 },
 	}
-	return NewRuleEngineWithSettings(db, settings)
+	size := 64
+	if v := os.Getenv("RULE_ENGINE_STMT_CACHE_SIZE"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			size = n
+		}
+	}
+	return NewRuleEngineWithSettings(db, settings, size)
 }
 
 // NewRuleEngineWithSettings constructs a RuleEngine using custom circuit breaker settings.
-func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings) (*RuleEngine, error) {
-	single, err := db.PrepareContext(context.Background(),
-		`SELECT person_id, door_id, decision FROM evaluate_access($1,$2)`)
+func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings, cacheSize int) (*RuleEngine, error) {
+	stmtCache, err := NewStmtCache(db, cacheSize)
 	if err != nil {
 		return nil, err
 	}
-	warm, err := db.PrepareContext(context.Background(),
-		`SELECT person_id, door_id, decision FROM warm_cache($1)`)
-	if err != nil {
-		single.Close()
+	if _, err := stmtCache.Get(context.Background(), queryEvaluate); err != nil {
+		return nil, err
+	}
+	if _, err := stmtCache.Get(context.Background(), queryWarm); err != nil {
 		return nil, err
 	}
 	cb := resilience.NewGoBreaker("rule-engine", settings)
-	return &RuleEngine{db: db, stmtSingle: single, stmtWarm: warm, breaker: cb}, nil
+	return &RuleEngine{db: db, stmts: stmtCache, breaker: cb}, nil
 }
 
 // EvaluateAccess evaluates the rules for a single person/door pair.
 func (re *RuleEngine) EvaluateAccess(ctx context.Context, personID, doorID string) (Decision, error) {
 	var d Decision
 	_, err := re.breaker.Execute(func() (interface{}, error) {
-		row := re.stmtSingle.QueryRowContext(ctx, personID, doorID)
+		stmt, err := re.stmts.Get(ctx, queryEvaluate)
+		if err != nil {
+			return nil, err
+		}
+		row := stmt.QueryRowContext(ctx, personID, doorID)
 		return nil, row.Scan(&d.PersonID, &d.DoorID, &d.Decision)
 	})
 	if err != nil {
@@ -91,7 +106,11 @@ func (re *RuleEngine) EvaluateBatch(ctx context.Context, reqs []AccessRequest) (
 // WarmCache preloads frequently used rules for the given facility.
 func (re *RuleEngine) WarmCache(ctx context.Context, facility string) error {
 	_, err := re.breaker.Execute(func() (interface{}, error) {
-		_, err := re.stmtWarm.ExecContext(ctx, facility)
+		stmt, err := re.stmts.Get(ctx, queryWarm)
+		if err != nil {
+			return nil, err
+		}
+		_, err = stmt.ExecContext(ctx, facility)
 		return nil, err
 	})
 	return err

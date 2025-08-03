@@ -154,7 +154,13 @@ func main() {
 			return c.ConsecutiveFailures >= uint32(t)
 		},
 	}
-	engCore, err := engine.NewRuleEngineWithSettings(db, dbSettings)
+	cacheSize := 64
+	if v := os.Getenv("RULE_ENGINE_STMT_CACHE_SIZE"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cacheSize = n
+		}
+	}
+	engCore, err := engine.NewRuleEngineWithSettings(db, dbSettings, cacheSize)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to init rule engine: %v", err)
 	}
