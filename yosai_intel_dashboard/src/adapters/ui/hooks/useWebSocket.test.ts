@@ -15,9 +15,17 @@ class MockSocket {
   public onopen: (() => void) | null = null;
   public onclose: (() => void) | null = null;
   public close = jest.fn();
+  public pong = jest.fn();
+  private handlers: Record<string, Function> = {};
   constructor(public url: string) {
     MockSocket.instance = this;
     MockSocket.instances.push(this);
+  }
+  on(evt: string, handler: Function) {
+    this.handlers[evt] = handler;
+  }
+  trigger(evt: string) {
+    this.handlers[evt]?.();
   }
   static instance: MockSocket | null = null;
   static instances: MockSocket[] = [];
@@ -91,28 +99,33 @@ describe('useWebSocket', () => {
     expect(MockSocket.instances).toHaveLength(1);
   });
 
-  it('emits state changes via EventBus', () => {
-    const states: WebSocketState[] = [];
-    const unsubscribe = eventBus.on('websocket_state', (s: WebSocketState) => {
-      states.push(s);
-    });
+  it('responds to ping with pong and resets heartbeat', () => {
+
     const { unmount } = renderHook(() =>
       useWebSocket('ws://test', url => new MockSocket(url) as unknown as WebSocket)
     );
 
     act(() => {
-      MockSocket.instance?.onopen?.();
-      MockSocket.instance?.onclose?.();
+      jest.advanceTimersByTime(29999);
     });
+    expect(MockSocket.instance?.close).not.toHaveBeenCalled();
+
+    act(() => {
+      MockSocket.instance?.trigger('ping');
+    });
+    expect(MockSocket.instance?.pong).toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(29999);
+    });
+    expect(MockSocket.instance?.close).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(30000);
+    });
+    expect(MockSocket.instance?.close).toHaveBeenCalled();
 
     unmount();
-    unsubscribe();
 
-    expect(states).toEqual([
-      WebSocketState.CONNECTING,
-      WebSocketState.CONNECTED,
-      WebSocketState.RECONNECTING,
-      WebSocketState.DISCONNECTED,
-    ]);
   });
 });

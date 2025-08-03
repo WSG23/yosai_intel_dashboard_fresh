@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { eventBus } from '../eventBus';
+import { defaultPool, HEARTBEAT_TIMEOUT } from './websocketPool';
 
-export enum WebSocketState {
-  DISCONNECTED = 'DISCONNECTED',
-  CONNECTING = 'CONNECTING',
-  CONNECTED = 'CONNECTED',
-  RECONNECTING = 'RECONNECTING',
-}
 
 export const useWebSocket = (
   path: string,
@@ -16,6 +10,7 @@ export const useWebSocket = (
   const [state, setState] = useState<WebSocketState>(WebSocketState.DISCONNECTED);
   const wsRef = useRef<WebSocket | null>(null);
   const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
   const stoppedRef = useRef(false);
 
@@ -23,15 +18,23 @@ export const useWebSocket = (
     const fullUrl = path.startsWith('ws')
       ? path
       : `ws://${window.location.host}${path}`;
-    const ws = socketFactory ? socketFactory(fullUrl) : new WebSocket(fullUrl);
+    const ws = socketFactory ? socketFactory(fullUrl) : defaultPool.get(fullUrl);
     wsRef.current = ws;
 
-    const nextState =
-      attemptRef.current > 0
-        ? WebSocketState.RECONNECTING
-        : WebSocketState.CONNECTING;
-    setState(nextState);
-    eventBus.emit('websocket_state', nextState);
+    const resetHeartbeat = () => {
+      if (heartbeatTimeout.current) {
+        clearTimeout(heartbeatTimeout.current);
+      }
+      heartbeatTimeout.current = setTimeout(() => ws.close(), HEARTBEAT_TIMEOUT);
+    };
+    resetHeartbeat();
+    if (typeof (ws as any).on === 'function') {
+      (ws as any).on('ping', () => {
+        (ws as any).pong?.();
+        resetHeartbeat();
+      });
+    }
+
 
     ws.onopen = () => {
       setState(WebSocketState.CONNECTED);
@@ -56,8 +59,10 @@ export const useWebSocket = (
     if (retryTimeout.current) {
       clearTimeout(retryTimeout.current);
     }
-    setState(WebSocketState.DISCONNECTED);
-    eventBus.emit('websocket_state', WebSocketState.DISCONNECTED);
+    if (heartbeatTimeout.current) {
+      clearTimeout(heartbeatTimeout.current);
+    }
+
     wsRef.current?.close();
   };
   useEffect(() => {
