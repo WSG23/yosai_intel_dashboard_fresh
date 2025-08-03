@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 import base64
-
-from flask import Blueprint, jsonify, request
 import os
 import redis
+
+from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
 from pydantic import BaseModel, ConfigDict
 
-from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
-
 from middleware.rate_limit import RedisRateLimiter, rate_limit
+from yosai_intel_dashboard.src.error_handling import (
+    ErrorCategory,
+    ErrorHandler,
+    api_error_response,
+)
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
-from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
+from yosai_intel_dashboard.src.utils.pydantic_decorators import (
+    validate_input,
+    validate_output,
+)
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_text
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
 rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
 
@@ -111,9 +118,10 @@ def create_upload_blueprint(
                 for file in request.files.values():
                     if not file.filename:
                         continue
+                    filename = sanitize_text(file.filename)
                     file_bytes = file.read()
                     try:
-                        validator.validate_file_upload(file.filename, file_bytes)
+                        validator.validate_file_upload(filename, file_bytes)
                     except Exception as exc:
                         return api_error_response(
                             exc,
@@ -123,10 +131,10 @@ def create_upload_blueprint(
                     b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
                     mime = file.mimetype or "application/octet-stream"
                     contents.append(f"data:{mime};base64,{b64}")
-                    filenames.append(file.filename)
+                    filenames.append(filename)
             else:
                 contents = payload.contents or []
-                filenames = payload.filenames or []
+                filenames = [sanitize_text(name) for name in (payload.filenames or [])]
 
             if not contents or not filenames:
                 return api_error_response(
