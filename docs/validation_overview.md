@@ -43,23 +43,35 @@ SecurityValidator provides comprehensive validation including:
 - **File validation** - Checks file types, sizes, and malicious content
 - **Input sanitization** - Cleans and normalizes user input
 
-## Anomaly Detection
+### Virus scanning hook
 
-`SecurityValidator` can optionally incorporate an anomaly detection model to
-score inputs. Any model with a ``predict`` method returning ``1`` for normal
-values and ``-1`` for outliers can be supplied, such as scikit-learn's
-``IsolationForest``:
+`SecurityValidator` exposes a private `_virus_scan` method that receives the
+raw file bytes. By default this hook performs no action, but integrators can
+override it to connect to ClamAV or other scanners. The hook should raise
+`ValidationError` when malware is detected.
 
 ```python
-from sklearn.ensemble import IsolationForest
+import io
+import clamd
 from validation import SecurityValidator
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
-model = IsolationForest().fit([[len(s)] for s in ["ok", "normal"]])
-validator = SecurityValidator(anomaly_model=model)
 
-# Raises ValidationError if the model predicts an outlier
-validator.validate_input("suspicious")
+class ClamAVValidator(SecurityValidator):
+    def __init__(self) -> None:
+        super().__init__()
+        self.clam = clamd.ClamdNetworkSocket()
+
+    def _virus_scan(self, content: bytes) -> None:
+        result = self.clam.instream(io.BytesIO(content))
+        if result.get("stream") == ("FOUND", None):
+            raise ValidationError("Virus detected")
+
 ```
+
+Any exception raised from `_virus_scan` is surfaced as a validation issue,
+allowing applications to block infected uploads.
+
 
 ## Migration from Deprecated Classes
 
