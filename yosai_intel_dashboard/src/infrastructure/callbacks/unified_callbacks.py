@@ -11,15 +11,18 @@ from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
+    Awaitable,
     Callable,
     Dict,
     Iterable,
     List,
     Optional,
+    Protocol,
     Set,
     Tuple,
     Type,
     TypeAlias,
+
 )
 
 from dash import Dash
@@ -36,7 +39,15 @@ Outputs: TypeAlias = Output | tuple[Output, ...]
 Inputs: TypeAlias = Input | tuple[Input, ...] | None
 States: TypeAlias = State | tuple[State, ...] | None
 
+
 logger = logging.getLogger(__name__)
+
+
+class CallbackHandler(Protocol):
+    """Protocol for synchronous or asynchronous callback handlers."""
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | Awaitable[Any]:
+        ...
 
 
 @dataclass
@@ -44,7 +55,7 @@ class Operation:
     """Represent a single callback operation."""
 
     name: str
-    func: Callable[..., Any]
+    func: CallbackHandler
     timeout: Optional[float] = None
     retries: int = 0
 
@@ -54,7 +65,7 @@ class EventCallback:
     """Internal representation of an event callback."""
 
     priority: int
-    func: Callable[..., Any]
+    func: CallbackHandler
     secure: bool = False
     timeout: Optional[float] = None
     retries: int = 0
@@ -71,10 +82,20 @@ class DashCallbackRegistration:
     states: Tuple[State, ...]
 
 
+class CallbackMetrics(TypedDict):
+    """Execution metrics for a callback event."""
+
+    calls: int
+    exceptions: int
+    total_time: float
+
+
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from validation.security_validator import SecurityValidator
 
-    from ...core.plugins.callback_unifier import CallbackUnifier  # noqa: F401
+    from ...core.plugins.callback_unifier import (  # noqa: F401
+        CallbackUnifier as _CallbackUnifier,
+    )
 
 
 class TrulyUnifiedCallbacks:
@@ -102,8 +123,8 @@ class TrulyUnifiedCallbacks:
         self._namespaces: Dict[str, List[str]] = defaultdict(list)
         self._groups: Dict[str, List[Operation]] = defaultdict(list)
         self._registered_components: Set[str] = set()
-        self._event_metrics: Dict[CallbackEvent, Dict[str, float | int]] = defaultdict(
-            lambda: {"calls": 0, "exceptions": 0, "total_time": 0.0}
+        self._event_metrics: Dict[CallbackEvent, CallbackMetrics] = defaultdict(
+            lambda: CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
         )
 
     # ------------------------------------------------------------------
@@ -134,6 +155,7 @@ class TrulyUnifiedCallbacks:
         Thread-safe via an internal ``RLock``.
         """
 
+
         if self.app is None:
             raise RuntimeError("Dash app not configured for TrulyUnifiedCallbacks")
 
@@ -159,7 +181,7 @@ class TrulyUnifiedCallbacks:
 
         outputs_tuple = outputs if isinstance(outputs, (list, tuple)) else (outputs,)
 
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def decorator(func: CallbackHandler) -> CallbackHandler:
             with self._lock:
                 if callback_id in self._dash_callbacks:
                     raise ValueError(f"Callback ID '{callback_id}' already registered")
@@ -214,6 +236,7 @@ class TrulyUnifiedCallbacks:
 
         Thread-safe via :meth:`handle_register`'s internal ``RLock``.
         """
+
         return self.handle_register(
             outputs=outputs,
             inputs=inputs,
@@ -240,6 +263,7 @@ class TrulyUnifiedCallbacks:
 
         Thread-safe via :meth:`handle_register`'s internal ``RLock``.
         """
+
         return self.handle_register(
             outputs=outputs,
             inputs=inputs,
@@ -294,7 +318,7 @@ class TrulyUnifiedCallbacks:
     def register_event(
         self,
         event: CallbackEvent,
-        func: Callable[..., Any],
+        func: CallbackHandler,
         *,
         priority: int = 50,
         secure: bool = False,
@@ -331,6 +355,7 @@ class TrulyUnifiedCallbacks:
 
         Thread-safe via an internal ``RLock``.
         """
+
         with self._lock:
             self._event_callbacks[event] = [
                 cb for cb in self._event_callbacks.get(event, []) if cb.func != func
@@ -422,14 +447,17 @@ class TrulyUnifiedCallbacks:
 
         Thread-safe via an internal ``RLock``.
         """
+
         with self._lock:
-            return dict(self._event_metrics.get(event, {}))
+            return self._event_metrics.get(
+                event, CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
+            )
 
     # Operation groups --------------------------------------------------
     def register_operation(
         self,
         group: str,
-        func: Callable[..., Any],
+        func: CallbackHandler,
         *,
         name: Optional[str] = None,
         timeout: Optional[float] = None,
@@ -543,7 +571,7 @@ class TrulyUnifiedCallbacks:
 
         if controller is None:
             try:
-                from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import (
+                from ...services.upload.controllers.upload_controller import (
                     UnifiedUploadController,
                 )
             except Exception as exc:  # pragma: no cover - import errors logged
@@ -580,7 +608,13 @@ class TrulyUnifiedCallbacks:
                 super().__init__(coord.app)
                 self._coord = coord
 
-            def handle_register(self, outputs, inputs=None, states=None, **kwargs):
+            def handle_register(
+                self,
+                outputs: Output | Iterable[Output],
+                inputs: Iterable[Input] | Input | None = None,
+                states: Iterable[State] | State | None = None,
+                **kwargs: Any,
+            ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
                 return self._coord.handle_register(outputs, inputs, states, **kwargs)
 
         for manager_cls in manager_classes:
@@ -598,4 +632,4 @@ class TrulyUnifiedCallbacks:
     get_metrics = get_event_metrics
 
 
-__all__ = ["TrulyUnifiedCallbacks"]
+__all__ = ["TrulyUnifiedCallbacks", "CallbackHandler"]
