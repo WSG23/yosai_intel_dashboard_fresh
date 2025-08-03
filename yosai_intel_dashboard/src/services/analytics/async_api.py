@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, AsyncIterator, Optional
+from typing import Any, AsyncIterator, Dict, Optional
 
 from fastapi import (
     Depends,
@@ -49,8 +49,26 @@ ws_server: AnalyticsWebSocketServer | None = None
 app = FastAPI(dependencies=[Depends(require_permission("analytics.read"))])
 
 
-register_health_check(app, "cache", lambda _: True)
-register_health_check(app, "event_bus", lambda _: True)
+async def _database_health(_: FastAPI) -> Dict[str, Any]:
+    try:
+        pool = await get_pool()
+        healthy = pool is not None
+    except Exception:  # pragma: no cover - best effort
+        healthy = False
+    return {"healthy": healthy, "circuit_breaker": "closed", "retries": 0}
+
+
+def _broker_health(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
+
+
+def _external_api_health(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
+
+
+register_health_check(app, "database", _database_health)
+register_health_check(app, "message_broker", _broker_health)
+register_health_check(app, "external_api", _external_api_health)
 setup_health_checks(app)
 
 

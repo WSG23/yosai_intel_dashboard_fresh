@@ -29,6 +29,8 @@ __all__ = [
     "InferenceDriftJob",
     "request_duration",
     "ABTest",
+    "circuit_breaker_state",
+    "start_metrics_server",
 
 ]
 
@@ -47,7 +49,7 @@ def __getattr__(name: str):
         "record_avro_failure",
         "record_compatibility_failure",
     }:
-        from .data_quality_monitor import (
+        from .data_quality_monitor import (  # noqa: F401
             DataQualityMetrics,
             DataQualityMonitor,
             avro_decoding_failures,
@@ -68,7 +70,7 @@ def __getattr__(name: str):
         "register_health_check",
         "setup_health_checks",
     }:
-        from ..discovery.health_check import (
+        from ..discovery.health_check import (  # noqa: F401
             health_check,
             health_check_router,
             register_health_check,
@@ -81,7 +83,7 @@ def __getattr__(name: str):
         "ModelMetrics",
         "get_model_performance_monitor",
     }:
-        from .model_performance_monitor import (
+        from .model_performance_monitor import (  # noqa: F401
             ModelMetrics,
             ModelPerformanceMonitor,
             get_model_performance_monitor,
@@ -97,7 +99,7 @@ def __getattr__(name: str):
 
         return ModelMonitoringService
     if name in {"RealTimeUIMonitor", "get_ui_monitor"}:
-        from .ui_monitor import RealTimeUIMonitor, get_ui_monitor
+        from .ui_monitor import RealTimeUIMonitor, get_ui_monitor  # noqa: F401
 
         return locals()[name]
     if name in {
@@ -105,7 +107,7 @@ def __getattr__(name: str):
         "record_deprecated_call",
         "start_deprecation_metrics_server",
     }:
-        from .prometheus.deprecation import (
+        from .prometheus.deprecation import (  # noqa: F401
             deprecated_calls,
             record_deprecated_call,
             start_deprecation_metrics_server,
@@ -124,5 +126,13 @@ def __getattr__(name: str):
         from .ab_testing import ABTest
 
         return ABTest
+    if name in {"circuit_breaker_state", "start_metrics_server"}:
+        from yosai_intel_dashboard.src.services.resilience.metrics import (
+            circuit_breaker_state,
+            start_metrics_server,
+
+        )
+
+        return locals()[name]
 
     raise AttributeError(name)
