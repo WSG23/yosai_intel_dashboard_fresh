@@ -60,7 +60,7 @@ class AlertDispatcher:
             except Exception as exc:  # pragma: no cover - network
                 self.logger.warning(f"Slack alert failed: {exc}")
         elif self.config.slack_webhook:
-            self._send_slack_sync(message)
+            await asyncio.to_thread(self._send_slack_sync, message)
 
     # ------------------------------------------------------------------
     def _send_webhook_sync(self, message: str) -> None:
@@ -87,7 +87,7 @@ class AlertDispatcher:
             except Exception as exc:  # pragma: no cover - network
                 self.logger.warning(f"Webhook alert failed: {exc}")
         elif self.config.webhook_url:
-            self._send_webhook_sync(message)
+            await asyncio.to_thread(self._send_webhook_sync, message)
 
     # ------------------------------------------------------------------
     def _send_email_sync(self, message: str) -> None:
@@ -114,7 +114,7 @@ class AlertDispatcher:
             except Exception as exc:  # pragma: no cover - external
                 self.logger.warning(f"Email alert failed: {exc}")
         elif self.config.email:
-            self._send_email_sync(message)
+            await asyncio.to_thread(self._send_email_sync, message)
 
     # ------------------------------------------------------------------
     async def send_alert_async(self, message: str) -> None:
@@ -134,9 +134,6 @@ class AlertDispatcher:
             loop = None
 
         if loop and loop.is_running():
-            # Running inside an event loop, fall back to synchronous sending
-            self._send_slack_sync(message)
-            self._send_webhook_sync(message)
-            self._send_email_sync(message)
+            loop.create_task(self.send_alert_async(message))
         else:
             asyncio.run(self.send_alert_async(message))

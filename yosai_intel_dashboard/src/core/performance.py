@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import functools
 import logging
-import math
 import threading
 import time
+from bisect import bisect_left
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -19,6 +19,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Deque,
     Dict,
     Iterable,
     List,
@@ -34,7 +35,6 @@ import yaml
 from prometheus_client import REGISTRY, Counter
 from prometheus_client.core import CollectorRegistry
 
-from monitoring.request_metrics import async_task_duration
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
@@ -45,10 +45,10 @@ except Exception:  # pragma: no cover - optional dependency
     QueryOptimizer = None  # type: ignore
 
 if TYPE_CHECKING:  # pragma: no cover - imported for type hints only
-    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
+    from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (  # noqa: F401, E501
         ModelMetrics,
     )
-    from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+    from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (  # noqa: F401, E501
         AlertDispatcher,
     )
 
@@ -163,7 +163,9 @@ class PerformanceMonitor:
         self.metrics: deque = deque(maxlen=max_metrics)
         self.snapshots: deque = deque(maxlen=1000)
         self.active_timers: Dict[str, float] = {}
-        self.aggregated_metrics: Dict[str, List[float]] = defaultdict(list)
+        self.aggregated_metrics: Dict[str, Deque[float]] = defaultdict(
+            lambda: deque(maxlen=1000)
+        )
         self.logger = logging.getLogger(__name__)
         self._lock = threading.Lock()
         self.memory_threshold_mb = getattr(
@@ -207,12 +209,15 @@ class PerformanceMonitor:
             self.metrics.append(metric)
             self.aggregated_metrics[name].append(value)
 
-            # Keep only recent aggregated metrics
-            if len(self.aggregated_metrics[name]) > 1000:
-                self.aggregated_metrics[name] = self.aggregated_metrics[name][-1000:]
-
             if self.budgets:
                 _check_budget(name.split(".")[0], value, self.budgets, self.dispatcher)
+
+    def get_metrics_since(self, cutoff: datetime) -> List[PerformanceMetric]:
+        """Return metrics with timestamp >= ``cutoff`` using binary search."""
+        metrics_list = list(self.metrics)
+        timestamps = [m.timestamp for m in metrics_list]
+        idx = bisect_left(timestamps, cutoff)
+        return metrics_list[idx:]
 
     def start_timer(self, name: str) -> None:
         """Start a named timer"""
@@ -298,7 +303,7 @@ class PerformanceMonitor:
     def get_metrics_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get performance metrics summary"""
         cutoff = datetime.now() - timedelta(hours=hours)
-        recent_metrics = [m for m in self.metrics if m.timestamp >= cutoff]
+        recent_metrics = self.get_metrics_since(cutoff)
 
         if not recent_metrics:
             return {"total_metrics": 0}
@@ -332,10 +337,9 @@ class PerformanceMonitor:
         cutoff = datetime.now() - timedelta(hours=hours)
 
         slow_ops = []
-        for metric in self.metrics:
+        for metric in self.get_metrics_since(cutoff):
             if (
-                metric.timestamp >= cutoff
-                and metric.metric_type == MetricType.EXECUTION_TIME
+                metric.metric_type == MetricType.EXECUTION_TIME
                 and metric.value > threshold
             ):
                 slow_ops.append(
@@ -353,11 +357,8 @@ class PerformanceMonitor:
         """Return how often deprecated functions were called in the last ``hours``."""
         cutoff = datetime.now() - timedelta(hours=hours)
         counts: Dict[str, int] = defaultdict(int)
-        for metric in self.metrics:
-            if (
-                metric.timestamp >= cutoff
-                and metric.metric_type == MetricType.DEPRECATED_USAGE
-            ):
+        for metric in self.get_metrics_since(cutoff):
+            if metric.metric_type == MetricType.DEPRECATED_USAGE:
                 counts[metric.name] += 1
         return dict(counts)
 
@@ -396,7 +397,7 @@ class PerformanceMonitor:
         drift_threshold: float = 0.05,
         fields: Iterable[str] = ("accuracy", "precision", "recall"),
     ) -> bool:
-        """Return ``True`` if ``metrics`` deviate from ``baseline`` by more than ``drift_threshold``.
+        """Return True if metrics deviate from baseline beyond ``drift_threshold``.
 
         Parameters
         ----------
@@ -879,20 +880,20 @@ def get_performance_dashboard() -> Dict[str, Any]:
 
 def export_performance_report(hours: int = 24) -> pd.DataFrame:
     """Export performance data as DataFrame for analysis"""
-    metrics = []
+    metrics: List[Dict[str, Any]] = []
     cutoff = datetime.now() - timedelta(hours=hours)
+    monitor = get_performance_monitor()
 
-    for metric in get_performance_monitor().metrics:
-        if metric.timestamp >= cutoff:
-            metrics.append(
-                {
-                    "timestamp": metric.timestamp,
-                    "name": metric.name,
-                    "type": metric.metric_type.value,
-                    "value": metric.value,
-                    "duration": metric.duration,
-                    **metric.metadata,
-                }
-            )
+    for metric in monitor.get_metrics_since(cutoff):
+        metrics.append(
+            {
+                "timestamp": metric.timestamp,
+                "name": metric.name,
+                "type": metric.metric_type.value,
+                "value": metric.value,
+                "duration": metric.duration,
+                **metric.metadata,
+            }
+        )
 
     return pd.DataFrame(metrics)

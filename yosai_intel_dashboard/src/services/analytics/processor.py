@@ -7,6 +7,7 @@ import pandas as pd
 
 from analytics.core.utils import hll_count
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +18,7 @@ class AnalyticsProcessor:
         total_records = len(df)
         unique_users = hll_count(df["person_id"]) if "person_id" in df.columns else 0
         unique_devices = hll_count(df["door_id"]) if "door_id" in df.columns else 0
+
         date_span = 0
         if "timestamp" in df.columns:
             ts = pd.to_datetime(df["timestamp"], errors="coerce")

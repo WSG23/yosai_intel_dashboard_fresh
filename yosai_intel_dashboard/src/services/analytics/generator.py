@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Analytics generation helpers packaged as a service."""
 
 import logging
@@ -10,11 +12,15 @@ import pandas as pd
 from analytics.core.utils import hll_count
 
 from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
+
 from yosai_intel_dashboard.src.core.cache_manager import (
     CacheConfig,
     InMemoryCacheManager,
     cache_with_lock,
 )
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
+
+from .approximation import approximate_unique_count
 
 cfg = get_cache_config()
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
@@ -115,6 +121,7 @@ class AnalyticsGenerator:
         unique_users = hll_count(df["person_id"])
         unique_doors = hll_count(df["door_id"])
 
+
         access_counts = df["access_result"].value_counts()
         granted = access_counts.get("Granted", 0)
         denied = access_counts.get("Denied", 0)
@@ -165,6 +172,7 @@ class AnalyticsGenerator:
                     analytics["summary"][col] = {
                         "type": "categorical",
                         "unique_values": hll_count(df[col]),
+
                         "top_values": {str(k): int(v) for k, v in counts.items()},
                         "null_count": int(df[col].isnull().sum()),
                     }

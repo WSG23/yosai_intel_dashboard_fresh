@@ -1,17 +1,20 @@
 """Database connection - compatible with existing codebase"""
 
-from typing import Iterable, Optional, Protocol
+from __future__ import annotations
+
+from typing import Any, Iterable, Optional, Protocol
 
 from opentelemetry import trace
 
+from database.metrics import queries_total, query_errors_total
+from database.types import DBRows
+from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
     DatabaseManager,
     MockConnection,
 )
-from database.metrics import queries_total, query_errors_total
-from database.utils import parse_connection_string
-from database.types import DBRows
 
+from .shard_resolver import ShardResolver
 
 
 class DatabaseConnection(Protocol):
@@ -39,12 +42,36 @@ class DatabaseConnection(Protocol):
         ...
 
 
-def create_database_connection() -> DatabaseConnection:
-    """Create database connection using :class:`DatabaseConnectionFactory`."""
+def create_database_connection(
+    table: Optional[str] = None,
+    shard_key: Any = None,
+    shard_resolver: Optional[ShardResolver] = None,
+) -> DatabaseConnection:
+    """Create database connection using :class:`DatabaseConnectionFactory`.
+
+    Parameters
+    ----------
+    table:
+        Optional name of the table being accessed.  When provided together with
+        ``shard_key`` and ``shard_resolver`` the connection will be routed to
+        the resolved shard.
+    shard_key:
+        Identifier used for sharding.  Any hashable value is accepted.
+    shard_resolver:
+        Resolver capable of mapping ``table`` and ``shard_key`` to a specific
+        shard connection string.
+    """
+
     from yosai_intel_dashboard.src.infrastructure.config import get_config
 
     config_manager = get_config()
     db_config = config_manager.get_database_config()
+
+    # Determine shard specific configuration if applicable
+    if table and shard_resolver and shard_key is not None:
+        shard_url = shard_resolver.resolve(table, shard_key)
+        if shard_url:
+            db_config = db_config.model_copy(update={"url": shard_url})
 
     # Validate connection string before creating manager
     parse_connection_string(db_config.get_connection_string())
@@ -53,13 +80,10 @@ def create_database_connection() -> DatabaseConnection:
 
     conn = db_manager.get_connection()
 
-
     tracer = trace.get_tracer("database")
 
     class InstrumentedConnection:
-        def execute_query(
-            self, query: str, params: Optional[tuple] = None
-        ) -> DBRows:
+        def execute_query(self, query: str, params: Optional[tuple] = None) -> DBRows:
             with tracer.start_as_current_span("execute_query"):
                 queries_total.inc()
                 try:

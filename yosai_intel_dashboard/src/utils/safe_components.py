@@ -4,8 +4,10 @@ Emergency Safe Components
 Provides safe fallback components that are guaranteed to be JSON serializable
 """
 
+from __future__ import annotations
+
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import get_asset_url, html
 
 from .assets_debug import navbar_icon
 
@@ -18,7 +20,7 @@ def safe_navbar():
                 [
                     html.A(
                         html.Img(
-                            src="/assets/yosai_logo_name_black.png",
+                            src=get_asset_url("yosai_logo_name_black.png"),
                             height="46px",
                             className="navbar__logo",
                             alt="logo",

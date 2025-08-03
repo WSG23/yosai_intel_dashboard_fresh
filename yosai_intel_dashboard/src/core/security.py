@@ -9,20 +9,39 @@ import hashlib
 import logging
 import secrets
 import time
+from concurrent.futures import ProcessPoolExecutor
+
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+_executor = ProcessPoolExecutor()
+
+
+def _pbkdf2_sha256(password: bytes, salt: bytes, iterations: int) -> bytes:
+    """Compute PBKDF2-HMAC-SHA256 hash."""
+    return hashlib.pbkdf2_hmac("sha256", password, salt, iterations)
+
+
+def _sha256_bytes(data: bytes) -> str:
+    """Compute SHA256 digest of ``data``."""
+    return hashlib.sha256(data).hexdigest()
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
 # :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.src.core.base_model import BaseModel
+from yosai_intel_dashboard.src.core.domain.entities.access_events import (
+    AccessEventModel,
+)
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
-main
+from yosai_intel_dashboard.src.infrastructure.monitoring.anomaly_detector import (
+    AnomalyDetector,
+)
 
 
 class SecurityLevel(Enum):
@@ -215,7 +234,9 @@ class SecurityAuditor(BaseModel):
     def get_security_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get security events summary"""
         cutoff = datetime.now() - timedelta(hours=hours)
-        recent_events = [e for e in self.events if e.timestamp >= cutoff]
+        timestamps = [e.timestamp for e in self.events]
+        idx = bisect_left(timestamps, cutoff)
+        recent_events = self.events[idx:]
 
         if not recent_events:
             return {"total_events": 0}
@@ -264,9 +285,13 @@ class SecureHashManager:
             salt = secrets.token_bytes(dynamic_config.security.salt_bytes)
 
         # Use PBKDF2 with SHA256
-        hash_bytes = hashlib.pbkdf2_hmac(
-            "sha256", password.encode(), salt, dynamic_config.security.pbkdf2_iterations
+        future = _executor.submit(
+            _pbkdf2_sha256,
+            password.encode(),
+            salt,
+            dynamic_config.security.pbkdf2_iterations,
         )
+        hash_bytes = future.result()
 
         return {
             "hash": hash_bytes.hex(),
@@ -279,18 +304,20 @@ class SecureHashManager:
     def verify_password(password: str, stored_hash: str, stored_salt: str) -> bool:
         """Verify password against stored hash"""
         salt = bytes.fromhex(stored_salt)
-        hash_bytes = hashlib.pbkdf2_hmac(
-            "sha256",
+        future = _executor.submit(
+            _pbkdf2_sha256,
             password.encode(),
             salt,
             dynamic_config.security.pbkdf2_iterations,
         )
+        hash_bytes = future.result()
         return hash_bytes.hex() == stored_hash
 
     @staticmethod
     def hash_sensitive_data(data: str) -> str:
         """Hash sensitive data for storage"""
-        return hashlib.sha256(data.encode()).hexdigest()
+        future = _executor.submit(_sha256_bytes, data.encode())
+        return future.result()
 
 
 # Global security instances
@@ -305,6 +332,13 @@ except Exception:  # pragma: no cover
             return {"valid": True, "sanitized": value}
 
     security_validator = _FallbackValidator()
+
+
+def validate_user_input(value: str, field: str) -> str:
+    """Validate and sanitize user input."""
+    result = security_validator.validate_input(value, field)
+    return result.get("sanitized", value)
+
 
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
@@ -399,8 +433,7 @@ def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
         from security.validation_middleware import ValidationMiddleware
-        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (  # noqa: E501
             TrulyUnifiedCallbacks,
         )
     except Exception:

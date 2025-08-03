@@ -1,15 +1,29 @@
-import builtins
 from datetime import datetime
+from pathlib import Path
+import importlib.util
+import json
 
+import aiofiles
 import pandas as pd
 
-import yosai_intel_dashboard.src.services as services.upload.helpers as upload_helpers
-from yosai_intel_dashboard.src.services.analytics.db_interface import AnalyticsDataAccessor
-from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import ConsolidatedLearningService
-from yosai_intel_dashboard.src.services.upload import save_ai_training_data
+helpers_spec = importlib.util.spec_from_file_location(
+    "upload_helpers",
+    Path(__file__).resolve().parent.parent
+    / "yosai_intel_dashboard"
+    / "src"
+    / "services"
+    / "upload"
+    / "helpers.py",
+)
+upload_helpers = importlib.util.module_from_spec(helpers_spec)
+helpers_spec.loader.exec_module(upload_helpers)
 
 
 def test_consolidated_learning_unicode(tmp_path):
+    from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import (
+        ConsolidatedLearningService,
+    )
+
     storage = tmp_path / "mäppings.json"
     service = ConsolidatedLearningService(str(storage))
 
@@ -30,6 +44,10 @@ def test_consolidated_learning_unicode(tmp_path):
 
 
 def test_accessor_load_unicode(tmp_path):
+    from yosai_intel_dashboard.src.services.analytics.db_interface import (
+        AnalyticsDataAccessor,
+    )
+
     base = tmp_path
     data = {"kéy": "välue"}
     f = base / "learned_mappings.json"
@@ -44,24 +62,13 @@ def test_accessor_load_unicode(tmp_path):
 
 
 def test_save_ai_training_data_unicode(tmp_path, monkeypatch):
-    training_dir = tmp_path / "training"
-    training_dir.mkdir()
+    from yosai_intel_dashboard.src.components import plugin_adapter
 
-    target = training_dir / "out.jsonl"
-
-    def fake_makedirs(path, exist_ok=False):
-        training_dir.mkdir(exist_ok=True)
-
-    monkeypatch.setattr(upload_helpers.os, "makedirs", fake_makedirs)
-
-    open_orig = builtins.open
-
-    def fake_open(path, mode="r", encoding=None, errors=None):
-        if path.startswith("data/training"):
-            return open_orig(target, mode, encoding=encoding, errors=errors)
-        return open_orig(path, mode, encoding=encoding, errors=errors)
-
-    monkeypatch.setattr(upload_helpers, "open", fake_open)
+    monkeypatch.setattr(
+        plugin_adapter.ComponentPluginAdapter,
+        "save_verified_mappings",
+        lambda self, *a, **kw: True,
+    )
 
     class DummyDT:
         @classmethod
@@ -70,12 +77,16 @@ def test_save_ai_training_data_unicode(tmp_path, monkeypatch):
 
     monkeypatch.setattr(upload_helpers, "datetime", DummyDT)
 
-    save_ai_training_data(
+    upload_helpers.save_ai_training_data(
         "файл.csv",
         {"дверь": "timestamp"},
         {"columns": ["a"], "ai_suggestions": {}},
     )
 
+    target = Path("data/training/mappings_20240101.jsonl")
     content = target.read_text(encoding="utf-8")
-    assert "файл.csv" in content
-    assert "дверь" in content
+    data = json.loads(content)
+    assert data["filename"] == "файл.csv"
+    assert "дверь" in data["mappings"]
+    target.unlink()
+    target.parent.rmdir()

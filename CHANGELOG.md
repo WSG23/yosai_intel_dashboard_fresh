@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Initial changelog with standard sections.
 - Database migration `0003` adds `ml_models` table for the model registry.
+- Configurable CDN asset URLs with deployment-time cache invalidation.
 
 ### Changed
 - Updated `run_service_analysis` to use `analyze_data_with_service` and

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Fresh, minimal app factory."""
 
+import os
+
 import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html
@@ -17,9 +19,13 @@ from yosai_intel_dashboard.src.infrastructure.error_handling.handlers import (
 def create_app(mode=None, **kwargs):
     """Create a working Dash app with logo, navigation, and routing - HTTPS ready."""
 
+    assets_external = os.environ.get("ASSET_CDN_URL")
+
     app = dash.Dash(
         __name__,
         external_stylesheets=[dbc.themes.BOOTSTRAP],
+        assets_url_path="/assets",
+        assets_external_path=assets_external or None,
     )
 
     register_error_handlers(app.server)
