@@ -3,11 +3,31 @@
 from __future__ import annotations
 
 import logging
+import os
+import time
 from typing import Any, Iterable, Optional
 
+try:  # optional import to avoid heavy dependency chain
+    from core.performance import PerformanceThresholds
+except Exception:  # pragma: no cover - default if core package unavailable
+    class PerformanceThresholds:  # type: ignore[misc]
+        SLOW_QUERY_SECONDS = 1.0
+
+from database.performance_analyzer import DatabasePerformanceAnalyzer
 from database.types import DBRows
 
+try:  # optional Prometheus integration
+    from database.metrics import query_execution_seconds
+except Exception:  # pragma: no cover - metrics are optional
+    query_execution_seconds = None  # type: ignore
+
 logger = logging.getLogger(__name__)
+
+performance_analyzer = DatabasePerformanceAnalyzer()
+query_metrics = performance_analyzer.query_metrics
+SLOW_QUERY_THRESHOLD = float(
+    os.getenv("DB_SLOW_QUERY_THRESHOLD", PerformanceThresholds.SLOW_QUERY_SECONDS)
+)
 
 
 def _infer_db_type(obj: Any) -> str:
@@ -54,13 +74,22 @@ def execute_query(conn: Any, sql: str, params: Optional[Iterable[Any]] = None):
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing query: %s", optimized_sql)
-    if hasattr(conn, "execute_query"):
-        return conn.execute_query(optimized_sql, p)
-    if hasattr(conn, "execute"):
-        if p is not None:
-            return conn.execute(optimized_sql, p)
-        return conn.execute(optimized_sql)
-    raise AttributeError("Object has no execute or execute_query method")
+    start = time.perf_counter()
+    try:
+        if hasattr(conn, "execute_query"):
+            return conn.execute_query(optimized_sql, p)
+        if hasattr(conn, "execute"):
+            if p is not None:
+                return conn.execute(optimized_sql, p)
+            return conn.execute(optimized_sql)
+        raise AttributeError("Object has no execute or execute_query method")
+    finally:
+        elapsed = time.perf_counter() - start
+        performance_analyzer.analyze_query_performance(optimized_sql, elapsed)
+        if elapsed > SLOW_QUERY_THRESHOLD:
+            logger.warning("Slow query (%.6f s): %s", elapsed, optimized_sql)
+        if query_execution_seconds is not None:
+            query_execution_seconds.observe(elapsed)
 
 
 def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
@@ -77,13 +106,28 @@ def execute_command(conn: Any, sql: str, params: Optional[Iterable[Any]] = None)
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing command: %s", optimized_sql)
-    if hasattr(conn, "execute_command"):
-        return conn.execute_command(optimized_sql, p)
-    if hasattr(conn, "execute"):
-        if p is not None:
-            return conn.execute(optimized_sql, p)
-        return conn.execute(optimized_sql)
-    raise AttributeError("Object has no execute or execute_command method")
+    start = time.perf_counter()
+    try:
+        if hasattr(conn, "execute_command"):
+            return conn.execute_command(optimized_sql, p)
+        if hasattr(conn, "execute"):
+            if p is not None:
+                return conn.execute(optimized_sql, p)
+            return conn.execute(optimized_sql)
+        raise AttributeError("Object has no execute or execute_command method")
+    finally:
+        elapsed = time.perf_counter() - start
+        performance_analyzer.analyze_query_performance(optimized_sql, elapsed)
+        if elapsed > SLOW_QUERY_THRESHOLD:
+            logger.warning("Slow query (%.6f s): %s", elapsed, optimized_sql)
+        if query_execution_seconds is not None:
+            query_execution_seconds.observe(elapsed)
 
 
-__all__ = ["execute_query", "execute_command", "execute_secure_query"]
+__all__ = [
+    "execute_query",
+    "execute_command",
+    "execute_secure_query",
+    "query_metrics",
+    "performance_analyzer",
+]
