@@ -18,7 +18,6 @@ from typing import (
     List,
     Optional,
     Protocol,
-    Set,
     Tuple,
     Type,
     TypedDict,
@@ -104,27 +103,26 @@ class TrulyUnifiedCallbacks:
 
     def __init__(
         self,
-        app: Optional[Dash] = None,
+        app: Dash | None = None,
         *,
-        security_validator: Optional["SecurityValidator"] = None,
+        security_validator: SecurityValidator | None = None,
     ) -> None:
-        self.app = app
+        self.app: Dash | None = app
         if security_validator is None:
             from validation.security_validator import SecurityValidator
 
-            self.security = SecurityValidator()
-        else:
-            self.security = security_validator
+            security_validator = SecurityValidator()
+        self.security: SecurityValidator = security_validator
         self._lock: threading.RLock = threading.RLock()
-        self._event_callbacks: Dict[CallbackEvent, List[EventCallback]] = defaultdict(
+        self._event_callbacks: dict[CallbackEvent, list[EventCallback]] = defaultdict(
             list
         )
-        self._dash_callbacks: Dict[str, DashCallbackRegistration] = {}
-        self._output_map: Dict[str, str] = {}
-        self._namespaces: Dict[str, List[str]] = defaultdict(list)
-        self._groups: Dict[str, List[Operation]] = defaultdict(list)
-        self._registered_components: Set[str] = set()
-        self._event_metrics: Dict[CallbackEvent, CallbackMetrics] = defaultdict(
+        self._dash_callbacks: dict[str, DashCallbackRegistration] = {}
+        self._output_map: dict[str, str] = {}
+        self._namespaces: dict[str, list[str]] = defaultdict(list)
+        self._groups: dict[str, list[Operation]] = defaultdict(list)
+        self._registered_components: set[str] = set()
+        self._event_metrics: dict[CallbackEvent, CallbackMetrics] = defaultdict(
             lambda: CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
         )
 
