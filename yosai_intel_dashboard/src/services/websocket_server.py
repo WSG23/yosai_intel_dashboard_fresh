@@ -28,8 +28,6 @@ class AnalyticsWebSocketServer:
         port: int = 6789,
         ping_interval: float = 30.0,
         ping_timeout: float = 10.0,
-        queue_size: int = 0,
-        compression_threshold: int | None = None,
 
     ) -> None:
         self.host = host
@@ -58,7 +56,8 @@ class AnalyticsWebSocketServer:
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         await self.pool.acquire(websocket)
         self.clients.add(websocket)
-        await self.pool.acquire(websocket)
+        websocket_metrics.record_connection()
+
         if self._queue:
             queued = list(self._queue)
             self._queue.clear()
@@ -92,6 +91,7 @@ class AnalyticsWebSocketServer:
                     {"client": id(ws), "status": "alive"},
                 )
         except asyncio.TimeoutError:
+            websocket_metrics.record_ping_failure()
             if self.event_bus:
                 self.event_bus.publish(
                     "websocket_heartbeat",
@@ -124,12 +124,6 @@ class AnalyticsWebSocketServer:
                 )
         else:
             self._queue.append(data)
-
-    async def _broadcast_async(self, message: str) -> None:
-        payload: str | bytes = message
-        if self.compression_threshold and len(message) > self.compression_threshold:
-            payload = gzip.compress(message.encode("utf-8"))
-        await self.pool.broadcast(payload)
 
 
     def stop(self) -> None:
