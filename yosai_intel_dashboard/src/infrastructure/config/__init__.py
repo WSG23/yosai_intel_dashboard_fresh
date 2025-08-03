@@ -30,6 +30,7 @@ from .secure_config_manager import SecureConfigManager
 from .secure_db import execute_secure_query
 from .unicode_handler import UnicodeHandler
 from .unified_loader import UnifiedLoader
+from .database_connection_factory import DatabaseConnectionFactory
 
 
 def create_config_manager(
@@ -135,7 +136,7 @@ __all__ = [
     "execute_secure_query",
     "UnicodeHandler",
     "DatabaseConnectionFactory",
-    "RetryStrategy",
+
 ]
 
 
