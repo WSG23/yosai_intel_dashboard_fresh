@@ -132,7 +132,7 @@ async def test_mapping_service(
                 # Test applying existing mappings
                 mappings_file = Path("data/learned_mappings.json")
                 if mappings_file.exists():
-                    with open(mappings_file) as f:
+                    with mappings_file.open(encoding="utf-8") as f:
                         mappings_data = json.load(f)
 
                     result["mapping_application"] = {
