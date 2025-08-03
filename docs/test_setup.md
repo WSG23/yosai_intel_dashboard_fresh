@@ -108,6 +108,29 @@ required:
 pytest --cov --cov-fail-under=80
 ```
 
+### Memory Profiling
+
+The test suite integrates [`memory_profiler`](https://pypi.org/project/memory-profiler/)
+to record the peak memory usage of each test and enforces a process-level memory
+cap. By default each test is limited to **512 MB** of address space. You can
+override this limit for the entire run by setting the `PYTEST_MAX_MEMORY_MB`
+environment variable:
+
+```bash
+PYTEST_MAX_MEMORY_MB=1024 pytest
+```
+
+Individual tests may specify a different limit using the `@pytest.mark.memlimit` marker:
+
+```python
+@pytest.mark.memlimit(256)
+def test_something():
+    ...
+```
+
+When `memory_profiler` is installed, each test will log its starting and ending
+memory usage, helping track leaks or unexpectedly large allocations.
+
 Before invoking the lint task you must ensure the Node packages are installed:
 ```bash
 npm install

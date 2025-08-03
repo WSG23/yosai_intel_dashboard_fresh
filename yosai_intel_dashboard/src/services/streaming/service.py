@@ -1,8 +1,8 @@
 import logging
-from typing import Any, Dict, Generator, Optional
+from typing import Generator, Optional
 
-from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 from yosai_framework.service import BaseService
+from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class StreamingService(BaseService):
     """Manage Kafka or Pulsar streaming connections."""
 
-    def __init__(self, config: Optional[Any] = None) -> None:
+    def __init__(self, config: Optional[ConfigProviderProtocol] = None) -> None:
         super().__init__("streaming", "")
         self.config = getattr(config, "streaming", config)
         self.producer = None
@@ -86,6 +86,7 @@ class StreamingService(BaseService):
             self.producer.send(data)
         else:
             self.producer.send(target, data)
+            self.producer.flush()
 
     def consume(self, timeout: float = 1.0) -> Generator[bytes, None, None]:
         """Yield messages from the configured topic."""
@@ -100,8 +101,10 @@ class StreamingService(BaseService):
                 self.consumer.acknowledge(msg)
                 yield msg.data()
         else:
-            for msg in self.consumer:
-                yield msg.value
+            records = self.consumer.poll(timeout_ms=int(timeout * 1000))
+            for batch in records.values():
+                for msg in batch:
+                    yield msg.value
 
     def close(self) -> None:
         """Close producer/consumer connections."""

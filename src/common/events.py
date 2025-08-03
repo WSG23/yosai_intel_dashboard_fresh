@@ -1,4 +1,5 @@
 """Thread-safe in-memory event bus and publisher utilities."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -16,12 +17,18 @@ class EventBus:
     accidental mutation of shared state.
     """
 
+    __slots__ = ("_subscribers", "_lock", "_counter")
+
     def __init__(self) -> None:
-        self._subscribers: Dict[str, Dict[str, Callable[[Mapping[str, Any]], None]]] = defaultdict(dict)
+        self._subscribers: Dict[str, Dict[str, Callable[[Mapping[str, Any]], None]]] = (
+            defaultdict(dict)
+        )
         self._lock = RLock()
         self._counter = 0
 
-    def subscribe(self, event_type: str, handler: Callable[[Mapping[str, Any]], None]) -> str:
+    def subscribe(
+        self, event_type: str, handler: Callable[[Mapping[str, Any]], None]
+    ) -> str:
         """Register ``handler`` to be called when ``event_type`` is emitted.
 
         Returns a subscription identifier that can be used to unsubscribe later.
@@ -53,6 +60,8 @@ class EventBus:
 
 class EventPublisher:
     """Mixin providing convenience methods for publishing events."""
+
+    __slots__ = ("_event_bus",)
 
     def __init__(self, event_bus: EventBus) -> None:
         self._event_bus = event_bus

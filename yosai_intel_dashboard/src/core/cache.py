@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import weakref
 from typing import Any
 
 from flask_caching import Cache
@@ -32,10 +33,18 @@ def _fallback_init(app) -> None:
             self._data: dict[str, Any] = {}
 
         def get(self, key: str) -> Any:
-            return self._data.get(key)
+            value = self._data.get(key)
+            if isinstance(value, weakref.ReferenceType):
+                value = value()
+            return value
 
         def set(self, key: str, value: Any, timeout: int | None = None) -> None:
-            self._data[key] = value
+            try:
+                self._data[key] = weakref.ref(
+                    value, lambda _, k=key: self._data.pop(k, None)
+                )
+            except TypeError:
+                self._data[key] = value
 
         def delete(self, key: str) -> None:
             self._data.pop(key, None)

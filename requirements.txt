@@ -39,6 +39,7 @@ pytest-cov==6.2.1
 hvac==2.3.0
 cryptography==45.0.5
 kafka-python==2.2.15
+hyperloglog==0.0.14
 pulsar-client==3.8.0
 dask==2024.4.1
 RapidFuzz==3.13.0
@@ -66,3 +67,6 @@ tenacity==8.2.3
 shap==0.44.1
 lime==0.2.0.1
 fairlearn==0.10.0
+networkx==3.5
+neo4j==5.14.1
+python-louvain==0.16

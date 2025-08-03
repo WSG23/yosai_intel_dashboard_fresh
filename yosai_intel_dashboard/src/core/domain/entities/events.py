@@ -10,7 +10,7 @@ from typing import Any, Dict
 from .enums import AccessResult, AnomalyType, BadgeStatus, SeverityLevel, TicketStatus
 
 
-@dataclass
+@dataclass(slots=True)
 class AccessEvent:
     """Core access control event model"""
 
@@ -43,7 +43,7 @@ class AccessEvent:
         }
 
 
-@dataclass
+@dataclass(slots=True)
 class AnomalyDetection:
     """Anomaly detection result model"""
 
@@ -78,7 +78,7 @@ class AnomalyDetection:
         }
 
 
-@dataclass
+@dataclass(slots=True)
 class IncidentTicket:
     """Security incident ticket model"""
 

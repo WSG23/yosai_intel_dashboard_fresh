@@ -340,6 +340,12 @@ Resource optimizers use the environment variables `MAX_MEMORY`,
 `core/plugins/config/staging.yaml`). When the process exceeds these thresholds,
 warnings are logged and background tasks may be throttled.
 
+Garbage collection is tuned globally via `sitecustomize.py`, which sets
+`gc.set_threshold(1000, 10, 10)` to reduce the frequency of collections in
+long-running services. Short-lived helper scripts can opt out entirely by
+setting `SHORT_LIVED_PROCESS=1`; after calling `gc.collect()` the collector is
+disabled to avoid unnecessary overhead.
+
 ### Async File Processor
 
 `services.data_processing.async_file_processor.AsyncFileProcessor` loads large

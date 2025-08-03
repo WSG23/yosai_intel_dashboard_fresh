@@ -7,6 +7,7 @@ import inspect
 import logging
 import os
 import time
+import weakref
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
@@ -50,14 +51,30 @@ class HierarchicalCacheManager(BaseModel):
         if item is not None:
             value, expiry = item
             if expiry is None or time.time() <= expiry:
-                return value
-            del self._level1[key]
+                if isinstance(value, weakref.ReferenceType):
+                    value = value()
+                    if value is None:
+                        self._level1.pop(key, None)
+                    else:
+                        return value
+                else:
+                    return value
+            else:
+                del self._level1[key]
         item = self._level2.get(key)
         if item is not None:
             value, expiry = item
             if expiry is None or time.time() <= expiry:
-                return value
-            del self._level2[key]
+                if isinstance(value, weakref.ReferenceType):
+                    value = value()
+                    if value is None:
+                        self._level2.pop(key, None)
+                    else:
+                        return value
+                else:
+                    return value
+            else:
+                del self._level2[key]
 
         return None
 
@@ -71,10 +88,20 @@ class HierarchicalCacheManager(BaseModel):
     ) -> None:
         """Store ``value`` at the specified cache ``level``."""
         expiry = time.time() + ttl if ttl else None
+
+        def _remove(_ref, *, k=key, lvl=level) -> None:
+            cache = self._level1 if lvl == 1 else self._level2
+            cache.pop(k, None)
+
+        try:
+            stored: Any = weakref.ref(value, _remove)
+        except TypeError:
+            stored = value
+
         if level == 1:
-            self._level1[key] = (value, expiry)
+            self._level1[key] = (stored, expiry)
         else:
-            self._level2[key] = (value, expiry)
+            self._level2[key] = (stored, expiry)
 
     async def delete(self, key: str) -> bool:
         """Delete ``key`` from any level and return if removed."""

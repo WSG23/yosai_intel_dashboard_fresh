@@ -3,6 +3,8 @@ from typing import Any, Optional
 
 
 class BaseModel:
+    __slots__ = ("config", "logger", "db")
+
     def __init__(
         self,
         config: Optional[Any] = None,

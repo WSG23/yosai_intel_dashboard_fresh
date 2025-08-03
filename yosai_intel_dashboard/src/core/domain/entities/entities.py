@@ -5,7 +5,7 @@ Core entity models for the Yōsai Intel system
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 from yosai_intel_dashboard.src.utils.result_types import Result, failure, success
 
@@ -13,7 +13,7 @@ from .enums import DoorType
 from .events import AccessEvent
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Person:
     """Immutable Person entity with validation"""
 
@@ -77,7 +77,7 @@ class Person:
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class Door:
     """Door/Access Point entity model"""
 
@@ -112,7 +112,7 @@ class Door:
         }
 
 
-@dataclass
+@dataclass(slots=True)
 class Facility:
     """Facility entity model"""
 
