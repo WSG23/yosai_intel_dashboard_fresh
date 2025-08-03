@@ -71,21 +71,24 @@ const Upload: React.FC = () => {
     );
 
     try {
-      const response = await api.post(`${API_URL}/api/v1/upload`, formData);
-      const { job_id } = response.data;
+      const response = await api.post<{ job_id: string }>(
+        `${API_URL}/api/v1/upload`,
+        formData,
+      );
+      const { job_id } = response;
 
       const poll = setInterval(async () => {
         try {
-          const res = await api.get(
+          const res = await api.get<{ progress?: number; done: boolean }>(
             `${API_URL}/api/v1/upload/status/${job_id}`,
           );
-          const progress = res.data.progress ?? 0;
+          const progress = res.progress ?? 0;
           setFiles((prev) =>
             prev.map((f) =>
               f.id === uploadedFile.id ? { ...f, progress } : f,
             ),
           );
-          if (res.data.done) {
+          if (res.done) {
             clearInterval(poll);
             setFiles((prev) =>
               prev.map((f) =>
