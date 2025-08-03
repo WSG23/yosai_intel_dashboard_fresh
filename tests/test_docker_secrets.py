@@ -1,16 +1,21 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
 import pytest
 
-from yosai_intel_dashboard.src.infrastructure.config.secrets_validator import DockerSecretSource, SecretsValidator
+from yosai_intel_dashboard.src.infrastructure.config.secrets_validator import (
+    DockerSecretSource,
+    SecretsValidator,
+)
 
 
 def test_docker_secret_source(tmp_path):
     # placeholder value used for test secrets
     (tmp_path / "SECRET_KEY").write_text("placeholdersecret" * 2)
     src = DockerSecretSource(tmp_path)
-    assert src.get_secret("SECRET_KEY").startswith("dockersecret")
+    assert src.get_secret("SECRET_KEY") == "placeholdersecret" * 2
     assert src.get_secret("MISSING") is None
 
 
