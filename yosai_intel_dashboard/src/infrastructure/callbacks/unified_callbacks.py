@@ -22,6 +22,7 @@ from typing import (
     Tuple,
     Type,
     TypeAlias,
+    TypedDict,
 
 )
 
@@ -614,7 +615,7 @@ class TrulyUnifiedCallbacks:
                 inputs: Iterable[Input] | Input | None = None,
                 states: Iterable[State] | State | None = None,
                 **kwargs: Any,
-            ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+            ) -> Callable[[CallbackHandler], CallbackHandler]:
                 return self._coord.handle_register(outputs, inputs, states, **kwargs)
 
         for manager_cls in manager_classes:
