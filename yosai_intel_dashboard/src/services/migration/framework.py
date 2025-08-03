@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List, Sequence
+from typing import Any, AsyncIterator, Dict, List, Sequence, Callable, Awaitable
 
 import asyncpg
 
@@ -15,14 +15,21 @@ LOG = logging.getLogger(__name__)
 class MigrationStrategy(ABC):
     """Abstract base for service specific migration strategies."""
 
-    def __init__(self, name: str, target_dsn: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        target_dsn: str,
+        *,
+        pool_factory: Callable[..., Awaitable[asyncpg.Pool]] | None = None,
+    ) -> None:
         self.name = name
         self.target_dsn = target_dsn
         self.target_pool: asyncpg.Pool | None = None
+        self.pool_factory = pool_factory or asyncpg.create_pool
         self.checker = IntegrityChecker()
 
     async def setup(self) -> None:
-        self.target_pool = await asyncpg.create_pool(dsn=self.target_dsn)
+        self.target_pool = await self.pool_factory(dsn=self.target_dsn)
 
     @abstractmethod
     async def run(self, source_pool: asyncpg.Pool) -> AsyncIterator[int]:
@@ -38,16 +45,26 @@ class MigrationStrategy(ABC):
 class MigrationManager:
     """Coordinate database migration across multiple strategies."""
 
-    def __init__(self, source_dsn: str, strategies: Sequence[MigrationStrategy]):
+    def __init__(
+        self,
+        source_dsn: str,
+        strategies: Sequence[MigrationStrategy],
+        *,
+        pool_factory: Callable[..., Awaitable[asyncpg.Pool]] | None = None,
+    ) -> None:
         self.source_dsn = source_dsn
         self.strategies = list(strategies)
         self.source_pool: asyncpg.Pool | None = None
         self.tasks: List[asyncio.Task[Any]] = []
         self.progress: Dict[str, int] = {}
         self.failures: List[str] = []
+        self.pool_factory = pool_factory or asyncpg.create_pool
+        for strat in self.strategies:
+            if getattr(strat, "pool_factory", asyncpg.create_pool) is asyncpg.create_pool:
+                strat.pool_factory = self.pool_factory
 
     async def setup(self) -> None:
-        self.source_pool = await asyncpg.create_pool(dsn=self.source_dsn)
+        self.source_pool = await self.pool_factory(dsn=self.source_dsn)
         for strat in self.strategies:
             await strat.setup()
 
