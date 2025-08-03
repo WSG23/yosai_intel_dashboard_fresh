@@ -29,6 +29,8 @@ __all__ = [
     "InferenceDriftJob",
     "request_duration",
     "ABTest",
+    "circuit_breaker_state",
+    "start_metrics_server",
 
 ]
 
@@ -124,5 +126,12 @@ def __getattr__(name: str):
         from .ab_testing import ABTest
 
         return ABTest
+    if name in {"circuit_breaker_state", "start_metrics_server"}:
+        from yosai_intel_dashboard.src.services.resilience.metrics import (
+            circuit_breaker_state,
+            start_metrics_server,
+        )
+
+        return locals()[name]
 
     raise AttributeError(name)

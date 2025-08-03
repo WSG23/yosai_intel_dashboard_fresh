@@ -11,6 +11,12 @@ from typing import Any, Dict
 import aiohttp
 
 from monitoring.data_quality_monitor import get_data_quality_monitor
+from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
+from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
+from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
 
 
 @dataclass
@@ -29,29 +35,40 @@ class SchemaRegistryClient:
         self.url = (
             url or os.getenv("SCHEMA_REGISTRY_URL", "http://localhost:8081")
         ).rstrip("/")
+        self._circuit_breaker = CircuitBreaker(5, 30, name="schema_registry")
+        self._error_handler = ErrorHandler()
 
     # ------------------------------------------------------------------
     async def _get_async(self, path: str) -> Any:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{self.url}{path}",
-                timeout=aiohttp.ClientTimeout(total=5.0),
-            ) as resp:
-                resp.raise_for_status()
-                return await resp.json()
+        try:
+            async with self._circuit_breaker:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        f"{self.url}{path}",
+                        timeout=aiohttp.ClientTimeout(total=5.0),
+                    ) as resp:
+                        resp.raise_for_status()
+                        return await resp.json()
+        except CircuitBreakerOpen as exc:
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+            raise
 
     async def _post_async(self, path: str, payload: Dict[str, Any]) -> Any:
-
         headers = {"Content-Type": "application/vnd.schemaregistry.v1+json"}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{self.url}{path}",
-                json=payload,
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=5.0),
-            ) as resp:
-                resp.raise_for_status()
-                return await resp.json()
+        try:
+            async with self._circuit_breaker:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{self.url}{path}",
+                        json=payload,
+                        headers=headers,
+                        timeout=aiohttp.ClientTimeout(total=5.0),
+                    ) as resp:
+                        resp.raise_for_status()
+                        return await resp.json()
+        except CircuitBreakerOpen as exc:
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+            raise
 
     # Backwards compatible synchronous wrappers ------------------------
     def _get(self, path: str) -> Any:

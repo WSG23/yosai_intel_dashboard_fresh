@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os
 import ssl
 from typing import Any, MutableMapping
 
 import aiohttp
+from tracing import propagate_context
 from tenacity import (
     AsyncRetrying,
     retry_if_exception_type,
@@ -16,6 +18,8 @@ from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
+from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
+from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
 
 from .protocols import ServiceClient
 
@@ -44,6 +48,7 @@ class RestClient:
         self.retries = retries
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._ssl = self._create_ssl_context(mtls_cert, mtls_key, verify_ssl)
+        self._error_handler = ErrorHandler()
 
     # ------------------------------------------------------------------
     def _create_ssl_context(
@@ -85,6 +90,18 @@ class RestClient:
                         if "application/json" in ctype:
                             return await resp.json()
                         return await resp.text()
+
+        try:
+            async for attempt in AsyncRetrying(
+                retry=retry_if_exception_type(aiohttp.ClientError),
+                stop=stop_after_attempt(self.retries),
+                wait=wait_exponential(multiplier=0.2, min=0.1, max=2),
+            ):
+                with attempt:
+                    return await _do_request()
+        except CircuitBreakerOpen as exc:
+            self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+            raise
 
 
 def create_service_client(service_name: str) -> ServiceClient:
