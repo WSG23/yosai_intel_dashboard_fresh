@@ -6,7 +6,8 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List, Optional
+
 
 import aiofiles
 import aiohttp
@@ -21,14 +22,29 @@ except Exception:  # pragma: no cover - fallback if redis not installed
 logger = logging.getLogger(__name__)
 
 
-# Default flag definitions with fallbacks. Additional flags may be provided at
-# runtime from Redis or a JSON source. Each definition contains a "fallback"
-# value and optional list of dependencies under "requires".
-FLAG_DEFINITIONS: Dict[str, Dict[str, Any]] = {
-    "use_kafka_events": {"fallback": False, "requires": []},
-    "use_timescaledb": {"fallback": False, "requires": []},
-    "use_analytics_microservice": {"fallback": False, "requires": []},
-}
+def get_evaluation_context() -> Dict[str, Any]:
+    """Return context for flag evaluation including user roles.
+
+    The current ``User`` from :mod:`core.auth` may expose a ``roles``
+    attribute.  These roles are included so that flag rules can target
+    specific groups.
+    """
+
+    roles: List[str] = []
+    user_id: Optional[str] = None
+    try:  # pragma: no cover - no request active during some tests
+        from flask_login import current_user  # type: ignore
+
+        if getattr(current_user, "is_authenticated", False):
+            user_id = getattr(current_user, "id", None)
+            roles = getattr(current_user, "roles", []) or []
+    except Exception:  # pragma: no cover - best effort
+        pass
+    return {"user_id": user_id, "roles": roles}
+
+
+class FeatureFlagManager:
+    """Watch a JSON file or HTTP endpoint for feature flag updates."""
 
 
 class FeatureFlagManager:
@@ -159,24 +175,39 @@ class FeatureFlagManager:
             if self._stop.wait(self.poll_interval):
                 break
 
-    # ------------------------------------------------------------------
-    def is_enabled(self, name: str, default: bool = False) -> bool:
+    def is_enabled(
+        self, name: str, default: bool = False, context: Dict[str, Any] | None = None
+    ) -> bool:
         """Return True if *name* flag is enabled."""
+        ctx = context or get_evaluation_context()
+        logger.debug("Evaluating flag %s with context %s", name, ctx)
+        return self._flags.get(name, default)
+
+    def set_flag(self, name: str, value: bool) -> None:
+        """Create or update a flag and persist it."""
+        self._flags[name] = bool(value)
+        self._persist_flags()
+
+    def delete_flag(self, name: str) -> bool:
+        """Delete *name* flag.  Returns ``True`` if removed."""
+        removed = self._flags.pop(name, None) is not None
+        if removed:
+            self._persist_flags()
+        return removed
+
+    def _persist_flags(self) -> None:
+        """Persist current flags to the JSON source if possible."""
+        if self.source.startswith("http://") or self.source.startswith("https://"):
+            return
+        try:
+            path = Path(self.source)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(self._flags, fh)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Failed to persist flags to %s: %s", self.source, exc)
 
 
-        if self._fallback_mode and not self._warned_fallback:
-            logger.warning("FeatureFlagManager operating in fallback mode")
-            self._warned_fallback = True
-
-        if name in self._flags:
-            return self._flags[name]
-
-        definition = self._definitions.get(name)
-        if definition is not None:
-            return bool(definition.get("fallback", default))
-        return default
-
-    # ------------------------------------------------------------------
     def register_callback(self, cb: Callable[[Dict[str, bool]], Any]) -> None:
         """Register *cb* to be called when flags change."""
         self._callbacks.append(cb)

@@ -55,44 +55,18 @@ if feature_flags.is_enabled("use_timescaledb"):
 Callbacks can be registered with `register_callback` to respond to
 updates.
 
-## REST API
+## Managing Flags via API
 
-Feature flags can also be managed via the dashboard's REST API.
+Administrative clients may modify flags through HTTP endpoints. These
+operations require the `feature_admin` role, which must be supplied via
+the `X-Roles` header.
 
-List all flags:
-
-```bash
-curl -H "X-Roles: user" http://localhost:8000/v1/feature-flags
+```
+GET    /v1/flags             # list all flags
+GET    /v1/flags/<name>      # retrieve a single flag
+PUT    /v1/flags/<name>      # create or update a flag
+DELETE /v1/flags/<name>      # remove a flag
 ```
 
-Retrieve a single flag:
+Only users with the `feature_admin` role can call these endpoints.
 
-```bash
-curl -H "X-Roles: user" http://localhost:8000/v1/feature-flags/use_timescaledb
-```
-
-Create or update a flag (requires the `admin` role):
-
-```bash
-curl -X POST -H "X-Roles: admin" -H "Content-Type: application/json" \
-  -d '{"name": "new_feature", "enabled": true}' \
-  http://localhost:8000/v1/feature-flags
-```
-
-Delete a flag:
-
-```bash
-curl -X DELETE -H "X-Roles: admin" \
-  http://localhost:8000/v1/feature-flags/new_feature
-```
-
-## CLI Usage
-
-The repository provides a small CLI for interacting with the feature
-flag API:
-
-```bash
-python cli/feature_flags.py list --roles user
-python cli/feature_flags.py create my_flag --enabled --roles admin
-python cli/feature_flags.py delete my_flag --roles admin
-```
