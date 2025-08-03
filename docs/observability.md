@@ -42,15 +42,16 @@ With these variables set, a log line looks similar to the following:
 
 ## Viewing Traces
 
-1. Launch the Jaeger all-in-one image (already included in
+1. Launch the Jaeger all-in-one image or a Zipkin server (both included in
    `docker-compose.dev.yml`):
    ```bash
-   docker-compose -f docker-compose.dev.yml up jaeger
+   docker-compose -f docker-compose.dev.yml up jaeger # or zipkin
    ```
-2. Open the Jaeger UI at [http://localhost:16686](http://localhost:16686) and
-   select the desired service from the dropdown.
-3. Spans from all services will appear when the `JAEGER_ENDPOINT` environment
-   variable points to the collector (defaults to
-   `http://localhost:14268/api/traces`).
+2. Open the Jaeger UI at [http://localhost:16686](http://localhost:16686) or the
+   Zipkin UI at [http://localhost:9411](http://localhost:9411) and select the
+   desired service.
+3. Spans from all services will appear when `TRACING_EXPORTER` is set to
+   `jaeger` or `zipkin` and the matching `JAEGER_ENDPOINT` or `ZIPKIN_ENDPOINT`
+   points to the collector (defaults to the standard localhost ports).
 
 This setup lets you correlate logs with traces to debug issues across services.

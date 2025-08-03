@@ -236,6 +236,12 @@ opentelemetry-exporter-jaeger-proto-grpc==1.21.0
     # via opentelemetry-exporter-jaeger
 opentelemetry-exporter-jaeger-thrift==1.21.0
     # via opentelemetry-exporter-jaeger
+opentelemetry-exporter-zipkin==1.21.0
+    # via -r requirements.txt
+opentelemetry-exporter-zipkin-json==1.21.0
+    # via opentelemetry-exporter-zipkin
+opentelemetry-exporter-zipkin-proto-http==1.21.0
+    # via opentelemetry-exporter-zipkin
 opentelemetry-sdk==1.35.0
     # via
     #   -r requirements.txt

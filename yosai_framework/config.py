@@ -17,6 +17,7 @@ class ServiceConfig:
     log_level: str = "INFO"
     metrics_addr: str = ""
     tracing_endpoint: str = ""
+    tracing_exporter: str = "jaeger"
     enable_profiling: bool = False
 
 
@@ -40,6 +41,7 @@ def load_config(path: str) -> ServiceConfig:
             log_level=cfg.log_level,
             metrics_addr=cfg.metrics_addr,
             tracing_endpoint=cfg.tracing_endpoint,
+            tracing_exporter=cfg.tracing_exporter,
         )
     )
     if errors:

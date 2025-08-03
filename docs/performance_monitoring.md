@@ -204,10 +204,12 @@ Adjust the `elasticsearch` output section if you have a different destination.
 
 ### Distributed Tracing
 
-All services export OpenTelemetry traces to Jaeger. Set the `JAEGER_ENDPOINT`
-environment variable to the collector URL (`http://localhost:14268/api/traces`
-by default). Invoke `init_tracing("analytics-microservice")` during startup of
-the analytics microservice so spans are reported correctly.
+All services export OpenTelemetry traces to Jaeger or Zipkin. Choose the backend
+with the `TRACING_EXPORTER` environment variable (`jaeger` by default) and set
+`JAEGER_ENDPOINT` or `ZIPKIN_ENDPOINT` to the collector URL (defaults are
+`http://localhost:14268/api/traces` and `http://localhost:9411/api/v2/spans`).
+Invoke `init_tracing("analytics-microservice")` during startup so spans are
+reported correctly.
 
 See [Observability Guide](observability.md) for instructions on viewing logs and traces.
 

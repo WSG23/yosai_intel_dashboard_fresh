@@ -10,6 +10,7 @@ class YosaiConfig:
     log_level: str = "INFO"
     metrics_addr: str = ""
     tracing_endpoint: str = ""
+    tracing_exporter: str = "jaeger"
 
 
 class ConfigValidator:
@@ -40,6 +41,9 @@ class ConfigValidator:
             ("http://", "https://")
         ):
             errors.append("tracing_endpoint must start with http:// or https://")
+
+        if cfg.tracing_exporter.lower() not in {"jaeger", "zipkin"}:
+            errors.append("tracing_exporter must be 'jaeger' or 'zipkin'")
 
         if cfg.metrics_addr and cfg.metrics_addr == cfg.tracing_endpoint:
             errors.append("metrics_addr and tracing_endpoint must differ")
