@@ -14,69 +14,15 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import validation.security_validator as security_validator_module
-from monitoring.anomaly_detector import AnomalyDetector
+# Import the high-level ``SecurityValidator`` used across the application.
+# This module keeps no internal validation logic and instead delegates to
+# :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.src.core.base_model import BaseModel
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
-
-
-# Import the high-level ``SecurityValidator`` used across the application.
-# This module keeps no internal validation logic and instead delegates to
-# :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
-security_validator_module.redis_client = None
-
-try:  # Optional during unit tests
-    from yosai_intel_dashboard.src.core.domain.entities.access_events import (
-        AccessEventModel,
-    )
-except Exception:  # pragma: no cover - model may be unavailable
-    AccessEventModel = None
-
-# Reuse a single validator instance for lightweight string sanitization across
-# the application.  The validator implements the heavy lifting in
-# ``validation.security_validator.SecurityValidator``; this helper simply
-# delegates to it so callers don't need to instantiate or import the class
-# directly.
-_INPUT_VALIDATOR: SecurityValidator | None = None
-
-
-def validate_user_input(value: str, field_name: str = "input") -> str:
-    """Return a sanitized version of ``value``.
-
-    Parameters
-    ----------
-    value:
-        User supplied string to validate.
-    field_name:
-        Optional identifier used for logging context.
-
-    Raises
-    ------
-    validation.security_validator.ValidationError
-        If the underlying validator determines the value is unsafe.
-
-    Returns
-    -------
-    str
-        Sanitized representation suitable for downstream processing.
-    """
-
-    global _INPUT_VALIDATOR
-    if _INPUT_VALIDATOR is None:
-        # ``SecurityValidator`` optionally relies on a Redis client for rate
-        # limiting.  During tests this client may not be configured, so ensure
-        # the module has a ``redis_client`` attribute set to ``None`` before
-        # instantiation to avoid ``NameError``.
-        import validation.security_validator as _sv  # local import for patching
-
-        if not hasattr(_sv, "redis_client"):
-            _sv.redis_client = None  # type: ignore[attr-defined]
-        _INPUT_VALIDATOR = _sv.SecurityValidator()
-    result = _INPUT_VALIDATOR.validate_input(value, field_name)
-    return result.get("sanitized", value)
+main
 
 
 class SecurityLevel(Enum):
@@ -109,6 +55,89 @@ class SecurityEvent:
     user_id: Optional[str]
     details: Dict[str, Any]
     blocked: bool = False
+
+
+class RateLimiter:
+    """Rate limiting to prevent abuse"""
+
+    def __init__(
+        self,
+        max_requests: int = dynamic_config.security.rate_limit_requests,
+        window_minutes: int = dynamic_config.security.rate_limit_window_minutes,
+    ):
+        self.max_requests = max_requests
+        self.window_seconds = window_minutes * 60
+        self.requests: Dict[str, List[float]] = {}
+        self.blocked_ips: Dict[str, float] = {}
+        self.logger = logging.getLogger(__name__)
+
+    def is_allowed(
+        self, identifier: str, source_ip: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Check if request is allowed"""
+        current_time = time.time()
+
+        # Check if IP is blocked
+        if source_ip and source_ip in self.blocked_ips:
+            if current_time < self.blocked_ips[source_ip]:
+                retry_after = self.blocked_ips[source_ip] - current_time
+                return {
+                    "allowed": False,
+                    "reason": "IP temporarily blocked",
+                    "retry_after": retry_after,
+                    "limit": self.max_requests,
+                    "remaining": 0,
+                    "reset": self.blocked_ips[source_ip],
+                }
+            # Unblock IP when the timeout has passed
+            del self.blocked_ips[source_ip]
+
+        # Initialize or clean old requests
+        if identifier not in self.requests:
+            self.requests[identifier] = []
+
+        # Remove old requests outside the window
+        cutoff_time = current_time - self.window_seconds
+        self.requests[identifier] = [
+            req_time for req_time in self.requests[identifier] if req_time > cutoff_time
+        ]
+
+        requests = self.requests[identifier]
+        if requests:
+            reset_time = requests[0] + self.window_seconds
+        else:
+            reset_time = current_time + self.window_seconds
+
+        # Check if under limit
+        if len(requests) >= self.max_requests:
+            if source_ip:
+                self.blocked_ips[source_ip] = current_time + (self.window_seconds * 2)
+                self.logger.warning(f"Rate limit exceeded, blocking IP: {source_ip}")
+            retry_after = reset_time - current_time
+            return {
+                "allowed": False,
+                "reason": "Rate limit exceeded",
+                "requests_in_window": len(requests),
+                "max_requests": self.max_requests,
+                "window_seconds": self.window_seconds,
+                "limit": self.max_requests,
+                "remaining": 0,
+                "reset": reset_time,
+                "retry_after": retry_after,
+            }
+
+        # Record this request
+        requests.append(current_time)
+        reset_time = requests[0] + self.window_seconds
+        remaining = self.max_requests - len(requests)
+
+        return {
+            "allowed": True,
+            "requests_in_window": len(requests),
+            "remaining": remaining,
+            "limit": self.max_requests,
+            "reset": reset_time,
+        }
 
 
 class SecurityAuditor(BaseModel):
@@ -317,16 +346,29 @@ def validate_input_decorator(field_mapping: Dict[str, str] = None):
 
 
 def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
-    """Decorator to apply rate limiting"""
+    """Decorator to apply rate limiting with response headers."""
     limiter = RateLimiter(max_requests, window_minutes)
 
     def decorator(func):
-        def wrapper(*args, **kwargs):
-            # Use function name as identifier
-            identifier = f"{func.__module__}.{func.__name__}"
+        from functools import wraps
 
-            # Check rate limit
-            result = limiter.is_allowed(identifier)
+        from flask import jsonify, make_response, request
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            auth = request.headers.get("Authorization", "")
+            identifier = (
+                auth.split(" ", 1)[1]
+                if auth.startswith("Bearer ")
+                else request.remote_addr
+            )
+            result = limiter.is_allowed(identifier or "anonymous", request.remote_addr)
+            headers = {
+                "X-RateLimit-Limit": str(result.get("limit", max_requests)),
+                "X-RateLimit-Remaining": str(result.get("remaining", 0)),
+                "X-RateLimit-Reset": str(int(result.get("reset", 0))),
+            }
+
             if not result["allowed"]:
                 security_auditor.log_security_event(
                     "rate_limit_exceeded",
@@ -334,9 +376,19 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
                     {"function": func.__name__, "reason": result["reason"]},
                     blocked=True,
                 )
-                raise Exception(f"Rate limit exceeded: {result['reason']}")
+                retry = result.get("retry_after")
+                if retry is not None:
+                    headers["Retry-After"] = str(int(retry))
+                response = jsonify({"detail": "rate limit exceeded"})
+                response.status_code = 429
+                for key, value in headers.items():
+                    response.headers[key] = value
+                return response
 
-            return func(*args, **kwargs)
+            response = make_response(func(*args, **kwargs))
+            for key, value in headers.items():
+                response.headers[key] = value
+            return response
 
         return wrapper
 
@@ -347,7 +399,8 @@ def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
         from security.validation_middleware import ValidationMiddleware
-        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (  # noqa: E501
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+
             TrulyUnifiedCallbacks,
         )
     except Exception:
