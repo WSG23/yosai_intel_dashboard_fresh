@@ -4,10 +4,12 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import aiofiles
 import aiohttp
+
+from .flag_evaluator import FlagEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +20,9 @@ class FeatureFlagManager:
     def __init__(self, source: str | None = None, poll_interval: float = 5.0) -> None:
         self.source = source or os.getenv("FEATURE_FLAG_SOURCE", "feature_flags.json")
         self.poll_interval = poll_interval
-        self._flags: Dict[str, bool] = {}
-        self._callbacks: List[Callable[[Dict[str, bool]], Any]] = []
+        self._flags: Dict[str, Any] = {}
+        self._evaluator = FlagEvaluator(self._flags)
+        self._callbacks: List[Callable[[Dict[str, Any]], Any]] = []
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._last_mtime: float | None = None
@@ -33,7 +36,6 @@ class FeatureFlagManager:
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(self.source, timeout=2) as resp:
-
                         resp.raise_for_status()
                         data = await resp.json()
             except Exception as exc:  # pragma: no cover - network failures
@@ -56,9 +58,10 @@ class FeatureFlagManager:
                 return
 
         if isinstance(data, dict):
-            new_flags = {k: bool(v) for k, v in data.items()}
+            new_flags = data
             if new_flags != self._flags:
                 self._flags = new_flags
+                self._evaluator = FlagEvaluator(self._flags)
                 for cb in list(self._callbacks):
                     try:
                         cb(self._flags.copy())
@@ -90,17 +93,31 @@ class FeatureFlagManager:
             if self._stop.wait(self.poll_interval):
                 break
 
-    def is_enabled(self, name: str, default: bool = False) -> bool:
-        """Return True if *name* flag is enabled."""
-        return self._flags.get(name, default)
+    def is_enabled(
+        self,
+        name: str,
+        default: bool | str = False,
+        *,
+        user_id: Optional[str] = None,
+    ) -> bool | str:
+        """Return flag value or variant for *name*.
 
-    def register_callback(self, cb: Callable[[Dict[str, bool]], Any]) -> None:
+        If ``user_id`` is provided, targeted and percentage rules are evaluated.
+        """
+        result = self._evaluator.evaluate(name, user_id)
+        if result is None:
+            return default
+        return result
+
+    def register_callback(self, cb: Callable[[Dict[str, Any]], Any]) -> None:
         """Register *cb* to be called when flags change."""
         self._callbacks.append(cb)
 
-    def get_all(self) -> Dict[str, bool]:
+    def get_all(self) -> Dict[str, Any]:
         return self._flags.copy()
 
 
 # Global feature flag manager
 feature_flags = FeatureFlagManager()
+
+__all__ = ["FeatureFlagManager", "feature_flags", "FlagEvaluator"]
