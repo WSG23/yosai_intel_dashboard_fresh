@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from typing import Any, Callable, Dict
 
 from .app_config import UploadConfig
@@ -11,6 +12,7 @@ from .constants import (
     CSSConstants,
     DatabaseConstants,
     PerformanceConstants,
+    RateLimitConfig,
     SecurityConstants,
     StreamingConstants,
     UploadLimits,
@@ -146,6 +148,23 @@ class DynamicConfigManager(BaseConfigLoader):
                     else:
                         logger.warning("Invalid database connection_timeout: %r", value)
 
+                security_config = config_data.get("security", {})
+                rate_limits_cfg = security_config.get("rate_limits", {})
+                for tier, values in rate_limits_cfg.items():
+                    if not isinstance(values, dict):
+                        logger.warning("Invalid rate limit config for %s", tier)
+                        continue
+                    self.security.rate_limits[tier] = RateLimitConfig(
+                        int(values.get("requests", self.security.rate_limit_requests)),
+                        int(
+                            values.get(
+                                "window_minutes",
+                                self.security.rate_limit_window_minutes,
+                            )
+                        ),
+                        int(values.get("burst", 0)),
+                    )
+
         except Exception as exc:
             logging.getLogger(__name__).warning(
                 "Failed to load %s: %s", config_path, exc
@@ -162,10 +181,18 @@ class DynamicConfigManager(BaseConfigLoader):
             requests_limit = os.getenv("RATE_LIMIT_API")
         if requests_limit is not None:
             self.security.rate_limit_requests = int(requests_limit)
+            self.security.rate_limits.setdefault(
+                "default",
+                RateLimitConfig(self.security.rate_limit_requests, self.security.rate_limit_window_minutes, 0),
+            ).requests = int(requests_limit)
 
         rate_limit_window = os.getenv("RATE_LIMIT_WINDOW")
         if rate_limit_window is not None:
             self.security.rate_limit_window_minutes = int(rate_limit_window)
+            self.security.rate_limits.setdefault(
+                "default",
+                RateLimitConfig(self.security.rate_limit_requests, self.security.rate_limit_window_minutes, 0),
+            ).window_minutes = int(rate_limit_window)
 
         max_upload = os.getenv("MAX_UPLOAD_MB")
         if max_upload is not None:
@@ -300,10 +327,62 @@ class DynamicConfigManager(BaseConfigLoader):
         if password:
             self.streaming.password = password
 
-    def get_rate_limit(self) -> Dict[str, int]:
+        for key, val in os.environ.items():
+            match = re.match(r"RATE_LIMIT_(.+)_REQUESTS$", key)
+            if not match:
+                continue
+            tier = match.group(1).lower()
+            rl = self.security.rate_limits.setdefault(
+                tier,
+                RateLimitConfig(
+                    self.security.rate_limit_requests,
+                    self.security.rate_limit_window_minutes,
+                    0,
+                ),
+            )
+            try:
+                rl.requests = int(val)
+            except ValueError:
+                logger.warning("Invalid requests limit for tier %s: %s", tier, val)
+                continue
+            if tier == "default":
+                self.security.rate_limit_requests = rl.requests
+            win_env = os.getenv(f"RATE_LIMIT_{tier.upper()}_WINDOW")
+            if win_env is not None:
+                rl.window_minutes = int(win_env)
+                if tier == "default":
+                    self.security.rate_limit_window_minutes = rl.window_minutes
+            burst_env = os.getenv(f"RATE_LIMIT_{tier.upper()}_BURST")
+            if burst_env is not None:
+                rl.burst = int(burst_env)
+        for tier, rl in self.security.rate_limits.items():
+            prefix = f"RATE_LIMIT_{tier.upper()}_"
+            if (req := os.getenv(f"{prefix}REQUESTS")) is not None:
+                rl.requests = int(req)
+                if tier == "default":
+                    self.security.rate_limit_requests = rl.requests
+            if (win := os.getenv(f"{prefix}WINDOW")) is not None:
+                rl.window_minutes = int(win)
+                if tier == "default":
+                    self.security.rate_limit_window_minutes = rl.window_minutes
+            if (burst := os.getenv(f"{prefix}BURST")) is not None:
+                rl.burst = int(burst)
+
+    def get_rate_limit(self, tier: str = "default") -> Dict[str, int]:
+        rl = self.security.rate_limits.get(tier)
+        if rl is None:
+            rl = self.security.rate_limits.get(
+                "default",
+                RateLimitConfig(
+                    self.security.rate_limit_requests,
+                    self.security.rate_limit_window_minutes,
+                    0,
+                ),
+            )
         return {
-            "requests": self.security.rate_limit_requests,
-            "window_minutes": self.security.rate_limit_window_minutes,
+            "limit": rl.requests,
+            "window": rl.window_minutes,
+            "burst": rl.burst,
         }
 
     def get_security_level(self) -> int:
@@ -373,6 +452,10 @@ class ConfigHelper:
     @staticmethod
     def upload_chunk_size() -> int:
         return dynamic_config.get_upload_chunk_size()
+
+    @staticmethod
+    def rate_limit(tier: str = "default") -> Dict[str, int]:
+        return dynamic_config.get_rate_limit(tier)
 
 
 def diagnose_upload_config() -> None:

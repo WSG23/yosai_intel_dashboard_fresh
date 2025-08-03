@@ -92,14 +92,14 @@ class FeatureFlagManager:
                         data = await resp.json()
             except Exception as exc:  # pragma: no cover - network failures
                 logger.warning("Failed to fetch flags from %s: %s", self.source, exc)
-                return
+                return self._flags.copy()
         else:
             path = Path(self.source)
             if not path.is_file():
-                return
+                return self._flags.copy()
             mtime = path.stat().st_mtime
             if self._last_mtime and mtime == self._last_mtime:
-                return
+                return self._flags.copy()
             self._last_mtime = mtime
             try:
                 async with aiofiles.open(path) as fh:
@@ -107,7 +107,7 @@ class FeatureFlagManager:
                     data = json.loads(content)
             except Exception as exc:  # pragma: no cover - bad file
                 logger.warning("Failed to read %s: %s", path, exc)
-                return
+                return self._flags.copy()
 
         if isinstance(data, dict):
             for name, value in data.items():
@@ -129,9 +129,11 @@ class FeatureFlagManager:
 
     # ------------------------------------------------------------------
 
-    def load_flags(self) -> None:
+        return self._flags.copy()
+
+    def load_flags(self) -> Dict[str, bool]:
         """Synchronous wrapper for :meth:`load_flags_async`."""
-        asyncio.run(self.load_flags_async())
+        return asyncio.run(self.load_flags_async())
 
     # ------------------------------------------------------------------
     def start(self) -> None:

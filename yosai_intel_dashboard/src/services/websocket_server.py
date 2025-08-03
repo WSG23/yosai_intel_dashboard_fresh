@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+import gzip
 import json
 import logging
 import threading
 from collections import deque
-from typing import Optional, Set, Deque
-
+from typing import Deque, Optional, Set
 
 from websockets import WebSocketServerProtocol, serve
 
-from yosai_intel_dashboard.src.core.events import EventBus
 from src.websocket import metrics as websocket_metrics
+from yosai_intel_dashboard.src.core.events import EventBus
 
 from .websocket_pool import WebSocketConnectionPool
 
@@ -37,6 +37,11 @@ class AnalyticsWebSocketServer:
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
 
+        self.pool = WebSocketConnectionPool()
+        self._queue: Deque[dict] = deque(maxlen=queue_size or None)
+        self.compression_threshold = compression_threshold
+
+
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -49,7 +54,10 @@ class AnalyticsWebSocketServer:
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
+        await self.pool.acquire(websocket)
         self.clients.add(websocket)
+        websocket_metrics.record_connection()
+
         if self._queue:
             queued = list(self._queue)
             self._queue.clear()
@@ -64,6 +72,7 @@ class AnalyticsWebSocketServer:
             logger.debug("WebSocket connection error: %s", exc)
         finally:
             await self.pool.release(websocket)
+            self.clients.discard(websocket)
 
     async def _serve(self) -> None:
         self._loop = asyncio.get_running_loop()
@@ -82,6 +91,7 @@ class AnalyticsWebSocketServer:
                     {"client": id(ws), "status": "alive"},
                 )
         except asyncio.TimeoutError:
+            websocket_metrics.record_ping_failure()
             if self.event_bus:
                 self.event_bus.publish(
                     "websocket_heartbeat",
@@ -110,7 +120,7 @@ class AnalyticsWebSocketServer:
             message = json.dumps(data)
             if self._loop is not None:
                 asyncio.run_coroutine_threadsafe(
-                    self._broadcast_async(message), self._loop
+                    self.pool.broadcast(message), self._loop
                 )
         else:
             self._queue.append(data)
