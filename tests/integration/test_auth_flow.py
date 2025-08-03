@@ -69,6 +69,7 @@ if not hasattr(werkzeug_urls, "url_encode"):
     werkzeug_urls.url_encode = lambda *a, **k: ""
 
 from yosai_intel_dashboard.src.core import auth  # noqa: E402
+from yosai_intel_dashboard.src.core.session_store import InMemorySessionStore  # noqa: E402
 
 
 @pytest.fixture
@@ -85,7 +86,7 @@ def auth_app(monkeypatch):
             }.get(key)
 
     monkeypatch.setattr(auth, "SecretsManager", DummySecretsManager)
-    monkeypatch.setattr(auth, "_users", {})
+    monkeypatch.setattr(auth, "session_store", InMemorySessionStore())
     monkeypatch.setattr(auth, "_apply_session_timeout", lambda user: None)
 
     class DummyAuth0:
