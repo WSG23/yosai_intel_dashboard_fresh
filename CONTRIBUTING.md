@@ -51,6 +51,18 @@ bandit -r .
 
 Run `isort .` to automatically sort imports before committing changes.
 
+### Database Query Helpers
+
+When executing SQL, always acquire connections using the factory context manager:
+
+```python
+with factory.get_connection() as conn:
+    execute_query(conn, sql)
+```
+
+Direct calls like `execute_query(factory.get_connection(), ...)` are flagged by
+a custom linter that runs via `make lint` and `pytest`.
+
 See [docs/test_architecture.md](docs/test_architecture.md) and
 [docs/testing_with_protocols.md](docs/testing_with_protocols.md) for details on
 the testing protocols, container builder and available test doubles.

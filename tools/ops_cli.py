@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 import subprocess
 import sys
@@ -118,6 +120,7 @@ def format():
 def lint():
     """Run flake8 lint checks."""
     run(["flake8", "."])
+    run([sys.executable, "tools/check_execute_query.py"])
 
 
 @cli.command()
