@@ -63,11 +63,8 @@ async def health_check() -> bool:
     if _pool is None:
         return False
     try:
-        conn = await _pool.acquire()
-        try:
+        async with _pool.acquire() as conn:
             await conn.execute("SELECT 1")
-        finally:
-            await _pool.release(conn)
         return True
     except Exception:
         return False
