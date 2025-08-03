@@ -6,12 +6,16 @@ import asyncio
 import json
 import logging
 import time
+import weakref
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Optional
 
-import redis.asyncio as redis
+import redis.asyncio as aioredis
+
+# expose async redis under original name for backward compatibility
+redis = aioredis
 
 from yosai_intel_dashboard.src.infrastructure.cache.cache_manager import CacheConfig
 
@@ -44,7 +48,7 @@ class IntelligentMultiLevelCache:
         self.default_ttl = getattr(cache_config, "timeout_seconds", 300)
         self.disk_path = Path(getattr(cache_config, "disk_path", "/tmp/yosai_cache"))
         self.memory_limit = 1000
-        self._redis: Optional[redis.Redis] = None
+        self._redis: Optional[aioredis.Redis] = None
         self._memory: Dict[str, CacheEntry] = {}
         self._locks: Dict[str, asyncio.Lock] = {}
 
@@ -53,7 +57,7 @@ class IntelligentMultiLevelCache:
         """Create Redis connection and ensure disk directory exists."""
         self.disk_path.mkdir(parents=True, exist_ok=True)
         if self._redis is None:
-            self._redis = redis.Redis(
+            self._redis = aioredis.Redis(
                 host=getattr(self.config, "host", "localhost"),
                 port=getattr(self.config, "port", 6379),
                 db=getattr(self.config, "database", 0),
@@ -82,7 +86,15 @@ class IntelligentMultiLevelCache:
 
     # ------------------------------------------------------------------
     def _record_memory(self, key: str, value: Any, expiry: Optional[float]) -> None:
-        self._memory[key] = CacheEntry(value=value, expiry=expiry, level=CacheLevel.L1)
+        def _remove(_ref, *, k=key) -> None:
+            self._memory.pop(k, None)
+
+        try:
+            stored: Any = weakref.ref(value, _remove)
+        except TypeError:
+            stored = value
+
+        self._memory[key] = CacheEntry(value=stored, expiry=expiry, level=CacheLevel.L1)
         if len(self._memory) > self.memory_limit:
             oldest = min(self._memory, key=lambda k: self._memory[k].expiry or 0)
             del self._memory[oldest]
@@ -178,7 +190,15 @@ class IntelligentMultiLevelCache:
             if entry.expiry and now > entry.expiry:
                 del self._memory[key]
             else:
-                return entry.value
+                value = entry.value
+                if isinstance(value, weakref.ReferenceType):
+                    value = value()
+                    if value is None:
+                        self._memory.pop(key, None)
+                    else:
+                        return value
+                else:
+                    return value
 
         if self._redis is not None:
             try:
