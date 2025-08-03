@@ -30,6 +30,7 @@ from psycopg2.extras import DictCursor, execute_batch
 from tqdm import tqdm
 
 from database.secure_exec import execute_command, execute_query
+from infrastructure.database.secure_query import SecureQueryBuilder
 
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"
@@ -56,38 +57,47 @@ def connect_with_retry(dsn: str, retries: int = 5, delay: float = 1.0) -> connec
 
 
 def ensure_checkpoint_table(cur: cursor) -> None:
-    execute_command(
-        cur,
+    builder = SecureQueryBuilder(allowed_tables={CHECKPOINT_TABLE})
+    table = builder.table(CHECKPOINT_TABLE)
+    sql, _ = builder.build(
         f"""
-        CREATE TABLE IF NOT EXISTS {CHECKPOINT_TABLE} (
+        CREATE TABLE IF NOT EXISTS {table} (
             table_name TEXT PRIMARY KEY,
             last_id BIGINT
         )
         """,
+        logger=LOG,
     )
+    execute_command(cur, sql)
 
 
 def get_checkpoint(cur: cursor, table: str) -> int:
-    execute_query(
-        cur,
-        f"SELECT last_id FROM {CHECKPOINT_TABLE} WHERE table_name = %s",
+    builder = SecureQueryBuilder(allowed_tables={CHECKPOINT_TABLE})
+    cp_table = builder.table(CHECKPOINT_TABLE)
+    sql, params = builder.build(
+        f"SELECT last_id FROM {cp_table} WHERE table_name = %s",
         (table,),
+        logger=LOG,
     )
+    execute_query(cur, sql, params)
     row = cur.fetchone()
     return row[0] if row else 0
 
 
 def update_checkpoint(cur: cursor, table: str, last_id: int) -> None:
-    execute_command(
-        cur,
+    builder = SecureQueryBuilder(allowed_tables={CHECKPOINT_TABLE})
+    cp_table = builder.table(CHECKPOINT_TABLE)
+    sql, params = builder.build(
         f"""
-        INSERT INTO {CHECKPOINT_TABLE} (table_name, last_id)
+        INSERT INTO {cp_table} (table_name, last_id)
         VALUES (%s, %s)
         ON CONFLICT (table_name)
         DO UPDATE SET last_id = EXCLUDED.last_id
         """,
         (table, last_id),
+        logger=LOG,
     )
+    execute_command(cur, sql, params)
 
 
 def rollback_table(conn: connection, table: str) -> None:
@@ -95,12 +105,17 @@ def rollback_table(conn: connection, table: str) -> None:
     with conn.cursor() as cur:
         ensure_checkpoint_table(cur)
         LOG.info("Rolling back table %s", table)
-        execute_command(cur, f"DELETE FROM {table}")
-        execute_command(
-            cur,
-            f"DELETE FROM {CHECKPOINT_TABLE} WHERE table_name = %s",
+        builder = SecureQueryBuilder(allowed_tables={table, CHECKPOINT_TABLE})
+        tbl = builder.table(table)
+        sql_del, _ = builder.build(f"DELETE FROM {tbl}", logger=LOG)
+        execute_command(cur, sql_del)
+        cp_tbl = builder.table(CHECKPOINT_TABLE)
+        sql_cp, params = builder.build(
+            f"DELETE FROM {cp_tbl} WHERE table_name = %s",
             (table,),
+            logger=LOG,
         )
+        execute_command(cur, sql_cp, params)
     conn.commit()
 
 
@@ -360,11 +375,14 @@ def setup_timescale(conn: connection) -> None:
 
 
 def fetch_chunk(cur: cursor, table: str, start: int, size: int) -> List[dict[str, Any]]:
-    execute_query(
-        cur,
-        f"SELECT * FROM {table} WHERE id > %s ORDER BY id ASC LIMIT %s",
+    builder = SecureQueryBuilder(allowed_tables={table})
+    tbl = builder.table(table)
+    sql, params = builder.build(
+        f"SELECT * FROM {tbl} WHERE id > %s ORDER BY id ASC LIMIT %s",
         (start, size),
+        logger=LOG,
     )
+    execute_query(cur, sql, params)
     return cast(List[dict[str, Any]], cur.fetchall())
 
 
@@ -373,10 +391,17 @@ def insert_rows(cur: cursor, table: str, rows: List[dict[str, Any]]) -> None:
         return
     columns = rows[0].keys()
     values = (tuple(row[col] for col in columns) for row in rows)
-    cols = ",".join(columns)
+    builder = SecureQueryBuilder(
+        allowed_tables={table}, allowed_columns=set(columns)
+    )
+    tbl = builder.table(table)
+    cols = ",".join(builder.column(c) for c in columns)
     placeholders = ",".join("%s" for _ in columns)
-    query = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
-    execute_batch(cur, query, values)
+    sql, _ = builder.build(
+        f"INSERT INTO {tbl} ({cols}) VALUES ({placeholders})",
+        logger=LOG,
+    )
+    execute_batch(cur, sql, values)
 
 
 def validate_chunk(
@@ -387,11 +412,14 @@ def validate_chunk(
     source_checksum: str,
     expected_count: int,
 ) -> None:
-    execute_query(
-        target_cur,
-        f"SELECT * FROM {table} WHERE id > %s AND id <= %s ORDER BY id ASC",
+    builder = SecureQueryBuilder(allowed_tables={table})
+    tbl = builder.table(table)
+    sql, params = builder.build(
+        f"SELECT * FROM {tbl} WHERE id > %s AND id <= %s ORDER BY id ASC",
         (start_id, end_id),
+        logger=LOG,
     )
+    execute_query(target_cur, sql, params)
     rows = target_cur.fetchall()
     if len(rows) != expected_count:
         raise ValueError(
@@ -421,7 +449,12 @@ def migrate_table(
         last_id = get_checkpoint(tgt, table) if resume else 0
         LOG.info("Starting migration for %s at id %s", table, last_id)
         if table == "access_events":
-            execute_query(src, f"SELECT COUNT(*) FROM {table}")
+            builder = SecureQueryBuilder(allowed_tables={table})
+            tbl = builder.table(table)
+            count_sql, _ = builder.build(
+                f"SELECT COUNT(*) FROM {tbl}", logger=LOG
+            )
+            execute_query(src, count_sql)
             total = src.fetchone()[0]
             pbar = tqdm(total=total - last_id, desc=table)
         else:

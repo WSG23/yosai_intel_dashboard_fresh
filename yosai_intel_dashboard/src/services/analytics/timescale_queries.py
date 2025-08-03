@@ -6,11 +6,15 @@ from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
 import asyncpg
+import logging
 from cachetools import LRUCache
 from sqlalchemy import text
 from sqlalchemy.sql import TextClause
 
+from infrastructure.database.secure_query import SecureQueryBuilder
 from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
+
+LOG = logging.getLogger(__name__)
 
 # Cache for compiled query plans
 _QUERY_PLAN_CACHE: LRUCache[Tuple[Any, ...], TextClause] = LRUCache(maxsize=64)
@@ -35,18 +39,24 @@ def build_time_bucket_query(
     extra_filters: str | None = None,
 ) -> TextClause:
     """Return a time-bucketed aggregation query as :class:`TextClause`."""
+    builder = SecureQueryBuilder(
+        allowed_tables={table}, allowed_columns={time_column}
+    )
+    table_q = builder.table(table)
+    time_col = builder.column(time_column)
     filters = f" AND {extra_filters}" if extra_filters else ""
-    query = text(
+    query_str = (
         f"""
-        SELECT time_bucket('{bucket_size}', {time_column}) AS bucket,
+        SELECT time_bucket('{bucket_size}', {time_col}) AS bucket,
                {metric} AS value
-        FROM {table}
-        WHERE {time_column} >= $1 AND {time_column} < $2{filters}
+        FROM {table_q}
+        WHERE {time_col} >= $1 AND {time_col} < $2{filters}
         GROUP BY bucket
         ORDER BY bucket
         """
     )
-    return query
+    builder.build(query_str, logger=LOG)
+    return text(query_str)
 
 
 @lru_cache(maxsize=64)
@@ -59,16 +69,21 @@ def build_sliding_window_query(
     extra_filters: str | None = None,
 ) -> TextClause:
     """Return a sliding window aggregation query."""
+    builder = SecureQueryBuilder(
+        allowed_tables={table}, allowed_columns={time_column}
+    )
+    table_q = builder.table(table)
+    time_col = builder.column(time_column)
     window_points = max(int(window_seconds // step_seconds), 1)
     filters = f" AND {extra_filters}" if extra_filters else ""
     inner = (
-        f"SELECT time_bucket('{step_seconds} seconds', {time_column}) AS bucket,"
+        f"SELECT time_bucket('{step_seconds} seconds', {time_col}) AS bucket,"
         f"       {metric} AS count_bucket\n"
-        f"FROM {table}\n"
-        f"WHERE {time_column} >= $1 AND {time_column} < $2{filters}\n"
+        f"FROM {table_q}\n"
+        f"WHERE {time_col} >= $1 AND {time_col} < $2{filters}\n"
         f"GROUP BY bucket"
     )
-    query = text(
+    query_str = (
         f"""
         SELECT bucket,
                SUM(count_bucket) OVER (
@@ -79,7 +94,8 @@ def build_sliding_window_query(
         ORDER BY bucket
         """
     )
-    return query
+    builder.build(query_str, logger=LOG)
+    return text(query_str)
 
 
 @monitor_query_performance()
@@ -101,7 +117,9 @@ async def fetch_time_buckets(
             bucket_size, table, metric, time_column, extra_filters
         )
         _cache_plan(key, query)
-    rows = await pool.fetch(str(query), start, end)
+    builder = SecureQueryBuilder()
+    sql, params = builder.build(str(query), (start, end), logger=LOG)
+    rows = await pool.fetch(sql, *params)
     return [dict(r) for r in rows]
 
 
@@ -133,7 +151,9 @@ async def fetch_sliding_window(
             window_seconds, step_seconds, table, metric, time_column, extra_filters
         )
         _cache_plan(key, query)
-    rows = await pool.fetch(str(query), start, end)
+    builder = SecureQueryBuilder()
+    sql, params = builder.build(str(query), (start, end), logger=LOG)
+    rows = await pool.fetch(sql, *params)
     return [dict(r) for r in rows]
 
 

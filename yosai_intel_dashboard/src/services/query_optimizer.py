@@ -7,6 +7,7 @@ import re
 from typing import Any, Dict, Iterable, List, Sequence
 
 from database.secure_exec import execute_query
+from infrastructure.database.secure_query import SecureQueryBuilder
 
 
 logger = logging.getLogger(__name__)
@@ -28,11 +29,14 @@ class QueryOptimizer:
         try:
             conn = self.connection
             name = conn.__class__.__name__
+            builder = SecureQueryBuilder()
             if name == "SQLiteConnection":
-                rows = execute_query(conn, f"EXPLAIN QUERY PLAN {query}")
+                sql, _ = builder.build(f"EXPLAIN QUERY PLAN {query}", logger=logger)
+                rows = execute_query(conn, sql)
                 return [row.get("detail", "") for row in rows]
             if name == "PostgreSQLConnection":
-                rows = execute_query(conn, f"EXPLAIN {query}")
+                sql, _ = builder.build(f"EXPLAIN {query}", logger=logger)
+                rows = execute_query(conn, sql)
                 return [row.get("QUERY PLAN", "") for row in rows]
         except Exception as exc:  # pragma: no cover - best effort
             logger.warning("Failed to analyze plan: %s", exc)
@@ -79,9 +83,15 @@ class QueryOptimizer:
             if column in line and "INDEX" in line.upper():
                 return False
         try:
-            sql = (
-                f"SELECT COUNT(DISTINCT {column}) AS distinct, COUNT(*) AS total "
-                f"FROM {table}"
+            builder = SecureQueryBuilder(
+                allowed_tables={table}, allowed_columns={column}
+            )
+            table_q = builder.table(table)
+            col_q = builder.column(column)
+            sql, _ = builder.build(
+                f"SELECT COUNT(DISTINCT {col_q}) AS distinct, COUNT(*) AS total "
+                f"FROM {table_q}",
+                logger=logger,
             )
             stats = execute_query(self.connection, sql)
             if not stats:

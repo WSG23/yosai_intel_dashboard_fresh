@@ -13,6 +13,7 @@ from prometheus_client import Gauge, start_http_server
 from psycopg2.extras import DictCursor, execute_values
 
 from database.secure_exec import execute_command, execute_query
+from infrastructure.database.secure_query import SecureQueryBuilder
 from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 LOG = logging.getLogger(__name__)
@@ -52,23 +53,30 @@ FIELDS = [
 
 
 def ensure_checkpoint(cur: DictCursor) -> None:
-    execute_command(
-        cur,
+    builder = SecureQueryBuilder(allowed_tables={CHECKPOINT_TABLE})
+    table = builder.table(CHECKPOINT_TABLE)
+    sql, _ = builder.build(
         f"""
-        CREATE TABLE IF NOT EXISTS {CHECKPOINT_TABLE} (
+        CREATE TABLE IF NOT EXISTS {table} (
             last_ts TIMESTAMPTZ PRIMARY KEY
         )
         """,
+        logger=LOG,
     )
-    execute_command(
-        cur,
-        f"INSERT INTO {CHECKPOINT_TABLE} (last_ts) VALUES (%s) ON CONFLICT DO NOTHING",
+    execute_command(cur, sql)
+    sql2, params2 = builder.build(
+        f"INSERT INTO {table} (last_ts) VALUES (%s) ON CONFLICT DO NOTHING",
         ("1970-01-01",),
+        logger=LOG,
     )
+    execute_command(cur, sql2, params2)
 
 
 def get_last_timestamp(cur: DictCursor) -> datetime:
-    execute_query(cur, f"SELECT last_ts FROM {CHECKPOINT_TABLE}")
+    builder = SecureQueryBuilder(allowed_tables={CHECKPOINT_TABLE})
+    table = builder.table(CHECKPOINT_TABLE)
+    sql, _ = builder.build(f"SELECT last_ts FROM {table}", logger=LOG)
+    execute_query(cur, sql)
     row = cur.fetchone()
     if row:
         return row[0]
@@ -76,15 +84,26 @@ def get_last_timestamp(cur: DictCursor) -> datetime:
 
 
 def update_timestamp(cur: DictCursor, ts: datetime) -> None:
-    execute_command(cur, f"UPDATE {CHECKPOINT_TABLE} SET last_ts = %s", (ts,))
+    builder = SecureQueryBuilder(allowed_tables={CHECKPOINT_TABLE})
+    table = builder.table(CHECKPOINT_TABLE)
+    sql, params = builder.build(
+        f"UPDATE {table} SET last_ts = %s", (ts,), logger=LOG
+    )
+    execute_command(cur, sql, params)
 
 
 def fetch_new_rows(cur: DictCursor, last_ts: datetime) -> list[dict[str, Any]]:
-    execute_query(
-        cur,
-        "SELECT * FROM access_events WHERE time > %s ORDER BY time ASC LIMIT 1000",
-        (last_ts,),
+    builder = SecureQueryBuilder(
+        allowed_tables={"access_events"}, allowed_columns={"time"}
     )
+    table = builder.table("access_events")
+    time_col = builder.column("time")
+    sql, params = builder.build(
+        f"SELECT * FROM {table} WHERE {time_col} > %s ORDER BY {time_col} ASC LIMIT 1000",
+        (last_ts,),
+        logger=LOG,
+    )
+    execute_query(cur, sql, params)
     return cur.fetchall()
 
 
@@ -92,12 +111,17 @@ def insert_rows(cur: DictCursor, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
     values = (tuple(row[f] for f in FIELDS) for row in rows)
-    cols = ",".join(FIELDS)
+    builder = SecureQueryBuilder(
+        allowed_tables={"access_events"}, allowed_columns=set(FIELDS)
+    )
+    table = builder.table("access_events")
+    cols = ",".join(builder.column(f) for f in FIELDS)
     placeholders = ",".join("%s" for _ in FIELDS)
     query = (
-        f"INSERT INTO access_events ({cols}) VALUES ({placeholders})"
+        f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
         " ON CONFLICT (event_id) DO NOTHING"
     )
+    builder.build(query, logger=LOG)
     execute_values(cur, query, values)
 
 

@@ -3,9 +3,13 @@ from __future__ import annotations
 from typing import AsyncIterator, List, Callable, Awaitable
 
 import asyncpg
+import logging
+from infrastructure.database.secure_query import SecureQueryBuilder
 from yosai_intel_dashboard.src.infrastructure.config.constants import MIGRATION_CHUNK_SIZE
 
 from ..framework import MigrationStrategy
+
+LOG = logging.getLogger(__name__)
 
 
 class AnalyticsMigration(MigrationStrategy):
@@ -25,16 +29,20 @@ class AnalyticsMigration(MigrationStrategy):
     async def run(self, source_pool: asyncpg.Pool) -> AsyncIterator[int]:
         start = 0
         assert self.target_pool is not None
+        builder = SecureQueryBuilder(allowed_tables={self.TABLE})
+        table = builder.table(self.TABLE)
         while True:
-            rows: List[asyncpg.Record] = await source_pool.fetch(
-                f"SELECT * FROM {self.TABLE} OFFSET $1 LIMIT $2",
-                start,
-                self.CHUNK_SIZE,
+            select_sql, params = builder.build(
+                f"SELECT * FROM {table} OFFSET $1 LIMIT $2",
+                (start, self.CHUNK_SIZE),
+                logger=LOG,
             )
+            rows: List[asyncpg.Record] = await source_pool.fetch(select_sql, *params)
             if not rows:
                 break
-            await self.target_pool.executemany(
-                f"INSERT INTO {self.TABLE} VALUES($1:record)", rows
+            insert_sql, _ = builder.build(
+                f"INSERT INTO {table} VALUES($1:record)", logger=LOG
             )
+            await self.target_pool.executemany(insert_sql, rows)
             start += len(rows)
             yield len(rows)

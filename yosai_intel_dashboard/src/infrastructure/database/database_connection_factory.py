@@ -15,6 +15,7 @@ from ..config.connection_retry import ConnectionRetryManager, RetryConfig
 from ..config.database_exceptions import DatabaseError
 from ..config.schema import DatabaseSettings
 from ..config.unicode_processor import QueryUnicodeHandler
+from .secure_query import log_sanitized_query
 
 logger = logging.getLogger(__name__)
 
@@ -191,11 +192,13 @@ class PooledConnection:
     def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         q = DatabaseConnectionFactory.encode_query(query)
         p = DatabaseConnectionFactory.encode_params(params)
+        log_sanitized_query(logger, q, p)
         return self._conn.execute_query(q, p)
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         c = DatabaseConnectionFactory.encode_query(command)
         p = DatabaseConnectionFactory.encode_params(params)
+        log_sanitized_query(logger, c, p)
         self._conn.execute_command(c, p)
 
     def fetch_results(self, query: str, params: Optional[tuple] = None) -> list:
@@ -229,6 +232,7 @@ class AsyncPooledConnection:
     async def execute_query(self, query: str, params: Optional[tuple] = None) -> list:
         q = DatabaseConnectionFactory.encode_query(query)
         p = DatabaseConnectionFactory.encode_params(params)
+        log_sanitized_query(logger, q, p)
         return await asyncio.to_thread(self._conn.execute_query, q, p)
 
     async def execute_command(
@@ -236,6 +240,7 @@ class AsyncPooledConnection:
     ) -> None:
         c = DatabaseConnectionFactory.encode_query(command)
         p = DatabaseConnectionFactory.encode_params(params)
+        log_sanitized_query(logger, c, p)
         await asyncio.to_thread(self._conn.execute_command, c, p)
 
     async def fetch_results(self, query: str, params: Optional[tuple] = None) -> list:
