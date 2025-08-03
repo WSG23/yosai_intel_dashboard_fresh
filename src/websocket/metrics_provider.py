@@ -1,9 +1,10 @@
 """Background publisher streaming metric updates over an event bus."""
+
 from __future__ import annotations
 
-import logging
 import threading
 from typing import Any, Dict
+
 
 from src.common.base import BaseComponent
 from src.common.events import EventBus, EventPublisher
@@ -17,6 +18,7 @@ def generate_sample_metrics() -> Dict[str, Any]:
 
 
 class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComponent):
+
     """Publish metrics updates to an event bus periodically."""
 
     def __init__(
@@ -31,6 +33,7 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
         self.repo = repo or InMemoryMetricsRepository()
         self.interval = interval
 
+
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -40,6 +43,7 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
         while not self._stop.is_set():
             payload = self.repo.snapshot()
             self.publish_event("metrics_update", payload)
+
             self.log("Published metrics update")
 
             self._stop.wait(self.interval)

@@ -69,8 +69,14 @@ except Exception:  # pragma: no cover - fallback stub
     from typing import Protocol
 
     class ConfigurationServiceProtocol(Protocol):
-        def get_max_upload_size_mb(self) -> int: ...
+        ai_confidence_threshold: float
+        max_upload_size_mb: int
+        upload_chunk_size: int
         def get_max_upload_size_bytes(self) -> int: ...
+        def validate_large_file_support(self) -> bool: ...
+        def get_max_parallel_uploads(self) -> int: ...
+        def get_validator_rules(self) -> Dict[str, Any]: ...
+        def get_db_pool_size(self) -> int: ...
 
 
 try:
@@ -187,14 +193,30 @@ class FakeColumnVerifier(ColumnVerifierProtocol):
 
 
 class FakeConfigurationService(ConfigurationServiceProtocol):
-    def __init__(self, max_mb: int = 50) -> None:
-        self.max_mb = max_mb
-
-    def get_max_upload_size_mb(self) -> int:
-        return self.max_mb
+    def __init__(
+        self,
+        max_mb: int = 50,
+        chunk_size: int = 1,
+        ai_threshold: float = 0.8,
+    ) -> None:
+        self.max_upload_size_mb = max_mb
+        self.upload_chunk_size = chunk_size
+        self.ai_confidence_threshold = ai_threshold
 
     def get_max_upload_size_bytes(self) -> int:
-        return self.max_mb * 1024 * 1024
+        return self.max_upload_size_mb * 1024 * 1024
+
+    def validate_large_file_support(self) -> bool:
+        return self.max_upload_size_mb >= 50
+
+    def get_max_parallel_uploads(self) -> int:
+        return 1
+
+    def get_validator_rules(self) -> Dict[str, Any]:
+        return {}
+
+    def get_db_pool_size(self) -> int:
+        return 10
 
 
 class FakeFileProcessor(FileProcessorProtocol):

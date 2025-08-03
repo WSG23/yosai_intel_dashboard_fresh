@@ -7,6 +7,7 @@ Writes the values to an env file rather than printing them to stdout.
 import argparse
 import logging
 import secrets
+from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate development secrets")
@@ -17,7 +18,7 @@ def main() -> None:
 
     secret_key = secrets.token_urlsafe(32)
     db_password = secrets.token_urlsafe(32)
-    with open(args.output, "w") as fh:
+    with Path(args.output).open("w", encoding="utf-8") as fh:
         fh.write(f"SECRET_KEY={secret_key}\n")
         fh.write(f"DB_PASSWORD={db_password}\n")
     logging.basicConfig(level=logging.INFO)

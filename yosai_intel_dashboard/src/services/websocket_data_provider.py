@@ -34,6 +34,7 @@ class WebSocketDataProvider(EventPublisher, BaseComponent):
         self.config = config or ConfigService()
         self.interval = interval if interval is not None else self.config.metrics_interval
 
+
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -43,6 +44,7 @@ class WebSocketDataProvider(EventPublisher, BaseComponent):
         while not self._stop.is_set():
             payload: Dict[str, Any] = generate_sample_analytics()
             self.publish_event("analytics_update", payload)
+
             logging.debug("analytics_update dispatched")
             self._stop.wait(self.interval)
 
@@ -53,4 +55,3 @@ class WebSocketDataProvider(EventPublisher, BaseComponent):
 
 
 __all__ = ["WebSocketDataProvider"]
-

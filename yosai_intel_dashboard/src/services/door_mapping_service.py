@@ -13,12 +13,9 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
-
-# ADD after existing imports
 from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator
 from yosai_intel_dashboard.src.services.common import ModelRegistry
 from yosai_intel_dashboard.src.services.common.config_utils import common_init, create_config_methods
-from yosai_intel_dashboard.src.services.configuration_service import DynamicConfigurationService
 from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import get_learning_service
 
 logger = logging.getLogger(__name__)
@@ -59,7 +56,7 @@ class DoorMappingService:
         self._registry = model_registry or ModelRegistry()
         self.fallback_version = fallback_version
         self.ai_model_version = fallback_version
-        self.confidence_threshold = config.get_ai_confidence_threshold()
+        self.confidence_threshold = config.ai_confidence_threshold
 
     def process_uploaded_data(
         self, df: pd.DataFrame, client_profile: str = "auto"
