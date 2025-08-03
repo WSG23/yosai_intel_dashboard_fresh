@@ -8,6 +8,7 @@ from typing import Any
 
 import joblib
 import pandas as pd
+import redis
 import redis.asyncio as aioredis
 import uuid
 from fastapi import (
@@ -31,7 +32,7 @@ from yosai_intel_dashboard.src.infrastructure.config import get_database_config
 from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CACHE_HOST, DEFAULT_CACHE_PORT
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import load_service_config
-from yosai_intel_dashboard.src.core.security import RateLimiter
+from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.services.analytics_microservice import async_queries
 from yosai_intel_dashboard.src.services.analytics_microservice.analytics_service import (
@@ -64,7 +65,10 @@ app = service.app
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
-rate_limiter = RateLimiter()
+# Configure a Redis backed rate limiter
+redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
+app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
 
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse, "description": "Bad Request"},
@@ -73,25 +77,6 @@ ERROR_RESPONSES = {
     500: {"model": ErrorResponse, "description": "Internal Server Error"},
 }
 
-
-@app.middleware("http")
-async def rate_limit(request: Request, call_next):
-    auth = request.headers.get("Authorization", "")
-    identifier = (
-        auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
-    )
-    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
-    if not result["allowed"]:
-        headers = {}
-        retry = result.get("retry_after")
-        if retry:
-            headers["Retry-After"] = str(int(retry))
-        return JSONResponse(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content={"detail": "rate limit exceeded"},
-            headers=headers,
-        )
-    return await call_next(request)
 
 
 async def _db_check(_: FastAPI) -> bool:
