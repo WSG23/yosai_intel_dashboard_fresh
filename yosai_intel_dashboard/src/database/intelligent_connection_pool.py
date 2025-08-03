@@ -6,7 +6,10 @@ import threading
 import time
 from typing import Any, Callable, Dict, List, Tuple, Set
 
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import ConnectionValidationFailed
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    ConnectionValidationFailed,
+    PoolExhaustedError,
+)
 from database.types import DatabaseConnection
 
 
@@ -158,7 +161,7 @@ class IntelligentConnectionPool:
                 if remaining <= 0:
                     self.metrics["timeouts"] += 1
                     self.circuit_breaker.record_failure()
-                    raise TimeoutError("No available connection in pool")
+                    raise PoolExhaustedError("No available connection in pool")
                 self._condition.wait(timeout=remaining)
 
     # ------------------------------------------------------------------

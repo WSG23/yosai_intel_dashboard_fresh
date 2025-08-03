@@ -3,6 +3,7 @@ import pytest
 from config import DatabaseSettings
 from yosai_intel_dashboard.src.infrastructure.config.connection_pool import DatabaseConnectionPool
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import PoolExhaustedError
 from tests.config import FakeConfiguration
 from tests.import_helpers import safe_import, import_optional
 
@@ -26,7 +27,7 @@ def test_database_config_default_pool_sizes():
     )
 
     conns = [pool.get_connection() for _ in range(cfg.max_pool_size)]
-    with pytest.raises(TimeoutError):
+    with pytest.raises(PoolExhaustedError):
         pool.get_connection()
     for c in conns:
         pool.release_connection(c)

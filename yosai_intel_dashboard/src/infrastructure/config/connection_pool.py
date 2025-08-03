@@ -5,6 +5,7 @@ import time
 from typing import Callable, List, Tuple, Set
 
 from database.types import DatabaseConnection
+from .database_exceptions import PoolExhaustedError
 
 
 class DatabaseConnectionPool:
@@ -85,7 +86,7 @@ class DatabaseConnectionPool:
                     return conn
 
             if time.time() >= deadline:
-                raise TimeoutError("No available connection in pool")
+                raise PoolExhaustedError("No available connection in pool")
 
             time.sleep(0.05)
 
