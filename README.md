@@ -1046,47 +1046,43 @@ database:
 ```
 
 ```python
-from yosai_intel_dashboard.src.infrastructure.database import (
+# Legacy path
+from config.database_manager import DatabaseConnectionFactory, DatabaseSettings
+# New path
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
     DatabaseConnectionFactory,
-    DatabaseConfig,
+    DatabaseSettings,
 )
 
-config = DatabaseConfig(
+settings = DatabaseSettings(
     type="postgresql",
-    pool_size=20,
-    max_overflow=40,
-    retry_attempts=5,
-    retry_backoff=1.5,
+    host="localhost",
+    port=5432,
+    name="intel",
+    user="postgres",
+    password="secret",
 )
-factory = DatabaseConnectionFactory(config)
+factory = DatabaseConnectionFactory(settings)
 
-# Synchronous query
-with factory.connection() as conn:
-    conn.execute("SELECT 1")
+# Synchronous usage
+with factory.get_connection() as conn:
+    conn.execute_query("SELECT 1")
 
-# Asynchronous query
-async with factory.async_connection() as conn:
-    await conn.execute("SELECT 1")
+# Asynchronous usage
+async with factory.get_async_connection() as conn:
+    await conn.execute_query("SELECT 1")
 
-# Built-in health check
-factory.health_check()
 ```
 
-Custom retry strategies can be supplied to the connection factory:
+**Configuration fields:**
 
-```python
-from config.database_connection_factory import DatabaseConnectionFactory
-from config.database_manager import DatabaseSettings
-
-class NoDelayStrategy:
-    def run_with_retry(self, func):
-        return func()
-
-factory = DatabaseConnectionFactory(
-    DatabaseSettings(type="mock"), retry_strategy=NoDelayStrategy()
-)
-conn = factory.create()
-```
+- `type`: database backend (`postgresql`, `sqlite`, or `mock`)
+- `host` / `port`: server location
+- `name`: database name or file path for SQLite
+- `user` / `password`: authentication credentials
+- `connection_timeout`: seconds to wait for a connection
+- `initial_pool_size` / `max_pool_size`: sync pool bounds
+- `async_pool_min_size` / `async_pool_max_size`: async pool bounds
 
 ### Models Layer (`models/`)
 - **entities.py**: Core business entities
