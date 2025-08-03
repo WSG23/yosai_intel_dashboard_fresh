@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+
 import ErrorBoundary from '../components/ErrorBoundary';
 import {
   BarChart,
@@ -15,9 +16,11 @@ import {
   PieChart,
   Pie,
   Cell,
+  Brush,
 } from 'recharts';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
 import useResponsiveChart from '../hooks/useResponsiveChart';
+
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
@@ -50,6 +53,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
   const doorsLazy = useLazyRender();
   const patternsLazy = useLazyRender();
 
+
   if (!data) {
     return <div>Waiting for analytics...</div>;
   }
@@ -57,6 +61,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
   const topUsersRaw = Array.isArray(data.top_users) ? data.top_users : [];
   const topDoorsRaw = Array.isArray(data.top_doors) ? data.top_doors : [];
   const patternsRaw = data.access_patterns
+
     ? Object.entries(data.access_patterns).map(([pattern, count]) => ({
         pattern,
         count: Number(count),
@@ -159,6 +164,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
               })()}
             </ResponsiveContainer>
           )}
+
         </div>
       )}
 

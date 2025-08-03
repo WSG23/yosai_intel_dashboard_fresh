@@ -1,14 +1,19 @@
 """Handle file uploads with validation and basic metrics."""
 
+import base64
+import io
 import logging
+import mimetypes
 import time
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
+from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_text
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
 
 _logger = logging.getLogger(__name__)
@@ -20,6 +25,35 @@ _metrics = {
     "bytes_saved": 0,
     "total_time": 0.0,
 }
+
+ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
+ALLOWED_MIME_TYPES = {
+    "text/csv",
+    "application/json",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+
+def _scan_for_malware(data: bytes) -> None:
+    """Scan *data* using clamd if available.
+
+    Raises a ``ValueError`` if malware is detected. If the scanner is not
+    available the function returns silently.
+    """
+
+    try:  # pragma: no cover - optional dependency
+        import clamd
+
+        cd = clamd.ClamdUnixSocket()
+        result = cd.instream(io.BytesIO(data))
+        if isinstance(result, dict):
+            status = result.get("stream", {}).get("status")
+            if status == "FOUND":
+                raise ValueError("Virus detected")
+    except Exception:
+        # Fail open if clamd is not available
+        return
 
 
 def process_file_upload(
@@ -48,6 +82,23 @@ def process_file_upload(
     storage = storage or UploadedDataStore()
     validator = FileHandler()
     start = time.perf_counter()
+
+    filename = sanitize_text(filename)
+    try:
+        header, data = contents.split(",", 1)
+    except ValueError:
+        raise ValueError("Invalid file contents")
+    file_bytes = base64.b64decode(data)
+    _scan_for_malware(file_bytes)
+    max_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
+    if len(file_bytes) > max_bytes:
+        raise ValueError("File too large")
+    ext = Path(filename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise ValueError("Invalid file extension")
+    mime = mimetypes.guess_type(filename)[0] or ""
+    if mime not in ALLOWED_MIME_TYPES:
+        raise ValueError("Invalid MIME type")
 
     df = validator.validate_file(contents, filename)
     df = UnicodeProcessor.sanitize_dataframe(df)

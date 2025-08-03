@@ -53,6 +53,12 @@ jobs:
           python-version: '3.11'
       - name: Run vulnerability scan
         run: python scripts/security_scan.py
+      - name: Run Bandit
+        run: bandit -r . -lll
+      - name: Run Safety
+        run: safety check --full-report --fail-on=high
+      - name: Scan JS dependencies
+        run: npm audit --audit-level=high
       - name: Scan for secrets
         run: python scripts/security_scan_secrets.py
       - name: Generate security report
@@ -115,6 +121,17 @@ jobs:
           name: snyk-results
           path: snyk-results.json
 
+  owasp-zap:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'http://localhost:8000'
+          fail_action: true
+
   secret-scan:
     needs: build-test
     runs-on: ubuntu-latest
@@ -135,7 +152,7 @@ jobs:
           path: secret-scan-report.json
 
   release:
-    needs: [trivy-scan, snyk-scan, security-scan]
+    needs: [trivy-scan, snyk-scan, security-scan, owasp-zap]
 
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

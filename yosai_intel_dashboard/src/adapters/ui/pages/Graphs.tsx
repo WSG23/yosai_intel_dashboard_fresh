@@ -13,9 +13,12 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  Brush,
 } from 'recharts';
+import Timeline from '../components/Timeline';
 import { graphsAPI, AvailableChart } from '../api/graphs';
 import useResponsiveChart from '../hooks/useResponsiveChart';
+
 
 const Graphs: React.FC = () => {
   const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
@@ -42,6 +45,7 @@ const Graphs: React.FC = () => {
     }
     return () => observer.disconnect();
   }, []);
+
 
   useEffect(() => {
     const fetchCharts = async () => {
@@ -109,6 +113,7 @@ const Graphs: React.FC = () => {
       },
     } as const;
     const { Chart, Series, props } = chartMap[variant];
+
 
     return (
       <ResponsiveContainer
