@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { graphsAPI, AvailableChart } from '../api/graphs';
+import { AccessibleVisualization } from '../components/accessibility';
 
 const Graphs: React.FC = () => {
   const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
@@ -57,15 +58,24 @@ const Graphs: React.FC = () => {
         count: Number(count),
       }));
       return (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="hour" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="count" stroke="#8884d8" />
-          </LineChart>
-        </ResponsiveContainer>
+        <AccessibleVisualization
+          title="Hourly Distribution"
+          summary={`Hourly distribution with ${data.length} data points.`}
+          tableData={{
+            headers: ['Hour', 'Count'],
+            rows: data.map((d) => [d.hour, d.count]),
+          }}
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="hour" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" stroke="#8884d8" />
+            </LineChart>
+          </ResponsiveContainer>
+        </AccessibleVisualization>
       );
     }
 
@@ -80,15 +90,24 @@ const Graphs: React.FC = () => {
         }),
       );
       return (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="hour" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="count" stroke="#82ca9d" />
-          </LineChart>
-        </ResponsiveContainer>
+        <AccessibleVisualization
+          title="Temporal Patterns"
+          summary={`Temporal patterns with ${data.length} data points.`}
+          tableData={{
+            headers: ['Hour', 'Count'],
+            rows: data.map((d) => [d.hour, d.count]),
+          }}
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="hour" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" stroke="#82ca9d" />
+            </LineChart>
+          </ResponsiveContainer>
+        </AccessibleVisualization>
       );
     }
 
@@ -106,6 +125,7 @@ const Graphs: React.FC = () => {
           className="mb-4 border p-2 rounded"
           value={selectedChart}
           onChange={(e) => setSelectedChart(e.target.value)}
+          aria-label="Select chart type"
         >
           {availableCharts.map((chart) => (
             <option key={chart.type} value={chart.type}>
@@ -114,7 +134,7 @@ const Graphs: React.FC = () => {
           ))}
         </select>
       )}
-      <div>{renderChart()}</div>
+      <div role="presentation">{renderChart()}</div>
     </div>
   );
 };

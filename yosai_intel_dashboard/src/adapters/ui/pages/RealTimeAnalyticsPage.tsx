@@ -13,6 +13,7 @@ import {
   Cell,
 } from 'recharts';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
+import { AccessibleVisualization } from '../components/accessibility';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
@@ -48,46 +49,73 @@ const RealTimeAnalyticsPage: React.FC = () => {
       </div>
 
       {topUsers.length > 0 && (
-        <div className="mb-4" style={{ width: '100%', height: 300 }}>
-          <ResponsiveContainer>
-            <BarChart data={topUsers.slice(0, 10)}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="user_id" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#8884d8" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <AccessibleVisualization
+          title="Top Users"
+          summary={`Top users chart with ${topUsers.length} entries.`}
+          tableData={{
+            headers: ['User ID', 'Count'],
+            rows: topUsers.slice(0, 10).map((u) => [u.user_id, u.count]),
+          }}
+        >
+          <div className="mb-4" style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <BarChart data={topUsers.slice(0, 10)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="user_id" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </AccessibleVisualization>
       )}
 
       {topDoors.length > 0 && (
-        <div className="mb-4" style={{ width: '100%', height: 300 }}>
-          <ResponsiveContainer>
-            <BarChart data={topDoors.slice(0, 10)}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="door_id" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <AccessibleVisualization
+          title="Top Doors"
+          summary={`Top doors chart with ${topDoors.length} entries.`}
+          tableData={{
+            headers: ['Door ID', 'Count'],
+            rows: topDoors.slice(0, 10).map((d) => [d.door_id, d.count]),
+          }}
+        >
+          <div className="mb-4" style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <BarChart data={topDoors.slice(0, 10)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="door_id" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </AccessibleVisualization>
       )}
 
       {patterns.length > 0 && (
-        <div className="mb-4" style={{ width: '100%', height: 300 }}>
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie data={patterns} dataKey="count" nameKey="pattern" label>
-                {patterns.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <AccessibleVisualization
+          title="Access Patterns"
+          summary={`Access patterns chart with ${patterns.length} entries.`}
+          tableData={{
+            headers: ['Pattern', 'Count'],
+            rows: patterns.map((p) => [p.pattern, p.count]),
+          }}
+        >
+          <div className="mb-4" style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={patterns} dataKey="count" nameKey="pattern" label>
+                  {patterns.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </AccessibleVisualization>
       )}
     </div>
   );
