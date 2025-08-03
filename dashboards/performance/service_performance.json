@@ -18,6 +18,10 @@
         {
           "expr": "histogram_quantile(0.99, sum(rate(api_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "p99"
+        },
+        {
+          "expr": "0.5",
+          "legendFormat": "p95 SLO"
         }
       ]
     },
@@ -40,6 +44,21 @@
         {
           "expr": "process_resident_memory_bytes",
           "legendFormat": "memory"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))",
+          "legendFormat": "errors"
+        },
+        {
+          "expr": "0.01",
+          "legendFormat": "1% SLO"
         }
       ]
     },

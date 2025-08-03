@@ -1,0 +1,5 @@
+# Service level objectives for monitoring
+# Latency SLO is defined as the maximum allowed p95 request latency in milliseconds.
+# Error rate SLO represents the maximum fraction of 5xx responses.
+latency_p95_ms: 500
+error_rate: 0.01
