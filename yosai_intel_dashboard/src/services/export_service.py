@@ -4,20 +4,20 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-import pandas as pd
-
-from yosai_intel_dashboard.src.core.protocols import ExportServiceProtocol
+from ..repository import FileRepository, LocalFileRepository
 
 
-class ExportService(ExportServiceProtocol):
-    def export_to_parquet(self, data: pd.DataFrame, filename: str) -> str:
+class ExportService:
+    def __init__(self, file_repo: FileRepository | None = None) -> None:
+        self._file_repo = file_repo or LocalFileRepository()
+
+    def export_to_parquet(self, data, filename: str) -> str:
         data.to_parquet(filename, index=False)
         return filename
 
     def export_to_pdf(self, data: Dict[str, Any], template: str) -> str:
         path = f"{template}.pdf"
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write(str(data))
+        self._file_repo.write_text(path, str(data))
         return path
 
     def get_export_status(self, export_id: str) -> Dict[str, Any]:

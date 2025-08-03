@@ -1,20 +1,45 @@
 import asyncio
-import json
 import logging
 import os
 import importlib.util
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Callable
 
 
-# Dynamically load the redis store located beside this module
-_store_path = Path(__file__).with_name("feature_flags") / "redis_store.py"
-_spec = importlib.util.spec_from_file_location("_ff_redis_store", _store_path)
-redis_store = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(redis_store)  # type: ignore[arg-type]
-RedisFeatureFlagStore = redis_store.RedisFeatureFlagStore
+# Dynamically load the redis store located beside this module.  If the
+# dependency is missing (e.g. during tests), fall back to a no-op store.
+class InMemoryFeatureFlagStore:  # type: ignore
+    def __init__(self, *_, **__) -> None:
+        self._flags: Dict[str, bool] = {}
 
-import aiofiles
+    def start(self) -> None:  # pragma: no cover - no-op
+        pass
+
+    def stop(self) -> None:  # pragma: no cover - no-op
+        pass
+
+    def get_flag(self, name: str, default: bool = False) -> bool:
+        return self._flags.get(name, default)
+
+    def set_flag(self, name: str, value: bool) -> None:
+        self._flags[name] = value
+
+    def get_all(self) -> Dict[str, bool]:
+        return dict(self._flags)
+
+try:  # pragma: no cover - optional dependency
+    _store_path = Path(__file__).with_name("feature_flags") / "redis_store.py"
+    _spec = importlib.util.spec_from_file_location("_ff_redis_store", _store_path)
+    redis_store = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(redis_store)  # type: ignore[arg-type]
+    RedisFeatureFlagStore = redis_store.RedisFeatureFlagStore
+except Exception:  # pragma: no cover - simplified fallback
+    RedisFeatureFlagStore = InMemoryFeatureFlagStore
+
+from ..repository import (
+    AsyncFileFeatureFlagCacheRepository,
+    FeatureFlagCacheRepository,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -42,13 +67,28 @@ def get_evaluation_context() -> Dict[str, Any]:
 
 
 class FeatureFlagManager:
-    """Feature flag manager backed by Redis with a local cache."""
+    """Feature flag manager backed by Redis with a pluggable cache."""
 
-    def __init__(self, redis_url: str | None = None) -> None:
-        redis_url = redis_url or os.getenv("FEATURE_FLAG_REDIS_URL", "redis://localhost:6379/0")
-        self._store = RedisFeatureFlagStore(redis_url=redis_url)
+    def __init__(
+        self,
+        redis_url: str | None = None,
+        cache_repo: FeatureFlagCacheRepository | None = None,
+    ) -> None:
+        redis_url = redis_url or os.getenv(
+            "FEATURE_FLAG_REDIS_URL", "redis://localhost:6379/0"
+        )
+        try:
+            self._store = RedisFeatureFlagStore(redis_url=redis_url)
+        except Exception:  # pragma: no cover - redis optional
+            self._store = InMemoryFeatureFlagStore()
         # expose the cache for tests that monkeypatch _flags
         self._flags = self._store._flags
+        self._definitions: Dict[str, Dict[str, Any]] = {}
+        self._callbacks: Set[Callable[[Dict[str, bool]], None]] = set()
+        self._cache_repo = cache_repo or AsyncFileFeatureFlagCacheRepository(
+            Path("feature_flags_cache.json")
+        )
+        self._load_cache()
 
 
     # ------------------------------------------------------------------
@@ -108,18 +148,17 @@ class FeatureFlagManager:
 
     # ------------------------------------------------------------------
     async def _load_cache_async(self) -> None:
-        try:
-            if await asyncio.to_thread(self.cache_file.is_file):
-                async with aiofiles.open(self.cache_file, "r") as fh:
-                    content = await fh.read()
-                cached = json.loads(content)
-                self._flags = {k: bool(v) for k, v in cached.items()}
-                for name, val in self._flags.items():
-                    self._definitions.setdefault(name, {"fallback": False})[
-                        "enabled"
-                    ] = val
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Failed to load feature flag cache: %s", exc)
+        cached = await self._cache_repo.read()
+        if cached:
+            self._flags = cached
+            try:
+                self._store._flags = dict(cached)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+            for name, val in self._flags.items():
+                self._definitions.setdefault(name, {"fallback": False})[
+                    "enabled"
+                ] = val
 
     def _load_cache(self) -> None:
         """Synchronous wrapper around :meth:`_load_cache_async`."""
@@ -127,14 +166,7 @@ class FeatureFlagManager:
 
     # ------------------------------------------------------------------
     async def _save_cache(self) -> None:
-        try:
-            async with aiofiles.open(self.cache_file, "w") as fh:
-                await fh.write(json.dumps(self._flags))
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("Failed to persist feature flag cache: %s", exc)
+        await self._cache_repo.write(self._flags)
 
 
-# Global feature flag manager
-feature_flags = FeatureFlagManager(
-    redis_url=os.getenv("FEATURE_FLAG_REDIS_URL"),
-)
+__all__ = ["FeatureFlagManager", "get_evaluation_context"]

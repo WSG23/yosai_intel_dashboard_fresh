@@ -6,7 +6,7 @@ from typing import Optional
 
 import asyncpg
 
-from factories.db_health import DBHealthStatus
+from yosai_intel_dashboard.src.repository import DBHealthRepository, PoolDBHealthRepository
 
 
 _pool: Optional[asyncpg.pool.Pool] = None
@@ -61,13 +61,14 @@ async def close_pool() -> None:
         _pool = None
 
 
-async def health_check() -> DBHealthStatus:
+async def health_check(repo: DBHealthRepository | None = None) -> bool:
     """Run a simple query to determine database health."""
-    if _pool is None:
-        return DBHealthStatus(healthy=False, details={"error": "pool not initialized"})
+    if repo is None:
+        if _pool is None:
+            return False
+        repo = PoolDBHealthRepository(_pool)
     try:
-        async with _pool.acquire() as conn:
-            await conn.execute("SELECT 1")
+        await repo.check()
         return True
     except Exception:
         return False
