@@ -11,40 +11,58 @@ export enum EventSocketState {
 export const useEventSocket = (
   url: string,
   socketFactory?: (url: string) => WebSocket,
+  jitter: boolean = true,
 ) => {
   const [data, setData] = useState<string | null>(null);
   const [state, setState] = useState<EventSocketState>(EventSocketState.DISCONNECTED);
   const wsRef = useRef<WebSocket | null>(null);
+  const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attemptRef = useRef(0);
   const stoppedRef = useRef(false);
 
-  useEffect(() => {
-    stoppedRef.current = false;
-    setState(EventSocketState.CONNECTING);
-    eventBus.emit('event_socket_state', EventSocketState.CONNECTING);
+  const connect = () => {
+
     const ws = socketFactory ? socketFactory(url) : new WebSocket(url);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      setState(EventSocketState.CONNECTED);
-      eventBus.emit('event_socket_state', EventSocketState.CONNECTED);
+      setIsConnected(true);
+      attemptRef.current = 0;
     };
     ws.onclose = () => {
-      if (stoppedRef.current) {
-        return;
+      setIsConnected(false);
+      if (!stoppedRef.current) {
+        let delay = Math.min(1000 * 2 ** attemptRef.current, 30000);
+        if (jitter) {
+          delay += Math.random() * 1000;
+        }
+        attemptRef.current += 1;
+        retryTimeout.current = setTimeout(connect, delay);
       }
-      setState(EventSocketState.DISCONNECTED);
-      eventBus.emit('event_socket_state', EventSocketState.DISCONNECTED);
+
     };
     ws.onmessage = (ev) => setData(ev.data);
+  };
+
+  const cleanup = () => {
+    stoppedRef.current = true;
+    if (retryTimeout.current) {
+      clearTimeout(retryTimeout.current);
+    }
+    wsRef.current?.close();
+  };
+
+  useEffect(() => {
+    stoppedRef.current = false;
+    connect();
 
     return () => {
-      stoppedRef.current = true;
-      setState(EventSocketState.DISCONNECTED);
-      eventBus.emit('event_socket_state', EventSocketState.DISCONNECTED);
-      ws.close();
+      cleanup();
     };
-  }, [url, socketFactory]);
+  }, [url, socketFactory, jitter]);
 
-  const isConnected = state === EventSocketState.CONNECTED;
-  return { data, isConnected, state };
+  return { data, isConnected, cleanup };
+
 };
+
+export default useEventSocket;
