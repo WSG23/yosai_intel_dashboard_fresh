@@ -19,7 +19,7 @@ import {
   Brush,
 } from 'recharts';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
-import useResponsiveChart from '../hooks/useResponsiveChart';
+import { AccessibleVisualization } from '../components/accessibility';
 
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
@@ -100,93 +100,75 @@ const RealTimeAnalyticsPage: React.FC = () => {
       </div>
 
       {topUsers.length > 0 && (
-        <div
-          className="mb-4"
-          style={{ width: '100%', height: 300 }}
-          ref={usersLazy.ref}
+        <AccessibleVisualization
+          title="Top Users"
+          summary={`Top users chart with ${topUsers.length} entries.`}
+          tableData={{
+            headers: ['User ID', 'Count'],
+            rows: topUsers.slice(0, 10).map((u) => [u.user_id, u.count]),
+          }}
         >
-          {usersLazy.visible && (
-            <ResponsiveContainer onTouchStart={() => setShowDetails(true)}>
-              {(() => {
-                const chartMap = {
-                  line: { Chart: LineChart, Series: Line, props: { type: 'monotone', stroke: '#8884d8' } },
-                  bar: { Chart: BarChart, Series: Bar, props: { fill: '#8884d8' } },
-                  area: {
-                    Chart: AreaChart,
-                    Series: Area,
-                    props: { type: 'monotone', stroke: '#8884d8', fill: '#8884d8', fillOpacity: 0.3 },
-                  },
-                } as const;
-                const { Chart, Series, props } = chartMap[variant];
-                return (
-                  <Chart data={topUsers}>
-                    {showDetails && <CartesianGrid strokeDasharray="3 3" />}
-                    <XAxis dataKey="user_id" />
-                    <YAxis />
-                    {showDetails && <Tooltip />}
-                    <Series dataKey="count" {...props} />
-                  </Chart>
-                );
-              })()}
+          <div className="mb-4" style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <BarChart data={topUsers.slice(0, 10)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="user_id" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
             </ResponsiveContainer>
-          )}
-        </div>
+          </div>
+        </AccessibleVisualization>
       )}
 
       {topDoors.length > 0 && (
-        <div
-          className="mb-4"
-          style={{ width: '100%', height: 300 }}
-          ref={doorsLazy.ref}
+        <AccessibleVisualization
+          title="Top Doors"
+          summary={`Top doors chart with ${topDoors.length} entries.`}
+          tableData={{
+            headers: ['Door ID', 'Count'],
+            rows: topDoors.slice(0, 10).map((d) => [d.door_id, d.count]),
+          }}
         >
-          {doorsLazy.visible && (
-            <ResponsiveContainer onTouchStart={() => setShowDetails(true)}>
-              {(() => {
-                const chartMap = {
-                  line: { Chart: LineChart, Series: Line, props: { type: 'monotone', stroke: '#82ca9d' } },
-                  bar: { Chart: BarChart, Series: Bar, props: { fill: '#82ca9d' } },
-                  area: {
-                    Chart: AreaChart,
-                    Series: Area,
-                    props: { type: 'monotone', stroke: '#82ca9d', fill: '#82ca9d', fillOpacity: 0.3 },
-                  },
-                } as const;
-                const { Chart, Series, props } = chartMap[variant];
-                return (
-                  <Chart data={topDoors}>
-                    {showDetails && <CartesianGrid strokeDasharray="3 3" />}
-                    <XAxis dataKey="door_id" />
-                    <YAxis />
-                    {showDetails && <Tooltip />}
-                    <Series dataKey="count" {...props} />
-                  </Chart>
-                );
-              })()}
+          <div className="mb-4" style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <BarChart data={topDoors.slice(0, 10)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="door_id" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#82ca9d" />
+              </BarChart>
             </ResponsiveContainer>
-          )}
-
-        </div>
+          </div>
+        </AccessibleVisualization>
       )}
 
       {patterns.length > 0 && (
-        <div
-          className="mb-4"
-          style={{ width: '100%', height: 300 }}
-          ref={patternsLazy.ref}
+        <AccessibleVisualization
+          title="Access Patterns"
+          summary={`Access patterns chart with ${patterns.length} entries.`}
+          tableData={{
+            headers: ['Pattern', 'Count'],
+            rows: patterns.map((p) => [p.pattern, p.count]),
+          }}
         >
-          {patternsLazy.visible && (
-            <ResponsiveContainer onTouchStart={() => setShowDetails(true)}>
+          <div className="mb-4" style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
               <PieChart>
-                <Pie data={patterns} dataKey="count" nameKey="pattern" label={showDetails}>
+                <Pie data={patterns} dataKey="count" nameKey="pattern" label>
+
                   {patterns.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                {showDetails && <Tooltip />}
+                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          )}
-        </div>
+          </div>
+        </AccessibleVisualization>
+
       )}
     </div>
   );
