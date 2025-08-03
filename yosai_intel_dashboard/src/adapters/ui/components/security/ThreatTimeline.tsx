@@ -1,27 +1,17 @@
-import React, { useMemo, useRef, useState } from 'react';
-import ReactEChartsCore from 'echarts-for-react/lib/core';
-import * as echarts from 'echarts/core';
+import React, { useMemo, useState } from "react";
 import {
-  TimelineComponent,
-  GridComponent,
-  TooltipComponent,
-  DataZoomComponent,
-  BrushComponent,
-} from 'echarts/components';
-import { ScatterChart, LinesChart } from 'echarts/charts';
-import { CanvasRenderer } from 'echarts/renderers';
-import { useSelectionStore } from '../../state/store';
-
-echarts.use([
-  TimelineComponent,
-  GridComponent,
-  TooltipComponent,
-  DataZoomComponent,
-  BrushComponent,
+  Brush,
+  CartesianGrid,
+  Line,
+  ResponsiveContainer,
+  Scatter,
   ScatterChart,
-  LinesChart,
-  CanvasRenderer,
-]);
+  Tooltip,
+  XAxis,
+  YAxis,
+  ZAxis,
+} from "recharts";
+import { useSelectionStore } from "../../state/store";
 
 interface ThreatEvent {
   id: string;
@@ -40,10 +30,7 @@ const dayMs = 24 * 60 * 60 * 1000;
 const hourMs = 60 * 60 * 1000;
 const minuteMs = 60 * 1000;
 
-const ReactECharts = ReactEChartsCore;
-
 const ThreatTimeline: React.FC<ThreatTimelineProps> = ({ events }) => {
-  const chartRef = useRef<ReactEChartsCore>(null);
   const { setSelectedThreats, setSelectedRange } = useSelectionStore();
   const [viewRange, setViewRange] = useState<[number, number] | null>(null);
 
@@ -53,9 +40,12 @@ const ThreatTimeline: React.FC<ThreatTimelineProps> = ({ events }) => {
   );
 
   const clusters = useMemo(() => {
-    if (events.length === 0) return [] as { track: string; timestamp: number; count: number }[];
-    const start = viewRange?.[0] ?? Math.min(...events.map((e) => +new Date(e.timestamp)));
-    const end = viewRange?.[1] ?? Math.max(...events.map((e) => +new Date(e.timestamp)));
+    if (events.length === 0)
+      return [] as { track: string; timestamp: number; count: number }[];
+    const start =
+      viewRange?.[0] ?? Math.min(...events.map((e) => +new Date(e.timestamp)));
+    const end =
+      viewRange?.[1] ?? Math.max(...events.map((e) => +new Date(e.timestamp)));
     const span = end - start;
     let bucket = 1000; // second
     if (span > yearMs) bucket = dayMs * 30;
@@ -63,7 +53,10 @@ const ThreatTimeline: React.FC<ThreatTimelineProps> = ({ events }) => {
     else if (span > dayMs) bucket = hourMs;
     else if (span > hourMs) bucket = minuteMs;
 
-    const map = new Map<string, { track: string; timestamp: number; count: number }>();
+    const map = new Map<
+      string,
+      { track: string; timestamp: number; count: number }
+    >();
     for (const ev of events) {
       const time = Math.floor(+new Date(ev.timestamp) / bucket) * bucket;
       const key = `${ev.track}-${time}`;
@@ -74,142 +67,147 @@ const ThreatTimeline: React.FC<ThreatTimelineProps> = ({ events }) => {
     return Array.from(map.values());
   }, [events, viewRange]);
 
-  const series = useMemo(() => {
-    const trackIndex: Record<string, number> = {};
-    tracks.forEach((t, i) => {
-      trackIndex[t] = i;
-    });
+  const { scatterSeries, lineSegments, predictionPoints, brushData } =
+    useMemo(() => {
+      const trackIndex: Record<string, number> = {};
+      tracks.forEach((t, i) => {
+        trackIndex[t] = i;
+      });
 
-    const scatterData: Record<string, any[]> = {};
-    tracks.forEach((t) => (scatterData[t] = []));
-    clusters.forEach((c) => {
-      scatterData[c.track].push([c.timestamp, trackIndex[c.track], c.count]);
-    });
+      const scatterData: Record<string, any[]> = {};
+      tracks.forEach((t) => (scatterData[t] = []));
+      clusters.forEach((c) => {
+        scatterData[c.track].push({
+          x: c.timestamp,
+          y: trackIndex[c.track],
+          z: c.count,
+        });
+      });
 
-    const scatterSeries = tracks.map((t) => ({
-      name: t,
-      type: 'scatter',
-      data: scatterData[t],
-      symbolSize: (val: number[]) => 8 + Math.log2(val[2] || 1) * 5,
-      emphasis: { focus: 'series' },
-    }));
+      const scatters = tracks.map((t) => ({ name: t, data: scatterData[t] }));
 
-    const eventMap = new Map(events.map((e) => [e.id, e]));
-    const linesData: any[] = [];
-    events.forEach((ev) => {
-      ev.correlatedWith?.forEach((id) => {
-        const target = eventMap.get(id);
-        if (target) {
-          linesData.push({
-            coords: [
-              [+new Date(ev.timestamp), trackIndex[ev.track]],
-              [+new Date(target.timestamp), trackIndex[target.track]],
-            ],
-          });
+      const eventMap = new Map(events.map((e) => [e.id, e]));
+      const lines: { from: [number, number]; to: [number, number] }[] = [];
+      events.forEach((ev) => {
+        ev.correlatedWith?.forEach((id) => {
+          const target = eventMap.get(id);
+          if (target) {
+            lines.push({
+              from: [+new Date(ev.timestamp), trackIndex[ev.track]],
+              to: [+new Date(target.timestamp), trackIndex[target.track]],
+            });
+          }
+        });
+      });
+
+      const predictions: { x: number; y: number }[] = [];
+      tracks.forEach((t) => {
+        const evs = events
+          .filter((e) => e.track === t)
+          .sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp));
+        if (evs.length >= 2) {
+          const last = +new Date(evs[evs.length - 1].timestamp);
+          const prev = +new Date(evs[evs.length - 2].timestamp);
+          const next = last + (last - prev);
+          predictions.push({ x: next, y: trackIndex[t] });
         }
       });
-    });
 
-    const linesSeries = {
-      name: 'correlation',
-      type: 'lines',
-      coordinateSystem: 'cartesian2d',
-      data: linesData,
-      lineStyle: { color: '#888', width: 1, curveness: 0.2 },
-      silent: true,
-    };
+      const brush = events
+        .map((e) => ({ x: +new Date(e.timestamp), id: e.id }))
+        .sort((a, b) => a.x - b.x);
 
-    const predictionSeries: any[] = [];
-    tracks.forEach((t) => {
-      const evs = events
-        .filter((e) => e.track === t)
-        .sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp));
-      if (evs.length >= 2) {
-        const last = +new Date(evs[evs.length - 1].timestamp);
-        const prev = +new Date(evs[evs.length - 2].timestamp);
-        const next = last + (last - prev);
-        predictionSeries.push({
-          name: `${t}-prediction`,
-          type: 'scatter',
-          data: [[next, trackIndex[t], 1]],
-          symbol: 'diamond',
-          itemStyle: { color: '#aaa' },
-          symbolSize: 8,
-        });
-      }
-    });
+      return {
+        scatterSeries: scatters,
+        lineSegments: lines,
+        predictionPoints: predictions,
+        brushData: brush,
+      };
+    }, [tracks, clusters, events]);
 
-    return [...scatterSeries, linesSeries, ...predictionSeries];
-  }, [tracks, clusters, events]);
-
-  const option = useMemo(
-    () => ({
-      timeline: {
-        axisType: 'time',
-        show: false,
-      },
-      tooltip: {
-        trigger: 'item',
-        formatter: (p: any) => {
-          const time = new Date(p.value[0]);
-          const count = p.value[2] || 1;
-          return `${time.toLocaleString()}<br/>Count: ${count}`;
-        },
-      },
-      xAxis: { type: 'time', scale: true },
-      yAxis: { type: 'category', data: tracks },
-      dataZoom: [
-        {
-          type: 'slider',
-          xAxisIndex: 0,
-          filterMode: 'none',
-          minValueSpan: 1000,
-          maxValueSpan: yearMs,
-        },
-        { type: 'inside', xAxisIndex: 0, minValueSpan: 1000, maxValueSpan: yearMs },
-      ],
-      brush: {
-        xAxisIndex: 'all',
-        brushLink: 'all',
-        throttleType: 'debounce',
-        throttleDelay: 300,
-        toolbox: ['rect', 'keep', 'clear'],
-      },
-      series,
-    }),
-    [tracks, series],
-  );
-
-  const onEvents = {
-    dataZoom: (params: any) => {
-      if (params.batch && params.batch[0]) {
-        const { startValue, endValue } = params.batch[0];
-        setViewRange([startValue, endValue]);
-      }
-    },
-    brushselected: (params: any) => {
-      const area = params.batch?.[0]?.areas?.[0];
-      if (area) {
-        const [start, end] = area.coordRange as [number, number];
-        setSelectedRange([start, end]);
-        const ids = events
-          .filter((e) => {
-            const t = +new Date(e.timestamp);
-            return t >= start && t <= end;
-          })
-          .map((e) => e.id);
-        setSelectedThreats(ids);
-      }
-    },
+  const handleBrushChange = (range: {
+    startIndex?: number;
+    endIndex?: number;
+  }) => {
+    if (
+      range.startIndex === undefined ||
+      range.endIndex === undefined ||
+      brushData.length === 0
+    )
+      return;
+    const start = brushData[Math.min(range.startIndex, range.endIndex)].x;
+    const end = brushData[Math.max(range.startIndex, range.endIndex)].x;
+    setViewRange([start, end]);
+    setSelectedRange([start, end]);
+    const ids = events
+      .filter((e) => {
+        const t = +new Date(e.timestamp);
+        return t >= start && t <= end;
+      })
+      .map((e) => e.id);
+    setSelectedThreats(ids);
   };
 
   return (
-    <ReactECharts
-      ref={chartRef}
-      option={option}
-      onEvents={onEvents}
-      style={{ height: 300, width: '100%' }}
-    />
+    <ResponsiveContainer width="100%" height={300}>
+      <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+        <CartesianGrid />
+        <XAxis
+          type="number"
+          dataKey="x"
+          domain={["auto", "auto"]}
+          tickFormatter={(v) => new Date(v).toLocaleString()}
+        />
+        <YAxis
+          type="number"
+          dataKey="y"
+          ticks={tracks.map((_, i) => i)}
+          tickFormatter={(v) => tracks[v]}
+        />
+        <ZAxis type="number" dataKey="z" range={[6, 30]} />
+        <Tooltip
+          cursor={{ strokeDasharray: "3 3" }}
+          formatter={(value: any, _name, props) => {
+            const time = new Date(props.payload.x);
+            const count = props.payload.z || 1;
+            return [`Count: ${count}`, time.toLocaleString()];
+          }}
+        />
+        {scatterSeries.map((s) => (
+          <Scatter key={s.name} name={s.name} data={s.data} />
+        ))}
+        {predictionPoints.map((p, i) => (
+          <Scatter
+            key={`pred-${i}`}
+            data={[{ x: p.x, y: p.y, z: 1 }]}
+            shape="diamond"
+            fill="#aaa"
+          />
+        ))}
+        {lineSegments.map((seg, i) => (
+          <Line
+            key={`line-${i}`}
+            data={[
+              { x: seg.from[0], y: seg.from[1] },
+              { x: seg.to[0], y: seg.to[1] },
+            ]}
+            type="linear"
+            dataKey="y"
+            stroke="#888"
+            strokeWidth={1}
+            dot={false}
+            isAnimationActive={false}
+          />
+        ))}
+        <Brush
+          dataKey="x"
+          height={20}
+          travellerWidth={10}
+          data={brushData}
+          onChange={handleBrushChange}
+        />
+      </ScatterChart>
+    </ResponsiveContainer>
   );
 };
 
