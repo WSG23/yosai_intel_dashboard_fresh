@@ -5,6 +5,7 @@ import sys
 import types
 from pathlib import Path
 
+import pyotp
 import pytest
 from flask import Flask, redirect
 
@@ -69,12 +70,17 @@ if not hasattr(werkzeug_urls, "url_encode"):
     werkzeug_urls.url_encode = lambda *a, **k: ""
 
 from yosai_intel_dashboard.src.core import auth  # noqa: E402
-from yosai_intel_dashboard.src.core.session_store import InMemorySessionStore  # noqa: E402
+from yosai_intel_dashboard.src.core.session_store import (  # noqa: E402
+    InMemorySessionStore,
+)
+from yosai_intel_dashboard.src.security.roles import require_permission  # noqa: E402
 
 
 @pytest.fixture
 def auth_app(monkeypatch):
     """Create Flask app with stubbed Auth0 integration."""
+
+    MFA_SECRET = "base32secret3232"
 
     class DummySecretsManager:
         def get(self, key):
@@ -83,6 +89,8 @@ def auth_app(monkeypatch):
                 "AUTH0_CLIENT_SECRET": "csecret",
                 "AUTH0_DOMAIN": "example.com",
                 "AUTH0_AUDIENCE": "https://api.example.com",
+                "JWT_SECRET": "jwtsecret",
+                "MFA_SECRET": MFA_SECRET,
             }.get(key)
 
     monkeypatch.setattr(auth, "SecretsManager", DummySecretsManager)
@@ -90,10 +98,10 @@ def auth_app(monkeypatch):
     monkeypatch.setattr(auth, "_apply_session_timeout", lambda user: None)
 
     class DummyAuth0:
-        def authorize_redirect(self, redirect_uri=None, audience=None):
+        def authorize_redirect(self, redirect_uri=None, audience=None, **kwargs):
             return redirect("/callback?code=fake")
 
-        def authorize_access_token(self):
+        def authorize_access_token(self, **kwargs):
             return {"id_token": "dummy"}
 
     class DummyOAuth:
@@ -125,6 +133,18 @@ def auth_app(monkeypatch):
     def protected():
         return "ok"
 
+    @app.route("/admin")
+    @auth.login_required
+    @auth.mfa_required
+    def admin():
+        return "admin"
+
+    @app.route("/need-perm")
+    @auth.login_required
+    @require_permission("admin:read")
+    def need_perm():
+        return "perm"
+
     return app
 
 
@@ -147,3 +167,53 @@ def test_auth_login_flow(auth_app) -> None:
     resp = client.get("/protected")
     assert resp.status_code == 200
     assert resp.data == b"ok"
+
+
+@pytest.mark.integration
+def test_token_refresh(auth_app) -> None:
+    client = auth_app.test_client()
+    client.get("/login")
+    client.get("/callback?code=fake")
+    resp = client.get("/token")
+    first = resp.get_json()["access_token"]
+    resp = client.get("/refresh")
+    second = resp.get_json()["access_token"]
+    assert first != second
+
+
+@pytest.mark.integration
+def test_role_enforcement(auth_app) -> None:
+    client = auth_app.test_client()
+    client.get("/login")
+    client.get("/callback?code=fake")
+    resp = client.get("/need-perm")
+    assert resp.status_code == 200
+    with client.session_transaction() as sess:
+        sess["permissions"] = []
+    resp = client.get("/need-perm")
+    assert resp.status_code == 403
+
+
+@pytest.mark.integration
+def test_mfa_flow(auth_app) -> None:
+    client = auth_app.test_client()
+    client.get("/login")
+    client.get("/callback?code=fake")
+    resp = client.get("/admin")
+    assert resp.status_code == 302
+    code = pyotp.TOTP("base32secret3232").now()
+    client.get(f"/mfa/verify?code={code}")
+    resp = client.get("/admin")
+    assert resp.status_code == 200
+    assert resp.data == b"admin"
+
+
+@pytest.mark.integration
+def test_cookie_attributes(auth_app) -> None:
+    client = auth_app.test_client()
+    client.get("/login")
+    resp = client.get("/callback?code=fake")
+    cookie = resp.headers.get("Set-Cookie")
+    assert "HttpOnly" in cookie
+    assert "Secure" in cookie
+    assert "SameSite=Strict" in cookie
