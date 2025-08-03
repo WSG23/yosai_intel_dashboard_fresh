@@ -39,40 +39,61 @@ def test_get_and_update_settings(monkeypatch):
     }
     fake_pkg = ModuleType("yosai_framework")
     fake_pkg.errors = fake_errors
-    safe_import('yosai_framework', fake_pkg)
-    safe_import('yosai_framework.errors', fake_errors)
+    sys.modules["yosai_framework"] = fake_pkg
+    sys.modules["yosai_framework.errors"] = fake_errors
 
     # Load utils.pydantic_decorators without importing utils package
-    spec = importlib.util.spec_from_file_location(
-        "utils.pydantic_decorators",
-        Path(__file__).resolve().parents[2] / "utils" / "pydantic_decorators.py",
-    )
-    pyd_module = importlib.util.module_from_spec(spec)
-    assert spec and spec.loader
-    spec.loader.exec_module(pyd_module)
-    utils_pkg = ModuleType("utils")
-    utils_pkg.pydantic_decorators = pyd_module
-    safe_import('utils', utils_pkg)
-    safe_import('utils.pydantic_decorators', pyd_module)
+    from flask import request
+    pyd_module = ModuleType("pydantic_decorators")
+
+    def _validate_input(model):
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                data = request.get_json() or {}
+                kwargs["payload"] = model.model_validate(data)
+                return func(*args, **kwargs)
+            return wrapper
+        return decorator
+
+    pyd_module.validate_input = _validate_input
+    pyd_module.validate_output = lambda model: (lambda f: f)
+    sys.modules["yosai_intel_dashboard.src.utils.pydantic_decorators"] = pyd_module
+
+    error_module = ModuleType("error_handling")
+    class _ErrorHandler:
+        def handle(self, exc, category):
+            return exc
+    error_module.ErrorHandler = _ErrorHandler
+    error_module.ErrorCategory = SimpleNamespace(INTERNAL="internal")
+    error_module.api_error_response = lambda exc, category, handler=None: ({"error": str(exc)}, 500)
+    sys.modules["yosai_intel_dashboard.src.error_handling"] = error_module
 
     settings_endpoint = importlib.import_module("api.settings_endpoint")
 
     monkeypatch.setattr(
-        settings_endpoint, "SETTINGS_FILE", "settings.json", raising=False
+        settings_endpoint, "SETTINGS_FILE", Path("settings.json"), raising=False
     )
     monkeypatch.setattr(
-        settings_endpoint, "LOCK_FILE", "settings.json.lock", raising=False
+        settings_endpoint, "LOCK_FILE", Path("settings.json.lock"), raising=False
     )
     monkeypatch.setattr(settings_endpoint, "FileLock", lambda p: DummyLock())
 
-    def fake_exists(path):
-        return path in fs
+    orig_exists = Path.exists
+    orig_mkdir = Path.mkdir
+    orig_open = Path.open
 
-    def fake_makedirs(path, exist_ok=False):
-        pass
+    def fake_exists(self: Path):
+        if str(self) in fs:
+            return True
+        return orig_exists(self)
+
+    def fake_mkdir(self: Path, parents: bool = False, exist_ok: bool = False):
+        if str(self) in {str(settings_endpoint.SETTINGS_FILE.parent)}:
+            return None
+        return orig_mkdir(self, parents=parents, exist_ok=exist_ok)
 
     class FakeFile(io.StringIO):
-        def __init__(self, path, mode):
+        def __init__(self, path: str, mode: str):
             content = fs.get(path, "") if "r" in mode else ""
             super().__init__(content)
             self._path = path
@@ -83,12 +104,14 @@ def test_get_and_update_settings(monkeypatch):
                 fs[self._path] = self.getvalue()
             super().close()
 
-    def fake_open(path, mode="r", encoding=None):
-        return FakeFile(path, mode)
+    def fake_open(self: Path, mode: str = "r", encoding: str | None = None, errors: str | None = None, **kwargs):
+        if str(self) in {str(settings_endpoint.SETTINGS_FILE), str(settings_endpoint.LOCK_FILE)}:
+            return FakeFile(str(self), mode)
+        return orig_open(self, mode, encoding=encoding, errors=errors, **kwargs)
 
-    monkeypatch.setattr(settings_endpoint.os.path, "exists", fake_exists)
-    monkeypatch.setattr(settings_endpoint.os, "makedirs", fake_makedirs)
-    monkeypatch.setattr("builtins.open", fake_open)
+    monkeypatch.setattr(Path, "exists", fake_exists)
+    monkeypatch.setattr(Path, "mkdir", fake_mkdir)
+    monkeypatch.setattr(Path, "open", fake_open)
 
     app = Flask(__name__)
     app.register_blueprint(settings_endpoint.settings_bp)
