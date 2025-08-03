@@ -3,12 +3,19 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 
 from yosai_intel_dashboard.src.services.feature_flags import feature_flags
 from yosai_intel_dashboard.src.services.security import require_role
+
+try:  # pragma: no cover - optional dependency
+    from yosai_intel_dashboard.src.services import feature_flag_audit
+except Exception:  # pragma: no cover - audit service may be absent
+    feature_flag_audit = None
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +29,19 @@ class FeatureFlag(BaseModel):
 
 class FeatureFlagUpdate(BaseModel):
     enabled: bool
+
+
+class FeatureFlagAuditEntry(BaseModel):
+    actor_user_id: str
+    timestamp: datetime
+    old_value: bool | None = None
+    new_value: bool | None = None
+    reason: str | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class FeatureFlagAuditHistory(BaseModel):
+    history: list[FeatureFlagAuditEntry]
 
 
 # ---------------------------------------------------------------------------
@@ -93,3 +113,19 @@ async def delete_feature_flag(name: str, _: None = Depends(require_role("admin")
     del feature_flags._flags[name]
     _persist_flags()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{name}/audit", response_model=FeatureFlagAuditHistory)
+async def get_feature_flag_audit(
+    name: str, _: None = Depends(require_role("admin"))
+) -> FeatureFlagAuditHistory:
+    """Return audit history for a feature flag."""
+    if feature_flag_audit is None or not hasattr(
+        feature_flag_audit, "get_feature_flag_audit_history"
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="audit service unavailable",
+        )
+    history = feature_flag_audit.get_feature_flag_audit_history(name)
+    return FeatureFlagAuditHistory(history=history)
