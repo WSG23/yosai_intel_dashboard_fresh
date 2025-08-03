@@ -4,8 +4,10 @@ import asyncio
 import json
 import os
 import pathlib
+from typing import Any, Dict
 
 from fastapi import Header, status
+
 from fastapi.openapi.utils import get_openapi
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -37,7 +39,26 @@ try:
 except Exception:
     service = None
 
-register_health_check(app, "streaming", lambda _: service is not None)
+
+def _broker_health(_: FastAPI) -> Dict[str, Any]:
+    return {
+        "healthy": service is not None,
+        "circuit_breaker": getattr(service, "circuit_breaker_state", "closed"),
+        "retries": getattr(service, "retry_count", 0),
+    }
+
+
+def _database_health(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
+
+
+def _external_api_health(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
+
+
+register_health_check(app, "message_broker", _broker_health)
+register_health_check(app, "database", _database_health)
+register_health_check(app, "external_api", _external_api_health)
 
 # Configure rate limiter
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))

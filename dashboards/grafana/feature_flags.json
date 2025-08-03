@@ -1,0 +1,41 @@
+{
+  "uid": "feature-flags",
+  "title": "Feature Flag Metrics",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Flag Evaluations",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "feature_flag_evaluations_total", "legendFormat": "evaluations"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Cache Refreshes",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "feature_flag_cache_refreshes_total", "legendFormat": "refreshes"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Variant Hits",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "feature_flag_variant_hits_total", "legendFormat": "{{variant}}"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Fallback Rate",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(feature_flag_fallback_total[5m]) / rate(feature_flag_evaluations_total[5m])",
+          "legendFormat": "fallback_rate"
+        }
+      ]
+    }
+  ]
+}

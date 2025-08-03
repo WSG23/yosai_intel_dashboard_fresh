@@ -6,6 +6,12 @@ from typing import Optional
 
 import aiohttp
 
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
+from yosai_intel_dashboard.src.services.resilience.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +23,11 @@ class ModelRegistry:
             base_url or os.getenv("MODEL_REGISTRY_URL", "http://localhost:8080")
         ).rstrip("/")
         self._session: aiohttp.ClientSession | None = None
+        self._cache: dict[str, str] = {}
+        self._lock = asyncio.Lock()
+        self._breaker = CircuitBreaker(3, 30, "model_registry")
+        self._retries = 3
+        self._error_handler = ErrorHandler()
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
@@ -26,19 +37,35 @@ class ModelRegistry:
     async def get_active_version_async(
         self, model_name: str, default: Optional[str] = None
     ) -> Optional[str]:
-        """Return the active version for *model_name* or *default* if lookup fails."""
-        try:
-            session = await self._get_session()
-            async with session.get(
-                f"{self.base_url}/models/{model_name}/active",
-                timeout=aiohttp.ClientTimeout(total=2),
-            ) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
-                return data.get("version", default)
-        except Exception as exc:  # pragma: no cover - network failures
-            logger.warning("model registry lookup failed for %s: %s", model_name, exc)
-            return default
+        """Return the active version for *model_name* or a fallback."""
+        async with self._lock:
+            cached = self._cache.get(model_name)
+
+        for attempt in range(self._retries):
+            try:
+                async with self._breaker:
+                    session = await self._get_session()
+                    async with session.get(
+                        f"{self.base_url}/models/{model_name}/active",
+                        timeout=aiohttp.ClientTimeout(total=2),
+                    ) as resp:
+                        resp.raise_for_status()
+                        data = await resp.json()
+                version = data.get("version", default)
+                if version is not None:
+                    async with self._lock:
+                        self._cache[model_name] = version
+                return version
+            except CircuitBreakerOpen as exc:
+                self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+                return cached if cached is not None else default
+            except Exception as exc:  # pragma: no cover - network failures
+                self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
+                if attempt + 1 == self._retries:
+                    return cached if cached is not None else default
+                await asyncio.sleep(0.1 * (attempt + 1))
+
+        return cached if cached is not None else default
 
     async def close(self) -> None:
         if self._session and not self._session.closed:
