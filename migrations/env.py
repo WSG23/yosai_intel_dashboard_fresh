@@ -39,8 +39,11 @@ def _get_url(section: str) -> str:
 def _ensure_timescale(connection) -> None:
     """Create TimescaleDB extension and hypertable if missing."""
     connection.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb"))
+    chunk = os.getenv("TIMESCALE_CHUNK_INTERVAL", "1 day")
     connection.execute(
-        text("SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE)")
+        text(
+            "SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE, chunk_time_interval => INTERVAL :chunk)"
+        ).bindparams(chunk=chunk)
     )
 
 

@@ -161,15 +161,17 @@ def setup_timescale(conn: connection) -> None:
             )
             """,
         )
+        chunk_interval = os.getenv("TIMESCALE_CHUNK_INTERVAL", "1 day")
         cur.execute(
             """
             SELECT create_hypertable(
                 'access_events',
                 'time',
-                chunk_time_interval => INTERVAL '1 day',
+                chunk_time_interval => %s::interval,
                 if_not_exists => TRUE
             )
-            """
+            """,
+            (chunk_interval,),
         )
 
         # indexes for common query patterns
