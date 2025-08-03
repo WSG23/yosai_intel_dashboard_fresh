@@ -4,6 +4,8 @@
 from abc import abstractmethod
 from typing import Any, Dict, Protocol
 
+from yosai_intel_dashboard.src.core.protocols import ConfigurationServiceProtocol
+
 
 class ConfigurationProviderProtocol(Protocol):
     """Provide configuration sections for various subsystems."""
@@ -61,4 +63,5 @@ __all__ = [
     "ConfigurationProviderProtocol",
     "AnalyticsProviderProtocol",
     "ConfigProviderProtocol",
+    "ConfigurationServiceProtocol",
 ]

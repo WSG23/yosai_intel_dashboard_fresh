@@ -9,7 +9,14 @@ except Exception:  # pragma: no cover - optional deps
     from typing import Protocol
 
     class ConfigurationServiceProtocol(Protocol):
-        def get_max_upload_size_mb(self) -> int: ...
+        ai_confidence_threshold: float
+        max_upload_size_mb: int
+        upload_chunk_size: int
+        def get_max_upload_size_bytes(self) -> int: ...
+        def validate_large_file_support(self) -> bool: ...
+        def get_max_parallel_uploads(self) -> int: ...
+        def get_validator_rules(self) -> dict: ...
+        def get_db_pool_size(self) -> int: ...
 
 
 class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, ConfigProviderProtocol):
@@ -35,7 +42,10 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
             MAX_PARALLEL_UPLOADS=4,
             VALIDATOR_RULES={},
         )
-        self.performance = SimpleNamespace(memory_usage_threshold_mb=1024)
+        self.performance = SimpleNamespace(
+            memory_usage_threshold_mb=1024,
+            ai_confidence_threshold=0.8,
+        )
         self.css = SimpleNamespace(
             bundle_excellent_kb=50,
             bundle_good_kb=100,
@@ -43,6 +53,9 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
             bundle_threshold_kb=100,
             specificity_high=30,
         )
+        self.max_upload_size_mb = self.security.max_upload_mb
+        self.upload_chunk_size = self.uploads.DEFAULT_CHUNK_SIZE
+        self.ai_confidence_threshold = self.performance.ai_confidence_threshold
 
     def get_database_config(self) -> dict:
         return self.database
@@ -62,20 +75,11 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
     def validate_config(self) -> dict:
         return {"valid": True}
 
-    # -- ConfigurationServiceProtocol methods ---------------------------------
-    def get_max_upload_size_mb(self) -> int:
-        return self.security.max_upload_mb
-
     def get_max_upload_size_bytes(self) -> int:
-        return self.get_max_upload_size_mb() * 1024 * 1024
+        return self.max_upload_size_mb * 1024 * 1024
 
     def validate_large_file_support(self) -> bool:
-        return self.get_max_upload_size_mb() >= 50
-
-    def get_upload_chunk_size(self) -> int:
-        from yosai_intel_dashboard.src.infrastructure.config.utils import get_upload_chunk_size
-
-        return get_upload_chunk_size()
+        return self.max_upload_size_mb >= 50
 
     def get_max_parallel_uploads(self) -> int:
         from yosai_intel_dashboard.src.core.config import get_max_parallel_uploads
@@ -86,11 +90,6 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
         from yosai_intel_dashboard.src.core.config import get_validator_rules
 
         return get_validator_rules()
-
-    def get_ai_confidence_threshold(self) -> int:
-        from yosai_intel_dashboard.src.infrastructure.config.utils import get_ai_confidence_threshold
-
-        return get_ai_confidence_threshold()
 
     def get_db_pool_size(self) -> int:
         return getattr(self.performance, "db_pool_size", 10)

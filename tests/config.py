@@ -226,6 +226,8 @@ set_test_environment()
 add_project_root_to_sys_path()
 register_dependency_stubs()
 
+from .fake_configuration import FakeConfiguration  # noqa: E402
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
