@@ -2,7 +2,8 @@ import asyncio
 import json
 import logging
 import threading
-from typing import Optional, Set
+from collections import deque
+from typing import Optional, Set, Deque
 
 from websockets import WebSocketServerProtocol, serve
 
@@ -19,11 +20,13 @@ class AnalyticsWebSocketServer:
         event_bus: Optional[EventBus] = None,
         host: str = "0.0.0.0",
         port: int = 6789,
+        queue_size: int = 100,
     ) -> None:
         self.host = host
         self.port = port
         self.event_bus = event_bus or EventBus()
         self.clients: Set[WebSocketServerProtocol] = set()
+        self._queue: Deque[dict] = deque(maxlen=queue_size)
         self._loop: asyncio.AbstractEventLoop | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -33,6 +36,12 @@ class AnalyticsWebSocketServer:
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         self.clients.add(websocket)
+        if self._queue:
+            queued = list(self._queue)
+            self._queue.clear()
+            for event in queued:
+                if self.event_bus:
+                    self.event_bus.publish("analytics_update", event)
         try:
             async for _ in websocket:
                 pass  # Server is broadcast-only
@@ -47,7 +56,11 @@ class AnalyticsWebSocketServer:
             await asyncio.Event().wait()
 
     def _run(self) -> None:
-        asyncio.run(self._serve())
+        try:
+            asyncio.run(self._serve())
+        except RuntimeError:
+            # Event loop stopped before coroutine completed
+            pass
 
     async def _broadcast_async(self, message: str) -> None:
         for ws in set(self.clients):
@@ -58,9 +71,14 @@ class AnalyticsWebSocketServer:
                 self.clients.discard(ws)
 
     def broadcast(self, data: dict) -> None:
-        message = json.dumps(data)
-        if self._loop is not None:
-            asyncio.run_coroutine_threadsafe(self._broadcast_async(message), self._loop)
+        if self.clients:
+            message = json.dumps(data)
+            if self._loop is not None:
+                asyncio.run_coroutine_threadsafe(
+                    self._broadcast_async(message), self._loop
+                )
+        else:
+            self._queue.append(data)
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""
