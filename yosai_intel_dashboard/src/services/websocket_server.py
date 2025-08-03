@@ -5,13 +5,12 @@ import json
 import logging
 import threading
 from collections import deque
-from typing import Optional, Set, Deque
-
+from typing import Deque, Optional, Set
 
 from websockets import WebSocketServerProtocol, serve
 
-from yosai_intel_dashboard.src.core.events import EventBus
 from src.websocket import metrics as websocket_metrics
+from yosai_intel_dashboard.src.core.events import EventBus
 
 from .websocket_pool import WebSocketConnectionPool
 
@@ -28,7 +27,6 @@ class AnalyticsWebSocketServer:
         port: int = 6789,
         ping_interval: float = 30.0,
         ping_timeout: float = 10.0,
-
     ) -> None:
         self.host = host
         self.port = port
@@ -50,6 +48,7 @@ class AnalyticsWebSocketServer:
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         self.clients.add(websocket)
+        websocket_metrics.record_connection()
         if self._queue:
             queued = list(self._queue)
             self._queue.clear()
@@ -82,6 +81,7 @@ class AnalyticsWebSocketServer:
                     {"client": id(ws), "status": "alive"},
                 )
         except asyncio.TimeoutError:
+            websocket_metrics.record_ping_failure()
             if self.event_bus:
                 self.event_bus.publish(
                     "websocket_heartbeat",
@@ -114,7 +114,6 @@ class AnalyticsWebSocketServer:
                 )
         else:
             self._queue.append(data)
-
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""
