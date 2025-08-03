@@ -63,3 +63,10 @@ class CircuitBreaker:
             self._failure_count = 0
             self._state = "closed"
             return result
+
+    # ------------------------------------------------------------------
+    def reset(self) -> None:
+        """Force the circuit breaker into the closed state."""
+        self._failure_count = 0
+        self._state = "closed"
+        self._opened_at = None
