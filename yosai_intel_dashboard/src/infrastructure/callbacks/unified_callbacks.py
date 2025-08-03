@@ -24,8 +24,8 @@ from typing import (
 from dash import Dash
 from dash.dependencies import Input, Output, State
 
-from .events import CallbackEvent
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
+from .events import CallbackEvent
 
 logger = logging.getLogger(__name__)
 
@@ -528,7 +528,13 @@ class TrulyUnifiedCallbacks:
                 super().__init__(coord.app)
                 self._coord = coord
 
-            def handle_register(self, outputs, inputs=None, states=None, **kwargs):
+            def handle_register(
+                self,
+                outputs: Output | Iterable[Output],
+                inputs: Iterable[Input] | Input | None = None,
+                states: Iterable[State] | State | None = None,
+                **kwargs: Any,
+            ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
                 return self._coord.handle_register(outputs, inputs, states, **kwargs)
 
         for manager_cls in manager_classes:
