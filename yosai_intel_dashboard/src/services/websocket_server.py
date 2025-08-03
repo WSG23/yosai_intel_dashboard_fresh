@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -26,9 +28,12 @@ class AnalyticsWebSocketServer:
         self.clients: Set[WebSocketServerProtocol] = set()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
+        self._subscription_id: str | None = None
         self._thread.start()
         if self.event_bus:
-            self.event_bus.subscribe("analytics_update", self.broadcast)
+            self._subscription_id = self.event_bus.subscribe(
+                "analytics_update", self.broadcast
+            )
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
@@ -62,9 +67,26 @@ class AnalyticsWebSocketServer:
         if self._loop is not None:
             asyncio.run_coroutine_threadsafe(self._broadcast_async(message), self._loop)
 
+    async def _close_clients(self) -> None:
+        for ws in list(self.clients):
+            try:
+                await ws.close()
+            except Exception as exc:  # pragma: no cover - closing errors
+                logger.debug("Failed closing client: %s", exc)
+            finally:
+                self.clients.discard(ws)
+
     def stop(self) -> None:
         """Stop the server thread and event loop."""
+        if self.event_bus and self._subscription_id:
+            self.event_bus.unsubscribe(self._subscription_id)
+            self._subscription_id = None
         if self._loop is not None:
+            future = asyncio.run_coroutine_threadsafe(self._close_clients(), self._loop)
+            try:
+                future.result(timeout=1)
+            except Exception as exc:  # pragma: no cover - timeout or loop issues
+                logger.debug("Error waiting for client close: %s", exc)
             self._loop.call_soon_threadsafe(self._loop.stop)
             self._thread.join(timeout=1)
 
