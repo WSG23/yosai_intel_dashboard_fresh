@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Debug utilities for Dash asset serving with safe imports."""
 
+from __future__ import annotations
+
 try:
-    from dash import html  # type: ignore
+    from dash import get_asset_url, html  # type: ignore
 
     DASH_AVAILABLE = True
 except ImportError:
@@ -12,7 +14,7 @@ except ImportError:
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable
 
 from yosai_intel_dashboard.src.core.unicode import safe_encode_text
 
@@ -83,8 +85,13 @@ def navbar_icon(filename: str, alt: str, fallback_text: str, *, warn: bool = Tru
     """
     path = NAVBAR_ICON_DIR / filename
     if path.is_file():
+        src = (
+            get_asset_url(f"navbar_icons/{filename}")
+            if DASH_AVAILABLE
+            else f"/assets/navbar_icons/{filename}"
+        )
         return html.Img(
-            src=f"/assets/navbar_icons/{filename}",
+            src=src,
             className="nav-icon nav-icon--image",
             alt=alt,
         )

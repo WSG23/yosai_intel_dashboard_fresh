@@ -10,6 +10,7 @@ def _read_sql() -> str:
 def test_hypertable_and_index_creation() -> None:
     sql = _read_sql()
     assert "create_hypertable('access_events'" in sql
+    assert "chunk_time_interval" in sql
     # primary key index ensures index creation
     assert "primary key" in sql
 

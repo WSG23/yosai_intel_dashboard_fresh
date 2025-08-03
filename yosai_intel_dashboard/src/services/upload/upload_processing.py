@@ -1,3 +1,5 @@
+from typing import Any
+
 from yosai_intel_dashboard.src.services.upload.protocols import UploadAnalyticsProtocol
 
 
@@ -19,20 +21,23 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
 
     # ------------------------------------------------------------------
     def _calculate_statistics(self, data):
-        """Calculate basic statistics for uploaded ``data``."""
+        """Calculate basic statistics for uploaded ``data``.
+
+        This version avoids nested iteration over rows by aggregating
+        unique values using hash-based ``set`` updates. Each DataFrame is
+        processed once, and relevant columns contribute their unique
+        entries directly to the accumulator sets.
+        """
+
         total_events = sum(len(df) for df in data.values())
-        unique_users = {
-            row.get("Person ID")
-            for df in data.values()
-            for row in df.to_dict("records")
-            if "Person ID" in row
-        }
-        unique_doors = {
-            row.get("Device name")
-            for df in data.values()
-            for row in df.to_dict("records")
-            if "Device name" in row
-        }
+        unique_users: set[Any] = set()
+        unique_doors: set[Any] = set()
+        for df in data.values():
+            if "Person ID" in df.columns:
+                unique_users.update(df["Person ID"].dropna().unique())
+            if "Device name" in df.columns:
+                unique_doors.update(df["Device name"].dropna().unique())
+
         return {
             "total_events": total_events,
             "active_users": len(unique_users),

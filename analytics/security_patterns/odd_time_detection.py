@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, Iterator
 
+import numpy as np
 import pandas as pd
 
 from .pattern_detection import Threat
@@ -13,14 +14,23 @@ class BaselineMetricsDB:
     def get_baseline(self, person_id: str) -> Dict[str, float]:
         return {}
 
-    def update_baseline(self, person_id: str, stats: Dict[str, float]) -> None:  # pragma: no cover
+    def update_baseline(
+        self, person_id: str, stats: Dict[str, float]
+    ) -> None:  # pragma: no cover
         pass
 
 
-def detect_odd_time(df: pd.DataFrame) -> List[Threat]:
-    """Detect access events occurring at unusual hours."""
+def detect_odd_time(df: pd.DataFrame) -> Iterator[Threat]:
+    """Detect access events occurring at unusual hours.
+
+    Yields
+    ------
+    Threat
+        An ``odd_time_access`` threat for users accessing outside their
+        typical hours.
+    """
     if df.empty:
-        return []
+        return
 
     db = BaselineMetricsDB()
     baselines = {pid: db.get_baseline(pid) or {} for pid in df["person_id"].unique()}
@@ -56,6 +66,7 @@ def detect_odd_time(df: pd.DataFrame) -> List[Threat]:
         for row in first_offenders.itertuples(index=False)
     )
     return threats
+
 
 
 __all__ = ["BaselineMetricsDB", "detect_odd_time"]

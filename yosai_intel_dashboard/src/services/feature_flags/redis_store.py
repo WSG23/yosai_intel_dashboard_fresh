@@ -113,8 +113,10 @@ class RedisFeatureFlagStore:
                 with self._lock.write_lock():
                     self._flags[name] = flag
         finally:
-            await pubsub.unsubscribe(self.channel)
-            await pubsub.close()
+            await asyncio.gather(
+                pubsub.unsubscribe(self.channel),
+                pubsub.close(),
+            )
 
     def get_flag(self, name: str, default: bool = False) -> bool:
         with self._lock.read_lock():

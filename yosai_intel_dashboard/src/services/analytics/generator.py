@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Analytics generation helpers packaged as a service."""
 
 import logging
@@ -7,12 +9,14 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 from yosai_intel_dashboard.src.core.cache_manager import (
     CacheConfig,
     InMemoryCacheManager,
     cache_with_lock,
 )
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
+
+from .approximation import approximate_unique_count
 
 cfg = get_cache_config()
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
@@ -26,8 +30,14 @@ class AnalyticsGenerator:
     @cache_with_lock(_cache_manager, ttl=600)
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         total_events = len(df)
-        active_users = df["person_id"].nunique() if "person_id" in df.columns else 0
-        active_doors = df["door_id"].nunique() if "door_id" in df.columns else 0
+        active_users = (
+            approximate_unique_count(df["person_id"])
+            if "person_id" in df.columns
+            else 0
+        )
+        active_doors = (
+            approximate_unique_count(df["door_id"]) if "door_id" in df.columns else 0
+        )
 
         date_range = {"start": "Unknown", "end": "Unknown"}
         if "timestamp" in df.columns:
@@ -110,8 +120,8 @@ class AnalyticsGenerator:
 
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         total_events = len(df)
-        unique_users = df["person_id"].nunique()
-        unique_doors = df["door_id"].nunique()
+        unique_users = approximate_unique_count(df["person_id"])
+        unique_doors = approximate_unique_count(df["door_id"])
 
         access_counts = df["access_result"].value_counts()
         granted = access_counts.get("Granted", 0)
@@ -162,7 +172,7 @@ class AnalyticsGenerator:
                     counts = df[col].value_counts().head(10)
                     analytics["summary"][col] = {
                         "type": "categorical",
-                        "unique_values": int(df[col].nunique()),
+                        "unique_values": approximate_unique_count(df[col]),
                         "top_values": {str(k): int(v) for k, v in counts.items()},
                         "null_count": int(df[col].isnull().sum()),
                     }

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -73,3 +75,43 @@ def test_task_queue_thread_safety():
     assert all(res == "ok" for res in results)
 
     assert queue._tasks == {}
+
+
+def test_task_queue_idempotency():
+    q = TaskQueue()
+
+    async def sample():
+        await asyncio.sleep(0.01)
+        return "ok"
+
+    tid1 = q.create_task(sample, idempotency_key="same")
+    tid2 = q.create_task(sample, idempotency_key="same")
+    assert tid1 == tid2
+    for _ in range(100):
+        status = q.get_status(tid1)
+        if status.get("done"):
+            break
+        time.sleep(0.01)
+    assert q.get_status(tid1)["result"] == "ok"
+    q.clear_task(tid1)
+
+
+def test_task_queue_workers():
+    q = TaskQueue(workers=2)
+
+    async def sample():
+        await asyncio.sleep(0.1)
+        return "ok"
+
+    start = time.perf_counter()
+    tids = [q.create_task(sample) for _ in range(2)]
+    for tid in tids:
+        while True:
+            status = q.get_status(tid)
+            if status.get("done"):
+                break
+            time.sleep(0.01)
+    elapsed = time.perf_counter() - start
+    assert elapsed < 0.19
+    for tid in tids:
+        q.clear_task(tid)

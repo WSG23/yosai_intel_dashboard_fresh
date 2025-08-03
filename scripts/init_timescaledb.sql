@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS access_events (
     response_time_ms INTEGER,
     metadata JSONB
 );
-SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE);
+SELECT create_hypertable('access_events', 'time', chunk_time_interval => INTERVAL '1 day', if_not_exists => TRUE);
 ALTER TABLE access_events
   SET (timescaledb.compress,
        timescaledb.compress_orderby = 'time DESC',
@@ -35,6 +35,21 @@ SELECT add_continuous_aggregate_policy('access_events_5min',
     start_offset => INTERVAL '1 day',
     end_offset => INTERVAL '1 minute',
     schedule_interval => INTERVAL '5 minutes');
+
+-- Continuous aggregate for hourly summaries per facility
+CREATE MATERIALIZED VIEW IF NOT EXISTS access_event_hourly
+WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket('1 hour', time) AS bucket,
+    facility_id,
+    COUNT(*) AS event_count
+FROM access_events
+GROUP BY bucket, facility_id
+WITH NO DATA;
+SELECT add_continuous_aggregate_policy('access_event_hourly',
+    start_offset => INTERVAL '7 days',
+    end_offset => INTERVAL '1 hour',
+    schedule_interval => INTERVAL '1 hour');
 
 SELECT add_compression_policy('access_events', INTERVAL '30 days');
 SELECT add_retention_policy('access_events', INTERVAL '365 days');

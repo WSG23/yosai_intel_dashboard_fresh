@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS access_events (
     metadata JSONB
 );
 
-SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE);
+SELECT create_hypertable('access_events', 'time', chunk_time_interval => INTERVAL '1 day', if_not_exists => TRUE);
 ALTER TABLE access_events
   SET (
        timescaledb.compress,
@@ -95,3 +95,29 @@ CREATE TABLE IF NOT EXISTS emergency_lockdowns (
     active BOOLEAN DEFAULT FALSE,
     activated_at TIMESTAMPTZ
 );
+
+-- Anomaly detections stored as a hypertable for efficient retention and compression
+CREATE TABLE IF NOT EXISTS anomaly_detections (
+    anomaly_id UUID PRIMARY KEY,
+    event_id UUID REFERENCES access_events(event_id),
+    anomaly_type VARCHAR(50) NOT NULL,
+    severity VARCHAR(20) NOT NULL,
+    confidence_score FLOAT NOT NULL,
+    description TEXT,
+    detected_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ai_model_version VARCHAR(50),
+    additional_context JSONB,
+    is_verified BOOLEAN,
+    verified_by VARCHAR(50),
+    verified_at TIMESTAMPTZ
+);
+SELECT create_hypertable('anomaly_detections', 'detected_at', if_not_exists => TRUE);
+CREATE INDEX IF NOT EXISTS idx_anomaly_detections_detected_at ON anomaly_detections(detected_at);
+CREATE INDEX IF NOT EXISTS idx_anomaly_detections_type ON anomaly_detections(anomaly_type);
+ALTER TABLE anomaly_detections
+  SET (
+       timescaledb.compress,
+       timescaledb.compress_orderby = 'detected_at DESC'
+  );
+SELECT add_compression_policy('anomaly_detections', INTERVAL '30 days');
+SELECT add_retention_policy('anomaly_detections', INTERVAL '180 days');

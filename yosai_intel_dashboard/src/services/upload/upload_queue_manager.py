@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import asyncio
-import heapq
 import logging
 import threading
 import time
 import uuid
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Tuple
+from collections import deque
+from typing import Any, Awaitable, Callable, Deque, Dict, Iterable, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +35,10 @@ class UploadQueueManager:
         self.max_concurrent = max_concurrent
         self._task_factory = task_factory
         self._lock = threading.Lock()
-        self._queue: List[Tuple[int, float, Any]] = []
+        self._queue: Deque[Tuple[int, float, Any]] = deque()
         self._tasks: Dict[str, asyncio.Task] = {}
         self.files: List[Any] = []
+        self._file_set: set[Any] = set()
         self.completed: set[Any] = set()
         self._paused = False
         self._state = state if state is not None else {}
@@ -46,10 +49,10 @@ class UploadQueueManager:
         data = self._state.get("queue_state")
         if not data:
             return
-        for priority, ts, item in data.get("queue", []):
-            heapq.heappush(self._queue, (priority, ts, item))
+        self._queue = deque(sorted(data.get("queue", [])))
         self._paused = data.get("paused", False)
         self.files = list(data.get("files", []))
+        self._file_set = set(self.files)
         self.completed = set(data.get("completed", []))
 
     def _save_state(self) -> None:
@@ -89,10 +92,13 @@ class UploadQueueManager:
         with self._lock:
             ts = time.time()
             for f in files:
-                heapq.heappush(self._queue, (priority, ts, f))
+                self._queue.append((priority, ts, f))
                 if f not in self.files:
+
                     self.files.append(f)
+                    self._file_set.add(f)
                 ts += 1e-6  # ensure stable ordering
+            self._queue = deque(sorted(self._queue))
             self._save_state()
 
     def add_file(self, file: Any, *, priority: int = 0) -> None:
@@ -144,7 +150,7 @@ class UploadQueueManager:
             if self._paused:
                 return completed
             while self._queue and len(self._tasks) < self.max_concurrent:
-                priority, ts, item = heapq.heappop(self._queue)
+                priority, ts, item = self._queue.popleft()
                 task_id = str(uuid.uuid4())
                 task = self._task_factory(handler(item))
                 self._tasks[task_id] = task

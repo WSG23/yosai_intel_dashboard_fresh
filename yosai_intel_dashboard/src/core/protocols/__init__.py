@@ -375,13 +375,8 @@ class ExportServiceProtocol(Protocol):
     """Protocol for data export operations."""
 
     @abstractmethod
-    def export_to_csv(self, data: pd.DataFrame, filename: str) -> str:
-        """Export data to CSV format."""
-        ...
-
-    @abstractmethod
-    def export_to_excel(self, data: pd.DataFrame, filename: str) -> str:
-        """Export data to Excel format."""
+    def export_to_parquet(self, data: pd.DataFrame, filename: str) -> str:
+        """Export data to Parquet format."""
         ...
 
     @abstractmethod
@@ -478,7 +473,9 @@ class UnicodeProcessorProtocol(Protocol):
         ...
 
 
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 
 def _get_container(

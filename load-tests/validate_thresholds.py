@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-from __future__ import annotations
 
 """Validate Locust metrics against threshold targets."""
 
 import csv
 import sys
+from pathlib import Path
 
 import yaml
 
 
 def load_metrics(csv_path: str) -> dict[str, dict[str, float]]:
     metrics: dict[str, dict[str, float]] = {}
-    with open(csv_path, newline="") as f:
+    with Path(csv_path).open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             name = row["Name"]
@@ -27,7 +27,8 @@ def load_metrics(csv_path: str) -> dict[str, dict[str, float]]:
 
 def main(csv_path: str, thresholds_path: str) -> int:
     metrics = load_metrics(csv_path)
-    thresholds = yaml.safe_load(open(thresholds_path)).get("endpoints", {})
+    with Path(thresholds_path).open(encoding="utf-8") as f:
+        thresholds = yaml.safe_load(f).get("endpoints", {})
 
     for ep, limits in thresholds.items():
         if ep not in metrics:

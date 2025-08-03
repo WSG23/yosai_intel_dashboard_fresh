@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
-    subjects = [s for subs in SCHEMA_MAP.values() for s in subs]
+    subjects = (s for subs in SCHEMA_MAP.values() for s in subs)
     fetch_current_versions(args.schema_registry, subjects)
 
     for path_str, subs in SCHEMA_MAP.items():

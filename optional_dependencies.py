@@ -21,7 +21,7 @@ import logging
 import types
 from typing import Any, Callable, Dict
 
-from monitoring import missing_dependencies
+from monitoring.missing_dependencies import missing_dependencies
 
 logger = logging.getLogger(__name__)
 
