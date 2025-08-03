@@ -9,11 +9,24 @@ import hashlib
 import logging
 import secrets
 import time
-from bisect import bisect_left
+from concurrent.futures import ProcessPoolExecutor
+
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+_executor = ProcessPoolExecutor()
+
+
+def _pbkdf2_sha256(password: bytes, salt: bytes, iterations: int) -> bytes:
+    """Compute PBKDF2-HMAC-SHA256 hash."""
+    return hashlib.pbkdf2_hmac("sha256", password, salt, iterations)
+
+
+def _sha256_bytes(data: bytes) -> str:
+    """Compute SHA256 digest of ``data``."""
+    return hashlib.sha256(data).hexdigest()
 
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
@@ -272,9 +285,13 @@ class SecureHashManager:
             salt = secrets.token_bytes(dynamic_config.security.salt_bytes)
 
         # Use PBKDF2 with SHA256
-        hash_bytes = hashlib.pbkdf2_hmac(
-            "sha256", password.encode(), salt, dynamic_config.security.pbkdf2_iterations
+        future = _executor.submit(
+            _pbkdf2_sha256,
+            password.encode(),
+            salt,
+            dynamic_config.security.pbkdf2_iterations,
         )
+        hash_bytes = future.result()
 
         return {
             "hash": hash_bytes.hex(),
@@ -287,18 +304,20 @@ class SecureHashManager:
     def verify_password(password: str, stored_hash: str, stored_salt: str) -> bool:
         """Verify password against stored hash"""
         salt = bytes.fromhex(stored_salt)
-        hash_bytes = hashlib.pbkdf2_hmac(
-            "sha256",
+        future = _executor.submit(
+            _pbkdf2_sha256,
             password.encode(),
             salt,
             dynamic_config.security.pbkdf2_iterations,
         )
+        hash_bytes = future.result()
         return hash_bytes.hex() == stored_hash
 
     @staticmethod
     def hash_sensitive_data(data: str) -> str:
         """Hash sensitive data for storage"""
-        return hashlib.sha256(data.encode()).hexdigest()
+        future = _executor.submit(_sha256_bytes, data.encode())
+        return future.result()
 
 
 # Global security instances
