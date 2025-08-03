@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .secure_config_manager import SecureConfigManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -150,22 +152,51 @@ class SecretsValidator:
         result = SecretValidationResult(is_valid, issues, severity, recommendations)
         return result, generated
 
+    @staticmethod
+    def _mask_secret(secret: str) -> str:
+        """Mask a secret value keeping first and last four characters."""
+        if len(secret) <= 8:
+            return "*" * len(secret)
+        return secret[:4] + "*" * (len(secret) - 8) + secret[-4:]
+
     def validate_production_secrets(
-        self, source: Optional[SecretSource] = None
+        self, source: Optional[SecretSource] = None, mask: bool = True
     ) -> Dict[str, str]:
         """Validate critical secrets for a production environment.
 
         Raises a ``ValueError`` if any required secret is missing or insecure.
+
+        Parameters
+        ----------
+        source:
+            Optional secret source to read from. Defaults to environment
+            variables.
+        mask:
+            If ``True`` (default), mask the returned secret values to avoid
+            leaking their contents.
         """
         source = source or EnvSecretSource()
         missing: List[str] = []
         secrets: Dict[str, str] = {}
+        manager: SecureConfigManager | None = None
         for key in self.REQUIRED_PRODUCTION_SECRETS:
             value = source.get_secret(key)
+            if isinstance(value, str) and (
+                value.startswith("vault:") or value.startswith("aws-secrets:")
+            ):
+                if manager is None:
+                    manager = SecureConfigManager.__new__(SecureConfigManager)
+                    manager.client = None  # type: ignore[attr-defined]
+                    manager.aws_client = None  # type: ignore[attr-defined]
+                    manager.fernet = None  # type: ignore[attr-defined]
+                try:
+                    value = manager._resolve_secret_values(value)  # type: ignore[assignment]
+                except Exception:
+                    value = None
             if not value or len(value) < 32 or value.startswith("test-"):
                 missing.append(key)
             else:
-                secrets[key] = value
+                secrets[key] = self._mask_secret(value) if mask else value
         if missing:
             raise ValueError("Invalid production secrets: " + ", ".join(missing))
         return secrets

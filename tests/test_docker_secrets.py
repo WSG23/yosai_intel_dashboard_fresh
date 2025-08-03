@@ -1,17 +1,24 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
 import pytest
 
-from yosai_intel_dashboard.src.infrastructure.config.secrets_validator import DockerSecretSource, SecretsValidator
+from yosai_intel_dashboard.src.infrastructure.config.secrets_validator import (
+    DockerSecretSource,
+    SecretsValidator,
+)
 
 
 def test_docker_secret_source(tmp_path):
     # placeholder value used for test secrets
-    (tmp_path / "SECRET_KEY").write_text("placeholdersecret" * 2)
+    secret_value = "placeholdersecret" * 2
+    (tmp_path / "SECRET_KEY").write_text(secret_value)
     src = DockerSecretSource(tmp_path)
     # the source should read back the exact secret written to disk
     assert src.get_secret("SECRET_KEY").startswith("placeholdersecret")
+
     assert src.get_secret("MISSING") is None
 
 
@@ -33,3 +40,4 @@ def test_validate_secret_returns_generated_secret():
     assert result.is_valid
     assert generated is not None
     assert len(generated) == 32
+
