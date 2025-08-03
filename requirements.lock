@@ -139,6 +139,8 @@ httptools==0.6.4
     # via uvicorn
 hvac==2.3.0
     # via -r requirements.txt
+hyperloglog==0.0.14
+    # via -r requirements.txt
 idna==3.10
     # via
     #   anyio

@@ -7,6 +7,8 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 
+from analytics.core.utils import hll_count
+
 from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 from yosai_intel_dashboard.src.core.cache_manager import (
     CacheConfig,
@@ -26,8 +28,8 @@ class AnalyticsGenerator:
     @cache_with_lock(_cache_manager, ttl=600)
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         total_events = len(df)
-        active_users = df["person_id"].nunique() if "person_id" in df.columns else 0
-        active_doors = df["door_id"].nunique() if "door_id" in df.columns else 0
+        active_users = hll_count(df["person_id"]) if "person_id" in df.columns else 0
+        active_doors = hll_count(df["door_id"]) if "door_id" in df.columns else 0
 
         date_range = {"start": "Unknown", "end": "Unknown"}
         if "timestamp" in df.columns:
@@ -110,8 +112,8 @@ class AnalyticsGenerator:
 
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         total_events = len(df)
-        unique_users = df["person_id"].nunique()
-        unique_doors = df["door_id"].nunique()
+        unique_users = hll_count(df["person_id"])
+        unique_doors = hll_count(df["door_id"])
 
         access_counts = df["access_result"].value_counts()
         granted = access_counts.get("Granted", 0)
@@ -162,7 +164,7 @@ class AnalyticsGenerator:
                     counts = df[col].value_counts().head(10)
                     analytics["summary"][col] = {
                         "type": "categorical",
-                        "unique_values": int(df[col].nunique()),
+                        "unique_values": hll_count(df[col]),
                         "top_values": {str(k): int(v) for k, v in counts.items()},
                         "null_count": int(df[col].isnull().sum()),
                     }
