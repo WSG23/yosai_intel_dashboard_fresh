@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Dict
 
 # Default chunk size used across services when reading or uploading large files
 DEFAULT_CHUNK_SIZE: int = 50_000
@@ -79,6 +80,15 @@ class FileProcessingLimits:
 
 
 @dataclass
+class RateLimitConfig:
+    """Configuration for a single API tier rate limit."""
+
+    requests: int
+    window_minutes: int
+    burst: int = 0
+
+
+@dataclass
 class SecurityConstants:
     """Security related default values with large file support."""
 
@@ -86,6 +96,9 @@ class SecurityConstants:
     salt_bytes: int = 32
     rate_limit_requests: int = 200
     rate_limit_window_minutes: int = 1
+    rate_limits: Dict[str, RateLimitConfig] = field(
+        default_factory=lambda: {"default": RateLimitConfig(200, 1, 0)}
+    )
     max_upload_mb: int = 500  # Changed from 100 to 500
     max_file_size_mb: int = 500  # Added for consistency
     max_analysis_mb: int = 1000  # Added for large file processing

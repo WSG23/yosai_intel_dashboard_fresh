@@ -13,12 +13,15 @@ Example
 >>> if shap:
 ...     shap.TreeExplainer(...)
 """
+
 from __future__ import annotations
 
 import importlib
 import logging
 import types
 from typing import Any, Callable, Dict
+
+from monitoring import missing_dependencies
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,7 @@ def register_stub(name: str, factory: Callable[[], Any] | Any) -> None:
 # ---------------------------------------------------------------------------
 # Optional import helper
 
+
 def import_optional(name: str, fallback: Any | None = None) -> Any | None:
     """Attempt to import ``name`` returning a fallback on failure.
 
@@ -63,6 +67,7 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
         return getattr(module, attr) if attr else module
     except Exception as exc:  # pragma: no cover - defensive
         logger.warning("Optional dependency '%s' unavailable: %s", name, exc)
+        missing_dependencies.labels(dependency=name).inc()
         value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
         if callable(value):
             return value()
@@ -84,6 +89,7 @@ __all__ = ["import_optional", "is_available", "register_stub"]
 
 # ---------------------------------------------------------------------------
 # Default stubs for commonly optional packages
+
 
 def _simple_module(name: str, **attrs: Any) -> types.ModuleType:
     mod = types.ModuleType(name)
@@ -148,7 +154,9 @@ register_stub("mlflow", _mlflow_stub)
 
 
 # asyncpg -------------------------------------------------------------------
-register_stub("asyncpg", lambda: _simple_module("asyncpg", create_pool=lambda *a, **k: None))
+register_stub(
+    "asyncpg", lambda: _simple_module("asyncpg", create_pool=lambda *a, **k: None)
+)
 
 
 # httpx ---------------------------------------------------------------------
