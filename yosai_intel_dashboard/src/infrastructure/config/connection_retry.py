@@ -11,6 +11,10 @@ from .protocols import (
     ConnectionRetryManagerProtocol,
     RetryConfigProtocol,
 )
+from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import (
+    request_retry_count,
+    request_retry_delay,
+)
 
 T = TypeVar("T")
 
@@ -71,6 +75,8 @@ class ConnectionRetryManager(ConnectionRetryManagerProtocol):
                     delay = min(delay, self.config.max_delay)
                     if self.callbacks and hasattr(self.callbacks, "on_retry"):
                         self.callbacks.on_retry(attempt, delay)
+                    request_retry_count.inc()
+                    request_retry_delay.observe(delay)
                     time.sleep(delay)
                     attempt += 1
 

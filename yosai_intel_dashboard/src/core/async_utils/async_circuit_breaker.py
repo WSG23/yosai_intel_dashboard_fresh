@@ -10,6 +10,9 @@ from yosai_intel_dashboard.src.core.performance import (
     MetricType,
     get_performance_monitor,
 )
+from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (
+    PerformanceProfiler,
+)
 
 
 _circuit_breaker_state = None
