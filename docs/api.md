@@ -189,3 +189,10 @@ The following table lists the required role or permission for key API route grou
 
 For details on internal streaming, alert dispatching and WebSocket messages see
 [Internal Service Interfaces](internal_services.md).
+
+## Intel Analysis Service SDK
+
+The Intel Analysis Service provides both REST and GraphQL interfaces. A basic
+health check is available at `/status` while `/graphql` exposes a lightweight
+schema suitable for interactive exploration or SDK generation. The service is
+intended as a starting point for custom analytics features.
