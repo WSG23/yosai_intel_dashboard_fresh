@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import threading
-from typing import Optional, Set
+from collections import deque
+from typing import Optional, Set, Deque
+
 
 from websockets import WebSocketServerProtocol, serve
 
 from yosai_intel_dashboard.src.core.events import EventBus
+from src.websocket import metrics as websocket_metrics
+
+from .websocket_pool import WebSocketConnectionPool
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +28,7 @@ class AnalyticsWebSocketServer:
         port: int = 6789,
         ping_interval: float = 30.0,
         ping_timeout: float = 10.0,
+
     ) -> None:
         self.host = host
         self.port = port
@@ -28,28 +36,40 @@ class AnalyticsWebSocketServer:
         self.clients: Set[WebSocketServerProtocol] = set()
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
+
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
+        self._subscription_id: str | None = None
         self._thread.start()
         if self.event_bus:
-            self.event_bus.subscribe("analytics_update", self.broadcast)
+            self._subscription_id = self.event_bus.subscribe(
+                "analytics_update", self.broadcast
+            )
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
         self.clients.add(websocket)
+        if self._queue:
+            queued = list(self._queue)
+            self._queue.clear()
+            for event in queued:
+                if self.event_bus:
+                    self.event_bus.publish("analytics_update", event)
+
         try:
             async for _ in websocket:
                 pass  # Server is broadcast-only
         except Exception as exc:  # pragma: no cover - connection errors
             logger.debug("WebSocket connection error: %s", exc)
         finally:
-            self.clients.discard(websocket)
+            await self.pool.release(websocket)
 
     async def _serve(self) -> None:
         self._loop = asyncio.get_running_loop()
         async with serve(self._handler, self.host, self.port):
             self._heartbeat_task = asyncio.create_task(self._heartbeat())
+
             await asyncio.Event().wait()
 
     async def _ping_client(self, ws: WebSocketServerProtocol) -> None:
@@ -79,26 +99,32 @@ class AnalyticsWebSocketServer:
                 await self._ping_client(ws)
 
     def _run(self) -> None:
-        asyncio.run(self._serve())
-
-    async def _broadcast_async(self, message: str) -> None:
-        for ws in set(self.clients):
-            try:
-                await ws.send(message)
-            except Exception as exc:  # pragma: no cover - drop dead clients
-                logger.debug("Failed sending to client: %s", exc)
-                self.clients.discard(ws)
+        try:
+            asyncio.run(self._serve())
+        except RuntimeError:
+            # Event loop stopped before coroutine completed
+            pass
 
     def broadcast(self, data: dict) -> None:
-        message = json.dumps(data)
-        if self._loop is not None:
-            asyncio.run_coroutine_threadsafe(self._broadcast_async(message), self._loop)
+        if self.clients:
+            message = json.dumps(data)
+            if self._loop is not None:
+                asyncio.run_coroutine_threadsafe(
+                    self._broadcast_async(message), self._loop
+                )
+        else:
+            self._queue.append(data)
+
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""
+        if self.event_bus and self._subscription_id:
+            self.event_bus.unsubscribe(self._subscription_id)
+            self._subscription_id = None
         if self._loop is not None:
             if self._heartbeat_task is not None:
                 self._loop.call_soon_threadsafe(self._heartbeat_task.cancel)
+
             self._loop.call_soon_threadsafe(self._loop.stop)
             self._thread.join(timeout=1)
 

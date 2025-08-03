@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { defaultPool, HEARTBEAT_TIMEOUT } from './websocketPool';
 
+
 export const useWebSocket = (
   path: string,
   socketFactory?: (url: string) => WebSocket
 ) => {
   const [data, setData] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [state, setState] = useState<WebSocketState>(WebSocketState.DISCONNECTED);
   const wsRef = useRef<WebSocket | null>(null);
   const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartbeatTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,17 +35,21 @@ export const useWebSocket = (
       });
     }
 
+
     ws.onopen = () => {
-      setIsConnected(true);
+      setState(WebSocketState.CONNECTED);
+      eventBus.emit('websocket_state', WebSocketState.CONNECTED);
       attemptRef.current = 0;
     };
     ws.onclose = () => {
-      setIsConnected(false);
-      if (!stoppedRef.current) {
-        const delay = Math.min(1000 * 2 ** attemptRef.current, 30000);
-        attemptRef.current += 1;
-        retryTimeout.current = setTimeout(connect, delay);
+      if (stoppedRef.current) {
+        return;
       }
+      setState(WebSocketState.RECONNECTING);
+      eventBus.emit('websocket_state', WebSocketState.RECONNECTING);
+      const delay = Math.min(1000 * 2 ** attemptRef.current, 30000);
+      attemptRef.current += 1;
+      retryTimeout.current = setTimeout(connect, delay);
     };
     ws.onmessage = (ev: MessageEvent) => setData(ev.data as string);
   };
@@ -57,6 +62,7 @@ export const useWebSocket = (
     if (heartbeatTimeout.current) {
       clearTimeout(heartbeatTimeout.current);
     }
+
     wsRef.current?.close();
   };
   useEffect(() => {
@@ -68,7 +74,8 @@ export const useWebSocket = (
     };
   }, [path, socketFactory]);
 
-  return { data, isConnected, cleanup };
+  const isConnected = state === WebSocketState.CONNECTED;
+  return { data, isConnected, state, cleanup };
 };
 
 export default useWebSocket;

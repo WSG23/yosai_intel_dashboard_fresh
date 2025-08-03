@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { useWebSocket } from './useWebSocket';
+import { useWebSocket, WebSocketState } from './useWebSocket';
+import { eventBus } from '../eventBus';
 
 jest.useFakeTimers();
 
@@ -37,6 +38,7 @@ describe('useWebSocket', () => {
     );
 
     act(() => {
+      MockSocket.instance?.onopen?.();
       MockSocket.instance?.onmessage?.({ data: JSON.stringify({ a: 1 }) });
     });
 
@@ -98,6 +100,7 @@ describe('useWebSocket', () => {
   });
 
   it('responds to ping with pong and resets heartbeat', () => {
+
     const { unmount } = renderHook(() =>
       useWebSocket('ws://test', url => new MockSocket(url) as unknown as WebSocket)
     );
@@ -123,5 +126,6 @@ describe('useWebSocket', () => {
     expect(MockSocket.instance?.close).toHaveBeenCalled();
 
     unmount();
+
   });
 });

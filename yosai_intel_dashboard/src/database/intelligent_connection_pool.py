@@ -103,10 +103,22 @@ class IntelligentConnectionPool:
 
         for _ in range(min_size):
             conn = self._factory()
+            self._warm_connection(conn)
             self._pool.append((conn, time.time()))
             self._active += 1
 
         self._update_metrics()
+
+    # ------------------------------------------------------------------
+    def _warm_connection(self, conn: DatabaseConnection) -> None:
+        """Run a lightweight query to validate and warm a connection."""
+        try:
+            if hasattr(conn, "execute_query"):
+                conn.execute_query("SELECT 1")
+            elif not conn.health_check():
+                raise ConnectionValidationFailed("initial connection validation failed")
+        except Exception as exc:  # pragma: no cover - defensive
+            raise ConnectionValidationFailed("initial connection validation failed") from exc
 
     def _update_metrics(self) -> None:
         db_pool_current_size.set(self._max_size)
@@ -151,6 +163,29 @@ class IntelligentConnectionPool:
             self._shrink_thread.join(timeout=0.1)
 
     # ------------------------------------------------------------------
+    def warmup(self) -> None:
+        """Ensure the pool is filled and connections are warmed."""
+        with self._condition:
+            new_pool: List[Tuple[DatabaseConnection, float]] = []
+            for conn, _ in self._pool:
+                try:
+                    self._warm_connection(conn)
+                    new_pool.append((conn, time.time()))
+                except ConnectionValidationFailed:
+                    conn.close()
+                    self._active -= 1
+                    self.metrics["failed"] += 1
+            self._pool = new_pool
+
+            while self._active < self._min_size:
+                conn = self._factory()
+                self._warm_connection(conn)
+                self._pool.append((conn, time.time()))
+                self._active += 1
+
+            self._update_metrics()
+
+    # ------------------------------------------------------------------
     def get_connection(self, *, timeout: float | None = None) -> DatabaseConnection:
         start = time.time()
         if not self.circuit_breaker.allows_request():
@@ -176,6 +211,7 @@ class IntelligentConnectionPool:
                     wait = time.time() - start
                     self.metrics["acquire_times"].append(wait)
                     self.circuit_breaker.record_success()
+                    self._in_use.add(conn)
                     self._update_metrics()
                     db_pool_wait_seconds.observe(wait)
 
@@ -197,6 +233,7 @@ class IntelligentConnectionPool:
                     wait = time.time() - start
                     self.metrics["acquire_times"].append(wait)
                     self.circuit_breaker.record_success()
+                    self._in_use.add(conn)
                     self._update_metrics()
                     db_pool_wait_seconds.observe(wait)
                     self._condition.notify()

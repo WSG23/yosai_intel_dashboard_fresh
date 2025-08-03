@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import datetime
+from typing import Iterable
 from importlib import util
 from pathlib import Path
 
@@ -29,6 +30,11 @@ class _Conn:
         cur.execute(command.replace("%s", "?"), params or ())
         self.conn.commit()
         return cur.rowcount
+
+    def execute_batch(self, command: str, params_seq: Iterable[tuple]):
+        cur = self.conn.cursor()
+        cur.executemany(command.replace("%s", "?"), params_seq)
+        self.conn.commit()
 
     def health_check(self) -> bool:
         try:
