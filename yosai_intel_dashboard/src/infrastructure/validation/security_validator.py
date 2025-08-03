@@ -18,13 +18,15 @@ Example
 """
 
 import html
+import inspect
+import json
 import logging
 import os
 import re
 from functools import lru_cache
 
-from typing import Iterable, Callable, Any
-import logging
+from typing import Any, Iterable
+
 
 
 try:  # pragma: no cover - allow using the validator without full core package
@@ -159,7 +161,11 @@ class SecurityValidator(CompositeValidator):
     def __init__(
         self,
         rules: Iterable[ValidationRule] | None = None,
-        authorize_resource: Callable[[Any, Any], bool] | None = None,
+        *,
+        rate_limit: int | None = None,
+        window_seconds: int | None = None,
+        redis_client: Any | None = None,
+
     ) -> None:
         base_rules = list(
             rules
@@ -174,8 +180,22 @@ class SecurityValidator(CompositeValidator):
         super().__init__(base_rules)
         self.file_validator = FileValidator()
         self.redis = redis_client
-        self.rate_limit = rate_limit or 0
-        self.window_seconds = window_seconds or 0
+        if rate_limit is None or window_seconds is None:
+            from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+                dynamic_config,
+            )
+
+            rate_limit = (
+                rate_limit if rate_limit is not None else dynamic_config.security.rate_limit_requests
+            )
+            window_seconds = (
+                window_seconds
+                if window_seconds is not None
+                else dynamic_config.security.rate_limit_window_minutes * 60
+            )
+        self.rate_limit = rate_limit
+        self.window_seconds = window_seconds
+
         self.logger = logging.getLogger(__name__)
         self._authorize_resource = authorize_resource or (lambda _u, _r: True)
 
@@ -296,6 +316,20 @@ class SecurityValidator(CompositeValidator):
             raise ValidationError("; ".join(result.issues or []))
         logger.info("Validation succeeded for %s", field_name)
         return {"valid": True, "sanitized": result.sanitized or value}
+
+    def scan_query(self, sql: str) -> None:
+        """Apply :class:`SQLRule` to ``sql`` and log call site on failure."""
+
+        check = SQLRule().validate(sql)
+        if check.valid:
+            return
+        frame = inspect.stack()[1]
+        logger.warning(
+            "SQL injection detected in %s:%s", frame.filename, frame.lineno
+        )
+        raise ValidationError(
+            "Potential SQL injection detected. Use parameterized statements."
+        )
 
     def validate_file_upload(self, filename: str, content: bytes) -> dict:
         result = self.file_validator.validate_file_upload(filename, content)
