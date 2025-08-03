@@ -23,6 +23,26 @@ jobs:
         run: |
           ./scripts/run_tests_and_smoke.sh
 
+  profile-critical:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.lock
+      - name: Run profiling
+        run: PYTHONPATH=. python scripts/profile_critical_paths.py
+      - name: Upload profiling report
+        uses: actions/upload-artifact@v4
+        with:
+          name: profiling-report
+          path: |
+            profiling_report.prof
+            profiling_report.txt
+
   security-scan:
     needs: build-test
     runs-on: ubuntu-latest
