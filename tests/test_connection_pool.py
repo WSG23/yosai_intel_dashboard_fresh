@@ -1,22 +1,31 @@
 import time
-
 import importlib.util
 from pathlib import Path
 
-# Import connection_pool without triggering heavy package imports
-spec = importlib.util.spec_from_file_location(
+spec_cp = importlib.util.spec_from_file_location(
     "connection_pool",
     Path(__file__).resolve().parents[1]
-    / "yosai_intel_dashboard/src/infrastructure/config/connection_pool.py",
+    / "yosai_intel_dashboard"
+    / "src"
+    / "infrastructure"
+    / "config"
+    / "connection_pool.py",
 )
-connection_pool = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(connection_pool)
-DatabaseConnectionPool = connection_pool.DatabaseConnectionPool
+cp_module = importlib.util.module_from_spec(spec_cp)
+spec_cp.loader.exec_module(cp_module)  # type: ignore
+DatabaseConnectionPool = cp_module.DatabaseConnectionPool
+
 
 
 class MockConnection:
     def __init__(self):
         self._connected = True
+
+    def execute_query(self, query, params=None):
+        return []
+
+    def execute_command(self, command, params=None):
+        return None
 
     def health_check(self):
         return self._connected

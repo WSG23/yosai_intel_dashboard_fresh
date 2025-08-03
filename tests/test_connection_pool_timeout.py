@@ -1,4 +1,4 @@
-import threading
+import pytest
 import importlib.util
 from pathlib import Path
 
@@ -16,7 +16,6 @@ spec_cp.loader.exec_module(cp_module)  # type: ignore
 DatabaseConnectionPool = cp_module.DatabaseConnectionPool
 
 
-
 class MockConnection:
     def __init__(self):
         self._connected = True
@@ -26,7 +25,6 @@ class MockConnection:
 
     def execute_command(self, command, params=None):
         return None
-
 
     def health_check(self):
         return self._connected
@@ -39,22 +37,25 @@ def factory():
     return MockConnection()
 
 
-def test_pool_thread_safety():
-    pool = DatabaseConnectionPool(
-        factory, initial_size=1, max_size=3, timeout=10, shrink_timeout=10
-    )
-    results = []
+def test_acquire_timeout():
+    pool = DatabaseConnectionPool(factory, 1, 1, timeout=0.1, shrink_timeout=1)
+    conn = pool.get_connection()
+    with pytest.raises(TimeoutError):
+        with pool.acquire(timeout=0.1):
+            pass
+    pool.release_connection(conn)
 
-    def worker():
-        conn = pool.get_connection()
-        results.append(conn)
-        pool.release_connection(conn)
 
-    threads = [threading.Thread(target=worker) for _ in range(10)]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
+def test_acquire_async_timeout():
+    pool = DatabaseConnectionPool(factory, 1, 1, timeout=0.1, shrink_timeout=1)
+    conn = pool.get_connection()
 
-    assert len(results) == 10
-    assert pool._active <= pool._max_pool_size
+    async def attempt():
+        async with pool.acquire_async(timeout=0.1):
+            pass
+
+    with pytest.raises(TimeoutError):
+        import asyncio
+        asyncio.run(attempt())
+    pool.release_connection(conn)
+

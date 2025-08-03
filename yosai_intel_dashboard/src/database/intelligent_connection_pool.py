@@ -2,10 +2,15 @@ from __future__ import annotations
 
 """Thread-safe connection pool with adaptive sizing and circuit breaking."""
 
+import asyncio
 import threading
 import time
-from typing import Any, Callable, Dict, List, Tuple, Set
+from contextlib import asynccontextmanager, contextmanager
+from typing import Any, Callable, Dict, List, Tuple
 
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    ConnectionValidationFailed,
+)
 
 from database.types import DatabaseConnection
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
@@ -146,11 +151,11 @@ class IntelligentConnectionPool:
             self._shrink_thread.join(timeout=0.1)
 
     # ------------------------------------------------------------------
-    def get_connection(self) -> DatabaseConnection:
+    def get_connection(self, *, timeout: float | None = None) -> DatabaseConnection:
         start = time.time()
         if not self.circuit_breaker.allows_request():
             raise ConnectionValidationFailed("circuit open")
-        deadline = start + self._timeout
+        deadline = start + (timeout if timeout is not None else self._timeout)
         with self._condition:
             while True:
                 self._shrink_idle_connections()
@@ -257,6 +262,24 @@ class IntelligentConnectionPool:
                 self.circuit_breaker.record_success()
             self._update_metrics()
             return healthy
+
+    @contextmanager
+    def acquire(self, *, timeout: float | None = None):
+        """Context manager to acquire a connection with optional timeout."""
+        conn = self.get_connection(timeout=timeout)
+        try:
+            yield conn
+        finally:
+            self.release_connection(conn)
+
+    @asynccontextmanager
+    async def acquire_async(self, *, timeout: float | None = None):
+        """Async context manager for acquiring a connection without blocking the loop."""
+        conn = await asyncio.to_thread(self.get_connection, timeout=timeout)
+        try:
+            yield conn
+        finally:
+            await asyncio.to_thread(self.release_connection, conn)
 
     # ------------------------------------------------------------------
     def get_metrics(self) -> Dict[str, Any]:
