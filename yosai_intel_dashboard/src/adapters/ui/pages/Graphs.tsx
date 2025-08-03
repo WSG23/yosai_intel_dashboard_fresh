@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Brush,
 } from 'recharts';
+import Timeline from '../components/Timeline';
 import { graphsAPI, AvailableChart } from '../api/graphs';
 import { useSelection } from '../core/interaction/SelectionContext';
 
@@ -84,7 +85,9 @@ const Graphs: React.FC = () => {
             />
           </LineChart>
         </ResponsiveContainer>
+
       );
+      return <Timeline data={data} />;
     }
 
     if (
