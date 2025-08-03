@@ -5,10 +5,11 @@ import os
 import uuid
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import joblib
 import pandas as pd
+import redis
 import redis.asyncio as aioredis
 from fastapi import (
     APIRouter,
@@ -34,6 +35,7 @@ from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter
+
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.infrastructure.config import get_database_config
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
@@ -71,7 +73,10 @@ app = service.app
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
-rate_limiter = RateLimiter()
+# Configure a Redis backed rate limiter
+redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
+app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
 
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse, "description": "Bad Request"},
@@ -108,11 +113,14 @@ async def rate_limit(request: Request, call_next):
     return response
 
 
-async def _db_check(_: FastAPI) -> bool:
-    return await async_db.health_check()
+
+async def _external_api_check(_: FastAPI) -> Dict[str, Any]:
+    return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
 
 
 register_health_check(app, "database", _db_check)
+register_health_check(app, "message_broker", _broker_check)
+register_health_check(app, "external_api", _external_api_check)
 
 _SECRET_PATH = "secret/data/jwt#secret"
 

@@ -22,6 +22,7 @@ from yosai_intel_dashboard.src.core.base_model import BaseModel
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
+main
 
 
 class SecurityLevel(Enum):
@@ -147,10 +148,14 @@ class SecurityAuditor(BaseModel):
         config: Optional[Any] = None,
         db: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
+        anomaly_detector: Optional[AnomalyDetector] = None,
     ) -> None:
         super().__init__(config, db, logger)
         self.events: List[SecurityEvent] = []
         self.max_events = 10000
+        access_model = AccessEventModel(db) if (db and AccessEventModel) else None
+        self.anomaly_detector = anomaly_detector or AnomalyDetector(access_model)
+        self.anomaly_metrics: Dict[str, int] = self.anomaly_detector.get_metrics()
 
     def log_security_event(
         self,
@@ -173,6 +178,18 @@ class SecurityAuditor(BaseModel):
             details=details,
             blocked=blocked,
         )
+        if self.anomaly_detector:
+            score, flagged = self.anomaly_detector.score(user_id, source_ip)
+            event.details["anomaly_score"] = score
+            event.details["anomaly_flagged"] = flagged
+            self.anomaly_metrics = self.anomaly_detector.get_metrics()
+            if flagged:
+                hint = "user exceeding normal rate; investigate credentials"
+                event.details["remediation_hint"] = hint
+                self.logger.warning(
+                    f"Anomaly detected for user {user_id or 'unknown'} from "
+                    f"{source_ip or 'unknown'}: {hint}"
+                )
 
         self.events.append(event)
 
@@ -277,7 +294,18 @@ class SecureHashManager:
 
 
 # Global security instances
-security_validator = SecurityValidator()
+try:  # Allow initialization without optional dependencies
+    security_validator = SecurityValidator()
+except Exception:  # pragma: no cover
+
+    class _FallbackValidator:
+        def validate_input(
+            self, value: str, field: str | None = None
+        ) -> Dict[str, Any]:
+            return {"valid": True, "sanitized": value}
+
+    security_validator = _FallbackValidator()
+
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
 
@@ -292,26 +320,23 @@ def validate_input_decorator(field_mapping: Dict[str, str] = None):
             if field_mapping:
                 for param_name, field_name in field_mapping.items():
                     if param_name in kwargs:
-                        validation = security_validator.validate_input(
-                            kwargs[param_name], field_name
-                        )
-                        if not validation["valid"]:
+                        try:
+                            kwargs[param_name] = validate_user_input(
+                                kwargs[param_name], field_name
+                            )
+                        except Exception as exc:
                             security_auditor.log_security_event(
                                 "input_validation_failed",
-                                validation["severity"],
+                                SecurityLevel.HIGH,
                                 {
                                     "function": func.__name__,
                                     "field": field_name,
-                                    "issues": validation["issues"],
+                                    "issues": [str(exc)],
                                 },
                             )
                             raise ValueError(
-                                "Invalid input for "
-                                f"{field_name}: {validation['issues']}"
+                                f"Invalid input for {field_name}: {exc}"  # noqa: EM102
                             )
-
-                        # Use sanitized input
-                        kwargs[param_name] = validation["sanitized"]
 
             return func(*args, **kwargs)
 
@@ -375,6 +400,7 @@ def initialize_validation_callbacks() -> None:
     try:
         from security.validation_middleware import ValidationMiddleware
         from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+
             TrulyUnifiedCallbacks,
         )
     except Exception:

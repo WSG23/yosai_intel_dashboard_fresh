@@ -4,10 +4,11 @@ import asyncio
 import json
 import os
 import pathlib
+from typing import Any, Dict
 
-from fastapi import Header, Request, status
+from fastapi import Header, status
+
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -39,9 +40,13 @@ try:
 except Exception:
     service = None
 
-register_health_check(app, "streaming", lambda _: service is not None)
 
-rate_limiter = RateLimiter()
+def _broker_health(_: FastAPI) -> Dict[str, Any]:
+    return {
+        "healthy": service is not None,
+        "circuit_breaker": getattr(service, "circuit_breaker_state", "closed"),
+        "retries": getattr(service, "retry_count", 0),
+    }
 
 
 @app.middleware("http")
@@ -69,6 +74,7 @@ async def rate_limit(request: Request, call_next):
     for key, value in headers.items():
         response.headers[key] = value
     return response
+
 
 
 def verify_token(authorization: str = Header("")) -> dict:

@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
-import { useWebSocket, WebSocketState } from './useWebSocket';
+import { useWebSocket, WebSocketState } from '.';
 import { eventBus } from '../eventBus';
+import websocket_metrics from '../metrics/websocket_metrics';
 
 jest.useFakeTimers();
 
@@ -8,6 +9,7 @@ beforeEach(() => {
   MockSocket.instances = [];
   MockSocket.instance = null;
   jest.clearAllTimers();
+  websocket_metrics.reset();
 });
 
 class MockSocket {
@@ -49,6 +51,8 @@ describe('useWebSocket', () => {
   });
 
   it('reconnects with exponential backoff', () => {
+    const events: any[] = [];
+    const off = eventBus.on('metrics_update', e => events.push(e));
     const { unmount } = renderHook(() =>
       useWebSocket('ws://test', url => new MockSocket(url) as unknown as WebSocket)
     );
@@ -62,6 +66,8 @@ describe('useWebSocket', () => {
     });
 
     expect(MockSocket.instances).toHaveLength(2);
+    expect(events[0].websocket_reconnect_attempts_total).toBe(1);
+    expect(websocket_metrics.snapshot().websocket_reconnect_attempts_total).toBe(1);
 
     act(() => {
       MockSocket.instances[1].onclose?.();
@@ -78,6 +84,7 @@ describe('useWebSocket', () => {
 
     expect(MockSocket.instances).toHaveLength(3);
 
+    off();
     unmount();
   });
 
@@ -97,6 +104,27 @@ describe('useWebSocket', () => {
     });
 
     expect(MockSocket.instances).toHaveLength(1);
+  });
+
+  it('emits state transitions through the eventBus', () => {
+    const handler = jest.fn();
+    const off = eventBus.on('websocket_state', handler);
+    const { unmount } = renderHook(() =>
+      useWebSocket('ws://test', url => new MockSocket(url) as unknown as WebSocket),
+    );
+
+    act(() => {
+      MockSocket.instance?.onopen?.();
+    });
+    expect(handler).toHaveBeenNthCalledWith(1, WebSocketState.CONNECTED);
+
+    act(() => {
+      MockSocket.instance?.onclose?.();
+    });
+    expect(handler).toHaveBeenNthCalledWith(2, WebSocketState.RECONNECTING);
+
+    off();
+    unmount();
   });
 
   it('responds to ping with pong and resets heartbeat', () => {
