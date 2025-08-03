@@ -5,45 +5,35 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
+import time
 from typing import Any, Iterable, Optional
 
-try:  # pragma: no cover - optional import
-    from config import DatabaseSettings
-except Exception:  # pragma: no cover - fallback when config imports fail
-    class DatabaseSettings:  # type: ignore[override]
-        query_timeout_seconds = 600
-        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401
-            """Fallback placeholder."""
-            pass
+try:  # optional import to avoid heavy dependency chain
+    from core.performance import PerformanceThresholds
+except Exception:  # pragma: no cover - default if core package unavailable
+    class PerformanceThresholds:  # type: ignore[misc]
+        SLOW_QUERY_SECONDS = 1.0
+
+from database.performance_analyzer import DatabasePerformanceAnalyzer
 
 from database.types import DBRows
 from database.query_cache import QueryCache
 from yosai_intel_dashboard.src.core.cache_manager import RedisCacheManager
 
+try:  # optional Prometheus integration
+    from database.metrics import query_execution_seconds
+except Exception:  # pragma: no cover - metrics are optional
+    query_execution_seconds = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
-_QUERY_CACHE: QueryCache | None = None
+performance_analyzer = DatabasePerformanceAnalyzer()
+query_metrics = performance_analyzer.query_metrics
+SLOW_QUERY_THRESHOLD = float(
+    os.getenv("DB_SLOW_QUERY_THRESHOLD", PerformanceThresholds.SLOW_QUERY_SECONDS)
+)
 
-
-def get_query_cache(
-    cache_manager: RedisCacheManager | None = None,
-    *,
-    ttl: int | None = None,
-) -> QueryCache:
-    """Return a shared :class:`QueryCache` instance.
-
-    Parameters
-    ----------
-    cache_manager:
-        Optional custom :class:`RedisCacheManager` to use as backend.
-    ttl:
-        Optional time-to-live override for cached results in seconds.
-    """
-
-    global _QUERY_CACHE
-    if _QUERY_CACHE is None or cache_manager is not None or ttl is not None:
-        _QUERY_CACHE = QueryCache(cache_manager=cache_manager, ttl=ttl)
-    return _QUERY_CACHE
 
 
 def _infer_db_type(obj: Any) -> str:
@@ -98,32 +88,9 @@ def execute_query(
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing query: %s", optimized_sql)
-
-    db_type = _infer_db_type(conn)
-    effective_timeout = (
-        timeout
-        if timeout is not None
-        else DatabaseSettings().query_timeout_seconds
-    )
-    timeout_ms = int(effective_timeout * 1000)
-
-    def _set_timeout():
-        if db_type == "postgresql":
-            conn.execute(f"SET LOCAL statement_timeout = {timeout_ms}")
-        elif db_type == "sqlite":
-            conn.execute(f"PRAGMA busy_timeout = {timeout_ms}")
-
-    def _reset_timeout():
-        try:
-            if db_type == "postgresql":
-                conn.execute("SET LOCAL statement_timeout = DEFAULT")
-            elif db_type == "sqlite":
-                conn.execute("PRAGMA busy_timeout = 0")
-        except Exception:
-            logger.exception("Failed to reset timeout")
-
+    start = time.perf_counter()
     try:
-        _set_timeout()
+
         if hasattr(conn, "execute_query"):
             return conn.execute_query(optimized_sql, p)
         if hasattr(conn, "execute"):
@@ -132,8 +99,12 @@ def execute_query(
             return conn.execute(optimized_sql)
         raise AttributeError("Object has no execute or execute_query method")
     finally:
-        _reset_timeout()
-
+        elapsed = time.perf_counter() - start
+        performance_analyzer.analyze_query_performance(optimized_sql, elapsed)
+        if elapsed > SLOW_QUERY_THRESHOLD:
+            logger.warning("Slow query (%.6f s): %s", elapsed, optimized_sql)
+        if query_execution_seconds is not None:
+            query_execution_seconds.observe(elapsed)
 
 
 def execute_secure_query(conn: Any, sql: str, params: Iterable[Any]) -> DBRows:
@@ -156,32 +127,9 @@ def execute_command(
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing command: %s", optimized_sql)
-
-    db_type = _infer_db_type(conn)
-    effective_timeout = (
-        timeout
-        if timeout is not None
-        else DatabaseSettings().query_timeout_seconds
-    )
-    timeout_ms = int(effective_timeout * 1000)
-
-    def _set_timeout():
-        if db_type == "postgresql":
-            conn.execute(f"SET LOCAL statement_timeout = {timeout_ms}")
-        elif db_type == "sqlite":
-            conn.execute(f"PRAGMA busy_timeout = {timeout_ms}")
-
-    def _reset_timeout():
-        try:
-            if db_type == "postgresql":
-                conn.execute("SET LOCAL statement_timeout = DEFAULT")
-            elif db_type == "sqlite":
-                conn.execute("PRAGMA busy_timeout = 0")
-        except Exception:
-            logger.exception("Failed to reset timeout")
-
+    start = time.perf_counter()
     try:
-        _set_timeout()
+
         if hasattr(conn, "execute_command"):
             return conn.execute_command(optimized_sql, p)
         if hasattr(conn, "execute"):
@@ -190,46 +138,19 @@ def execute_command(
             return conn.execute(optimized_sql)
         raise AttributeError("Object has no execute or execute_command method")
     finally:
-        _reset_timeout()
-
-
-def prepare_statement(conn: Any, name: str, sql: str) -> None:
-    """Prepare ``sql`` on ``conn`` under identifier ``name``."""
-    if not isinstance(name, str) or not isinstance(sql, str):
-        raise TypeError("name and sql must be strings")
-    optimized_sql = _get_optimizer(conn).optimize_query(sql)
-    logger.debug("Preparing statement %s: %s", name, optimized_sql)
-    if hasattr(conn, "prepare_statement"):
-        conn.prepare_statement(name, optimized_sql)
-        return
-    cache = getattr(conn, "_prepared_statements", None)
-    if cache is None:
-        cache = {}
-        try:
-            setattr(conn, "_prepared_statements", cache)
-        except Exception:
-            pass
-    cache[name] = optimized_sql
-
-
-def execute_prepared(conn: Any, name: str, params: Optional[Iterable[Any]] = None):
-    """Execute a previously prepared statement."""
-    p = _validate_params(params)
-    if hasattr(conn, "execute_prepared"):
-        return conn.execute_prepared(name, p if p is not None else tuple())
-    cache = getattr(conn, "_prepared_statements", {})
-    sql = cache.get(name)
-    if sql is None:
-        raise AttributeError(f"Statement {name!r} has not been prepared")
-    if sql.lstrip().lower().startswith("select"):
-        return execute_query(conn, sql, p)
-    return execute_command(conn, sql, p)
+        elapsed = time.perf_counter() - start
+        performance_analyzer.analyze_query_performance(optimized_sql, elapsed)
+        if elapsed > SLOW_QUERY_THRESHOLD:
+            logger.warning("Slow query (%.6f s): %s", elapsed, optimized_sql)
+        if query_execution_seconds is not None:
+            query_execution_seconds.observe(elapsed)
 
 
 __all__ = [
     "execute_query",
     "execute_command",
     "execute_secure_query",
-    "prepare_statement",
-    "execute_prepared",
+    "query_metrics",
+    "performance_analyzer",
+
 ]
