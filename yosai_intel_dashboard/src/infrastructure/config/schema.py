@@ -52,6 +52,7 @@ class DatabaseSettings(BaseModel):
     shrink_interval: int = 0
     use_intelligent_pool: bool = False
     query_timeout_seconds: int = 600
+    read_replicas: List[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def populate_url(cls, values: "DatabaseSettings") -> "DatabaseSettings":
