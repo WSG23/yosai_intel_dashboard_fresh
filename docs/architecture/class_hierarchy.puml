@@ -1,19 +1,13 @@
 @startuml
-class BaseModel
+class BaseComponent
+class WebSocketDataProvider
+BaseComponent <|-- WebSocketDataProvider
+
+interface ConfigProvider
+class ConfigService
+ConfigProvider <|.. ConfigService
+
 interface EventBusProtocol
 class EventBus
-EventBus -|> BaseModel
 EventBus ..|> EventBusProtocol
-
-interface IPersonRepository
-class PersonRepository
-IPersonRepository <|.. PersonRepository
-
-interface IAccessEventRepository
-class AccessEventRepository
-IAccessEventRepository <|.. AccessEventRepository
-
-interface IDoorRepository
-class DoorRepository
-IDoorRepository <|.. DoorRepository
 @enduml

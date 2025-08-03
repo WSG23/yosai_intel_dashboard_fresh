@@ -4,7 +4,7 @@
 Configuration data was previously pulled directly from environment files in multiple modules, making it difficult to reload or validate settings.
 
 ## Decision
-Create a ConfigService responsible for loading, transforming and providing configuration values through a single interface. Clients depend on the service instead of reading files or environment variables.
+Create a ConfigService responsible for loading, transforming and providing configuration values through a single interface. Clients depend on the service instead of reading files or environment variables. Its relationship to other components is shown in the [class hierarchy diagram](../architecture/class_hierarchy.svg).
 
 ## Consequences
 - Hot-reloading of configuration becomes feasible.
