@@ -2,10 +2,12 @@
 actor Producer
 participant "EventBus" as Bus
 participant "AnalyticsService" as Service
+participant "ConfigService" as Config
 participant "Repository" as Repo
 
 Producer -> Bus : publish(event)
 Bus -> Service : dispatch(event)
+Service -> Config : load settings
 Service -> Repo : persist(event)
 Service -> Bus : publish(analytics_update)
 @enduml

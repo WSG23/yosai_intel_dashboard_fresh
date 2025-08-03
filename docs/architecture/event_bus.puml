@@ -1,6 +1,6 @@
 @startuml
-component Publisher
-component Subscriber
+component Publisher <<BaseComponent>>
+component Subscriber <<BaseComponent>>
 component EventBus
 Publisher --> EventBus : publish
 EventBus --> Subscriber : dispatch

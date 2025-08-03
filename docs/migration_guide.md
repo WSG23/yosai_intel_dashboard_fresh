@@ -6,6 +6,23 @@ remains as a compatibility layer but will be removed in a future release.
 `unicode_toolkit` provides hardened text utilities, DataFrame
 sanitization helpers and SQL encoding functions.
 
+## Adopting Core Framework Components
+
+### BaseComponent
+1. Derive UI elements from `BaseComponent` to share lifecycle and styling.
+2. Replace direct component implementations with subclasses.
+3. See [ADR 0001](adr/0001-base-component.md) and the [class hierarchy diagram](architecture/class_hierarchy.svg).
+
+### ConfigService
+1. Replace scattered environment lookups with `ConfigService`.
+2. Pass an instance where configuration is required rather than reading globals.
+3. See [ADR 0002](adr/0002-config-service.md).
+
+### EventBus
+1. Instantiate a process-wide `EventBus` for decoupled communication.
+2. Publish events with `emit` and subscribe handlers with `subscribe`.
+3. See [ADR 0003](adr/0003-event-bus.md) and the [event flow diagram](architecture/event_processing_sequence.svg).
+
 ## Renamed and Relocated APIs
 
 Several legacy entry points were moved in this release. Importing the old
