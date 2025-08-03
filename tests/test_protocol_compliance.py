@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Protocol, assert_type, runtime_checkable
+from typing import Any, Callable, Dict, Iterable, List, Protocol, assert_type, runtime_checkable
 
 import pandas as pd
 import pytest
@@ -71,6 +71,9 @@ class DummyDatabase(DatabaseProtocol):
         return pd.DataFrame()
 
     def execute_command(self, command: str, params: tuple | None = None) -> None:
+        pass
+
+    def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
         pass
 
     def begin_transaction(self) -> Any:
