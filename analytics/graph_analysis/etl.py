@@ -84,3 +84,32 @@ def snapshot_graph(graph: GraphModel, start: float, end: float) -> GraphModel:
     snapshot = GraphModel()
     snapshot.graph = graph.get_subgraph_by_time(start, end)
     return snapshot
+
+
+def consume_kafka_stream(
+    graph: GraphModel,
+    topics: Iterable[str],
+    *,
+    brokers: str = "localhost:9092",
+    poll_interval: float = 1.0,
+) -> None:
+    """Consume Kafka messages and apply them to ``graph`` in real time.
+
+    The function relies on :class:`AvroConsumer` from the services.kafka module.
+    Each decoded message is expected to be a dictionary compatible with
+    :func:`incremental_update`.
+    """
+
+    try:
+        from yosai_intel_dashboard.src.services.kafka.avro_consumer import AvroConsumer
+    except Exception:  # pragma: no cover - dependency may be optional
+        return
+
+    consumer = AvroConsumer(topics, brokers=brokers)
+    try:
+        while True:
+            msg = consumer.poll(poll_interval)
+            if msg and getattr(msg, "decoded", None):
+                incremental_update(graph, [msg.decoded])
+    finally:  # pragma: no cover - cleanup is best effort
+        consumer.close()
