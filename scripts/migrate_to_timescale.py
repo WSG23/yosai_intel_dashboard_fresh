@@ -231,6 +231,33 @@ def setup_timescale(conn: connection) -> None:
             """
         )
 
+        cur.execute("SELECT to_regclass('access_event_hourly')")
+        if cur.fetchone()[0] is None:
+            cur.execute(
+                """
+                CREATE MATERIALIZED VIEW access_event_hourly
+                WITH (timescaledb.continuous) AS
+                SELECT time_bucket('1 hour', time) AS bucket,
+                       facility_id,
+                       COUNT(*) AS event_count
+                FROM access_events
+                GROUP BY bucket, facility_id
+                WITH NO DATA
+                """
+            )
+
+        cur.execute(
+            """
+            SELECT add_continuous_aggregate_policy(
+                'access_event_hourly',
+                schedule_interval => INTERVAL '1 hour',
+                start_offset => INTERVAL '7 days',
+                end_offset => INTERVAL '1 hour',
+                if_not_exists => TRUE
+            )
+            """
+        )
+
         # compression and retention
         cur.execute(
             """
