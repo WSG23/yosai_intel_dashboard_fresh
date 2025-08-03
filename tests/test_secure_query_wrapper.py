@@ -19,6 +19,10 @@ class DummyConn:
         self.last = (query, params)
         return 1
 
+    def execute_batch(self, command: str, params_seq):
+        self.last = (command, list(params_seq))
+        return 1
+
 
 def test_execute_secure_sql_basic():
     conn = DummyConn()

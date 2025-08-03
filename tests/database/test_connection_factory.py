@@ -105,6 +105,13 @@ def load_dbm_modules():
         db_pkg.secure_exec.execute_command = (
             lambda conn, cmd, params=None: conn.execute_command(cmd, params)
         )
+        db_pkg.secure_exec.execute_batch = (
+            lambda conn, cmd, params_seq: (
+                conn.execute_batch(cmd, params_seq)
+                if hasattr(conn, "execute_batch")
+                else conn.executemany(cmd, params_seq)
+            )
+        )
         db_pkg.types = types.ModuleType("database.types")
         class DatabaseConnection: ...
         db_pkg.types.DatabaseConnection = DatabaseConnection
@@ -370,6 +377,9 @@ def test_retry_with_exponential_backoff(monkeypatch):
         def close(self):
             pass
 
+        def execute_batch(self, command, params_seq):
+             pass
+
     conn = FlakyConn()
 
     class Pool:
@@ -417,6 +427,9 @@ def test_unicode_query_parameter_handling(monkeypatch):
             return True
 
         def close(self):
+            pass
+
+        def execute_batch(self, command, params_seq):
             pass
 
     conn = Conn()

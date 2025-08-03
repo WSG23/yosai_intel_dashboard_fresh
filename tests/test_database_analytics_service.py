@@ -20,6 +20,9 @@ class FakeConnection:
             ]
         return []
 
+    def execute_batch(self, command, params_seq):
+        return None
+
 
 class FakeDBManager:
     def get_connection(self):

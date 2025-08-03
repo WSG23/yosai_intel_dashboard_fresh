@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import importlib.util
 import threading
 import time
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
-    "connection_pool",
+    "yosai_intel_dashboard.src.infrastructure.config.connection_pool",
     Path(__file__).resolve().parents[1]
     / "yosai_intel_dashboard/src/infrastructure/config/connection_pool.py",
 )

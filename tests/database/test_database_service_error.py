@@ -118,6 +118,9 @@ class BadQueryConnection:
     def execute_command(self, cmd, params=None):
         pass
 
+    def execute_batch(self, cmd, params_seq):
+        pass
+
     def health_check(self):
         return True
 

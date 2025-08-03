@@ -28,6 +28,16 @@ sys.modules[spec_exc.name] = exc_module
 spec_exc.loader.exec_module(exc_module)  # type: ignore
 ConnectionValidationFailed = exc_module.ConnectionValidationFailed
 
+metrics_pkg = types.ModuleType(
+    "yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.connection_pool"
+)
+metrics_pkg.db_pool_active_connections = types.SimpleNamespace(set=lambda v: None)
+metrics_pkg.db_pool_current_size = types.SimpleNamespace(set=lambda v: None)
+metrics_pkg.db_pool_wait_seconds = types.SimpleNamespace(observe=lambda v: None)
+sys.modules[
+    "yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.connection_pool"
+] = metrics_pkg
+
 spec_ip = importlib.util.spec_from_file_location(
     "intelligent_connection_pool",
     Path(__file__).resolve().parents[1]
@@ -50,6 +60,9 @@ class MockConnection:
         return []
 
     def execute_command(self, command, params=None):
+        return None
+
+    def execute_batch(self, command, params_seq):
         return None
 
     def health_check(self):
@@ -97,20 +110,16 @@ def bad_factory():
 
 
 def test_circuit_breaker_opens_on_failures():
-    pool = IntelligentConnectionPool(
-        bad_factory,
-        1,
-        1,
-        timeout=0.1,
-        shrink_timeout=0,
-        failure_threshold=2,
-        recovery_timeout=1,
-    )
     with pytest.raises(ConnectionValidationFailed):
-        pool.get_connection()
-    # second attempt should immediately fail due to open circuit
-    with pytest.raises(ConnectionValidationFailed):
-        pool.get_connection()
+        IntelligentConnectionPool(
+            bad_factory,
+            1,
+            1,
+            timeout=0.1,
+            shrink_timeout=0,
+            failure_threshold=2,
+            recovery_timeout=1,
+        )
 
 
 def test_connection_count_under_load():

@@ -7,8 +7,10 @@ from typing import Any, List, Sequence
 
 from database.types import DBRows
 
-from .connection import create_database_connection
-from .secure_exec import execute_query
+# Importing create_database_connection at module level pulls in heavy
+# configuration dependencies which complicates testing.  To keep the module
+# lightweight we defer that import until runtime when needed.
+from .secure_exec import execute_command, execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,12 @@ class IndexOptimizer:
     """Simple database index optimizer."""
 
     def __init__(self, connection: Any | None = None) -> None:
-        self.connection = connection or create_database_connection()
+        if connection is None:
+            from .connection import create_database_connection
+
+            self.connection = create_database_connection()
+        else:
+            self.connection = connection
 
     # ------------------------------------------------------------------
     def analyze_index_usage(self) -> DBRows:
@@ -37,6 +44,16 @@ class IndexOptimizer:
         except Exception as exc:  # pragma: no cover - best effort
             logger.warning("Failed to analyze index usage: %s", exc)
         return []
+
+    # ------------------------------------------------------------------
+    def apply_recommendations(self, table: str, columns: Sequence[str]) -> None:
+        """Execute any missing index recommendations for ``table``."""
+        try:
+            conn = self.connection
+            for stmt in self.recommend_new_indexes(table, columns):
+                execute_command(conn, stmt)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Failed to apply index recommendations: %s", exc)
 
     # ------------------------------------------------------------------
     def recommend_new_indexes(self, table: str, columns: Sequence[str]) -> List[str]:
