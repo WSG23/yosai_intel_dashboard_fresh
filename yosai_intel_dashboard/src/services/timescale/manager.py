@@ -78,6 +78,7 @@ class TimescaleDBManager:
     # ------------------------------------------------------------------
     async def _setup(self, conn: asyncpg.Connection) -> None:
         await conn.execute("CREATE EXTENSION IF NOT EXISTS timescaledb")
+        chunk_interval = os.getenv("TIMESCALE_CHUNK_INTERVAL", "1 day")
         await conn.execute(
             """
             CREATE TABLE IF NOT EXISTS access_events (
@@ -94,7 +95,8 @@ class TimescaleDBManager:
             """,
         )
         await conn.execute(
-            "SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE)"
+            "SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE, chunk_time_interval => $1::interval)",
+            chunk_interval,
         )
         await conn.execute(
             """
@@ -167,7 +169,8 @@ class TimescaleDBManager:
             """,
         )
         await conn.execute(
-            "SELECT create_hypertable('model_monitoring_events', 'time', if_not_exists => TRUE)"
+            "SELECT create_hypertable('model_monitoring_events', 'time', if_not_exists => TRUE, chunk_time_interval => $1::interval)",
+            chunk_interval,
         )
         await conn.execute(
             "SELECT add_compression_policy('model_monitoring_events', INTERVAL $1 || ' days', if_not_exists => TRUE)",

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS access_events (
     metadata JSONB
 );
 
-SELECT create_hypertable('access_events', 'time', if_not_exists => TRUE);
+SELECT create_hypertable('access_events', 'time', chunk_time_interval => INTERVAL '1 day', if_not_exists => TRUE);
 ALTER TABLE access_events
   SET (
        timescaledb.compress,
