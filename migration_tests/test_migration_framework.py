@@ -29,33 +29,13 @@ spec = importlib.util.spec_from_file_location(
 framework = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(framework)
 
-spec = importlib.util.spec_from_file_location(
-    "services.migration.strategies.gateway_migration",
-    SERVICES_PATH / "migration" / "strategies" / "gateway_migration.py",
-)
-gateway_migration = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(gateway_migration)
-
-spec = importlib.util.spec_from_file_location(
-    "services.migration.strategies.events_migration",
-    SERVICES_PATH / "migration" / "strategies" / "events_migration.py",
-)
-events_migration = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(events_migration)
-
-spec = importlib.util.spec_from_file_location(
-    "services.migration.strategies.analytics_migration",
-    SERVICES_PATH / "migration" / "strategies" / "analytics_migration.py",
-)
-analytics_migration = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(analytics_migration)
-
 
 class DummyPool:
     def __init__(self, rows=None):
         self.rows = rows or []
         self.inserted = []
         self._fetch_count = 0
+        self.executed_queries = []
 
     async def fetch(self, *a, **k):
         self._fetch_count += 1
@@ -82,8 +62,20 @@ class DummyPool:
         pass
 
     async def execute(self, query):
+        self.executed_queries.append(query)
         if query.startswith("TRUNCATE"):
             self.inserted.clear()
+
+
+class SimpleMigration(framework.MigrationStrategy):
+    async def run(self, source_pool):
+        assert self.target_pool is not None
+        while True:
+            rows = await source_pool.fetch("SELECT")
+            if not rows:
+                break
+            await self.target_pool.executemany("INSERT", rows)
+            yield len(rows)
 
 
 def test_migration_manager_progress():
@@ -98,23 +90,41 @@ def test_migration_manager_progress():
         async def fake_create_pool(*_, **__):
             return next(pools)
 
+        strategies = [
+            SimpleMigration("gateway_logs", "postgresql://gw", pool_factory=fake_create_pool),
+            SimpleMigration("access_events", "postgresql://ev", pool_factory=fake_create_pool),
+            SimpleMigration(
+                "analytics_results", "postgresql://an", pool_factory=fake_create_pool
+            ),
+        ]
+
         mgr = framework.MigrationManager(
-            "postgresql://source",
-            [
-                gateway_migration.GatewayMigration(
-                    "postgresql://gw", pool_factory=fake_create_pool
-                ),
-                events_migration.EventsMigration(
-                    "postgresql://ev", pool_factory=fake_create_pool
-                ),
-                analytics_migration.AnalyticsMigration(
-                    "postgresql://an", pool_factory=fake_create_pool
-                ),
-            ],
-            pool_factory=fake_create_pool,
+            "postgresql://source", strategies, pool_factory=fake_create_pool
         )
         await mgr.migrate()
         status = await mgr.status()
         assert status["progress"]["gateway_logs"] == 1
+
+    asyncio.run(_run())
+
+
+def test_rollback_table_whitelist():
+    class DummyMigration(framework.MigrationStrategy):
+        async def run(self, source_pool):
+            yield 0
+
+    async def _run():
+        pool = DummyPool()
+        strat = DummyMigration("gateway_logs", "postgresql://target")
+        strat.target_pool = pool
+        await strat.rollback()
+        assert pool.executed_queries == ['TRUNCATE TABLE "gateway_logs" CASCADE']
+
+        bad_pool = DummyPool()
+        bad_strat = DummyMigration("bad_table", "postgresql://target")
+        bad_strat.target_pool = bad_pool
+        with pytest.raises(ValueError):
+            await bad_strat.rollback()
+        assert bad_pool.executed_queries == []
 
     asyncio.run(_run())
