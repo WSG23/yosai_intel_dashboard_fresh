@@ -3,12 +3,10 @@
 
 Writes the values to an env file rather than printing them to stdout.
 """
-from __future__ import annotations
 
 import argparse
 import logging
 import secrets
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate development secrets")
