@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator, Dict, List, Sequence, Callable, Awaitable
 
 import asyncpg
-from asyncpg import utils as asyncpg_utils
+
+from infrastructure.database.secure_query import SecureQueryBuilder
 
 from .validators.integrity_checker import IntegrityChecker
 
@@ -47,10 +48,10 @@ class MigrationStrategy(ABC):
         if self.target_pool is None:
             return
         async with self.target_pool.acquire() as conn:
-            if self.name not in APPROVED_TABLES:
-                raise ValueError(f"Unapproved table: {self.name}")
-            table = asyncpg_utils._quote_ident(self.name)
-            await conn.execute(f"TRUNCATE TABLE {table} CASCADE")
+            builder = SecureQueryBuilder(allowed_tables=APPROVED_TABLES)
+            table = builder.table(self.name)
+            sql, _ = builder.build(f"TRUNCATE TABLE {table} CASCADE", logger=LOG)
+            await conn.execute(sql)
 
 
 class MigrationManager:
