@@ -40,7 +40,7 @@ for file_path in doc_files:
 
     print(f"Updating {file_path}...")
 
-    with open(file_path, "r") as f:
+    with Path(file_path).open("r", encoding="utf-8") as f:
         content = f.read()
 
     original_content = content
@@ -58,7 +58,7 @@ for file_path in doc_files:
             )
             content = note + content
 
-    with open(file_path, "w") as f:
+    with Path(file_path).open("w", encoding="utf-8") as f:
         f.write(content)
 
     print(f"  ✓ Updated {file_path}")
