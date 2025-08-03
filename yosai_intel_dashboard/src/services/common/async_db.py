@@ -66,11 +66,8 @@ async def health_check() -> DBHealthStatus:
     if _pool is None:
         return DBHealthStatus(healthy=False, details={"error": "pool not initialized"})
     try:
-        conn = await _pool.acquire()
-        try:
+        async with _pool.acquire() as conn:
             await conn.execute("SELECT 1")
-        finally:
-            await _pool.release(conn)
-        return DBHealthStatus(healthy=True, details={})
-    except Exception as exc:  # pragma: no cover - safety net
-        return DBHealthStatus(healthy=False, details={"error": str(exc)})
+        return True
+    except Exception:
+        return False
