@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import gzip
 import json
 import logging
 import threading
@@ -27,6 +28,7 @@ class AnalyticsWebSocketServer:
         port: int = 6789,
         ping_interval: float = 30.0,
         ping_timeout: float = 10.0,
+
     ) -> None:
         self.host = host
         self.port = port
@@ -34,6 +36,11 @@ class AnalyticsWebSocketServer:
         self.clients: Set[WebSocketServerProtocol] = set()
         self.ping_interval = ping_interval
         self.ping_timeout = ping_timeout
+
+        self.pool = WebSocketConnectionPool()
+        self._queue: Deque[dict] = deque(maxlen=queue_size or None)
+        self.compression_threshold = compression_threshold
+
 
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
@@ -47,8 +54,10 @@ class AnalyticsWebSocketServer:
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
+        await self.pool.acquire(websocket)
         self.clients.add(websocket)
         websocket_metrics.record_connection()
+
         if self._queue:
             queued = list(self._queue)
             self._queue.clear()
@@ -63,6 +72,7 @@ class AnalyticsWebSocketServer:
             logger.debug("WebSocket connection error: %s", exc)
         finally:
             await self.pool.release(websocket)
+            self.clients.discard(websocket)
 
     async def _serve(self) -> None:
         self._loop = asyncio.get_running_loop()
@@ -110,10 +120,11 @@ class AnalyticsWebSocketServer:
             message = json.dumps(data)
             if self._loop is not None:
                 asyncio.run_coroutine_threadsafe(
-                    self._broadcast_async(message), self._loop
+                    self.pool.broadcast(message), self._loop
                 )
         else:
             self._queue.append(data)
+
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""

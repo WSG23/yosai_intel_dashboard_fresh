@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import sys
+import threading
 import types
 from collections import deque
 from pathlib import Path
@@ -56,6 +57,7 @@ class DummyWS:
     def __init__(self, respond: bool = True):
         self.respond = respond
         self.closed = False
+        self.messages = []
 
     def ping(self):
         fut = asyncio.Future()
@@ -71,6 +73,7 @@ class DummyWS:
 
     async def __anext__(self):
         raise StopAsyncIteration
+
 
 
 class DummyBus:

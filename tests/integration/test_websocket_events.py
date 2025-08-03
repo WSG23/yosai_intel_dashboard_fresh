@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import importlib.util
 import json
@@ -33,6 +35,9 @@ def _load_server():
         def subscribe(self, event_type: str, handler, priority: int = 0) -> None:
             self._subs.setdefault(event_type, []).append(handler)
 
+        def unsubscribe(self, sub_id: str) -> None:  # pragma: no cover - stub
+            pass
+
     events_mod.EventBus = DummyEventBus
     sys.modules["yosai_intel_dashboard.src.core.events"] = events_mod
 
@@ -60,10 +65,16 @@ def test_websocket_events_broadcast():
     event_bus = EventBus()
     server = AnalyticsWebSocketServer(event_bus=event_bus, host="127.0.0.1", port=8766)
     try:
+
         async def runner():
             async def client():
+                await asyncio.sleep(0.05)
                 async with websockets.connect("ws://127.0.0.1:8766") as ws:
                     msg = await ws.recv()
+                    if isinstance(msg, bytes):
+                        import gzip
+
+                        msg = gzip.decompress(msg).decode("utf-8")
                     return json.loads(msg)
 
             task = asyncio.create_task(client())
