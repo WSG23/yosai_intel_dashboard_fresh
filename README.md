@@ -103,6 +103,13 @@ This project follows a fully modular design built around a dependency injection 
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
 </p>
 
+Additional architecture diagrams are available under `docs/architecture/`:
+
+- [Class hierarchy](docs/architecture/class_hierarchy.svg)
+- [Event bus overview](docs/architecture/event_bus.svg)
+- [Repository interfaces](docs/architecture/repositories.svg)
+- [Event processing sequence](docs/architecture/event_processing_sequence.svg)
+
 Core service protocols live in `services/interfaces.py`. Components obtain
 implementations from the `ServiceContainer` when an explicit instance is not
 provided, allowing tests to supply lightweight mocks. See
