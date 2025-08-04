@@ -36,15 +36,29 @@ def build_time_bucket_query(
     table: str = "access_events",
     metric: str = "COUNT(*)",
     time_column: str = "time",
-    extra_filters: str | None = None,
+    extra_filters: Tuple[str, ...] | None = None,
 ) -> TextClause:
-    """Return a time-bucketed aggregation query as :class:`TextClause`."""
-    builder = SecureQueryBuilder(allowed_tables={table}, allowed_columns={time_column})
+    """Return a time-bucketed aggregation query as :class:`TextClause`.
+
+    ``bucket_size`` and ``extra_filters`` are converted into parameter placeholders
+    so the resulting query plan can be safely cached and reused for different
+    values.
+    """
+    allowed_columns = {time_column}
+    if extra_filters:
+        allowed_columns.update(extra_filters)
+    builder = SecureQueryBuilder(
+        allowed_tables={table}, allowed_columns=allowed_columns
+    )
     table_q = builder.table(table)
     time_col = builder.column(time_column)
-    filters = f" AND {extra_filters}" if extra_filters else ""
+    filters = ""
+    if extra_filters:
+        for i, col in enumerate(extra_filters, start=4):
+            col_q = builder.column(col)
+            filters += f" AND {col_q} = ${i}"
     query_str = f"""
-        SELECT time_bucket('{bucket_size}', {time_col}) AS bucket,
+        SELECT time_bucket($3, {time_col}) AS bucket,
                {metric} AS value
         FROM {table_q}
         WHERE {time_col} >= $1 AND {time_col} < $2{filters}
@@ -62,20 +76,29 @@ def build_sliding_window_query(
     table: str = "access_events",
     metric: str = "COUNT(*)",
     time_column: str = "time",
-    extra_filters: str | None = None,
+    extra_filters: Tuple[str, ...] | None = None,
 ) -> TextClause:
     """Return a sliding window aggregation query."""
-    builder = SecureQueryBuilder(allowed_tables={table}, allowed_columns={time_column})
+    allowed_columns = {time_column}
+    if extra_filters:
+        allowed_columns.update(extra_filters)
+    builder = SecureQueryBuilder(
+        allowed_tables={table}, allowed_columns=allowed_columns
+    )
     table_q = builder.table(table)
     time_col = builder.column(time_column)
     window_points = max(int(window_seconds // step_seconds), 1)
-    filters = f" AND {extra_filters}" if extra_filters else ""
+    filters = ""
+    if extra_filters:
+        for i, col in enumerate(extra_filters, start=4):
+            col_q = builder.column(col)
+            filters += f" AND {col_q} = ${i}"
     inner = (
-        f"SELECT time_bucket('{step_seconds} seconds', {time_col}) AS bucket,"
+        f"SELECT time_bucket($3, {time_col}) AS bucket,"
         f"       {metric} AS count_bucket\n"
         f"FROM {table_q}\n"
         f"WHERE {time_col} >= $1 AND {time_col} < $2{filters}\n"
-        f"GROUP BY bucket"
+        "GROUP BY bucket"
     )
     query_str = f"""
         SELECT bucket,
@@ -99,18 +122,22 @@ async def fetch_time_buckets(
     table: str = "access_events",
     metric: str = "COUNT(*)",
     time_column: str = "time",
-    extra_filters: str | None = None,
+    extra_filters: Dict[str, Any] | None = None,
 ) -> List[Dict[str, Any]]:
     """Execute a time-bucketed query and return the results as dictionaries."""
-    key = ("bucket", bucket_size, table, metric, time_column, extra_filters)
+    filter_keys = tuple(sorted(extra_filters.keys())) if extra_filters else None
+    key = ("bucket", table, metric, time_column, filter_keys)
     query = _get_cached_plan(key)
     if query is None:
         query = build_time_bucket_query(
-            bucket_size, table, metric, time_column, extra_filters
+            bucket_size, table, metric, time_column, filter_keys
         )
         _cache_plan(key, query)
     builder = SecureQueryBuilder()
-    sql, params = builder.build(str(query), (start, end), logger=LOG)
+    params: List[Any] = [start, end, bucket_size]
+    if extra_filters:
+        params.extend(extra_filters[k] for k in filter_keys)  # type: ignore[arg-type]
+    sql, params = builder.build(str(query), params, logger=LOG)
     rows = await pool.fetch(sql, *params)
     return [dict(r) for r in rows]
 
@@ -125,26 +152,29 @@ async def fetch_sliding_window(
     table: str = "access_events",
     metric: str = "COUNT(*)",
     time_column: str = "time",
-    extra_filters: str | None = None,
+    extra_filters: Dict[str, Any] | None = None,
 ) -> List[Dict[str, Any]]:
     """Execute a sliding-window aggregation and return the results."""
+    filter_keys = tuple(sorted(extra_filters.keys())) if extra_filters else None
     key = (
         "window",
         window_seconds,
-        step_seconds,
         table,
         metric,
         time_column,
-        extra_filters,
+        filter_keys,
     )
     query = _get_cached_plan(key)
     if query is None:
         query = build_sliding_window_query(
-            window_seconds, step_seconds, table, metric, time_column, extra_filters
+            window_seconds, step_seconds, table, metric, time_column, filter_keys
         )
         _cache_plan(key, query)
     builder = SecureQueryBuilder()
-    sql, params = builder.build(str(query), (start, end), logger=LOG)
+    params: List[Any] = [start, end, f"{step_seconds} seconds"]
+    if extra_filters:
+        params.extend(extra_filters[k] for k in filter_keys)  # type: ignore[arg-type]
+    sql, params = builder.build(str(query), params, logger=LOG)
     rows = await pool.fetch(sql, *params)
     return [dict(r) for r in rows]
 
