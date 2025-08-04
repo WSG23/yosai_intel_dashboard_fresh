@@ -133,3 +133,33 @@ def test_require_permission_async_forbidden():
             return "ok"
 
         assert asyncio.run(endpoint()) == ("Forbidden", 403)
+
+
+def test_biometric_block_role(monkeypatch):
+    app = Flask(__name__)
+    app.secret_key = "test"
+    app.config["RBAC_SERVICE"] = DummyService()
+    with app.test_request_context():
+        session["user_id"] = "u1"
+        monkeypatch.setattr(rbac, "_verify_behavioral_biometrics", lambda req: False)
+
+        @require_role("admin")
+        def endpoint():
+            return "ok"
+
+        assert endpoint() == ("Forbidden", 403)
+
+
+def test_biometric_block_permission(monkeypatch):
+    app = Flask(__name__)
+    app.secret_key = "test"
+    app.config["RBAC_SERVICE"] = DummyService()
+    with app.test_request_context():
+        session["user_id"] = "u1"
+        monkeypatch.setattr(rbac, "_verify_behavioral_biometrics", lambda req: False)
+
+        @require_permission("read")
+        def endpoint():
+            return "ok"
+
+        assert endpoint() == ("Forbidden", 403)

@@ -12,9 +12,17 @@ from typing import Callable, List, Optional
 
 import asyncpg
 import redis.asyncio as redis
-from flask import current_app, session
+from flask import current_app, request, session
 
 logger = logging.getLogger(__name__)
+
+
+def _verify_behavioral_biometrics(req) -> bool:
+    from yosai_intel_dashboard.src.services.security.behavioral_biometrics import (
+        verify_behavioral_biometrics as _verify,
+    )
+
+    return _verify(req)
 
 
 class RBACService:
@@ -154,6 +162,8 @@ def require_role(role: str) -> Callable[[Callable[..., any]], Callable[..., any]
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
+                if not _verify_behavioral_biometrics(request):
+                    return _fail_response()
                 service: RBACService | None = current_app.config.get("RBAC_SERVICE")
                 if service is None:
                     return await func(*args, **kwargs)
@@ -166,6 +176,8 @@ def require_role(role: str) -> Callable[[Callable[..., any]], Callable[..., any]
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
+            if not _verify_behavioral_biometrics(request):
+                return _fail_response()
             service: RBACService | None = current_app.config.get("RBAC_SERVICE")
             if service is None:
                 return func(*args, **kwargs)
@@ -189,6 +201,8 @@ def require_permission(
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
+                if not _verify_behavioral_biometrics(request):
+                    return _fail_response()
                 service: RBACService | None = current_app.config.get("RBAC_SERVICE")
                 if service is None:
                     return await func(*args, **kwargs)
@@ -201,6 +215,8 @@ def require_permission(
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
+            if not _verify_behavioral_biometrics(request):
+                return _fail_response()
             service: RBACService | None = current_app.config.get("RBAC_SERVICE")
             if service is None:
                 return func(*args, **kwargs)
