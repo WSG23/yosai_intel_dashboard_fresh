@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import warnings
 from functools import lru_cache
@@ -7,9 +9,11 @@ from typing import Any, Dict
 try:  # pragma: no cover - optional metrics dependency
     from metrics import increment  # type: ignore
 except Exception:  # pragma: no cover - gracefully handle missing metrics
+
     def increment(*args: Any, **kwargs: Any) -> None:
         """Fallback increment when metrics library is unavailable."""
         return None
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +42,15 @@ def warn(component: str) -> None:
     removal = info.get("removal_version")
     migration = info.get("migration_path")
 
-    message = f"{component} is deprecated"
+    message_parts = [f"{component} is deprecated"]
     if since:
-        message += f" since {since}"
+        message_parts.append(f" since {since}")
     if removal:
-        message += f" and will be removed in {removal}"
+        message_parts.append(f" and will be removed in {removal}")
     if migration:
-        message += f". See {migration} for migration guidance."
+        message_parts.append(f". See {migration} for migration guidance.")
 
+    message = "".join(message_parts)
     warnings.warn(message, DeprecationWarning, stacklevel=2)
     logger.warning(message)
     try:

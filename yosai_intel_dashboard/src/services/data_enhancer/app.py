@@ -19,8 +19,8 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import dcc, html
 
-from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 from yosai_intel_dashboard.src.core.unicode import clean_unicode_surrogates
+from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
 
 from .config import (
     AI_COLUMN_SERVICE_AVAILABLE,
@@ -32,7 +32,9 @@ from .config import (
 )
 
 if CONTAINER_AVAILABLE:
-    from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+    from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+        ServiceContainer,
+    )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -871,6 +873,7 @@ app.layout = html.Div(
     style=CUSTOM_STYLE,
 )
 
+
 # Enhanced consolidated callbacks
 @callbacks.callback(
     [
@@ -1060,11 +1063,12 @@ def handle_enhanced_column_mapping(n_clicks):
     if n_clicks:
         try:
             suggestions = MultiBuildingDataEnhancer.get_enhanced_column_suggestions(df)
-            status_msg = (
+            status_parts = [
                 f"Enhanced AI suggestions generated ({len(suggestions)} matches found)"
-            )
+            ]
             if not AI_COLUMN_SERVICE_AVAILABLE:
-                status_msg += " (Using enhanced fallback service)"
+                status_parts.append(" (Using enhanced fallback service)")
+            status_msg = "".join(status_parts)
             ai_status = dbc.Alert(status_msg, color="info")
         except Exception as e:
             suggestions = {}
@@ -1121,9 +1125,12 @@ def get_device_suggestions(df: pd.DataFrame) -> Tuple[Dict[str, Dict], Any]:
     """Return device suggestions and status component."""
     try:
         suggestions = MultiBuildingDataEnhancer.get_enhanced_device_suggestions(df)
-        status_msg = f"Enhanced AI device suggestions generated for {len(suggestions)} devices"
+        status_parts = [
+            f"Enhanced AI device suggestions generated for {len(suggestions)} devices"
+        ]
         if not AI_DOOR_SERVICE_AVAILABLE:
-            status_msg += " (Using enhanced fallback service)"
+            status_parts.append(" (Using enhanced fallback service)")
+        status_msg = "".join(status_parts)
         ai_status = dbc.Alert(status_msg, color="info")
     except Exception as e:  # pragma: no cover - best effort
         suggestions = {}
@@ -1151,7 +1158,9 @@ def summarize_buildings(suggestions: Dict[str, Dict]) -> List[Any]:
     return summary
 
 
-def generate_device_controls(df: pd.DataFrame, suggestions: Dict[str, Dict]) -> List[Any]:
+def generate_device_controls(
+    df: pd.DataFrame, suggestions: Dict[str, Dict]
+) -> List[Any]:
     """Generate UI controls for device mapping."""
     unique_doors = df["door_id"].unique()[:15]
     controls: List[Any] = []
@@ -1177,7 +1186,9 @@ def generate_device_controls(df: pd.DataFrame, suggestions: Dict[str, Dict]) -> 
                                         dbc.Label("Building Name:"),
                                         dbc.Input(
                                             id=f"building-{door_id}",
-                                            value=door_data.get("building", "Main Building"),
+                                            value=door_data.get(
+                                                "building", "Main Building"
+                                            ),
                                             placeholder="Building name",
                                         ),
                                     ],
@@ -1189,15 +1200,32 @@ def generate_device_controls(df: pd.DataFrame, suggestions: Dict[str, Dict]) -> 
                                         dcc.Dropdown(
                                             id=f"building-type-{door_id}",
                                             options=[
-                                                {"label": "Main Building", "value": "main"},
-                                                {"label": "North Wing", "value": "north"},
-                                                {"label": "South Wing", "value": "south"},
+                                                {
+                                                    "label": "Main Building",
+                                                    "value": "main",
+                                                },
+                                                {
+                                                    "label": "North Wing",
+                                                    "value": "north",
+                                                },
+                                                {
+                                                    "label": "South Wing",
+                                                    "value": "south",
+                                                },
                                                 {"label": "East Wing", "value": "east"},
                                                 {"label": "West Wing", "value": "west"},
-                                                {"label": "Annex Building", "value": "annex"},
-                                                {"label": "Tower Building", "value": "tower"},
+                                                {
+                                                    "label": "Annex Building",
+                                                    "value": "annex",
+                                                },
+                                                {
+                                                    "label": "Tower Building",
+                                                    "value": "tower",
+                                                },
                                             ],
-                                            value=door_data.get("building_type", "main"),
+                                            value=door_data.get(
+                                                "building_type", "main"
+                                            ),
                                         ),
                                     ],
                                     width=6,
@@ -1244,8 +1272,14 @@ def generate_device_controls(df: pd.DataFrame, suggestions: Dict[str, Dict]) -> 
                                         dbc.Checklist(
                                             id=f"access-{door_id}",
                                             options=[
-                                                {"label": "Entry Point", "value": "is_entry"},
-                                                {"label": "Exit Point", "value": "is_exit"},
+                                                {
+                                                    "label": "Entry Point",
+                                                    "value": "is_entry",
+                                                },
+                                                {
+                                                    "label": "Exit Point",
+                                                    "value": "is_exit",
+                                                },
                                             ],
                                             value=[
                                                 k
@@ -1263,15 +1297,29 @@ def generate_device_controls(df: pd.DataFrame, suggestions: Dict[str, Dict]) -> 
                                         dbc.Checklist(
                                             id=f"special-{door_id}",
                                             options=[
-                                                {"label": "Elevator", "value": "is_elevator"},
-                                                {"label": "Stairwell", "value": "is_stairwell"},
-                                                {"label": "Fire Exit", "value": "is_fire_escape"},
-                                                {"label": "Restricted", "value": "is_restricted"},
+                                                {
+                                                    "label": "Elevator",
+                                                    "value": "is_elevator",
+                                                },
+                                                {
+                                                    "label": "Stairwell",
+                                                    "value": "is_stairwell",
+                                                },
+                                                {
+                                                    "label": "Fire Exit",
+                                                    "value": "is_fire_escape",
+                                                },
+                                                {
+                                                    "label": "Restricted",
+                                                    "value": "is_restricted",
+                                                },
                                             ],
                                             value=[
                                                 k
                                                 for k, v in door_data.items()
-                                                if k.startswith("is_") and k not in ["is_entry", "is_exit"] and v
+                                                if k.startswith("is_")
+                                                and k not in ["is_entry", "is_exit"]
+                                                and v
                                             ],
                                             inline=True,
                                         ),
@@ -1549,9 +1597,7 @@ DATA OVERVIEW:
         report_lines.append("BUILDING DISTRIBUTION:\n")
         for building, count in building_stats.items():
             percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"  {building}: {count:,} events ({percentage:.1f}%)\n"
-            )
+            report_lines.append(f"  {building}: {count:,} events ({percentage:.1f}%)\n")
         report_lines.append("\n")
 
     # Floor analysis
@@ -1587,9 +1633,7 @@ DATA OVERVIEW:
         report_lines.append("ACCESS RESULT DISTRIBUTION:\n")
         for result, count in result_stats.items():
             percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"  {result}: {count:,} events ({percentage:.1f}%)\n"
-            )
+            report_lines.append(f"  {result}: {count:,} events ({percentage:.1f}%)\n")
         report_lines.append("\n")
 
     # Door analysis
@@ -1601,9 +1645,7 @@ DATA OVERVIEW:
         report_lines.append("  Most Active Doors:\n")
         for door, count in most_active_doors.items():
             percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"    {door}: {count:,} events ({percentage:.1f}%)\n"
-            )
+            report_lines.append(f"    {door}: {count:,} events ({percentage:.1f}%)\n")
         report_lines.append("\n")
 
     # Special properties summary
@@ -1632,4 +1674,3 @@ DATA OVERVIEW:
     report_lines.append("Report generated by MVP Data Enhancement Tool\n")
 
     return "".join(report_lines)
-

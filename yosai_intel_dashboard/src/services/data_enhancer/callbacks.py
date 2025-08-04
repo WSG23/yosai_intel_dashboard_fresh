@@ -9,7 +9,9 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, callback_context, dash_table, dcc, html
 
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
 
 from .app import EnhancedFileProcessor, MultiBuildingDataEnhancer
 from .config import (
@@ -160,9 +162,7 @@ DATA OVERVIEW:
         report_lines.append("BUILDING DISTRIBUTION:\n")
         for building, count in building_stats.items():
             percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"  {building}: {count:,} events ({percentage:.1f}%)\n"
-            )
+            report_lines.append(f"  {building}: {count:,} events ({percentage:.1f}%)\n")
         report_lines.append("\n")
 
     if "floor_number" in df.columns:
@@ -195,9 +195,7 @@ DATA OVERVIEW:
         report_lines.append("ACCESS RESULT DISTRIBUTION:\n")
         for result, count in result_stats.items():
             percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"  {result}: {count:,} events ({percentage:.1f}%)\n"
-            )
+            report_lines.append(f"  {result}: {count:,} events ({percentage:.1f}%)\n")
         report_lines.append("\n")
 
     if "door_id" in df.columns:
@@ -208,9 +206,7 @@ DATA OVERVIEW:
         report_lines.append("  Most Active Doors:\n")
         for door, count in most_active_doors.items():
             percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"    {door}: {count:,} events ({percentage:.1f}%)\n"
-            )
+            report_lines.append(f"    {door}: {count:,} events ({percentage:.1f}%)\n")
         report_lines.append("\n")
 
     special_props = [
@@ -307,9 +303,12 @@ def register_callbacks(app, container) -> None:
                 suggestions = MultiBuildingDataEnhancer.get_enhanced_column_suggestions(
                     df
                 )
-                status_msg = f"Enhanced AI suggestions generated ({len(suggestions)} matches found)"
+                status_parts = [
+                    f"Enhanced AI suggestions generated ({len(suggestions)} matches found)"
+                ]
                 if not AI_COLUMN_SERVICE_AVAILABLE:
-                    status_msg += " (Using enhanced fallback service)"
+                    status_parts.append(" (Using enhanced fallback service)")
+                status_msg = "".join(status_parts)
                 ai_status = dbc.Alert(status_msg, color="info")
             except Exception as e:  # pragma: no cover - best effort
                 suggestions = {}
@@ -387,9 +386,12 @@ def register_callbacks(app, container) -> None:
                 suggestions = MultiBuildingDataEnhancer.get_enhanced_device_suggestions(
                     df
                 )
-                status_msg = f"Enhanced AI device suggestions generated for {len(suggestions)} devices"
+                status_parts = [
+                    f"Enhanced AI device suggestions generated for {len(suggestions)} devices"
+                ]
                 if not AI_DOOR_SERVICE_AVAILABLE:
-                    status_msg += " (Using enhanced fallback service)"
+                    status_parts.append(" (Using enhanced fallback service)")
+                status_msg = "".join(status_parts)
                 ai_status = dbc.Alert(status_msg, color="info")
                 session_data["device_mappings"] = suggestions
             except Exception as e:  # pragma: no cover - best effort
