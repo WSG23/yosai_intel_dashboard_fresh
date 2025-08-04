@@ -26,11 +26,15 @@ except Exception:  # pragma: no cover - metrics optional for tests
     compatibility_failures = _DummyCounter()
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
-    from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
+    from yosai_intel_dashboard.src.infrastructure.config.base import (
+        DataQualityThresholds,
+    )
 
 else:  # pragma: no cover - runtime import for tests
     try:
-        from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
+        from yosai_intel_dashboard.src.infrastructure.config.base import (
+            DataQualityThresholds,
+        )
     except Exception:  # pragma: no cover - minimal fallback
 
         class DataQualityThresholds:
@@ -51,7 +55,10 @@ except Exception:  # pragma: no cover - minimal fallback for tests
 
 # Local imports are deferred to avoid heavy dependencies during module import
 if TYPE_CHECKING:  # pragma: no cover - type hints only
-    from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig, AlertDispatcher
+    from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+        AlertConfig,
+        AlertDispatcher,
+    )
     from yosai_intel_dashboard.src.core.performance import MetricType
 
 
@@ -75,19 +82,25 @@ class DataQualityMonitor:
         cfg = get_monitoring_config()
         dq_cfg = getattr(cfg, "data_quality", None)
         if isinstance(dq_cfg, dict):
-            from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
+            from yosai_intel_dashboard.src.infrastructure.config.base import (
+                DataQualityThresholds,
+            )
 
             self.thresholds = DataQualityThresholds(**dq_cfg)
         elif dq_cfg is not None:
             self.thresholds = dq_cfg
         else:
-            from yosai_intel_dashboard.src.infrastructure.config.base import DataQualityThresholds
+            from yosai_intel_dashboard.src.infrastructure.config.base import (
+                DataQualityThresholds,
+            )
 
             self.thresholds = thresholds or DataQualityThresholds()
 
         alert_cfg = getattr(cfg, "alerting", {})
         if isinstance(alert_cfg, dict):
-            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig
+            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+                AlertConfig,
+            )
 
             ac = AlertConfig(
                 slack_webhook=alert_cfg.get("slack_webhook"),
@@ -95,14 +108,18 @@ class DataQualityMonitor:
                 webhook_url=alert_cfg.get("webhook_url"),
             )
         else:
-            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertConfig
+            from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+                AlertConfig,
+            )
 
             ac = AlertConfig(
                 slack_webhook=getattr(alert_cfg, "slack_webhook", None),
                 email=getattr(alert_cfg, "email", None),
                 webhook_url=getattr(alert_cfg, "webhook_url", None),
             )
-        from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import AlertDispatcher
+        from yosai_intel_dashboard.src.core.monitoring.user_experience_metrics import (
+            AlertDispatcher,
+        )
 
         self.dispatcher = dispatcher or AlertDispatcher(ac)
         self._avro_failures = 0
@@ -111,7 +128,10 @@ class DataQualityMonitor:
     # ------------------------------------------------------------------
     def emit(self, metrics: DataQualityMetrics) -> None:
         """Record metrics and send alerts if thresholds are exceeded."""
-        from yosai_intel_dashboard.src.core.performance import MetricType, get_performance_monitor
+        from yosai_intel_dashboard.src.core.performance import (
+            MetricType,
+            get_performance_monitor,
+        )
 
         monitor = get_performance_monitor()
         monitor.record_metric(
@@ -147,7 +167,7 @@ class DataQualityMonitor:
                 f"schema violations {metrics.schema_violations} > {self.thresholds.max_schema_violations}"
             )
         if problems:
-            msg = "Data quality alert: " + "; ".join(problems)
+            msg = f"Data quality alert: {'; '.join(problems)}"
             self.dispatcher.send_alert(msg)
 
     # ------------------------------------------------------------------

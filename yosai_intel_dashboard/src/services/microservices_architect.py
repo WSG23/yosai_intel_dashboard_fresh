@@ -61,7 +61,7 @@ class MicroservicesArchitect:
 
         boundaries: List[ServiceBoundary] = []
         for boundary_name, modules in service_map.items():
-            description = "Modules: " + ", ".join(sorted(modules))
+            description = f"Modules: {', '.join(sorted(modules))}"
             boundaries.append(
                 ServiceBoundary(name=boundary_name, description=description)
             )
