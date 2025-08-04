@@ -17,6 +17,8 @@ from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import
 class UploadCallbacks(ComponentCallbackManager):
     """Register upload related callbacks using :class:`TrulyUnifiedCallbacks`."""
 
+    registry_name = "upload"
+
     def register_all(self) -> Dict[str, CallbackHandler]:
         callbacks: TrulyUnifiedCallbacks = self.registry.callbacks
         callbacks.register_upload_callbacks()

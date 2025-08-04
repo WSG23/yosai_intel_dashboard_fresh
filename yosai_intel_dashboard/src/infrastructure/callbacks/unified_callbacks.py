@@ -596,7 +596,15 @@ class TrulyUnifiedCallbacks:
     def register_all_callbacks(
         self, *manager_classes: type["ComponentCallbackManager"]
     ) -> None:
-        """Instantiate and register callbacks from provided managers."""
+        """Instantiate and register callbacks from provided managers.
+
+        If no ``manager_classes`` are provided, all classes registered on
+        :class:`ComponentCallbackManager` via the :class:`~src.common.meta.AutoRegister`
+        metaclass are used.
+        """
+
+        if not manager_classes:
+            manager_classes = tuple(ComponentCallbackManager.REGISTRY.values())
 
         class _Registry(CallbackRegistry):
             def __init__(self, coord: "TrulyUnifiedCallbacks") -> None:

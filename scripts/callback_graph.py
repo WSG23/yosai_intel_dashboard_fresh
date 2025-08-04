@@ -5,20 +5,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 from dash import Dash
 from graphviz import Digraph
 
+import yosai_intel_dashboard.src.services.upload.callbacks  # noqa: F401
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
     TrulyUnifiedCallbacks,
 )
-from yosai_intel_dashboard.src.services.upload.callbacks import UploadCallbacks
+
 
 def load_callbacks() -> TrulyUnifiedCallbacks:
     """Create app, register callbacks and return coordinator."""
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
-    coord.register_all_callbacks(UploadCallbacks)
+    coord.register_all_callbacks()
     return coord
 
 
