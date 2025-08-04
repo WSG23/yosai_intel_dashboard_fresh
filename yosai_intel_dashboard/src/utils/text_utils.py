@@ -28,6 +28,12 @@ def safe_text(text: Union[str, Any]) -> str:
     return clean_surrogate_chars(repr(text))
 
 
+# Backwards compatibility alias
+def safe_str(text: Union[str, Any]) -> str:
+    """Alias for :func:`safe_text` for legacy imports."""
+    return safe_text(text)
+
+
 def sanitize_text_for_dash(text: Union[str, Any]) -> str:
     """
     Sanitize text specifically for Dash components
@@ -88,4 +94,10 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     return text[: max_length - len(suffix)] + suffix
 
 
-__all__ = ["safe_text", "sanitize_text_for_dash", "format_file_size", "truncate_text"]
+__all__ = [
+    "safe_text",
+    "safe_str",
+    "sanitize_text_for_dash",
+    "format_file_size",
+    "truncate_text",
+]

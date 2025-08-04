@@ -21,6 +21,7 @@ from database.replicated_connection import ReplicatedDatabaseConnection
 from database.secure_exec import execute_batch, execute_command, execute_query
 from database.types import DatabaseConnection, DBRows
 from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
@@ -221,7 +222,7 @@ class PostgreSQLConnection:
                 execute_command(cursor, "CREATE EXTENSION IF NOT EXISTS timescaledb;")
                 self._connection.commit()
         except psycopg2.Error as e:
-            sanitized = _scrub_password(str(e), self.config.password)
+            sanitized = _scrub_password(safe_text(e), self.config.password)
             logger.error("Failed to connect to PostgreSQL: %s", sanitized)
             raise DatabaseError(f"PostgreSQL connection failed: {sanitized}") from e
 
@@ -240,7 +241,7 @@ class PostgreSQLConnection:
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
         except psycopg2.Error as e:
-            sanitized = _scrub_password(str(e), self.config.password)
+            sanitized = _scrub_password(safe_text(e), self.config.password)
             logger.error("PostgreSQL query error: %s", sanitized)
             raise DatabaseError(f"Query failed: {sanitized}") from e
 
@@ -258,7 +259,7 @@ class PostgreSQLConnection:
 
             self._connection.commit()
         except psycopg2.Error as e:
-            sanitized = _scrub_password(str(e), self.config.password)
+            sanitized = _scrub_password(safe_text(e), self.config.password)
             logger.error("PostgreSQL command error: %s", sanitized)
             self._connection.rollback()
             raise DatabaseError(f"Command failed: {sanitized}") from e
@@ -273,7 +274,7 @@ class PostgreSQLConnection:
                 execute_batch(cursor, command, params_seq)
             self._connection.commit()
         except psycopg2.Error as e:
-            sanitized = _scrub_password(str(e), self.config.password)
+            sanitized = _scrub_password(safe_text(e), self.config.password)
             logger.error("PostgreSQL batch error: %s", sanitized)
             self._connection.rollback()
             raise DatabaseError(f"Batch failed: {sanitized}") from e

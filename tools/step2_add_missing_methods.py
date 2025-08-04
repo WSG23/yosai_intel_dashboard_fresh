@@ -9,6 +9,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 
 def add_missing_analytics_methods():
     """Add missing methods to UploadAnalyticsProcessor"""
@@ -17,7 +19,9 @@ def add_missing_analytics_methods():
 
     try:
         # First, let's check what methods are currently in UploadAnalyticsProcessor
-        from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
+        from yosai_intel_dashboard.src.services.upload_processing import (
+            UploadAnalyticsProcessor,
+        )
 
         processor = UploadAnalyticsProcessor()
         current_methods = [
@@ -56,7 +60,7 @@ def add_missing_analytics_methods():
                     return result
 
                 except Exception as e:
-                    return {"status": "error", "message": str(e)}
+                    return {"status": "error", "message": safe_text(e)}
 
             UploadAnalyticsProcessor.get_analytics_from_uploaded_data = (
                 get_analytics_from_uploaded_data
@@ -113,7 +117,7 @@ def add_missing_analytics_methods():
                 f"✅ get_analytics_from_uploaded_data: {analytics_result.get('status', 'unknown')}"
             )
         except Exception as e:
-            print(f"❌ get_analytics_from_uploaded_data failed: {e}")
+            print(f"❌ get_analytics_from_uploaded_data failed: {safe_text(e)}")
 
         # Test clean_uploaded_dataframe
         try:
@@ -123,7 +127,7 @@ def add_missing_analytics_methods():
             cleaned_df = test_processor.clean_uploaded_dataframe(test_df)
             print(f"✅ clean_uploaded_dataframe: {len(cleaned_df)} rows processed")
         except Exception as e:
-            print(f"❌ clean_uploaded_dataframe failed: {e}")
+            print(f"❌ clean_uploaded_dataframe failed: {safe_text(e)}")
 
         # Test summarize_dataframe
         try:
@@ -132,13 +136,13 @@ def add_missing_analytics_methods():
                 f"✅ summarize_dataframe: {summary['rows']} rows, {summary['columns']} columns"
             )
         except Exception as e:
-            print(f"❌ summarize_dataframe failed: {e}")
+            print(f"❌ summarize_dataframe failed: {safe_text(e)}")
 
         print("\n🎉 Step 2 completed successfully!")
         return True
 
     except Exception as e:
-        print(f"Step 2 failed: {e}")
+        print(f"Step 2 failed: {safe_text(e)}")
         import traceback
 
         traceback.print_exc()

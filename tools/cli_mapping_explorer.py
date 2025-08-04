@@ -13,6 +13,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 
 def setup_logging(verbose: bool = False) -> None:
     level = logging.DEBUG if verbose else logging.INFO
@@ -31,7 +33,9 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
         # Process file first
         import base64
 
-        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
+        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import (
+            AsyncFileProcessor,
+        )
 
         path = Path(file_path)
         filename = path.name
@@ -54,7 +58,9 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
 
         # Explore AI Suggestions in detail
         logger.info("=== AI SUGGESTIONS DETAILED ===")
-        from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import get_ai_column_suggestions
+        from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import (
+            get_ai_column_suggestions,
+        )
 
         suggestions = get_ai_column_suggestions(df)
 
@@ -63,7 +69,9 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
 
         # Explore DeviceLearningService methods with correct parameters
         logger.info("=== DEVICE LEARNING SERVICE EXPLORATION ===")
-        from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
+        from yosai_intel_dashboard.src.services.device_learning_service import (
+            DeviceLearningService,
+        )
 
         device_service = DeviceLearningService()
 
@@ -85,8 +93,8 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
                     "value": str(learned_mappings)[:200],
                 }
         except Exception as e:
-            logger.warning(f"get_learned_mappings failed: {e}")
-            result["learned_mappings"] = {"error": str(e)}
+            logger.warning(f"get_learned_mappings failed: {safe_text(e)}")
+            result["learned_mappings"] = {"error": safe_text(e)}
 
         # Test get_user_device_mappings with filename
         try:
@@ -103,8 +111,8 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
                     "value": str(user_device_mappings)[:200],
                 }
         except Exception as e:
-            logger.warning(f"get_user_device_mappings failed: {e}")
-            result["user_device_mappings"] = {"error": str(e)}
+            logger.warning(f"get_user_device_mappings failed: {safe_text(e)}")
+            result["user_device_mappings"] = {"error": safe_text(e)}
 
         # Test other available methods
         available_methods = [
@@ -117,8 +125,8 @@ async def explore_mapping_services(file_path: str, verbose: bool = False) -> dic
         return result
 
     except Exception as e:
-        logger.error(f"Exploration failed: {e}")
-        return {"success": False, "error": str(e)}
+        logger.error(f"Exploration failed: {safe_text(e)}")
+        return {"success": False, "error": safe_text(e)}
 
 
 def main():

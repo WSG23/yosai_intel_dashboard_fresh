@@ -18,6 +18,8 @@ from typing import Any, Dict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 
 def setup_logging(verbose: bool = False) -> None:
     """Configure logging for CLI tool"""
@@ -47,12 +49,12 @@ async def process_file_with_service(
         logger.info(f"Processing file with AsyncFileProcessor: {file_path}")
 
         # Import and create AsyncFileProcessor
-        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import (
-            AsyncFileProcessor,
-        )
         from yosai_intel_dashboard.src.infrastructure.callbacks import (
             CallbackType,
             UnifiedCallbackRegistry,
+        )
+        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import (
+            AsyncFileProcessor,
         )
 
         registry = UnifiedCallbackRegistry()
@@ -109,14 +111,14 @@ async def process_file_with_service(
         return result
 
     except Exception as e:
-        logger.error(f"AsyncFileProcessor failed: {str(e)}")
+        logger.error(f"AsyncFileProcessor failed: {safe_text(e)}")
         if verbose:
             logger.error(traceback.format_exc())
 
         return {
             "success": False,
             "processor": "AsyncFileProcessor",
-            "error": str(e),
+            "error": safe_text(e),
             "error_type": type(e).__name__,
             "file_path": file_path,
             "traceback": traceback.format_exc() if verbose else None,

@@ -11,6 +11,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 
 # Apply BOTH fixes
 def apply_both_fixes():
@@ -18,7 +20,9 @@ def apply_both_fixes():
 
     # Step 1: Callback fix
     try:
-        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+            TrulyUnifiedCallbacks as CallbackManager,
+        )
 
         if hasattr(CallbackManager, "handle_register") and not hasattr(
             CallbackManager, "register_handler"
@@ -26,11 +30,13 @@ def apply_both_fixes():
             CallbackManager.register_handler = CallbackManager.handle_register
             print("✅ Step 1: Callback patch applied")
     except Exception as e:
-        print(f"⚠️  Step 1: Callback patch failed: {e}")
+        print(f"⚠️  Step 1: Callback patch failed: {safe_text(e)}")
 
     # Step 2: Missing methods fix
     try:
-        from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
+        from yosai_intel_dashboard.src.services.upload_processing import (
+            UploadAnalyticsProcessor,
+        )
 
         # Add missing methods if they don't exist
         if not hasattr(UploadAnalyticsProcessor, "get_analytics_from_uploaded_data"):
@@ -47,7 +53,7 @@ def apply_both_fixes():
                     result["status"] = "success"
                     return result
                 except Exception as e:
-                    return {"status": "error", "message": str(e)}
+                    return {"status": "error", "message": safe_text(e)}
 
             UploadAnalyticsProcessor.get_analytics_from_uploaded_data = (
                 get_analytics_from_uploaded_data
@@ -69,7 +75,7 @@ def apply_both_fixes():
         print("✅ Step 2: Missing methods patch applied")
 
     except Exception as e:
-        print(f"⚠️  Step 2: Missing methods patch failed: {e}")
+        print(f"⚠️  Step 2: Missing methods patch failed: {safe_text(e)}")
 
 
 async def test_analytics_comprehensive():
@@ -80,7 +86,9 @@ async def test_analytics_comprehensive():
 
         import pandas as pd
 
-        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+            AnalyticsService,
+        )
 
         # Load the Enhanced Security Demo data
         parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
@@ -142,19 +150,19 @@ async def test_analytics_comprehensive():
             except Exception as e:
                 result["tests"][test_name.lower().replace(" ", "_")] = {
                     "success": False,
-                    "error": str(e),
+                    "error": safe_text(e),
                 }
-                print(f"❌ {test_name}: {e}")
+                print(f"❌ {test_name}: {safe_text(e)}")
 
         print("\n=== COMPREHENSIVE TEST COMPLETE ===")
         return result
 
     except Exception as e:
-        print(f"Comprehensive test failed: {e}")
+        print(f"Comprehensive test failed: {safe_text(e)}")
         import traceback
 
         traceback.print_exc()
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": safe_text(e)}
 
 
 def main():
