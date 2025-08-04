@@ -13,7 +13,7 @@ from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadCon
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from yosai_intel_dashboard.src.utils.text_utils import safe_text
+from yosai_intel_dashboard.src.utils.text_utils import safe_text  # noqa: E402
 
 
 async def test_analytics_with_mappings(verbose: bool = False) -> dict:
@@ -27,11 +27,11 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
         from yosai_intel_dashboard.src.services.analytics.analytics_service import (
             AnalyticsService,
         )
-        from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
-            UploadAnalyticsProcessor,
-        )
         from yosai_intel_dashboard.src.services.device_learning_service import (
             DeviceLearningService,
+        )
+        from yosai_intel_dashboard.src.services.upload_processing import (
+            UploadAnalyticsProcessor,
         )
 
         parquet_path = (
@@ -151,7 +151,8 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
                         )
                     }
                     print(
-                        f"Analytics engine functions loaded: {analytics_func is not None}"
+                        "Analytics engine functions loaded: "
+                        f"{analytics_func is not None}"
                     )
 
                 except Exception as e:
