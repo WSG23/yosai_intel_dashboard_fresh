@@ -63,6 +63,19 @@ with factory.get_connection() as conn:
 Direct calls like `execute_query(factory.get_connection(), ...)` are flagged by
 a custom linter that runs via `make lint` and `pytest`.
 
+### SQL Query Safety
+
+New SQL queries must use parameterized statements. Before committing, scan
+modified Python files for unsafe string interpolation:
+
+```bash
+PYTHONPATH=. python scripts/sql_migration_report.py <changed files>
+PYTHONPATH=. python scripts/detect_sql_strings.py <changed files>
+```
+
+The CI pipeline runs the same scripts on pull requests and will fail if they
+detect concatenated or interpolated SQL strings.
+
 See [docs/test_architecture.md](docs/test_architecture.md) and
 [docs/testing_with_protocols.md](docs/testing_with_protocols.md) for details on
 the testing protocols, container builder and available test doubles.
