@@ -6,6 +6,12 @@
 
 An AI-powered modular security intelligence dashboard for physical access control monitoring.
 
+## Quick Start for End Users
+
+1. Open the dashboard in your browser and sign in with your credentials.
+2. Use the navigation menu to access analytics, real-time monitoring, uploads, and settings.
+3. For tips on working with alerts and customizing your view, see the [User Guide](docs/user_guide.md).
+
 ## Migration Status
 
 The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
