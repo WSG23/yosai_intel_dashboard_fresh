@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
+from .configuration_mixin import ConfigurationMixin
 from .constants import (
     AnalyticsConstants,
     CSSConstants,
@@ -18,12 +19,11 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
-from yosai_intel_dashboard.src.core.utils import get_max_upload_size_mb
 
 logger = logging.getLogger(__name__)
 
 
-class DynamicConfigManager(BaseConfigLoader):
+class DynamicConfigManager(ConfigurationMixin, BaseConfigLoader):
     """Loads constants and applies environment overrides."""
 
     def __init__(self) -> None:
@@ -329,9 +329,6 @@ class DynamicConfigManager(BaseConfigLoader):
     def get_security_level(self) -> int:
         return self.security.pbkdf2_iterations
 
-    def get_max_upload_size(self) -> int:
-        return get_max_upload_size_mb(self)
-
     def get_db_pool_size(self) -> int:
         return self.performance.db_pool_size
 
@@ -346,11 +343,11 @@ class DynamicConfigManager(BaseConfigLoader):
 
     def get_max_upload_size_bytes(self) -> int:
         """Get maximum upload size in bytes."""
-        return get_max_upload_size_mb(self) * 1024 * 1024
+        return self.get_max_upload_size_mb() * 1024 * 1024
 
     def validate_large_file_support(self) -> bool:
         """Check if configuration supports 50MB+ files."""
-        return get_max_upload_size_mb(self) >= 50
+        return self.get_max_upload_size_mb() >= 50
 
     def get_max_parallel_uploads(self) -> int:
         return getattr(self.uploads, "MAX_PARALLEL_UPLOADS", 4)

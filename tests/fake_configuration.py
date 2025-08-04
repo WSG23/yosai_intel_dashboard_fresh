@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import ConfigurationMixin
 
 try:
     from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
@@ -19,7 +20,12 @@ except Exception:  # pragma: no cover - optional deps
         def get_db_pool_size(self) -> int: ...
 
 
-class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, ConfigProviderProtocol):
+class FakeConfiguration(
+    ConfigurationMixin,
+    ConfigurationProtocol,
+    ConfigurationServiceProtocol,
+    ConfigProviderProtocol,
+):
     """Simple config for unit tests."""
 
     def __init__(self) -> None:
@@ -53,10 +59,6 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
             bundle_threshold_kb=100,
             specificity_high=30,
         )
-        self.max_upload_size_mb = self.security.max_upload_mb
-        self.upload_chunk_size = self.uploads.DEFAULT_CHUNK_SIZE
-        self.ai_confidence_threshold = self.performance.ai_confidence_threshold
-
     def get_database_config(self) -> dict:
         return self.database
 
@@ -76,10 +78,10 @@ class FakeConfiguration(ConfigurationProtocol, ConfigurationServiceProtocol, Con
         return {"valid": True}
 
     def get_max_upload_size_bytes(self) -> int:
-        return self.max_upload_size_mb * 1024 * 1024
+        return self.get_max_upload_size_mb() * 1024 * 1024
 
     def validate_large_file_support(self) -> bool:
-        return self.max_upload_size_mb >= 50
+        return self.get_max_upload_size_mb() >= 50
 
     def get_max_parallel_uploads(self) -> int:
         from yosai_intel_dashboard.src.core.config import get_max_parallel_uploads
