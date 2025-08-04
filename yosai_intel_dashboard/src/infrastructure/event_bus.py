@@ -4,7 +4,7 @@ import asyncio
 import inspect
 import time
 from collections import defaultdict
-from typing import Any, Awaitable, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 
 Callback = Callable[..., Any]
@@ -40,52 +40,68 @@ class EventBus:
 
         results: List[Any] = []
         callbacks = list(self._subscribers.get(event, []))
-        for _, cb in callbacks:
-            start = time.perf_counter()
-            try:
-                if inspect.iscoroutinefunction(cb):
-                    result = asyncio.run(cb(*args, **kwargs))
-                else:
-                    result = cb(*args, **kwargs)
-                duration = time.perf_counter() - start
-                metric = self._metrics[event]
-                metric["calls"] += 1
-                metric["total_time"] += duration
-                results.append(result)
-            except Exception:
-                metric = self._metrics[event]
-                metric["calls"] += 1
-                metric["exceptions"] += 1
-                results.append(None)
+        for _, callback in callbacks:
+            results.append(
+                self._invoke(event, callback, *args, **kwargs)
+            )
         return results
 
     async def emit_async(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
         """Asynchronously emit *event* to all subscribers."""
 
         results: List[Any] = []
-        for _, cb in self._subscribers.get(event, []):
-            start = time.perf_counter()
-            try:
-                if inspect.iscoroutinefunction(cb):
-                    result = await cb(*args, **kwargs)
-                else:
-                    result = cb(*args, **kwargs)
-                duration = time.perf_counter() - start
-                metric = self._metrics[event]
-                metric["calls"] += 1
-                metric["total_time"] += duration
-                results.append(result)
-            except Exception:
-                metric = self._metrics[event]
-                metric["calls"] += 1
-                metric["exceptions"] += 1
-                results.append(None)
+        for _, callback in self._subscribers.get(event, []):
+            results.append(
+                await self._invoke_async(event, callback, *args, **kwargs)
+            )
         return results
+
+    def _update_metrics(self, event: Any, *, duration: float | None = None, error: bool = False) -> None:
+        """Update metrics for a callback invocation."""
+
+        metric = self._metrics[event]
+        metric["calls"] += 1
+        if error:
+            metric["exceptions"] += 1
+        if duration is not None:
+            metric["total_time"] += duration
+
+    def _invoke(self, event: Any, callback: Callback, *args: Any, **kwargs: Any) -> Any:
+        """Invoke *callback* synchronously and record metrics."""
+
+        start = time.perf_counter()
+        try:
+            if inspect.iscoroutinefunction(callback):
+                result = asyncio.run(callback(*args, **kwargs))
+            else:
+                result = callback(*args, **kwargs)
+            self._update_metrics(event, duration=time.perf_counter() - start)
+            return result
+        except Exception:
+            self._update_metrics(event, error=True)
+            return None
+
+    async def _invoke_async(
+        self, event: Any, callback: Callback, *args: Any, **kwargs: Any
+    ) -> Any:
+        """Invoke *callback* asynchronously and record metrics."""
+
+        start = time.perf_counter()
+        try:
+            if inspect.iscoroutinefunction(callback):
+                result = await callback(*args, **kwargs)
+            else:
+                result = callback(*args, **kwargs)
+            self._update_metrics(event, duration=time.perf_counter() - start)
+            return result
+        except Exception:
+            self._update_metrics(event, error=True)
+            return None
 
     def get_callbacks(self, event: Any) -> List[Callback]:
         """Return callbacks subscribed to *event*."""
 
-        return [cb for _, cb in self._subscribers.get(event, [])]
+        return [callback for _, callback in self._subscribers.get(event, [])]
 
     def get_metrics(self, event: Any) -> Dict[str, float]:
         """Return metrics for *event*."""
