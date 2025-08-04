@@ -9,14 +9,18 @@ from types import ModuleType
 try:
     from .analytics_service import AnalyticsService
 except Exception:  # pragma: no cover - optional dependency fallback
+
     class AnalyticsService:
         """Fallback stub when analytics service is unavailable."""
 
         pass
 
+
 if os.getenv("LIGHTWEIGHT_SERVICES"):
     __all__ = ["AnalyticsService"]
 else:
+
+    from yosai_intel_dashboard.src.core.container import container
 
     from .ab_testing import ModelABTester
     from .ai_mapping_store import ai_mapping_store
@@ -25,7 +29,6 @@ else:
     from .analytics.generator import AnalyticsGenerator
     from .analytics.processor import AnalyticsProcessor
     from .analytics.publisher import Publisher
-    from .analytics.upload_analytics import UploadAnalyticsProcessor
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
     from .controllers.upload_controller import UploadProcessingController
@@ -38,10 +41,9 @@ else:
     from .event_publisher import publish_event
     from .explainability_service import ExplainabilityService
     from .helpers.database_initializer import initialize_database
-    from .query_optimizer import QueryOptimizer
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
     from .publishing_service import PublishingService
-    from yosai_intel_dashboard.src.core.container import container
+    from .query_optimizer import QueryOptimizer
     from .report_generation_service import ReportGenerationService
     from .result_formatting import (
         apply_regular_analysis,
@@ -51,6 +53,7 @@ else:
     )
     from .summary_report_generator import SummaryReportGenerator
     from .summary_reporter import SummaryReporter
+    from .upload_processing import UploadAnalyticsProcessor
 
     logger = logging.getLogger(__name__)
 
@@ -71,17 +74,27 @@ else:
         compliance_pkg = None
 
     # Resolve optional services from the container
-    FileHandlerService = container.get("FileHandler") if container.has("FileHandler") else None
+    FileHandlerService = (
+        container.get("FileHandler") if container.has("FileHandler") else None
+    )
     FILE_HANDLER_AVAILABLE = FileHandlerService is not None
 
     create_analytics_service = (
-        container.get("create_analytics_service") if container.has("create_analytics_service") else None
+        container.get("create_analytics_service")
+        if container.has("create_analytics_service")
+        else None
     )
-    AnalyticsService = container.get("AnalyticsService") if container.has("AnalyticsService") else None
+    AnalyticsService = (
+        container.get("AnalyticsService") if container.has("AnalyticsService") else None
+    )
 
     def get_analytics_service():
         """Return a shared :class:`AnalyticsService` instance if available."""
-        getter = container.get("get_analytics_service") if container.has("get_analytics_service") else None
+        getter = (
+            container.get("get_analytics_service")
+            if container.has("get_analytics_service")
+            else None
+        )
         if getter is None:
             return None
         try:
