@@ -23,6 +23,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(location.pathname);
+  const [isMobile, setIsMobile] = useState(false);
 
   const navItems: NavItem[] = [
     { path: '/upload', label: 'Upload', icon: <Upload size={20} /> },
@@ -35,6 +36,17 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     setActiveTab(location.pathname);
   }, [location]);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) setIsMenuOpen(false);
+  }, [isMobile]);
 
   const handleNavClick = (path: string) => {
     setActiveTab(path);
@@ -50,15 +62,17 @@ const Navbar: React.FC = () => {
           <span className="brand-text">YOSAI Intelligence</span>
         </div>
 
-        <button 
-          className="mobile-menu-toggle"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {isMobile && (
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        )}
 
-        <div className={`navbar-menu ${isMenuOpen ? 'is-active' : ''}`}>
+        <div className={`navbar-menu ${isMobile && isMenuOpen ? 'is-active' : ''}`}>
           {navItems.map((item) => (
             <Link
               key={item.path}
