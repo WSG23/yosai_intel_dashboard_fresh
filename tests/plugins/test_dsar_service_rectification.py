@@ -53,14 +53,14 @@ secure_exec_mod.execute_command = execute_command
 secure_exec_mod.execute_query = execute_query
 sys.modules["database.secure_exec"] = secure_exec_mod
 
-# Stub infrastructure.database.secure_query with minimal builder
+# Stub infrastructure.security.query_builder with minimal builder
 infrastructure_pkg = types.ModuleType("infrastructure")
 infrastructure_pkg.__path__ = []  # type: ignore[attr-defined]
 sys.modules["infrastructure"] = infrastructure_pkg
-infrastructure_db_pkg = types.ModuleType("infrastructure.database")
-infrastructure_db_pkg.__path__ = []  # type: ignore[attr-defined]
-sys.modules["infrastructure.database"] = infrastructure_db_pkg
-secure_query_mod = types.ModuleType("infrastructure.database.secure_query")
+infrastructure_sec_pkg = types.ModuleType("infrastructure.security")
+infrastructure_sec_pkg.__path__ = []  # type: ignore[attr-defined]
+sys.modules["infrastructure.security"] = infrastructure_sec_pkg
+secure_query_mod = types.ModuleType("infrastructure.security.query_builder")
 
 
 class SecureQueryBuilder:
@@ -83,7 +83,7 @@ class SecureQueryBuilder:
 
 
 secure_query_mod.SecureQueryBuilder = SecureQueryBuilder
-sys.modules["infrastructure.database.secure_query"] = secure_query_mod
+sys.modules["infrastructure.security.query_builder"] = secure_query_mod
 
 # Stub models.compliance to avoid SQLAlchemy dependency
 models_mod = types.ModuleType("yosai_intel_dashboard.models.compliance")

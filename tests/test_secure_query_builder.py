@@ -1,14 +1,16 @@
-import logging
-import pytest
+from __future__ import annotations
 
 import importlib.util
+import logging
 import sys
 from pathlib import Path
+
+import pytest
 
 spec = importlib.util.spec_from_file_location(
     "secure_query",
     Path(__file__).resolve().parents[1]
-    / "yosai_intel_dashboard/src/infrastructure/database/secure_query.py",
+    / "yosai_intel_dashboard/src/infrastructure/security/query_builder.py",
 )
 secure_query = importlib.util.module_from_spec(spec)
 sys.modules["secure_query"] = secure_query

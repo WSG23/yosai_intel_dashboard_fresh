@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import importlib.util
 import pathlib
 import sys
-import pytest
 
+import pytest
 import sqlalchemy.sql as sql
 from sqlalchemy.sql.elements import TextClause
 
@@ -17,17 +19,17 @@ import types
 
 infrastructure_pkg = types.ModuleType("infrastructure")
 infrastructure_pkg.__path__ = [str(ROOT / "infrastructure")]
-database_pkg = types.ModuleType("infrastructure.database")
-database_pkg.__path__ = [str(ROOT / "infrastructure/database")]
+security_pkg = types.ModuleType("infrastructure.security")
+security_pkg.__path__ = [str(ROOT / "infrastructure/security")]
 sys.modules.setdefault("infrastructure", infrastructure_pkg)
-sys.modules.setdefault("infrastructure.database", database_pkg)
+sys.modules.setdefault("infrastructure.security", security_pkg)
 
 spec_sq = importlib.util.spec_from_file_location(
-    "infrastructure.database.secure_query",
-    ROOT / "infrastructure/database/secure_query.py",
+    "infrastructure.security.query_builder",
+    ROOT / "infrastructure/security/query_builder.py",
 )
 secure_module = importlib.util.module_from_spec(spec_sq)
-sys.modules.setdefault("infrastructure.database.secure_query", secure_module)
+sys.modules.setdefault("infrastructure.security.query_builder", secure_module)
 assert spec_sq.loader is not None
 spec_sq.loader.exec_module(secure_module)
 
@@ -99,6 +101,4 @@ async def test_malicious_filter_column_rejected():
             return []
 
     with pytest.raises(ValueError):
-        await tq.fetch_time_buckets(
-            DummyPool(), 1, 2, extra_filters={"bad;DROP": "x"}
-        )
+        await tq.fetch_time_buckets(DummyPool(), 1, 2, extra_filters={"bad;DROP": "x"})

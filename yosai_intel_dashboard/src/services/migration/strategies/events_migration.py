@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import AsyncIterator, List, Callable, Awaitable
+import logging
+from typing import AsyncIterator, Awaitable, Callable, List
 
 import asyncpg
-import logging
-from infrastructure.database.secure_query import SecureQueryBuilder
-from yosai_intel_dashboard.src.infrastructure.config.constants import DataProcessingLimits
+
+from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DataProcessingLimits,
+)
 
 from ..framework import MigrationStrategy
 

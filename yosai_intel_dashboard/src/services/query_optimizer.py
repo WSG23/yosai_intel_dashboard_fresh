@@ -7,8 +7,7 @@ import re
 from typing import Any, Dict, Iterable, List, Sequence
 
 from database.secure_exec import execute_query
-from infrastructure.database.secure_query import SecureQueryBuilder
-
+from infrastructure.security.query_builder import SecureQueryBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -108,4 +107,3 @@ class QueryOptimizer:
 
 
 __all__ = ["QueryOptimizer"]
-
