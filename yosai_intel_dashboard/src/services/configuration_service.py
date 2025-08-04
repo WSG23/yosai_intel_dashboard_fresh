@@ -14,41 +14,47 @@ from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     DynamicConfigManager,
     dynamic_config,
 )
+from src.common.config import ConfigProvider, ConfigService
 
 
 class DynamicConfigurationService(ConfigurationServiceProtocol):
-    """Expose :class:`DynamicConfigManager` via ``ConfigurationServiceProtocol``."""
+    """Expose configuration values via ``ConfigurationServiceProtocol``."""
 
-    def __init__(self, manager: DynamicConfigManager = dynamic_config) -> None:
-        self._cfg = manager
+    def __init__(
+        self,
+        manager: DynamicConfigManager = dynamic_config,
+        cfg: ConfigProvider | None = None,
+    ) -> None:
+        self._manager = manager
+        self._cfg = cfg or ConfigService()
 
     # Simple pass-through wrappers
     @property
     def max_upload_size_mb(self) -> int:
-        return self._cfg.get_max_upload_size_mb()
+        return self._cfg.max_upload_size_mb
 
     def get_max_upload_size_bytes(self) -> int:
-        return self._cfg.get_max_upload_size_bytes()
+        return self._cfg.max_upload_size_mb * 1024 * 1024
 
     def validate_large_file_support(self) -> bool:
-        return self._cfg.validate_large_file_support()
+        return self._cfg.max_upload_size_mb >= 50
 
     @property
     def upload_chunk_size(self) -> int:
-        return self._cfg.get_upload_chunk_size()
+        return self._cfg.upload_chunk_size
 
     def get_max_parallel_uploads(self) -> int:
-        return self._cfg.get_max_parallel_uploads()
+        return self._manager.get_max_parallel_uploads()
 
     def get_validator_rules(self) -> Dict[str, Any]:
-        return self._cfg.get_validator_rules()
+        return self._manager.get_validator_rules()
 
     @property
     def ai_confidence_threshold(self) -> int:
-        return self._cfg.get_ai_confidence_threshold()
+        return self._cfg.ai_confidence_threshold
 
     def get_db_pool_size(self) -> int:
-        return self._cfg.get_db_pool_size()
+        return self._manager.get_db_pool_size()
 
 
 __all__ = [
