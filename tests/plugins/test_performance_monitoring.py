@@ -1,5 +1,8 @@
 import time
 import types
+import pytest
+
+psutil = pytest.importorskip("psutil")
 
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from tests.plugins.test_plugin_manager import _install_protocol_stubs
@@ -24,7 +27,7 @@ def test_monitoring_alerts(monkeypatch):
         def get_plugin_config(self, name: str):
             return {}
 
-    monkeypatch.setattr("psutil.Process", lambda: FakeProc())
+    monkeypatch.setattr(psutil, "Process", lambda: FakeProc())
     monkeypatch.setattr("core.plugins.performance_manager.time.sleep", lambda n: None)
     mgr = EnhancedThreadSafePluginManager(
         ServiceContainer(), DummyConfig(), health_check_interval=0.1

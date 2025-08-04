@@ -12,12 +12,19 @@
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
-  
+
   /* Border radius */
   --border-radius-sm: 0.25rem;
   --border-radius-md: 0.5rem;
   --border-radius-lg: 0.75rem;
-  
+
+  /* Responsive spacing tokens */
+  --space-responsive-xs: var(--space-2);
+  --space-responsive-sm: var(--space-3);
+  --space-responsive-md: var(--space-4);
+  --space-responsive-lg: var(--space-6);
+  --space-responsive-xl: var(--space-8);
+
   /* Colors */
   --color-primary: rgb(59, 130, 246);
   --color-primary-hover: rgb(37, 99, 235);
@@ -80,26 +87,57 @@ body {
 }
 
 /* Breakpoints mapped to disclosure levels */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   :root {
     --disclosure-level: 0;
+    --space-responsive-xs: var(--space-2);
+    --space-responsive-sm: var(--space-3);
+    --space-responsive-md: var(--space-4);
+    --space-responsive-lg: var(--space-6);
+    --space-responsive-xl: var(--space-8);
   }
 }
 
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   :root {
     --disclosure-level: 1;
+    --space-responsive-xs: var(--space-3);
+    --space-responsive-sm: var(--space-4);
+    --space-responsive-md: var(--space-6);
+    --space-responsive-lg: var(--space-8);
+    --space-responsive-xl: var(--space-10);
   }
 }
 
-@media (min-width: 1025px) and (max-width: 1440px) {
+@media (min-width: 1024px) and (max-width: 1439px) {
   :root {
     --disclosure-level: 2;
+    --space-responsive-xs: var(--space-4);
+    --space-responsive-sm: var(--space-6);
+    --space-responsive-md: var(--space-8);
+    --space-responsive-lg: var(--space-10);
+    --space-responsive-xl: var(--space-12);
   }
 }
 
-@media (min-width: 1441px) {
+@media (min-width: 1440px) and (max-width: 2559px) {
   :root {
     --disclosure-level: 3;
+    --space-responsive-xs: var(--space-5);
+    --space-responsive-sm: var(--space-8);
+    --space-responsive-md: var(--space-10);
+    --space-responsive-lg: var(--space-12);
+    --space-responsive-xl: var(--space-14);
+  }
+}
+
+@media (min-width: 2560px) {
+  :root {
+    --disclosure-level: 4;
+    --space-responsive-xs: var(--space-6);
+    --space-responsive-sm: var(--space-9);
+    --space-responsive-md: var(--space-12);
+    --space-responsive-lg: var(--space-14);
+    --space-responsive-xl: var(--space-16);
   }
 }

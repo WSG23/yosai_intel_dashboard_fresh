@@ -1,6 +1,8 @@
 import pandas as pd
 import pytest
 
+psutil = pytest.importorskip("psutil")
+
 from yosai_intel_dashboard.src.core.performance_file_processor import PerformanceFileProcessor
 
 
@@ -25,9 +27,7 @@ def test_abort_on_memory_limit(monkeypatch, tmp_path):
     df.to_csv(path, index=False)
 
     fake_proc = FakeProcess([10 * 1024 * 1024, 200 * 1024 * 1024])
-    monkeypatch.setattr(
-        "core.performance_file_processor.psutil.Process", lambda: fake_proc
-    )
+    monkeypatch.setattr(psutil, "Process", lambda: fake_proc)
 
     processor = PerformanceFileProcessor(chunk_size=5, max_memory_mb=50)
     with pytest.raises(MemoryError):
