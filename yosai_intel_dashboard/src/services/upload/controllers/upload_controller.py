@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import base64
 import io
 import json
 import logging
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
 import pandas as pd
+
 from validation.security_validator import SecurityValidator
 
 logger = logging.getLogger(__name__)
@@ -26,7 +29,7 @@ class UnifiedUploadController:
             return None
 
         if user is not None:
-            self._validator.validate_resource_id(user, filename)
+            self._validator.validate_resource_access(user, filename)
 
         try:
             _type, content_string = contents.split(",", 1)

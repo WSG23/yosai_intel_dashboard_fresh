@@ -266,8 +266,8 @@ class SecurityValidator(CompositeValidator):
             return self._augment(ValidationResult(False, name, ["invalid_filename"]))
         return self._augment(ValidationResult(True, name))
 
-    def validate_resource_id(self, user: Any, resource_id: Any) -> Any:
-        """Validate that ``user`` is authorized for ``resource_id``."""
+    def validate_resource_access(self, user: Any, resource_id: Any) -> Any:
+        """Ensure ``user`` is authorized to access ``resource_id``."""
         rule = IDORRule(user, self._authorize_resource)
         result = rule.validate(str(resource_id))
         if not result.valid:

@@ -4,16 +4,20 @@ Access Events Data Model for Yōsai Intel Dashboard
 Handles all database operations for access control events
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Union
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.config.constants import DataProcessingLimits
-from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
 from database.secure_exec import execute_command, execute_query
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DataProcessingLimits,
+)
 
 from .base import BaseModel
 from .enums import AccessResult, BadgeStatus
@@ -63,13 +67,13 @@ class AccessEventModel(BaseModel):
 
         if "person_id" in filters:
             if user is not None:
-                _sql_validator.validate_resource_id(user, filters["person_id"])
+                _sql_validator.validate_resource_access(user, filters["person_id"])
             base_query += " AND person_id = %s"
             params.append(filters["person_id"])
 
         if "door_id" in filters:
             if user is not None:
-                _sql_validator.validate_resource_id(user, filters["door_id"])
+                _sql_validator.validate_resource_access(user, filters["door_id"])
             base_query += " AND door_id = %s"
             params.append(filters["door_id"])
 
@@ -345,7 +349,9 @@ class AccessEventModel(BaseModel):
 def create_access_event_model(db_connection=None) -> AccessEventModel:
     """Factory function to create AccessEventModel instance"""
     if db_connection is None:
-        from yosai_intel_dashboard.src.infrastructure.config.database_manager import get_database
+        from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
+            get_database,
+        )
 
         db_connection = get_database()
 
