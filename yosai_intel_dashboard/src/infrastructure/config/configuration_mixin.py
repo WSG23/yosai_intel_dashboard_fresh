@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Mixin providing access to common configuration values."""
 
-from typing import Any
+from typing import Any, Mapping
 
 
 class ConfigurationMixin:
@@ -10,67 +10,85 @@ class ConfigurationMixin:
 
     The mixin looks for values across several possible attribute names and
     locations to maintain compatibility with different configuration objects.
+    The public methods accept an optional ``cfg`` argument allowing them to be
+    used both as mixin methods and as stand‑alone helpers operating on arbitrary
+    configuration objects or mappings.
     """
 
-    def _get_attr(self, obj: Any, names: tuple[str, ...]) -> Any | None:
+    @staticmethod
+    def _get_attr(obj: Any, names: tuple[str, ...]) -> Any | None:
+        """Retrieve an attribute or mapping key from ``obj``."""
+
+        if obj is None:
+            return None
+        if isinstance(obj, Mapping):
+            for name in names:
+                if name in obj:
+                    return obj[name]
+            return None
         for name in names:
             if hasattr(obj, name):
                 return getattr(obj, name)
         return None
 
     # AI confidence threshold -------------------------------------------------
-    def get_ai_confidence_threshold(self) -> float:
+    def get_ai_confidence_threshold(self, cfg: Any | None = None) -> float:
         """Return the AI confidence threshold with fallbacks."""
-        # Check nested performance object
-        perf = getattr(self, "performance", None)
+
+        obj = self if cfg is None else cfg
+        perf = getattr(obj, "performance", None)
         if perf is not None:
-            value = self._get_attr(perf, ("ai_confidence_threshold", "ai_threshold"))
+            value = ConfigurationMixin._get_attr(
+                perf, ("ai_confidence_threshold", "ai_threshold")
+            )
             if value is not None:
                 return float(value)
-        # Direct attributes
-        value = self._get_attr(self, ("ai_confidence_threshold", "ai_threshold"))
+        value = ConfigurationMixin._get_attr(
+            obj, ("ai_confidence_threshold", "ai_threshold")
+        )
         if value is not None:
             return float(value)
         return 0.8
 
     # Maximum upload size -----------------------------------------------------
-    def get_max_upload_size_mb(self) -> int:
+    def get_max_upload_size_mb(self, cfg: Any | None = None) -> int:
         """Return maximum upload size in megabytes with fallbacks."""
-        sec = getattr(self, "security", None)
-        if sec is not None:
-            value = self._get_attr(
-                sec,
-                ("max_upload_mb", "max_upload_size_mb", "max_size_mb"),
-            )
-            if value is not None:
-                return int(value)
-        # Root level attributes
-        value = self._get_attr(
-            self, ("max_upload_size_mb", "max_upload_mb", "max_size_mb")
+
+        obj = self if cfg is None else cfg
+        value = ConfigurationMixin._get_attr(
+            obj, ("max_upload_size_mb", "max_upload_mb", "max_size_mb")
         )
         if value is not None:
             return int(value)
-        # Upload sub-object
-        upload = getattr(self, "upload", None)
+        sec = getattr(obj, "security", None)
+        if sec is not None:
+            value = ConfigurationMixin._get_attr(
+                sec, ("max_upload_mb", "max_upload_size_mb", "max_size_mb")
+            )
+            if value is not None:
+                return int(value)
+        upload = getattr(obj, "upload", None)
         if upload is not None:
-            value = self._get_attr(upload, ("max_file_size_mb",))
+            value = ConfigurationMixin._get_attr(upload, ("max_file_size_mb",))
             if value is not None:
                 return int(value)
         return 50
 
     # Upload chunk size -------------------------------------------------------
-    def get_upload_chunk_size(self) -> int:
+    def get_upload_chunk_size(self, cfg: Any | None = None) -> int:
         """Return default upload chunk size with fallbacks."""
-        uploads = getattr(self, "uploads", None)
+
+        obj = self if cfg is None else cfg
+        value = ConfigurationMixin._get_attr(obj, ("upload_chunk_size", "chunk_size"))
+        if value is not None:
+            return int(value)
+        uploads = getattr(obj, "uploads", None)
         if uploads is not None:
-            value = self._get_attr(
+            value = ConfigurationMixin._get_attr(
                 uploads, ("DEFAULT_CHUNK_SIZE", "chunk_size", "upload_chunk_size")
             )
             if value is not None:
                 return int(value)
-        value = self._get_attr(self, ("upload_chunk_size", "chunk_size"))
-        if value is not None:
-            return int(value)
         return 1024
 
 
