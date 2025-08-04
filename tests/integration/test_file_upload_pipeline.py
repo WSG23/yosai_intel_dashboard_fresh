@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import importlib.util
 import sys
@@ -9,6 +11,8 @@ from typing import Protocol
 import pandas as pd
 import pytest
 
+from tests.fixtures import setup_test_environment
+
 
 def _load_process_uploaded_file():
     """Dynamically load ``process_uploaded_file`` with minimal stubs."""
@@ -16,16 +20,16 @@ def _load_process_uploaded_file():
     core_interfaces = types.ModuleType(
         "yosai_intel_dashboard.src.core.interfaces.protocols"
     )
-    class FileProcessorProtocol(Protocol):
-        ...
+
+    class FileProcessorProtocol(Protocol): ...
+
     core_interfaces.FileProcessorProtocol = FileProcessorProtocol
-    sys.modules[
-        "yosai_intel_dashboard.src.core.interfaces.protocols"
-    ] = core_interfaces
+    sys.modules["yosai_intel_dashboard.src.core.interfaces.protocols"] = core_interfaces
 
     core_proto = types.ModuleType("yosai_intel_dashboard.src.core.protocols")
-    class ConfigurationProtocol(Protocol):
-        ...
+
+    class ConfigurationProtocol(Protocol): ...
+
     core_proto.ConfigurationProtocol = ConfigurationProtocol
     sys.modules["yosai_intel_dashboard.src.core.protocols"] = core_proto
 
@@ -37,7 +41,12 @@ def _load_process_uploaded_file():
     # Avoid heavy initialisation of the utils and config packages
     utils_pkg = types.ModuleType("yosai_intel_dashboard.src.utils")
     utils_pkg.__path__ = [
-        str(Path(__file__).resolve().parents[2] / "yosai_intel_dashboard" / "src" / "utils")
+        str(
+            Path(__file__).resolve().parents[2]
+            / "yosai_intel_dashboard"
+            / "src"
+            / "utils"
+        )
     ]
     sys.modules["yosai_intel_dashboard.src.utils"] = utils_pkg
 
@@ -61,24 +70,16 @@ def _load_process_uploaded_file():
     upload_types_mod = types.ModuleType(
         "yosai_intel_dashboard.src.services.upload.upload_types"
     )
+
     @dataclass
     class ValidationResult:
         valid: bool
         message: str = ""
-    upload_types_mod.ValidationResult = ValidationResult
-    sys.modules[
-        "yosai_intel_dashboard.src.services.upload.upload_types"
-    ] = upload_types_mod
 
-    # Provide a tiny SecurityValidator implementation
-    sec_validator = types.ModuleType("validation.security_validator")
-    class SecurityValidator:
-        def validate_file_meta(self, filename, content):
-            return {"valid": True, "filename": Path(filename).name, "issues": []}
-        def sanitize_filename(self, filename):
-            return Path(filename).name
-    sec_validator.SecurityValidator = SecurityValidator
-    sys.modules["validation.security_validator"] = sec_validator
+    upload_types_mod.ValidationResult = ValidationResult
+    sys.modules["yosai_intel_dashboard.src.services.upload.upload_types"] = (
+        upload_types_mod
+    )
 
     # Stub unicode helper used when logging errors
     unicode_mod = types.ModuleType("unicode_toolkit")
@@ -87,7 +88,9 @@ def _load_process_uploaded_file():
 
     # Minimal stub for optional ``aiohttp`` dependency
     aiohttp_stub = types.ModuleType("aiohttp")
+
     class ClientSession: ...
+
     aiohttp_stub.ClientSession = ClientSession
     sys.modules["aiohttp"] = aiohttp_stub
 
@@ -113,7 +116,9 @@ def _load_process_uploaded_file():
 
 @pytest.fixture()
 def process_uploaded_file():
-    return _load_process_uploaded_file()
+    with setup_test_environment():
+        func = _load_process_uploaded_file()
+        yield func
 
 
 def _csv_payload(df: pd.DataFrame) -> str:

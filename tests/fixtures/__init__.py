@@ -59,3 +59,4 @@ class MockUploadDataStore:
 
     def add_file(self, name: str, df: Any) -> None:
         self.files[name] = df
+
