@@ -3,7 +3,7 @@ import importlib
 
 from yosai_intel_dashboard.src.services.data_processing import file_processor as upload_module
 from tests.config import FakeConfiguration
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 def test_env_max_upload_limit(monkeypatch):

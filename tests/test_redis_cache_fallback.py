@@ -1,6 +1,8 @@
 import importlib
 import sys
 import types
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+
 
 
 def test_redis_cache_manager_fallback(monkeypatch, fake_dash):

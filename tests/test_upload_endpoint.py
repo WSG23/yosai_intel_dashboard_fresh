@@ -8,7 +8,7 @@ import pandas as pd
 from flask import Flask
 from pathlib import Path
 import types
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 safe_import('yosai_intel_dashboard', types.ModuleType("yosai_intel_dashboard"))
 sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]

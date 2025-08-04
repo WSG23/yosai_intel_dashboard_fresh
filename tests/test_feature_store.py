@@ -5,7 +5,7 @@ import os
 import sys
 import types
 from pathlib import Path
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 if "services.resilience" not in sys.modules:
     safe_import('services.resilience', types.ModuleType("services.resilience"))

@@ -4,14 +4,8 @@ import types
 import pytest
 
 from yosai_intel_dashboard.src.core.base_database_service import BaseDatabaseService
-from tests.import_helpers import safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
-
-class DatabaseSettings:
-    def __init__(self, type: str, user: str, password: str):
-        self.type = type
-        self.user = user
-        self.password = password
 
 
 def _install_fake_module(monkeypatch, name, factory_attr):

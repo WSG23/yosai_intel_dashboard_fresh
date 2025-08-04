@@ -3,7 +3,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # stub config.dynamic_config for PerformanceMonitor
 cfg = ModuleType("config")

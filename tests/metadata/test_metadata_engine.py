@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Protocol, Tuple, runtime_checkable
 
 import pandas as pd
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 @runtime_checkable

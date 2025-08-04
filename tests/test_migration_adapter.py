@@ -9,7 +9,7 @@ from typing import Any
 
 import pandas as pd
 
-from tests.import_helpers import import_optional, safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Provide a lightweight stub for services.interfaces to avoid heavy imports
 stub_pkg = types.ModuleType("services")

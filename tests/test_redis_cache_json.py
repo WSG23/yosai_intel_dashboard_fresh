@@ -3,6 +3,8 @@ import json
 import pickle
 import sys
 import types
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+
 
 
 def _setup_manager(monkeypatch, fake_redis):
