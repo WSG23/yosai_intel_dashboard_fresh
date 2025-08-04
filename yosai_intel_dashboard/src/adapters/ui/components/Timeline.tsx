@@ -55,7 +55,7 @@ const Timeline: React.FC<TimelineProps> = ({ data, onRangeChange }) => {
             startIndex={range.startIndex}
             endIndex={range.endIndex}
             onChange={handleBrushChange}
-            travellerWidth={12}
+            travellerWidth={44}
           />
         </LineChart>
       </ResponsiveContainer>

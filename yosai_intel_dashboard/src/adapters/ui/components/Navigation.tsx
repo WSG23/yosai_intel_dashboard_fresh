@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import { getGestureManager } from '../lib/gestures';
 import {
   Upload,
   BarChart3,
@@ -95,6 +96,23 @@ const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = '
   const navigate = useNavigate();
   const { level: userLevel, logFeatureUsage } = useProficiencyStore();
 
+  useEffect(() => {
+    const manager = getGestureManager();
+    const handlePress = (ev: HammerInput) => {
+      const target = (ev.target as HTMLElement).closest('[data-nav-item]');
+      if (target) {
+        const description = target.getAttribute('data-description');
+        if (description) {
+          alert(description);
+        }
+      }
+    };
+    manager.on('press', handlePress);
+    return () => {
+      manager.off('press', handlePress);
+    };
+  }, []);
+
   const isActive = (href?: string) => href && location.pathname === href;
 
   const renderItems = (items: NavItem[], depth = 0): React.ReactNode => (
@@ -112,15 +130,17 @@ const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = '
           const Icon = item.icon;
           const active = isActive(item.href);
           const hasChildren = item.children && item.children.length > 0;
-          const content = item.href ? (
-            <Link
-              to={item.href}
-              onClick={() => {
+            const content = item.href ? (
+              <Link
+                to={item.href}
+                data-nav-item
+                data-description={item.description}
+                onClick={() => {
                 logFeatureUsage(item.name);
                 navigate(item.href!);
               }}
               className={cn(
-                'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[44px] min-w-[44px]',
                 active
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
