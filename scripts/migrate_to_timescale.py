@@ -34,6 +34,17 @@ from infrastructure.security.query_builder import SecureQueryBuilder
 
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"
+ALLOWED_TABLES = {
+    "access_events",
+    "users",
+    "devices",
+    "alerts",
+    "people",
+    "doors",
+    "facilities",
+    "anomaly_detections",
+    "incident_tickets",
+}
 
 LOG = logging.getLogger(__name__)
 
@@ -375,7 +386,9 @@ def setup_timescale(conn: connection) -> None:
 
 
 def fetch_chunk(cur: cursor, table: str, start: int, size: int) -> List[dict[str, Any]]:
-    builder = SecureQueryBuilder(allowed_tables={table})
+    if table not in ALLOWED_TABLES:
+        raise ValueError(f"Table {table} is not allowed")
+    builder = SecureQueryBuilder(allowed_tables=ALLOWED_TABLES)
     tbl = builder.table(table)
     sql, params = builder.build(
         f"SELECT * FROM {tbl} WHERE id > %s ORDER BY id ASC LIMIT %s",
@@ -389,9 +402,13 @@ def fetch_chunk(cur: cursor, table: str, start: int, size: int) -> List[dict[str
 def insert_rows(cur: cursor, table: str, rows: List[dict[str, Any]]) -> None:
     if not rows:
         return
+    if table not in ALLOWED_TABLES:
+        raise ValueError(f"Table {table} is not allowed")
     columns = rows[0].keys()
     values = (tuple(row[col] for col in columns) for row in rows)
-    builder = SecureQueryBuilder(allowed_tables={table}, allowed_columns=set(columns))
+    builder = SecureQueryBuilder(
+        allowed_tables=ALLOWED_TABLES, allowed_columns=set(columns)
+    )
     tbl = builder.table(table)
     cols = ",".join(builder.column(c) for c in columns)
     placeholders = ",".join("%s" for _ in columns)
@@ -410,7 +427,9 @@ def validate_chunk(
     source_checksum: str,
     expected_count: int,
 ) -> None:
-    builder = SecureQueryBuilder(allowed_tables={table})
+    if table not in ALLOWED_TABLES:
+        raise ValueError(f"Table {table} is not allowed")
+    builder = SecureQueryBuilder(allowed_tables=ALLOWED_TABLES)
     tbl = builder.table(table)
     sql, params = builder.build(
         f"SELECT * FROM {tbl} WHERE id > %s AND id <= %s ORDER BY id ASC",
@@ -440,6 +459,8 @@ def migrate_table(
     resume: bool = False,
     test_mode: bool = False,
 ) -> None:
+    if table not in ALLOWED_TABLES:
+        raise ValueError(f"Table {table} is not allowed")
     with source_conn.cursor(cursor_factory=DictCursor) as src, target_conn.cursor(
         cursor_factory=DictCursor
     ) as tgt:
@@ -447,7 +468,7 @@ def migrate_table(
         last_id = get_checkpoint(tgt, table) if resume else 0
         LOG.info("Starting migration for %s at id %s", table, last_id)
         if table == "access_events":
-            builder = SecureQueryBuilder(allowed_tables={table})
+            builder = SecureQueryBuilder(allowed_tables=ALLOWED_TABLES)
             tbl = builder.table(table)
             count_sql, _ = builder.build(f"SELECT COUNT(*) FROM {tbl}", logger=LOG)
             execute_query(src, count_sql)
