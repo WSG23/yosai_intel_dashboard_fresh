@@ -13,6 +13,7 @@ const MemoryRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 test('shows brand text and toggles menu', () => {
+  (window as any).innerWidth = 500;
   render(
     <MemoryRouter>
       <Navbar />

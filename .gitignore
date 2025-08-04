@@ -64,6 +64,9 @@ data/learned_mappings.json
 !package-lock.json
 !yosai_intel_dashboard/src/adapters/ui/tsconfig.json
 !public/manifest.json
+!yosai_intel_dashboard/src/adapters/ui/lib/
+!yosai_intel_dashboard/src/adapters/ui/lib/gestures.ts
+!yosai_intel_dashboard/src/adapters/ui/lib/gestures.ts
 !dashboards/grafana/*.json
 !dashboards/performance/*.json
 !monitoring/grafana/*.json
