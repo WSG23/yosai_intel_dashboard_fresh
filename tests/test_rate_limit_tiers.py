@@ -1,3 +1,5 @@
+import os
+
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import DynamicConfigManager
 
 
@@ -17,10 +19,10 @@ security:
     path.write_text(yaml_text, encoding="utf-8")
     monkeypatch.setenv("YOSAI_CONFIG_FILE", str(path))
     required = {
-        "SECRET_KEY": "s",
-        "DB_PASSWORD": "pwd",
+        "SECRET_KEY": os.urandom(16).hex(),
+        "DB_PASSWORD": os.urandom(16).hex(),
         "AUTH0_CLIENT_ID": "cid",
-        "AUTH0_CLIENT_SECRET": "secret",
+        "AUTH0_CLIENT_SECRET": os.urandom(16).hex(),
         "AUTH0_DOMAIN": "dom",
         "AUTH0_AUDIENCE": "aud",
     }
