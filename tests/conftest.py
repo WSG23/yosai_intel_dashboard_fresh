@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from typing import Callable, Iterator, List
+from types import ModuleType, SimpleNamespace
 
 # Make project package importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +23,8 @@ setup_common_fallbacks()
 
 import pytest
 
-from tests.import_helpers import safe_import
+import importlib
+
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 try:
@@ -49,6 +51,14 @@ def _register_stub(module_name: str, module: ModuleType | None = None) -> Module
     if module is None:
         module = ModuleType(parts[-1])
     module.__path__ = getattr(module, "__path__", [])
+    def safe_import(name: str, factory):
+        try:
+            return importlib.import_module(name)
+        except Exception:
+            mod = factory()
+            sys.modules[name] = mod
+            return mod
+
     safe_import(module_name, lambda: module)
     sys.modules[module_name] = module
     return module

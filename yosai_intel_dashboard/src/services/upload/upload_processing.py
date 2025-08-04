@@ -2,8 +2,9 @@ from typing import Any, Dict
 
 import pandas as pd
 
-
-import pandas as pd
+from yosai_intel_dashboard.src.services.upload.protocols import (
+    UploadAnalyticsProtocol,
+)
 
 
 class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
