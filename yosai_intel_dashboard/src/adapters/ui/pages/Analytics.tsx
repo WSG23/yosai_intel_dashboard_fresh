@@ -38,6 +38,7 @@ const Analytics: React.FC = () => {
   const { analyticsCache, setAnalytics } = useAnalyticsStore();
   const [sourceType, setSourceType] = useState('all');
   const analyticsData = analyticsCache[sourceType] || null;
+  const [alertsEnabled, setAlertsEnabled] = useState(false);
 
   const riskData = {
     score: 72,
@@ -218,6 +219,25 @@ const Analytics: React.FC = () => {
                 ))}
               </ChunkGroup>
             </section>
+          </ProgressiveSection>
+          <ProgressiveSection
+            title="Advanced Settings"
+            id="analytics-advanced-settings"
+            className="analytics-sections mt-4"
+          >
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={alertsEnabled}
+                onChange={(e) => setAlertsEnabled(e.target.checked)}
+              />
+              <span>Enable anomaly alerts</span>
+            </label>
+            {alertsEnabled && (
+              <div className="text-sm mt-2">
+                Anomaly alerts are enabled
+              </div>
+            )}
           </ProgressiveSection>
         </ClickExpand>
       )}
