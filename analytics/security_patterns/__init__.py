@@ -22,29 +22,6 @@ from .pattern_detection import Threat, detect_critical_door_risks
 fallback_callbacks: TrulyUnifiedCallbacks | None = None
 
 
-class _SimpleCallbacks:
-    """Lightweight callback manager used when dependencies are missing."""
-
-    def __init__(self) -> None:
-        self._event_callbacks: Dict[SecurityEvent, List[Any]] = {
-            e: [] for e in SecurityEvent
-        }
-        self.history: List[tuple[SecurityEvent, Any]] = []
-
-    def register_event(self, event: SecurityEvent, func: Any) -> None:
-        self._event_callbacks.setdefault(event, []).append(func)
-
-    def trigger_event(self, event: SecurityEvent, data: Any | None = None) -> None:
-        for cb in self._event_callbacks.get(event, []):
-            cb(data)
-        self.history.append((event, data))
-
-    def clear_all_callbacks(self) -> None:
-        for lst in self._event_callbacks.values():
-            lst.clear()
-        self.history.clear()
-
-
 # ---------------------------------------------------------------------------
 # Public helpers
 
@@ -99,7 +76,7 @@ class SecurityPatternsAnalyzer:
         except Exception:  # pragma: no cover
             manager = fallback_callbacks
         if manager is None:
-            manager = _SimpleCallbacks()
+            manager = TrulyUnifiedCallbacks()
         if threats:
             manager.trigger_event(SecurityEvent.THREAT_DETECTED, {"threats": threats})
         manager.trigger_event(
@@ -184,7 +161,7 @@ def setup_isolated_security_testing() -> Any:
     try:  # pragma: no cover - may fail if heavy deps missing
         new_manager = TrulyUnifiedCallbacks()
     except Exception:  # pragma: no cover
-        new_manager = _SimpleCallbacks()
+        new_manager = TrulyUnifiedCallbacks()
     fallback_callbacks = new_manager
     try:  # pragma: no cover - import may fail if optional deps missing
         import security.events as se  # type: ignore
