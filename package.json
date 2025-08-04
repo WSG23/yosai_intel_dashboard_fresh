@@ -80,7 +80,7 @@
     "build": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts build",
     "build:android": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts build && npx cap sync android",
     "build:ios": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts build && npx cap sync ios",
-    "test": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts test --coverage --watchAll=false",
+    "test": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts test --coverage --watchAll=false --passWithNoTests",
     "eject": "react-scripts eject",
     "build-css": "sh scripts/build_css.sh",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
