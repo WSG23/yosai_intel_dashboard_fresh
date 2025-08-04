@@ -21,7 +21,7 @@ class UnicodeSanitizationMiddleware(BaseHTTPMiddleware):
                 k: UnicodeHandler.sanitize(v) for k, v in request.query_params.items()
             }
             request._query_params = request.query_params.__class__(sanitized)
-            logger.info("Sanitized query for %s", request.url.path)
+            logger.debug("Sanitized query for %s", request.url.path)
 
         if request.method in {"POST", "PUT", "PATCH"}:
             body = await request.body()
@@ -31,7 +31,7 @@ class UnicodeSanitizationMiddleware(BaseHTTPMiddleware):
                 text = ""
             cleaned = UnicodeHandler.sanitize(text)
             request._body = cleaned.encode("utf-8")
-            logger.info("Sanitized body for %s", request.url.path)
+            logger.debug("Sanitized body for %s", request.url.path)
 
         response = await call_next(request)
         return response

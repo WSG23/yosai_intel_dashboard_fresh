@@ -132,7 +132,7 @@ class PersonRepository(IPersonRepository):
             person.last_active.isoformat() if person.last_active else None,
             person.risk_score,
         )
-        logger.info("Sanitized query: %s", query)
+        logger.debug("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, params)
         return person
 
@@ -155,7 +155,7 @@ class PersonRepository(IPersonRepository):
             person.risk_score,
             _sanitize(person.person_id),
         )
-        logger.info("Sanitized query: %s", query)
+        logger.debug("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, params)
         return person
 
@@ -163,7 +163,7 @@ class PersonRepository(IPersonRepository):
     async def delete(self, person_id: str) -> bool:
         query = "DELETE FROM people WHERE person_id=%s"
         person_id = _sanitize(person_id)
-        logger.info("Sanitized query: %s", query)
+        logger.debug("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, (person_id,))
         return True
 
@@ -245,7 +245,7 @@ class AccessEventRepository(IAccessEventRepository):
             json.dumps(event.raw_data),
             datetime.now().isoformat(),
         )
-        logger.info("Sanitized query: %s", query)
+        logger.debug("Sanitized query: %s", query)
         await asyncio.to_thread(self.conn.execute_command, query, params)
         return event
 

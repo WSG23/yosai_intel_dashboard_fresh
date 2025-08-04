@@ -49,7 +49,7 @@ class QueryUnicodeHandler:
                 emit_security_event(
                     SecurityEvent.VALIDATION_FAILED, {"issue": "surrogate_query"}
                 )
-                logger.info("Surrogate characters removed from query value")
+                logger.debug("Surrogate characters removed from query value")
             return processor.safe_encode_text(text)
         if isinstance(value, dict):
             return {
@@ -73,7 +73,7 @@ class QueryUnicodeHandler:
         from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 
         if contains_surrogates(query):
-            (on_surrogate or logger.info)("Surrogates detected in query")
+            (on_surrogate or logger.debug)("Surrogates detected in query")
         return cls._encode(query, processor)
 
     @classmethod
@@ -89,7 +89,7 @@ class QueryUnicodeHandler:
         processor = processor or get_unicode_processor()
 
         def _cb(text: str) -> None:
-            (on_surrogate or logger.info)("Surrogates detected in query parameters")
+            (on_surrogate or logger.debug)("Surrogates detected in query parameters")
 
         from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 
