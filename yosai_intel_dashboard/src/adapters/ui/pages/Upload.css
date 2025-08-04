@@ -1,14 +1,21 @@
 /* Upload component styles */
 :root {
-  --upload-border: #007bff;
+  --upload-border: var(--color-primary);
   --upload-padding: clamp(1.5rem, 5vw, 3rem);
-  --upload-bg: #fafafa;
+  --upload-bg: var(--color-background-secondary);
+  --upload-text: var(--color-text-primary);
+  --upload-active-border: #28a745;
+  --upload-active-bg: #f0fff4;
+  --upload-hover-border: #0056b3;
+  --upload-hover-bg: #f0f8ff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --upload-border: #66aaff;
     --upload-bg: #1f1f1f;
+    --upload-text: #f5f5f5;
+    --upload-active-bg: #063613;
+    --upload-hover-bg: #001f33;
   }
 }
 
@@ -19,6 +26,7 @@
   text-align: center;
   cursor: pointer;
   background-color: var(--upload-bg);
+  color: var(--upload-text);
   min-height: 12.5rem;
   display: flex;
   flex-direction: column;
@@ -29,8 +37,8 @@
 
 
 .upload-dropzone--active {
-  border-color: #28a745;
-  background-color: #f0fff4;
+  border-color: var(--upload-active-border);
+  background-color: var(--upload-active-bg);
 }
 
 .upload-dropzone--disabled {
@@ -39,8 +47,8 @@
 }
 
 .upload-dropzone:hover:not(.upload-dropzone--disabled) {
-  border-color: #0056b3;
-  background-color: #f0f8ff;
+  border-color: var(--upload-hover-border);
+  background-color: var(--upload-hover-bg);
 }
 
 .alerts-container {
