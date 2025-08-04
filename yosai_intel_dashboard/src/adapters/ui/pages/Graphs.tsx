@@ -20,6 +20,7 @@ const Graphs: React.FC = () => {
   const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
   const [selectedChart, setSelectedChart] = useState('');
   const [chartData, setChartData] = useState<any>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     const fetchCharts = async () => {

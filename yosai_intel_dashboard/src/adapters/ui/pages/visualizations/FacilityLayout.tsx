@@ -11,6 +11,7 @@ const FacilityLayout: React.FC = () => {
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
+    renderer.domElement.setAttribute('aria-hidden', 'true');
     mountRef.current?.appendChild(renderer.domElement);
 
     const geometry = new THREE.BoxGeometry();

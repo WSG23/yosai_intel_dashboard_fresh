@@ -105,7 +105,7 @@ const NetworkGraph: React.FC = () => {
     };
   }, []);
 
-  return <svg ref={ref} width="100%" height={300} />;
+  return <svg ref={ref} width="100%" height={300} aria-hidden="true" />;
 };
 
 export default NetworkGraph;
