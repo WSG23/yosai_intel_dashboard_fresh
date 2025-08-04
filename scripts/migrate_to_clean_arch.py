@@ -108,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if args.report and not any([args.backup, args.rollback, args.dry_run]):
+    if args.report and not any((args.backup, args.rollback, args.dry_run)):
         print(report_status())
         return 0
 
