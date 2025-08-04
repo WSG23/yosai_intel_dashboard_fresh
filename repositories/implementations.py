@@ -184,15 +184,16 @@ class AccessEventRepository(IAccessEventRepository):
         limit: int = 100,
         offset: int = 0,
     ) -> List[AccessEvent]:
-        query = "SELECT * FROM access_events WHERE person_id=%s"
+        query_parts = ["SELECT * FROM access_events WHERE person_id=%s"]
         params: list = [person_id]
         if start_date:
-            query += " AND timestamp >= %s"
+            query_parts.append("AND timestamp >= %s")
             params.append(start_date.isoformat())
         if end_date:
-            query += " AND timestamp <= %s"
+            query_parts.append("AND timestamp <= %s")
             params.append(end_date.isoformat())
-        query += " ORDER BY timestamp DESC LIMIT %s OFFSET %s"
+        query_parts.append("ORDER BY timestamp DESC LIMIT %s OFFSET %s")
+        query = " ".join(query_parts)
         params.extend([limit, offset])
 
         rows = await asyncio.to_thread(self.conn.execute_query, query, tuple(params))
@@ -208,15 +209,16 @@ class AccessEventRepository(IAccessEventRepository):
         limit: int = 100,
         offset: int = 0,
     ) -> List[AccessEvent]:
-        query = "SELECT * FROM access_events WHERE door_id=%s"
+        query_parts = ["SELECT * FROM access_events WHERE door_id=%s"]
         params: list = [door_id]
         if start_date:
-            query += " AND timestamp >= %s"
+            query_parts.append("AND timestamp >= %s")
             params.append(start_date.isoformat())
         if end_date:
-            query += " AND timestamp <= %s"
+            query_parts.append("AND timestamp <= %s")
             params.append(end_date.isoformat())
-        query += " ORDER BY timestamp DESC LIMIT %s OFFSET %s"
+        query_parts.append("ORDER BY timestamp DESC LIMIT %s OFFSET %s")
+        query = " ".join(query_parts)
         params.extend([limit, offset])
         rows = await asyncio.to_thread(self.conn.execute_query, query, tuple(params))
         return [_row_to_event(r) for r in rows]

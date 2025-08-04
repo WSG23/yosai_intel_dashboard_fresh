@@ -12,6 +12,8 @@ from collections import defaultdict
 from statistics import mean, stdev
 from typing import Dict, Iterable, List, Sequence, Tuple
 
+from itertools import combinations
+
 import networkx as nx
 from sklearn.neighbors import LocalOutlierFactor
 
@@ -190,13 +192,13 @@ def find_hidden_relationships(graph: GraphModel | nx.Graph) -> List[Tuple[str, s
 
     G = _to_nx(graph)
     hidden: List[Tuple[str, str]] = []
-    for u in G.nodes():
-        for v in G.nodes():
-            if u >= v or G.has_edge(u, v) or G.has_edge(v, u):
-                continue
-            common = len(sorted(nx.common_neighbors(G.to_undirected(), u, v)))
-            if common > 2:
-                hidden.append((u, v))
+    undirected = G.to_undirected()
+    for u, v in combinations(G.nodes(), 2):
+        if undirected.has_edge(u, v):
+            continue
+        common = len(nx.common_neighbors(undirected, u, v))
+        if common > 2:
+            hidden.append((u, v))
     return hidden
 
 
@@ -236,9 +238,10 @@ def deviation_from_group_norms(
             continue
         m = mean(degrees)
         s = stdev(degrees)
-        for n, d in zip(community, degrees):
-            if s and abs(d - m) > 2 * s:
-                outliers.append(n)
+        if s:
+            outliers.extend(
+                n for n, d in zip(community, degrees) if abs(d - m) > 2 * s
+            )
     return outliers
 
 
