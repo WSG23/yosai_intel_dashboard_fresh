@@ -7,8 +7,9 @@ import pandas as pd
 try:
     from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
     from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
+    from yosai_intel_dashboard.src.infrastructure.callbacks import UnifiedCallbackRegistry
 except Exception:  # pragma: no cover - fallback stubs for optional deps
-    from typing import Protocol
+    from typing import Any, Dict, List, Protocol
 
     class UploadStorageProtocol(Protocol):
         def add_file(self, filename: str, dataframe: pd.DataFrame) -> None: ...
@@ -24,12 +25,14 @@ except Exception:  # pragma: no cover - fallback stubs for optional deps
             self,
             content: str,
             filename: str,
-            progress_callback: Callable[[str, int], None] | None = None,
         ) -> pd.DataFrame: ...
 
         def read_uploaded_file(
             self, contents: str, filename: str
         ) -> tuple[pd.DataFrame, str]: ...
+
+    class UnifiedCallbackRegistry:  # type: ignore[too-few-public-methods]
+        def register_callback(self, *args: Any, **kwargs: Any) -> None: ...
 
 
 try:
@@ -222,11 +225,13 @@ class FakeConfigurationService(ConfigurationServiceProtocol):
 class FakeFileProcessor(FileProcessorProtocol):
     """Very small ``FileProcessorProtocol`` implementation for tests."""
 
+    def __init__(self) -> None:
+        self.callbacks = UnifiedCallbackRegistry()
+
     async def process_file(
         self,
         content: str,
         filename: str,
-        progress_callback: Callable[[str, int], None] | None = None,
     ) -> pd.DataFrame:
         import base64
         from io import BytesIO
@@ -237,11 +242,6 @@ class FakeFileProcessor(FileProcessorProtocol):
             df = pd.read_csv(BytesIO(raw))
         else:
             df = pd.DataFrame()
-        if progress_callback:
-            try:
-                progress_callback(filename, 100)
-            except Exception:
-                pass
         return df
 
     def read_uploaded_file(

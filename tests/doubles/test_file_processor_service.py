@@ -5,16 +5,19 @@ from typing import Callable, Optional, Tuple
 import pandas as pd
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
+from yosai_intel_dashboard.src.infrastructure.callbacks import UnifiedCallbackRegistry
 
 
 class FileProcessorServiceStub(FileProcessorProtocol):
     """Minimal async file processor used in tests."""
 
+    def __init__(self) -> None:
+        self.callbacks = UnifiedCallbackRegistry()
+
     async def process_file(
         self,
         content: str,
         filename: str,
-        progress_callback: Optional[Callable[[str, int], None]] = None,
     ) -> pd.DataFrame:
         return pd.DataFrame()
 

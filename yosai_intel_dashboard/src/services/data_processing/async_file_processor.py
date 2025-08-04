@@ -19,6 +19,10 @@ from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
 from yosai_intel_dashboard.src.services.task_queue import create_task, get_status
 from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    UnifiedCallbackRegistry,
+)
 
 from .file_processor import UnicodeFileProcessor
 
@@ -32,12 +36,14 @@ class AsyncFileProcessor(FileProcessorProtocol):
         *,
         task_queue_url: str | None = None,
         config: ConfigProviderProtocol | None = None,
+        callback_registry: UnifiedCallbackRegistry | None = None,
     ) -> None:
         analytics_cfg = getattr(config, "analytics", None) if config else None
         self.chunk_size = chunk_size or getattr(analytics_cfg, "chunk_size", 50000)
         self.max_memory_mb = getattr(analytics_cfg, "max_memory_mb", 1024)
         self.config = config
         self.logger = logging.getLogger(__name__)
+        self.callbacks = callback_registry or UnifiedCallbackRegistry()
         self._queue: RabbitMQClient | None = None
         if task_queue_url:
             try:
@@ -51,12 +57,13 @@ class AsyncFileProcessor(FileProcessorProtocol):
         file_path: str | Path,
         *,
         encoding: str = "utf-8",
-        progress_callback: Optional[Callable[[int], None]] = None,
+        component_id: str | None = None,
     ) -> AsyncIterator[pd.DataFrame]:
         path = Path(file_path)
         total_lines = await asyncio.to_thread(self._count_lines, path)
         processed = 0
         reader = pd.read_csv(path, chunksize=self.chunk_size, encoding=encoding)
+        cid = component_id or str(path)
 
         def _next_chunk() -> pd.DataFrame | None:
             try:
@@ -70,30 +77,23 @@ class AsyncFileProcessor(FileProcessorProtocol):
                 break
             check_memory_limit(self.max_memory_mb, self.logger)
             processed += len(chunk)
-            if progress_callback and total_lines:
+            if total_lines:
                 pct = int(processed / total_lines * 100)
                 pct = max(0, min(100, pct))
-                try:
-                    progress_callback(pct)
-                except Exception:  # pragma: no cover - best effort
-                    pass
+                self.callbacks.trigger_callback(CallbackType.PROGRESS, cid, pct)
             yield chunk
-        if progress_callback:
-            try:
-                progress_callback(100)
-            except Exception:  # pragma: no cover - best effort
-                pass
+        self.callbacks.trigger_callback(CallbackType.PROGRESS, cid, 100)
 
     async def load_csv(
         self,
         file_path: str | Path,
         *,
         encoding: str = "utf-8",
-        progress_callback: Optional[Callable[[int], None]] = None,
+        component_id: str | None = None,
     ) -> pd.DataFrame:
         chunks: List[pd.DataFrame] = []
         async for chunk in self.read_csv_chunks(
-            file_path, encoding=encoding, progress_callback=progress_callback
+            file_path, encoding=encoding, component_id=component_id
         ):
             chunks.append(chunk)
         return pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
@@ -102,7 +102,6 @@ class AsyncFileProcessor(FileProcessorProtocol):
         self,
         contents: str,
         filename: str,
-        progress_callback: Optional[Callable[[str, int], None]] = None,
     ) -> pd.DataFrame:
         """Decode ``contents`` and return a sanitized ``DataFrame``."""
         prefix, data = contents.split(",", 1)
@@ -114,24 +113,17 @@ class AsyncFileProcessor(FileProcessorProtocol):
         path = Path(path_str)
         await asyncio.to_thread(path.write_bytes, raw)
 
-        def _cb(pct: int) -> None:
-            if progress_callback:
-                try:
-                    progress_callback(filename, pct)
-                except Exception:  # pragma: no cover - best effort
-                    pass
-
         try:
             if filename.lower().endswith(".csv"):
-                df = await self.load_csv(path, progress_callback=_cb)
+                df = await self.load_csv(path, component_id=filename)
             elif filename.lower().endswith((".xlsx", ".xls")):
                 df = await asyncio.to_thread(pd.read_excel, path)
                 df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
-                _cb(100)
+                self.callbacks.trigger_callback(CallbackType.PROGRESS, filename, 100)
             elif filename.lower().endswith(".json"):
                 df = await asyncio.to_thread(pd.read_json, path)
                 df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
-                _cb(100)
+                self.callbacks.trigger_callback(CallbackType.PROGRESS, filename, 100)
             else:
                 raise ValueError(f"Unsupported file type: {filename}")
         finally:
@@ -162,9 +154,10 @@ class AsyncFileProcessor(FileProcessorProtocol):
             )
 
         async def _job(progress: Callable[[int], None]):
-            df = await self.process_file(
-                contents, filename, progress_callback=lambda _f, pct: progress(pct)
+            self.callbacks.register_callback(
+                CallbackType.PROGRESS, progress, component_id=filename
             )
+            df = await self.process_file(contents, filename)
             return {"rows": len(df), "columns": len(df.columns)}
 
         return create_task(_job)
