@@ -1,6 +1,7 @@
 import pandas as pd
-import psutil
 import pytest
+
+psutil = pytest.importorskip("psutil")
 
 from yosai_intel_dashboard.src.services.data_processing.file_processor import UnicodeFileProcessor
 
