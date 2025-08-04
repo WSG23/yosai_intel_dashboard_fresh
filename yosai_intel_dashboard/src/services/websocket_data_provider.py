@@ -14,12 +14,15 @@ from typing import Any, Dict
 from src.common.base import BaseComponent
 from src.common.config import ConfigProvider, ConfigService
 from src.common.events import EventBus, EventPublisher
+from src.common.mixins import LoggingMixin, SerializationMixin
 from yosai_intel_dashboard.src.services.analytics_summary import (
     generate_sample_analytics,
 )
 
 
-class WebSocketDataProvider(EventPublisher, BaseComponent):
+class WebSocketDataProvider(
+    EventPublisher, LoggingMixin, SerializationMixin, BaseComponent
+):
     """Publish sample analytics updates to an event bus periodically."""
 
     def __init__(
@@ -34,10 +37,10 @@ class WebSocketDataProvider(EventPublisher, BaseComponent):
         self.config = config or ConfigService()
         self.interval = interval if interval is not None else self.config.metrics_interval
 
-
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
+        self.log("WebSocketDataProvider started")
 
     # ------------------------------------------------------------------
     def _run(self) -> None:
@@ -45,13 +48,17 @@ class WebSocketDataProvider(EventPublisher, BaseComponent):
             payload: Dict[str, Any] = generate_sample_analytics()
             self.publish_event("analytics_update", payload)
 
-            logging.debug("analytics_update dispatched")
+            self.log("analytics_update dispatched", logging.DEBUG)
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
         """Stop the provider thread."""
         self._stop.set()
         self._thread.join(timeout=1)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return serializable state for ``SerializationMixin``."""
+        return {"interval": self.interval}
 
 
 __all__ = ["WebSocketDataProvider"]
