@@ -6,6 +6,7 @@ from .feature_flag_cache import (
 )
 from .file_system import FileRepository, LocalFileRepository
 from .db_health import DBHealthRepository, PoolDBHealthRepository
+from .requirements import RequirementsRepository, FileRequirementsRepository
 
 __all__ = [
     "FeatureFlagCacheRepository",
@@ -14,4 +15,6 @@ __all__ = [
     "LocalFileRepository",
     "DBHealthRepository",
     "PoolDBHealthRepository",
+    "RequirementsRepository",
+    "FileRequirementsRepository",
 ]

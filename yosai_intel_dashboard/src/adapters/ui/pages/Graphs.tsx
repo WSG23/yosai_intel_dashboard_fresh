@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
+import { ChunkGroup } from '../components/layout';
 import {
   LineChart,
   Line,
@@ -163,24 +164,26 @@ const Graphs: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h1 className="mb-4 flex items-center space-x-2">
-        <LineChartIcon size={20} />
-        <span>Security Graphs</span>
-      </h1>
-      {availableCharts.length > 0 && (
-        <select
-          className="mb-4 border p-2 rounded"
-          value={selectedChart}
-          onChange={(e) => setSelectedChart(e.target.value)}
-          aria-label="Select chart type"
-        >
-          {availableCharts.map((chart) => (
-            <option key={chart.type} value={chart.type}>
-              {chart.name}
-            </option>
-          ))}
-        </select>
-      )}
+      <ChunkGroup>
+        <h1 className="mb-4 flex items-center space-x-2">
+          <LineChartIcon size={20} />
+          <span>Security Graphs</span>
+        </h1>
+        {availableCharts.length > 0 && (
+          <select
+            className="mb-4 border p-2 rounded"
+            value={selectedChart}
+            onChange={(e) => setSelectedChart(e.target.value)}
+            aria-label="Select chart type"
+          >
+            {availableCharts.map((chart) => (
+              <option key={chart.type} value={chart.type}>
+                {chart.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </ChunkGroup>
       <div role="presentation">{renderChart()}</div>
 
     </div>

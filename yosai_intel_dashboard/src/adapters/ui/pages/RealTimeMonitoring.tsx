@@ -8,6 +8,7 @@ import { Activity, Users, AlertCircle } from 'lucide-react';
 import { useWebSocket } from '../hooks';
 import { useEventStream } from '../hooks/useEventStream';
 import useResponsiveChart from '../hooks/useResponsiveChart';
+import { ChunkGroup } from '../components/layout';
 
 interface AccessEvent {
   eventId: string;
@@ -141,7 +142,7 @@ export const RealTimeMonitoring: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <ChunkGroup className="grid grid-cols-1 md:grid-cols-4 gap-4" limit={9}>
         <MetricCard
           title="Events/Second"
           value={metrics.eventsPerSecond.toFixed(1)}
@@ -165,12 +166,12 @@ export const RealTimeMonitoring: React.FC = () => {
           icon={AlertCircle}
           trend={metrics.anomaliesDetected > 0 ? 'alert' : 'good'}
         />
-      </div>
+      </ChunkGroup>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <ChunkGroup className="flex items-center justify-between">
+            <ChunkGroup className="flex items-center space-x-2">
               <CardTitle>Live Access Events</CardTitle>
               {!paused && <Badge className="bg-green-500 text-white">Live</Badge>}
               {paused && (
@@ -178,8 +179,8 @@ export const RealTimeMonitoring: React.FC = () => {
                   Paused{pending ? ` (${pending})` : ''}
                 </Badge>
               )}
-            </div>
-            <div className="space-x-2">
+            </ChunkGroup>
+            <ChunkGroup className="space-x-2">
               {!paused ? (
                 <Button size="sm" onClick={() => setPaused(true)}>
                   Pause
@@ -199,8 +200,8 @@ export const RealTimeMonitoring: React.FC = () => {
                   </Button>
                 </>
               )}
-            </div>
-          </div>
+            </ChunkGroup>
+          </ChunkGroup>
         </CardHeader>
         <CardContent ref={listRef} onTouchStart={() => setShowDetails(true)}>
           {listVisible && (

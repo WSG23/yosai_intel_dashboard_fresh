@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import useVisualizationPerformance from '../../hooks/useVisualizationPerformance';
+import './skeleton.css';
 
 export interface BaseVisualizationProps {
   width?: number;
   height?: number;
   rowHeight?: number;
   dataLength?: number;
+  loading?: boolean;
   onSetup?: (gl: WebGLRenderingContext) => void;
   onRender: (gl: WebGLRenderingContext, frame: number) => void;
   children?: React.ReactNode;
@@ -22,6 +24,7 @@ const BaseVisualization: React.FC<BaseVisualizationProps> = ({
   height = 150,
   rowHeight = 20,
   dataLength = 0,
+  loading = false,
   onSetup,
   onRender,
   children
@@ -67,6 +70,10 @@ const BaseVisualization: React.FC<BaseVisualizationProps> = ({
   const startIndex = Math.floor(scrollTop / rowHeight);
   const endIndex = Math.min(dataLength, startIndex + visibleCount);
   const offsetY = startIndex * rowHeight;
+
+  if (loading) {
+    return <div className="skeleton" style={{ width, height }} />;
+  }
 
   return (
     <div

@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
   `create_analysis_results_display`.
 - Legacy API wrappers now emit `DeprecationWarning` and forward calls to
   their relocated implementations.
+- Added deprecation warnings for `publish`, `register_all_services`,
+  `sanitize_data_frame`, and `safe_unicode_encode` to guide migration.
 
 ### Fixed
 - Navigation bar icons failed to load when `app.get_asset_url` returned

@@ -41,6 +41,11 @@ Update your code to use the new locations:
 | `core.container.Container` | `ServiceContainer` |
 | `mapping.models.load_model` | `load_model_from_config` |
 | `infrastructure.security.UnicodeSecurityHandler` | `UnicodeSecurityProcessor` |
+| `startup.service_registration.register_all_services` | `startup.service_registration.register_all_application_services` |
+| `infrastructure.config.complete_service_registration.register_all_services` | `register_all_application_services` |
+| `core.protocols.EventBus.publish` | `emit` |
+| `core.unicode.sanitize_data_frame` | `sanitize_dataframe` |
+| `core.unicode.safe_unicode_encode` | `safe_encode` |
 
 These shims will be removed in a future major release.
 

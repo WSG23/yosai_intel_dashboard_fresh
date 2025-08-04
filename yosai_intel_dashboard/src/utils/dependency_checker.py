@@ -3,6 +3,11 @@ import logging
 from pathlib import Path
 from typing import Dict, Iterable, List
 
+from ..repository.requirements import (
+    FileRequirementsRepository,
+    RequirementsRepository,
+)
+
 logger = logging.getLogger(__name__)
 
 # Map pip package names to their corresponding Python import names. This ensures
@@ -32,29 +37,33 @@ def check_dependencies(packages: Iterable[str]) -> List[str]:
     return missing
 
 
-def verify_requirements(path: str = "requirements.txt") -> None:
-    """Validate that all packages listed in ``path`` are importable."""
+class DependencyChecker:
+    """Validate that listed packages are importable."""
 
-    reqs: List[str] = []
-    with open(Path(path), "r", encoding="utf-8", errors="ignore") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
+    def __init__(self, repo: RequirementsRepository) -> None:
+        self._repo = repo
 
-            pkg = line.split("==")[0].split(">=")[0].split("~=")[0]
-            module_name = PACKAGE_MODULE_MAP.get(
-                pkg.lower(), pkg.lower().replace("-", "_")
+    def verify_requirements(self) -> None:
+        packages = [
+            PACKAGE_MODULE_MAP.get(pkg.lower(), pkg.lower().replace("-", "_"))
+            for pkg in self._repo.get_packages()
+        ]
+        missing = check_dependencies(packages)
+        if missing:
+            logger.info(
+                "\u2705 Dependency validation skipped - packages assumed installed via requirements.txt"
             )
-            reqs.append(module_name)
+            logger.debug(
+                f"Packages that failed import check: {', '.join(missing)}"
+            )
+            # Dependency check disabled for some packages with complex import patterns
+            # logger.error("Missing required dependencies: %s", ", ".join(missing))
+            # logger.info("Run `pip install -r requirements.txt`")
+            # sys.exit(1)
 
-    missing = check_dependencies(reqs)
-    if missing:
-        logger.info(
-            "\u2705 Dependency validation skipped - packages assumed installed via requirements.txt"
-        )
-        logger.debug(f"Packages that failed import check: {', '.join(missing)}")
-        # Dependency check disabled for some packages with complex import patterns
-        # logger.error("Missing required dependencies: %s", ", ".join(missing))
-        # logger.info("Run `pip install -r requirements.txt`")
-        # sys.exit(1)
+
+def verify_requirements(path: str = "requirements.txt") -> None:
+    """Compatibility wrapper using a file-based requirements repository."""
+
+    repo = FileRequirementsRepository(Path(path))
+    DependencyChecker(repo).verify_requirements()

@@ -4,6 +4,9 @@ from __future__ import annotations
 from typing import Any, Dict, Protocol, Callable
 from cachetools import TTLCache
 from threading import RLock
+import warnings
+
+from src.common.base import BaseComponent
 
 
 class MetricsRepository(Protocol):
@@ -22,7 +25,7 @@ class MetricsRepository(Protocol):
         }
 
 
-class InMemoryMetricsRepository:
+class InMemoryMetricsRepository(BaseComponent):
     """Simple in-memory storage for metric data."""
 
     def __init__(
@@ -31,18 +34,48 @@ class InMemoryMetricsRepository:
         drift: Dict[str, Any] | None = None,
         feature_importances: Dict[str, Any] | None = None,
     ) -> None:
-        self._performance = performance or {"throughput": 100, "latency_ms": 50}
-        self._drift = drift or {"prediction_drift": 0.02, "feature_drift": {"age": 0.01}}
-        self._feature_importances = feature_importances or {"age": 0.3, "income": 0.2, "score": 0.1}
+        BaseComponent.__init__(
+            self,
+            performance=performance
+            or {"throughput": 100, "latency_ms": 50},
+            drift=drift
+            or {"prediction_drift": 0.02, "feature_drift": {"age": 0.01}},
+            feature_importances=feature_importances
+            or {"age": 0.3, "income": 0.2, "score": 0.1},
+        )
+
+    # Backward compatibility with previous attribute names
+    @property
+    def _performance(self) -> Dict[str, Any]:  # pragma: no cover - shim
+        warnings.warn(
+            "_performance is deprecated, use 'performance'", DeprecationWarning, stacklevel=2
+        )
+        return self.performance
+
+    @property
+    def _drift(self) -> Dict[str, Any]:  # pragma: no cover - shim
+        warnings.warn(
+            "_drift is deprecated, use 'drift'", DeprecationWarning, stacklevel=2
+        )
+        return self.drift
+
+    @property
+    def _feature_importances(self) -> Dict[str, Any]:  # pragma: no cover - shim
+        warnings.warn(
+            "_feature_importances is deprecated, use 'feature_importances'",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.feature_importances
 
     def get_performance_metrics(self) -> Dict[str, Any]:
-        return self._performance
+        return self.performance
 
     def get_drift_data(self) -> Dict[str, Any]:
-        return self._drift
+        return self.drift
 
     def get_feature_importances(self) -> Dict[str, Any]:
-        return self._feature_importances
+        return self.feature_importances
 
     def snapshot(self) -> Dict[str, Any]:
         return {
@@ -52,13 +85,21 @@ class InMemoryMetricsRepository:
         }
 
 
-class CachedMetricsRepository:
+class CachedMetricsRepository(BaseComponent):
     """Wrap another repository and cache query results for a TTL."""
 
     def __init__(self, repo: MetricsRepository, ttl: int = 60, maxsize: int = 128) -> None:
-        self._repo = repo
-        self._cache: TTLCache[str, Dict[str, Any]] = TTLCache(maxsize=maxsize, ttl=ttl)
+        BaseComponent.__init__(self, repo=repo, ttl=ttl, maxsize=maxsize)
+        self._cache: TTLCache[str, Dict[str, Any]] = TTLCache(
+            maxsize=maxsize, ttl=ttl
+        )
         self._lock = RLock()
+
+    # Backward compatibility for ``_repo`` attribute
+    @property
+    def _repo(self) -> MetricsRepository:  # pragma: no cover - shim
+        warnings.warn("_repo is deprecated, use 'repo'", DeprecationWarning, stacklevel=2)
+        return self.repo
 
     def _get_or_set(self, key: str, fn: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:
         with self._lock:
@@ -70,21 +111,21 @@ class CachedMetricsRepository:
                 return value
 
     def get_performance_metrics(self) -> Dict[str, Any]:
-        return self._get_or_set("performance", self._repo.get_performance_metrics)
+        return self._get_or_set("performance", self.repo.get_performance_metrics)
 
     def get_drift_data(self) -> Dict[str, Any]:
-        return self._get_or_set("drift", self._repo.get_drift_data)
+        return self._get_or_set("drift", self.repo.get_drift_data)
 
     def get_feature_importances(self) -> Dict[str, Any]:
-        return self._get_or_set("feature_importance", self._repo.get_feature_importances)
+        return self._get_or_set("feature_importance", self.repo.get_feature_importances)
 
     def snapshot(self) -> Dict[str, Any]:
         return self._get_or_set(
             "snapshot",
             lambda: {
-                "performance": self._repo.get_performance_metrics(),
-                "drift": self._repo.get_drift_data(),
-                "feature_importance": self._repo.get_feature_importances(),
+                "performance": self.repo.get_performance_metrics(),
+                "drift": self.repo.get_drift_data(),
+                "feature_importance": self.repo.get_feature_importances(),
             },
         )
 

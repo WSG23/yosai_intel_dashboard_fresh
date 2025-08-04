@@ -1,10 +1,59 @@
+from __future__ import annotations
+
 """Repository pattern for Person data access"""
 
 from dataclasses import dataclass
-from typing import List, Optional, Protocol
+from typing import Generic, List, Optional, Protocol, TypeVar, Union
 
-from yosai_intel_dashboard.src.utils.result_types import Result, failure, success
-from yosai_intel_dashboard.src.core.domain.entities import Person
+T = TypeVar("T")
+E = TypeVar("E")
+
+
+@dataclass(frozen=True)
+class Success(Generic[T]):
+    value: T
+
+    def is_success(self) -> bool:
+        return True
+
+    def is_failure(self) -> bool:
+        return False
+
+
+@dataclass(frozen=True)
+class Failure(Generic[E]):
+    error: E
+
+    def is_success(self) -> bool:
+        return False
+
+    def is_failure(self) -> bool:
+        return True
+
+
+Result = Union[Success[T], Failure[E]]
+
+
+def success(value: T) -> Success[T]:
+    return Success(value)
+
+
+def failure(error: E) -> Failure[E]:
+    return Failure(error)
+
+
+@dataclass(frozen=True)
+class Person:
+    """Minimal person model for repository testing"""
+
+    person_id: str
+    name: str | None = None
+    department: str | None = None
+
+    def validate(self) -> Result[bool, str]:
+        if not self.person_id:
+            return failure("person_id cannot be empty")
+        return success(True)
 
 
 class PersonRepositoryProtocol(Protocol):

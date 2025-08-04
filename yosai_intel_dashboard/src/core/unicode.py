@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable, Iterable, Optional, Union
+import warnings
 
 import pandas as pd  # type: ignore[import]
 
@@ -397,6 +398,11 @@ def utf8_safe_decode(data: bytes) -> str:
 def sanitize_data_frame(df: pd.DataFrame) -> pd.DataFrame:
     """Deprecated alias for :func:`sanitize_dataframe`."""
 
+    warnings.warn(
+        "sanitize_data_frame is deprecated; use sanitize_dataframe",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return sanitize_dataframe(df)
 
 
@@ -409,6 +415,11 @@ def handle_surrogate_characters(text: str) -> str:
 def safe_unicode_encode(value: Any) -> str:
     """Deprecated wrapper around :func:`safe_encode`."""
 
+    warnings.warn(
+        "safe_unicode_encode is deprecated; use safe_encode",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return safe_encode(value)
 
 

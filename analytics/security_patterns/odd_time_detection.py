@@ -30,20 +30,22 @@ def detect_odd_time(df: pd.DataFrame) -> Iterator[Threat]:
         typical hours.
     """
     if df.empty:
-        return
+        return (x for x in [])
 
     db = BaselineMetricsDB()
     baselines = {pid: db.get_baseline(pid) or {} for pid in df["person_id"].unique()}
     if not baselines:
-        return []
+        return (x for x in [])
 
     baseline_df = pd.DataFrame.from_dict(baselines, orient="index")
+    if baseline_df.empty or "mean_hour" not in baseline_df.columns:
+        return (x for x in [])
     baseline_df["person_id"] = baseline_df.index
 
     frame = df.merge(baseline_df, on="person_id", how="left")
     frame = frame.dropna(subset=["mean_hour"])
     if frame.empty:
-        return []
+        return (x for x in [])
 
     frame["std_hour"] = frame["std_hour"].fillna(0)
 
@@ -65,7 +67,7 @@ def detect_odd_time(df: pd.DataFrame) -> Iterator[Threat]:
         Threat("odd_time_access", {"person_id": row.person_id, "hour": int(row.hour)})
         for row in first_offenders.itertuples(index=False)
     )
-    return threats
+    return (t for t in threats)
 
 
 
