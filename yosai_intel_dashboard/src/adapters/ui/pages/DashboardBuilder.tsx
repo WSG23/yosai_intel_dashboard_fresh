@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { getPreferences } from '../services/preferences';
 import { saveTemplate, loadTemplate, ChartTemplate } from '../lib/dashboardTemplates';
+import { TaskLauncher, Wizard } from '../components/interaction';
 
 const chartTypes = ['Line', 'Bar', 'Pie'];
 
@@ -65,7 +66,7 @@ const DashboardBuilder: React.FC = () => {
     background: prefs.colorScheme === 'dark' ? '#1f2937' : '#f9fafb',
   };
 
-  return (
+  const designStep = (
     <div style={{ display: 'flex', height: '100%' }}>
       <div style={{ width: 200, padding: 10, borderRight: '1px solid #ccc' }}>
         <h3>Charts</h3>
@@ -112,6 +113,18 @@ const DashboardBuilder: React.FC = () => {
         ))}
       </div>
     </div>
+  );
+
+  const steps = [
+    { title: 'Design', content: designStep },
+    { title: 'Review', content: <div>Review your dashboard before saving.</div> },
+  ];
+
+  return (
+    <>
+      <TaskLauncher />
+      <Wizard steps={steps} storageKey="dashboard-builder-wizard" />
+    </>
   );
 };
 
