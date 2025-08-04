@@ -18,8 +18,24 @@ from typing import Dict
 
 from src.common.events import EventBus
 
-from prometheus_client import REGISTRY, Counter, start_http_server
-from prometheus_client.core import CollectorRegistry
+try:
+    from prometheus_client import REGISTRY, Counter, start_http_server
+    from prometheus_client.core import CollectorRegistry
+except Exception:  # pragma: no cover - optional dependency
+    class _DummyRegistry:
+        _names_to_collectors: Dict[str, object] = {}
+
+    REGISTRY = _DummyRegistry()
+
+    def start_http_server(*_, **__):  # type: ignore[no-redef]
+        return None
+
+    class Counter:  # type: ignore[no-redef]
+        def __init__(self, *args, **kwargs):
+            self._value = type("V", (), {"get": lambda self: 0})()
+
+        def inc(self, *args, **kwargs) -> None:
+            pass
 
 _event_bus: EventBus | None = None
 _metrics_started = False

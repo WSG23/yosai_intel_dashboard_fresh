@@ -12,12 +12,41 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Optional
 
-import redis.asyncio as aioredis
+from yosai_intel_dashboard.src.infrastructure.cache.cache_manager import CacheConfig
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:  # pragma: no cover - Redis optional
+
+    class _RedisStub:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        async def set(self, *args, **kwargs) -> bool:
+            return True
+
+        async def setex(self, *args, **kwargs) -> bool:
+            return True
+
+        async def delete(self, *args, **kwargs) -> bool:
+            return True
+
+        async def flushdb(self, *args, **kwargs) -> bool:
+            return True
+
+        async def ping(self, *args, **kwargs) -> bool:
+            return True
+
+        async def close(self) -> None:
+            return None
+
+    class _RedisModuleStub:
+        Redis = _RedisStub
+
+    aioredis = _RedisModuleStub()  # type: ignore[misc, assignment]
 
 # expose async redis under original name for backward compatibility
 redis = aioredis
-
-from yosai_intel_dashboard.src.infrastructure.cache.cache_manager import CacheConfig
 
 logger = logging.getLogger(__name__)
 
