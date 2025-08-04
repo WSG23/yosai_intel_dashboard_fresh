@@ -27,11 +27,13 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
         repo: MetricsRepository | None = None,
         interval: float = 1.0,
     ) -> None:
-        BaseComponent.__init__(self, component_id="metrics_provider")
-        EventPublisher.__init__(self, event_bus)
-
-        self.repo = repo or InMemoryMetricsRepository()
-        self.interval = interval
+        BaseComponent.__init__(
+            self,
+            component_id="metrics_provider",
+            event_bus=event_bus,
+            repo=repo or InMemoryMetricsRepository(),
+            interval=interval,
+        )
 
 
         self._stop = threading.Event()
