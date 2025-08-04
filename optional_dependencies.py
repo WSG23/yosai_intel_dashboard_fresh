@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 _fallbacks: Dict[str, Callable[[], Any] | Any] = {}
 
 
-def register_stub(name: str, factory: Callable[[], Any] | Any) -> None:
-    """Register a fallback for ``name``.
+def register_fallback(name: str, factory: Callable[[], Any] | Any) -> None:
+    """Register a fallback factory for ``name``.
 
     ``factory`` may be a module instance or a callable returning one.
     The value is returned when :func:`import_optional` cannot import
@@ -38,6 +38,10 @@ def register_stub(name: str, factory: Callable[[], Any] | Any) -> None:
     """
 
     _fallbacks[name] = factory
+
+
+# ``register_stub`` is kept for backwards compatibility with older tests
+register_stub = register_fallback
 
 
 # ---------------------------------------------------------------------------
@@ -82,7 +86,7 @@ def is_available(name: str) -> bool:
         return False
 
 
-__all__ = ["import_optional", "is_available", "register_stub"]
+__all__ = ["import_optional", "is_available", "register_fallback", "register_stub"]
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +101,7 @@ def _simple_module(name: str, **attrs: Any) -> types.ModuleType:
 
 
 # hvac ----------------------------------------------------------------------
-register_stub("hvac", lambda: _simple_module("hvac", Client=object))
+register_fallback("hvac", lambda: _simple_module("hvac", Client=object))
 
 
 # cryptography.fernet -------------------------------------------------------
@@ -115,14 +119,14 @@ class _DummyFernet:
         return data
 
 
-register_stub(
+register_fallback(
     "cryptography.fernet",
     lambda: _simple_module("cryptography.fernet", Fernet=_DummyFernet),
 )
 
 
 # boto3 ---------------------------------------------------------------------
-register_stub("boto3", lambda: _simple_module("boto3", client=lambda *a, **k: object()))
+register_fallback("boto3", lambda: _simple_module("boto3", client=lambda *a, **k: object()))
 
 
 # mlflow --------------------------------------------------------------------
@@ -148,28 +152,28 @@ def _mlflow_stub() -> types.ModuleType:
     )
 
 
-register_stub("mlflow", _mlflow_stub)
+register_fallback("mlflow", _mlflow_stub)
 
 
 # asyncpg -------------------------------------------------------------------
-register_stub(
+register_fallback(
     "asyncpg", lambda: _simple_module("asyncpg", create_pool=lambda *a, **k: None)
 )
 
 
 # httpx ---------------------------------------------------------------------
-register_stub(
+register_fallback(
     "httpx",
     lambda: _simple_module("httpx", ASGITransport=object, AsyncClient=object),
 )
 
 
 # structlog -----------------------------------------------------------------
-register_stub("structlog", lambda: _simple_module("structlog", BoundLogger=object))
+register_fallback("structlog", lambda: _simple_module("structlog", BoundLogger=object))
 
 
 # confluent_kafka -----------------------------------------------------------
-register_stub("confluent_kafka", lambda: _simple_module("confluent_kafka"))
+register_fallback("confluent_kafka", lambda: _simple_module("confluent_kafka"))
 
 
 # dash and friends ----------------------------------------------------------
@@ -178,20 +182,20 @@ _dash_stub.html = _simple_module("dash.html")
 _dash_stub.dcc = _simple_module("dash.dcc")
 _dash_stub.dependencies = _simple_module("dash.dependencies")
 _dash_stub._callback = _simple_module("dash._callback")
-register_stub("dash", _dash_stub)
-register_stub("dash.html", lambda: _dash_stub.html)
-register_stub("dash.dcc", lambda: _dash_stub.dcc)
-register_stub("dash.dependencies", lambda: _dash_stub.dependencies)
-register_stub("dash._callback", lambda: _dash_stub._callback)
-register_stub("dash_bootstrap_components", lambda: _simple_module("dbc"))
+register_fallback("dash", _dash_stub)
+register_fallback("dash.html", lambda: _dash_stub.html)
+register_fallback("dash.dcc", lambda: _dash_stub.dcc)
+register_fallback("dash.dependencies", lambda: _dash_stub.dependencies)
+register_fallback("dash._callback", lambda: _dash_stub._callback)
+register_fallback("dash_bootstrap_components", lambda: _simple_module("dbc"))
 
 
 # redis ---------------------------------------------------------------------
 _redis_stub = _simple_module("redis")
 _redis_stub.asyncio = _simple_module("redis.asyncio")
-register_stub("redis", _redis_stub)
-register_stub("redis.asyncio", lambda: _redis_stub.asyncio)
+register_fallback("redis", _redis_stub)
+register_fallback("redis.asyncio", lambda: _redis_stub.asyncio)
 
 
 # requests ------------------------------------------------------------------
-register_stub("requests", lambda: _simple_module("requests"))
+register_fallback("requests", lambda: _simple_module("requests"))

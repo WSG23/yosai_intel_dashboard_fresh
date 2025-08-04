@@ -11,7 +11,7 @@ import pytest
 
 from config import create_config_manager
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:

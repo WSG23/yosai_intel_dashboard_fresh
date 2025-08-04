@@ -8,7 +8,11 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 
-from tracing import propagate_context
+try:  # pragma: no cover - tracing optional
+    from tracing import propagate_context
+except Exception:  # pragma: no cover - fallback when tracing unavailable
+    def propagate_context(_: Dict[str, str]) -> None:  # type: ignore[override]
+        return None
 from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
@@ -63,11 +67,20 @@ class ServiceDiscovery:
         self.base_url = url.rstrip("/")
         self.session = aiohttp.ClientSession()
         self._circuit_breaker = CircuitBreaker(5, 30, name="service_discovery")
-
         self._error_handler = ErrorHandler()
+        self._cache: Dict[str, str] = {}
+
+    def _get_cached(self, name: str) -> Optional[str]:
+        return self._cache.get(name)
+
+    def _set_cached(self, name: str, value: str) -> None:
+        self._cache[name] = value
 
     async def resolve_async(self, name: str) -> Optional[str]:
         """Return ``host:port`` for *name* or ``None`` if lookup fails."""
+        cached = self._get_cached(name)
+        if cached is not None:
+            return cached
         try:
             headers: Dict[str, str] = {}
             propagate_context(headers)
@@ -83,14 +96,16 @@ class ServiceDiscovery:
                     if not data:
                         return None
                     svc = data[0]["Service"]
-                    return f"{svc['Address']}:{svc['Port']}"
+                    addr = f"{svc['Address']}:{svc['Port']}"
+                    self._set_cached(name, addr)
+                    return addr
         except CircuitBreakerOpen as exc:  # pragma: no cover - circuit open
             self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
             return None
 
         except Exception as exc:  # pragma: no cover - network failures
             self._error_handler.handle(exc, ErrorCategory.UNAVAILABLE)
-            cached = self._cache.get(name)
+            cached = self._get_cached(name)
             if cached is not None:
                 return cached
             env = os.getenv(f"{name.upper()}_SERVICE_URL")

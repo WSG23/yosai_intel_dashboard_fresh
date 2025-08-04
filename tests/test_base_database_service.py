@@ -3,9 +3,9 @@ import types
 
 import pytest
 
-from config import DatabaseSettings
 from yosai_intel_dashboard.src.core.base_database_service import BaseDatabaseService
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+
 
 
 def _install_fake_module(monkeypatch, name, factory_attr):
@@ -43,11 +43,11 @@ def test_mongodb_connection(monkeypatch):
     assert service.connection is conn
 
 
-def test_redis_connection(monkeypatch):
+def test_redis_connection(monkeypatch, auto_stub_dependencies):
     module = types.ModuleType("redis")
     conn = object()
     module.Redis = lambda *a, **k: conn
-    safe_import('redis', module)
+    auto_stub_dependencies("redis", module)
     service = BaseDatabaseService(
         DatabaseSettings(type="redis", user="user", password="pass")
     )

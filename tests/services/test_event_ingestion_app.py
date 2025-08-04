@@ -12,7 +12,7 @@ import pytest
 from fastapi import Depends, FastAPI, HTTPException
 from jose import jwt
 
-from tests.import_helpers import import_optional, safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 

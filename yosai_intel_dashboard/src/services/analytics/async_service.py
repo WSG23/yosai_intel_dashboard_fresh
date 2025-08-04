@@ -8,6 +8,7 @@ import asyncpg
 
 from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, RedisCacheManager
 from yosai_intel_dashboard.src.core.error_handling import with_async_error_handling
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 from .common_queries import fetch_access_patterns, fetch_dashboard_summary
 
@@ -116,7 +117,12 @@ class AsyncAnalyticsService:
         try:
             return await self._combined_analytics_safe(days)
         except Exception as exc:  # pragma: no cover - runtime failures
-            return {"status": "error", "message": str(exc)}
+            logger.error("Combined analytics failed: %s", safe_text(exc))
+            return {
+                "status": "error",
+                "message": safe_text(exc),
+                "error_code": "DB_COMBINED_ANALYTICS_ERROR",
+            }
 
 
 __all__ = [

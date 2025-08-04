@@ -3,7 +3,7 @@ import sys
 import types
 from pathlib import Path
 from unittest.mock import MagicMock
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 def _install_core_stub(monkeypatch):

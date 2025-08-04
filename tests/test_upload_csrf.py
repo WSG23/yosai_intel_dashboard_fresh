@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 import types
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Provide stubs when optional dependencies are missing
 if "flask_wtf" not in sys.modules:

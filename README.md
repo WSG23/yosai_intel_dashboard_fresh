@@ -241,6 +241,52 @@ details are provided in [docs/vault_integration.md](docs/vault_integration.md).
 Whenever possible set these values through environment variables or your
 secret management solution rather than hard coding them.
 
+### Database Pool Parameters
+
+- `DB_MIN_CONNECTIONS` – minimum number of pooled connections.
+- `DB_MAX_CONNECTIONS` – maximum number of pooled connections.
+- `DB_TIMEOUT` – seconds to wait for a free connection.
+
+### Redis Settings
+
+- `REDIS_URL` – connection URL (defaults to `redis://localhost:6379/0`).
+- `SESSION_REDIS_URL` – dedicated Redis database for session data.
+- `METRICS_REDIS_URL` – dedicated Redis database for metrics.
+- `REDIS_HOST` / `REDIS_PORT` / `REDIS_DB` / `REDIS_PASSWORD` – low-level connection parameters.
+
+### Security and Authentication Secrets
+
+- `SESSION_COOKIE_SECRET` – secret for signing session cookies.
+- `CSRF_SECRET` – CSRF protection secret.
+- `API_ENCRYPTION_KEY` – symmetric key for internal encryption.
+
+### Analytics Limits
+
+- `ANALYTICS_CACHE_TIMEOUT` – seconds analytics results remain cached.
+- `ANALYTICS_CHUNK_SIZE` – maximum records processed per chunk.
+- `ANALYTICS_BATCH_SIZE` – maximum batch size when streaming data.
+- `ANALYTICS_MAX_MEMORY_MB` – memory limit for analytics workers.
+- `ANALYTICS_MAX_WORKERS` – number of concurrent analytics workers.
+
+### Feature Flags
+
+- `FEATURE_FLAG_SOURCE` – path or URL providing feature flag definitions.
+- `FEATURE_FLAG_REDIS_URL` – Redis URL for dynamic feature flags.
+- `FEATURE_FLAGS` – JSON object containing inline flag values.
+
+### Monitoring Ports
+
+- `REPLICATION_METRICS_PORT` – port exposing Timescale replication metrics.
+- `PROMETHEUS_PORT` – port exposing service metrics.
+- `HEALTH_CHECK_PORT` – port for health check endpoints.
+
+### Development Toggles
+
+- `ENABLE_AUTH` – require an `Authorization` header (`1` to enable).
+- `ENABLE_RATELIMIT` – enable token bucket rate limiting (`1` to enable).
+- `ENABLE_PROFILING` – enable request profiler (`true` to enable).
+- `ENABLE_REAL_TIME` – enable real-time analytics features.
+
 #### Frontend WebSocket URL
 
 Set `REACT_APP_WS_URL` to override the host used for WebSocket connections.

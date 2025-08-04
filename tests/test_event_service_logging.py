@@ -4,7 +4,7 @@ import sys
 import types
 import logging
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Setup minimal environment to load EventServiceAdapter
 services_path = pathlib.Path(__file__).resolve().parents[1] / "yosai_intel_dashboard" / "src" / "services"

@@ -9,7 +9,7 @@ import importlib.util
 import pytest
 import asyncpg
 
-from tests.import_helpers import safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 def load_dbm_modules():

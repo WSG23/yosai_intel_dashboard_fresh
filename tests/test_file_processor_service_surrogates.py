@@ -2,7 +2,7 @@ import importlib.util
 import sys
 
 from tests.config import FakeConfiguration
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 spec = importlib.util.spec_from_file_location(
     "services.file_processor_service", "services/file_processor_service.py"

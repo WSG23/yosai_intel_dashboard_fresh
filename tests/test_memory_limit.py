@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from tests.config import FakeConfiguration
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 fake_cfg = FakeConfiguration()
 from yosai_intel_dashboard.src.core.performance import get_performance_monitor
