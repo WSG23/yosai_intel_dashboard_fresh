@@ -1,9 +1,9 @@
-"""Lightweight application settings loaded from environment variables."""
+"""Application settings read from environment variables."""
 
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 
@@ -11,67 +11,51 @@ from typing import List, Optional
 class DatabaseSettings:
     """Database connection configuration."""
 
-    host: str
-    port: int
-    user: str
-    password: str
-    name: str
-    connection_timeout: Optional[int]
+    host: str = field(default_factory=lambda: os.getenv("DB_HOST", "localhost"))
+    port: int = field(default_factory=lambda: int(os.getenv("DB_PORT", "5432")))
+    user: str = field(default_factory=lambda: os.getenv("DB_USER", "postgres"))
+    password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", ""))
+    name: str = field(default_factory=lambda: os.getenv("DB_NAME", "app"))
+    min_connections: int = field(
+        default_factory=lambda: int(os.getenv("DB_MIN_CONNECTIONS", "1"))
+    )
+    max_connections: int = field(
+        default_factory=lambda: int(os.getenv("DB_MAX_CONNECTIONS", "10"))
+    )
+    timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "30")))
 
-    @classmethod
-    def from_env(cls) -> "DatabaseSettings":
-        """Create settings from environment variables."""
-        timeout = os.getenv("DB_TIMEOUT")
-        return cls(
-            host=os.getenv("DB_HOST", "localhost"),
-            port=int(os.getenv("DB_PORT", "5432")),
-            user=os.getenv("DB_USER", "postgres"),
-            password=os.getenv("DB_PASSWORD", ""),
-            name=os.getenv("DB_NAME", "app"),
-            connection_timeout=int(timeout) if timeout is not None else None,
-        )
 
 
 @dataclass
 class SecuritySettings:
     """Security related configuration."""
 
-    secret_key: str
-    jwt_algorithm: str
-    cors_origins: List[str]
-    csrf_enabled: bool
-    max_upload_mb: Optional[int]
+    secret_key: str = field(
+        default_factory=lambda: os.getenv("SECRET_KEY", "change-me")
+    )
+    jwt_algorithm: str = field(
+        default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256")
+    )
+    cors_origins: List[str] = field(
+        default_factory=lambda: [
+            o for o in os.getenv("CORS_ORIGINS", "").split(",") if o
+        ]
+    )
+    csrf_enabled: bool = field(
+        default_factory=lambda: os.getenv("CSRF_ENABLED", "true").lower() == "true"
+    )
 
-    @classmethod
-    def from_env(cls) -> "SecuritySettings":
-        """Create settings from environment variables."""
-        origins = [o for o in os.getenv("CORS_ORIGINS", "").split(",") if o]
-        max_upload = os.getenv("MAX_UPLOAD_MB")
-        return cls(
-            secret_key=os.getenv("SECRET_KEY", "change-me"),
-            jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
-            cors_origins=origins,
-            csrf_enabled=os.getenv("CSRF_ENABLED", "true").lower() == "true",
-            max_upload_mb=int(max_upload) if max_upload is not None else None,
-        )
 
 
 @dataclass
 class AnalyticsSettings:
     """Analytics service configuration."""
 
-    api_key: str
-    endpoint: str
-    enabled: bool
-
-    @classmethod
-    def from_env(cls) -> "AnalyticsSettings":
-        """Create settings from environment variables."""
-        return cls(
-            api_key=os.getenv("ANALYTICS_API_KEY", ""),
-            endpoint=os.getenv("ANALYTICS_ENDPOINT", ""),
-            enabled=os.getenv("ENABLE_ANALYTICS", "false").lower() == "true",
-        )
+    api_key: str = field(default_factory=lambda: os.getenv("ANALYTICS_API_KEY", ""))
+    endpoint: str = field(default_factory=lambda: os.getenv("ANALYTICS_ENDPOINT", ""))
+    enabled: bool = field(
+        default_factory=lambda: os.getenv("ENABLE_ANALYTICS", "false").lower() == "true"
+    )
 
 
 @dataclass
@@ -90,41 +74,43 @@ class PerformanceSettings:
 class AppSettings:
     """Top level application configuration."""
 
-    debug: bool
-    database: DatabaseSettings
-    security: SecuritySettings
-    analytics: AnalyticsSettings
-    performance: PerformanceSettings
-    name: str = "Yōsai Intel Dashboard"
+    debug: bool = field(
+        default_factory=lambda: os.getenv("APP_DEBUG", "false").lower() == "true"
+    )
+    database: DatabaseSettings = field(default_factory=DatabaseSettings)
+    security: SecuritySettings = field(default_factory=SecuritySettings)
+    analytics: AnalyticsSettings = field(default_factory=AnalyticsSettings)
+    name: str = field(
+        default_factory=lambda: os.getenv("APP_NAME", "Yōsai Intel Dashboard")
+    )
 
-    @classmethod
-    def from_env(cls) -> "AppSettings":
-        """Create settings from environment variables."""
-        return cls(
-            debug=os.getenv("APP_DEBUG", "false").lower() == "true",
-            database=DatabaseSettings.from_env(),
-            security=SecuritySettings.from_env(),
-            analytics=AnalyticsSettings.from_env(),
-            performance=PerformanceSettings.from_env(),
-            name=os.getenv("APP_NAME", "Yōsai Intel Dashboard"),
-        )
 
 
 class ConfigManager:
-    """Manage application settings with lazy loading and reloading."""
+    """Manage application settings with optional ``.env`` loading."""
 
-    def __init__(self) -> None:
+    def __init__(self, env_file: Optional[str] = None) -> None:
         self._settings: Optional[AppSettings] = None
+        self._load_env(env_file)
 
-    def get_settings(self) -> AppSettings:
-        """Return loaded settings, loading them on first use."""
-        if self._settings is None:
-            self._settings = AppSettings.from_env()
-        return self._settings
+    @staticmethod
+    def _load_env(env_file: Optional[str]) -> None:
+        """Load environment variables from a ``.env`` file if available."""
+        try:
+            from dotenv import load_dotenv  # type: ignore import-not-found
 
-    def reload(self) -> AppSettings:
-        """Force reload of settings from the environment."""
-        self._settings = AppSettings.from_env()
+            if env_file:
+                load_dotenv(env_file, override=True)
+            else:
+                load_dotenv(override=True)
+        except Exception:
+            # ``python-dotenv`` is optional; ignore if not installed.
+            pass
+
+    def get_settings(self, reload: bool = False) -> AppSettings:
+        """Return loaded settings, reloading them if requested."""
+        if self._settings is None or reload:
+            self._settings = AppSettings()
         return self._settings
 
 
@@ -132,10 +118,8 @@ _config_manager = ConfigManager()
 
 
 def get_settings(reload: bool = False) -> AppSettings:
-    """Return application settings, optionally reloading them."""
-    if reload:
-        return _config_manager.reload()
-    return _config_manager.get_settings()
+    """Return application settings using the global ``ConfigManager`` instance."""
+    return _config_manager.get_settings(reload=reload)
 
 
 __all__ = [
