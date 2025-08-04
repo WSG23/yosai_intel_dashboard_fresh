@@ -11,8 +11,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid
+  CartesianGrid,
 } from 'recharts';
+import useDataSaver from '../../hooks/useDataSaver';
 
 interface RiskFactor {
   name: string;
@@ -29,10 +30,11 @@ interface RiskDashboardProps {
 const RiskDashboard: React.FC<RiskDashboardProps> = ({
   score,
   history,
-  factors
+  factors,
 }) => {
   const [displayScore, setDisplayScore] = useState(score);
   const [expanded, setExpanded] = useState(false);
+  const dataSaver = useDataSaver();
 
   useEffect(() => {
     let start = displayScore;
@@ -50,7 +52,10 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
   }, [score]);
 
   const radialData = [{ name: 'risk', value: displayScore }];
-  const historyData = history.map((h, index) => ({ index, score: h }));
+  const historyData = (
+    dataSaver ? history.filter((_, i) => i % 2 === 0) : history
+  ).map((h, index) => ({ index, score: h }));
+  const factorData = dataSaver ? factors.slice(0, 1) : factors;
 
   return (
     <div className="bg-white p-4 rounded shadow">
@@ -79,19 +84,21 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
             {Math.round(displayScore)}
           </div>
         </div>
-        <div className="flex-1 mt-4 md:mt-0 md:ml-8 w-full h-24">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={historyData}>
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {!dataSaver && (
+          <div className="flex-1 mt-4 md:mt-0 md:ml-8 w-full h-24">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={historyData}>
+                <Line
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
       <button
         onClick={() => setExpanded((prev) => !prev)}
@@ -99,10 +106,10 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
       >
         {expanded ? 'Hide Details' : 'Show Details'}
       </button>
-      {expanded && (
+      {expanded && !dataSaver && (
         <div className="mt-4" data-testid="risk-factors">
           <ResponsiveContainer width="100%" height={200}>
-            <ComposedChart data={factors}>
+            <ComposedChart data={factorData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
@@ -112,6 +119,11 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
             </ComposedChart>
           </ResponsiveContainer>
         </div>
+      )}
+      {dataSaver && (
+        <p className="mt-4 text-sm text-gray-500">
+          Data saver enabled: chart detail reduced
+        </p>
       )}
     </div>
   );
