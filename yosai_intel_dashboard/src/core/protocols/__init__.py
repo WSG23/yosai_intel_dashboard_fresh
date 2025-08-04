@@ -5,6 +5,7 @@ Defines clear contracts for all major system components
 """
 """Protocol interfaces for core services used across the project."""
 
+import warnings
 from abc import abstractmethod
 from datetime import datetime
 from typing import (
@@ -18,7 +19,6 @@ from typing import (
     Tuple,
     runtime_checkable,
 )
-import warnings
 
 import pandas as pd
 
@@ -221,6 +221,7 @@ class ConfigProviderProtocol(Protocol):
 @runtime_checkable
 class ConfigurationServiceProtocol(Protocol):
     """Interface for accessing runtime configuration values."""
+
     ai_confidence_threshold: float
     max_upload_size_mb: int
     upload_chunk_size: int
@@ -433,7 +434,7 @@ class CallbackSystemProtocol(Protocol):
     """Protocol for the unified callback system."""
 
     @abstractmethod
-    def handle_register_event(
+    def register_event(
         self,
         event: CallbackEvent,
         func: Callable[..., Any],

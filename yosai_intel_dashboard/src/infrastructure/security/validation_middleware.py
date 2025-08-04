@@ -1,14 +1,20 @@
 """Flask request validation middleware."""
 
+from __future__ import annotations
+
 from typing import Callable, Optional, Protocol
 
 from flask import Response, request
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from yosai_intel_dashboard.src.core.exceptions import ValidationError
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
 
 
 class Validator(Protocol):
@@ -48,8 +54,8 @@ class ValidationMiddleware:
 
     def handle_registers(self, manager: TrulyUnifiedCallbacks) -> None:
         """Register validation hooks with the callback manager."""
-        manager.handle_register(CallbackEvent.BEFORE_REQUEST, self.validate_request)
-        manager.handle_register(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
+        manager.register_handler(CallbackEvent.BEFORE_REQUEST, self.validate_request)
+        manager.register_handler(CallbackEvent.AFTER_REQUEST, self.sanitize_response)
 
     def validate_request(self) -> None:
         # Enforce maximum request body size
@@ -73,7 +79,10 @@ class ValidationMiddleware:
             ):
                 return None
             try:
-                from yosai_intel_dashboard.src.core.unicode import safe_unicode_decode, sanitize_for_utf8
+                from yosai_intel_dashboard.src.core.unicode import (
+                    safe_unicode_decode,
+                    sanitize_for_utf8,
+                )
 
                 raw_text = safe_unicode_decode(request.data, "utf-8")
                 sanitized = sanitize_for_utf8(raw_text)
