@@ -3,6 +3,8 @@
 Test Analytics without callback patch
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -11,13 +13,6 @@ from pathlib import Path
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-
-def safe_text(value: object) -> str:
-    try:
-        return str(value)
-    except Exception:
-        return "<unprintable>"
 
 
 async def test_analytics():
