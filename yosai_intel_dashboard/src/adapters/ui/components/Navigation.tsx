@@ -12,7 +12,7 @@ import {
   Activity,
   LayoutDashboard
 } from 'lucide-react';
-import { useProficiencyStore } from '../yosai_intel_dashboard/src/adapters/ui/state/store';
+import { useProficiencyStore } from '../state/store';
 
 interface NavItem {
   name: string;
