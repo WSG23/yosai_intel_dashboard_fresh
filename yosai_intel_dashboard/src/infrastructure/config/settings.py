@@ -23,6 +23,9 @@ class DatabaseSettings:
         default_factory=lambda: int(os.getenv("DB_MAX_CONNECTIONS", "10"))
     )
     timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "30")))
+    connection_timeout: int = field(
+        default_factory=lambda: int(os.getenv("DB_CONNECTION_TIMEOUT", "30"))
+    )
 
 
 
@@ -44,6 +47,9 @@ class SecuritySettings:
     csrf_enabled: bool = field(
         default_factory=lambda: os.getenv("CSRF_ENABLED", "true").lower() == "true"
     )
+    max_upload_mb: int = field(
+        default_factory=lambda: int(os.getenv("MAX_UPLOAD_MB", "50"))
+    )
 
 
 
@@ -62,12 +68,13 @@ class AnalyticsSettings:
 class PerformanceSettings:
     """Performance tuning configuration."""
 
-    ai_confidence_threshold: Optional[int]
-
-    @classmethod
-    def from_env(cls) -> "PerformanceSettings":
-        value = os.getenv("AI_CONFIDENCE_THRESHOLD")
-        return cls(ai_confidence_threshold=int(value) if value is not None else None)
+    ai_confidence_threshold: Optional[int] = field(
+        default_factory=lambda: (
+            int(os.getenv("AI_CONFIDENCE_THRESHOLD"))
+            if os.getenv("AI_CONFIDENCE_THRESHOLD") is not None
+            else None
+        )
+    )
 
 
 @dataclass
@@ -80,6 +87,7 @@ class AppSettings:
     database: DatabaseSettings = field(default_factory=DatabaseSettings)
     security: SecuritySettings = field(default_factory=SecuritySettings)
     analytics: AnalyticsSettings = field(default_factory=AnalyticsSettings)
+    performance: PerformanceSettings = field(default_factory=PerformanceSettings)
     name: str = field(
         default_factory=lambda: os.getenv("APP_NAME", "Yōsai Intel Dashboard")
     )

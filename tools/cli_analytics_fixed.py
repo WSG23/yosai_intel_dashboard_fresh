@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Analytics with callback fix applied
+Test Analytics without callback patch
 """
 
 import asyncio
@@ -12,26 +12,17 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
-# Apply callback patch first
-try:
-    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-        TrulyUnifiedCallbacks as CallbackManager,
-    )
-
-    if hasattr(CallbackManager, "handle_register") and not hasattr(
-        CallbackManager, "register_handler"
-    ):
-        CallbackManager.register_handler = CallbackManager.handle_register
-        print("✅ Callback patch applied")
-except Exception as e:
-    print(f"⚠️  Callback patch failed: {safe_text(e)}")
-
-
-async def test_analytics_with_fix():
+def safe_text(value: object) -> str:
     try:
-        print("=== TESTING ANALYTICS WITH CALLBACK FIX ===")
+        return str(value)
+    except Exception:
+        return "<unprintable>"
+
+
+async def test_analytics():
+    try:
+        print("=== TESTING ANALYTICS SERVICE ===")
 
         import pandas as pd
 
@@ -130,7 +121,7 @@ async def test_analytics_with_fix():
             }
             print(f"❌ Data processing failed: {safe_text(e)}")
 
-        print("\n=== ANALYTICS TESTING WITH FIX COMPLETE ===")
+        print("\n=== ANALYTICS TESTING COMPLETE ===")
         return result
 
     except Exception as e:
@@ -143,7 +134,7 @@ async def test_analytics_with_fix():
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    result = asyncio.run(test_analytics_with_fix())
+    result = asyncio.run(test_analytics())
     print("\n" + "=" * 50)
     print("FINAL RESULTS:")
     print(json.dumps(result, indent=2, default=str))
