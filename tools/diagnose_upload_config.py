@@ -11,13 +11,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
 from src.common.config import ConfigService
-try:  # allow tests to provide a lightweight stub
-    from config.dynamic_config import diagnose_upload_config, dynamic_config  # type: ignore
-except Exception:  # pragma: no cover - fallback to real implementation
-    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-        diagnose_upload_config,
-        dynamic_config,
-    )
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    diagnose_upload_config,
+    dynamic_config,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
