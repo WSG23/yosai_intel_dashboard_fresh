@@ -57,7 +57,7 @@ from yosai_intel_dashboard.src.services.analytics.protocols import (
     UploadAnalyticsProtocol,
 )
 from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
-from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
+from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
 from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
 from yosai_intel_dashboard.src.services.controllers.protocols import UploadProcessingControllerProtocol
 from yosai_intel_dashboard.src.services.controllers.upload_controller import UploadProcessingController
