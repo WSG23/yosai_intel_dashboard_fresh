@@ -8,6 +8,8 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from 'recharts';
+import { usePreferencesStore } from '../../state';
+import { useNetworkStatus } from '../../lib/network';
 
 export interface SeriesPoint {
   x: string;
@@ -32,6 +34,10 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
   labels = ['Series A', 'Series B'],
 }) => {
   const [mode, setMode] = useState<'overlay' | 'side-by-side'>('overlay');
+  const { saveData } = usePreferencesStore();
+  const network = useNetworkStatus();
+  const dataSaver =
+    saveData || network.saveData || ['slow-2g', '2g'].includes(network.effectiveType ?? '');
 
   const merged = useMemo(() => {
     const map: Record<string, { a?: number; b?: number }> = {};
@@ -77,32 +83,56 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({
       {mode === 'overlay' ? (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={merged}>
-            <CartesianGrid strokeDasharray="3 3" />
+            {!dataSaver && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis dataKey="x" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="a" stroke="#8884d8" name={labels[0]} />
-            <Line type="monotone" dataKey="b" stroke="#82ca9d" name={labels[1]} />
+            <Line
+              type="monotone"
+              dataKey="a"
+              stroke="#8884d8"
+              name={labels[0]}
+              dot={!dataSaver}
+            />
+            <Line
+              type="monotone"
+              dataKey="b"
+              stroke="#82ca9d"
+              name={labels[1]}
+              dot={!dataSaver}
+            />
           </LineChart>
         </ResponsiveContainer>
       ) : (
         <div className="flex space-x-4" style={{ height: 300 }}>
           <ResponsiveContainer width="50%" height="100%">
-            <LineChart data={seriesA}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <LineChart data={dataSaver ? seriesA.filter((_, i) => i % 2 === 0) : seriesA}>
+              {!dataSaver && <CartesianGrid strokeDasharray="3 3" />}
               <XAxis dataKey="x" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" name={labels[0]} />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#8884d8"
+                name={labels[0]}
+                dot={!dataSaver}
+              />
             </LineChart>
           </ResponsiveContainer>
           <ResponsiveContainer width="50%" height="100%">
-            <LineChart data={seriesB}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <LineChart data={dataSaver ? seriesB.filter((_, i) => i % 2 === 0) : seriesB}>
+              {!dataSaver && <CartesianGrid strokeDasharray="3 3" />}
               <XAxis dataKey="x" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#82ca9d" name={labels[1]} />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#82ca9d"
+                name={labels[1]}
+                dot={!dataSaver}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

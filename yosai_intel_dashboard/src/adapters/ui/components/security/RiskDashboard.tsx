@@ -13,7 +13,8 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
-import useDataSaver from '../../hooks/useDataSaver';
+import { usePreferencesStore } from '../../state';
+import { useNetworkStatus } from '../../lib/network';
 
 interface RiskFactor {
   name: string;
@@ -34,7 +35,10 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
 }) => {
   const [displayScore, setDisplayScore] = useState(score);
   const [expanded, setExpanded] = useState(false);
-  const dataSaver = useDataSaver();
+  const { saveData } = usePreferencesStore();
+  const network = useNetworkStatus();
+  const dataSaver =
+    saveData || network.saveData || ['slow-2g', '2g'].includes(network.effectiveType ?? '');
 
   useEffect(() => {
     let start = displayScore;

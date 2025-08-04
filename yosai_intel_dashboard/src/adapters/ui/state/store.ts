@@ -5,6 +5,10 @@ import { createAnalyticsSlice, AnalyticsSlice } from './analyticsSlice';
 import { createUploadSlice, UploadSlice } from './uploadSlice';
 import { createSelectionSlice, SelectionSlice } from './selectionSlice';
 import { createUiSlice, UiSlice } from './uiSlice';
+import {
+  createPreferencesSlice,
+  PreferencesSlice,
+} from './preferences';
 
 
 export type BoundState =
@@ -12,7 +16,8 @@ export type BoundState =
   AnalyticsSlice &
   UploadSlice &
   SelectionSlice &
-  UiSlice;
+  UiSlice &
+  PreferencesSlice;
 
 
 export const boundStore = createStore<BoundState>()((...a) => ({
@@ -21,6 +26,7 @@ export const boundStore = createStore<BoundState>()((...a) => ({
   ...createUploadSlice(...a),
   ...createSelectionSlice(...a),
   ...createUiSlice(...a),
+  ...createPreferencesSlice(...a),
 
 }));
 
@@ -56,4 +62,10 @@ export const useUiStore = () =>
     tableDensity: state.tableDensity,
     setTableDensity: state.setTableDensity,
 
+  }));
+
+export const usePreferencesStore = () =>
+  useBoundStore((state) => ({
+    saveData: state.saveData,
+    setSaveData: state.setSaveData,
   }));
