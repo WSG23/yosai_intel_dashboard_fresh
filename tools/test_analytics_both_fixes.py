@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Analytics with both Step 1 (callback fix) and Step 2 (missing methods) applied
+Test Analytics with missing methods fix applied (callback fix already integrated)
 """
 
 import asyncio
@@ -12,25 +12,18 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from yosai_intel_dashboard.src.utils.text_utils import safe_text
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks as CallbackManager,
+)
 
 
-# Apply BOTH fixes
+# Apply remaining fixes
 def apply_both_fixes():
-    """Apply both callback fix and missing methods fix"""
+    """Apply missing methods fix"""
 
-    # Step 1: Callback fix
-    try:
-        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-            TrulyUnifiedCallbacks as CallbackManager,
-        )
-
-        if hasattr(CallbackManager, "handle_register") and not hasattr(
-            CallbackManager, "register_handler"
-        ):
-            CallbackManager.register_handler = CallbackManager.handle_register
-            print("✅ Step 1: Callback patch applied")
-    except Exception as e:
-        print(f"⚠️  Step 1: Callback patch failed: {safe_text(e)}")
+    # Instantiate to verify callback manager provides required methods
+    _callback_manager = CallbackManager()
+    assert hasattr(_callback_manager, "register_handler")
 
     # Step 2: Missing methods fix
     try:
@@ -80,7 +73,7 @@ def apply_both_fixes():
 
 async def test_analytics_comprehensive():
     try:
-        print("=== COMPREHENSIVE ANALYTICS TEST WITH BOTH FIXES ===")
+        print("=== COMPREHENSIVE ANALYTICS TEST WITH FIX ===")
 
         apply_both_fixes()
 

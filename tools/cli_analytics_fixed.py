@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Analytics with callback fix applied
+Test Analytics using built-in callback manager
 """
 
 import asyncio
@@ -13,20 +13,13 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from yosai_intel_dashboard.src.utils.text_utils import safe_text
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks as CallbackManager,
+)
 
-# Apply callback patch first
-try:
-    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-        TrulyUnifiedCallbacks as CallbackManager,
-    )
-
-    if hasattr(CallbackManager, "handle_register") and not hasattr(
-        CallbackManager, "register_handler"
-    ):
-        CallbackManager.register_handler = CallbackManager.handle_register
-        print("✅ Callback patch applied")
-except Exception as e:
-    print(f"⚠️  Callback patch failed: {safe_text(e)}")
+# Instantiate to verify callback manager provides required methods
+_callback_manager = CallbackManager()
+assert hasattr(_callback_manager, "register_handler")
 
 
 async def test_analytics_with_fix():
