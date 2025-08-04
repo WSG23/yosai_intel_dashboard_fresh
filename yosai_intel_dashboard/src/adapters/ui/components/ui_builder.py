@@ -28,9 +28,9 @@ class UploadUIBuilder:
         prefix: str = "Successfully uploaded",
         processed: bool = True,
     ) -> dbc.Alert:
-        details = f"📊 {rows:,} rows × {cols} columns"
-        if processed:
-            details += " processed"
+        details = f"📊 {rows:,} rows × {cols} columns" + (
+            " processed" if processed else ""
+        )
         timestamp = pd.Timestamp.now().strftime("%H:%M:%S")
         return dbc.Alert(
             [

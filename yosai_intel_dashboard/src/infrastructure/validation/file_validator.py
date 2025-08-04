@@ -51,10 +51,10 @@ class CSVFormulaRule(ValidationRule):
         text = content.decode("utf-8", errors="ignore")
         reader = csv.reader(io.StringIO(text))
         try:
-            for row in reader:
-                for cell in row:
-                    if cell.startswith(("=", "+", "-", "@")):
-                        return ValidationResult(False, data, ["formula_injection"])
+            if any(
+                cell.startswith(("=", "+", "-", "@")) for row in reader for cell in row
+            ):
+                return ValidationResult(False, data, ["formula_injection"])
         except csv.Error:
             return ValidationResult(False, data, ["csv_error"])
         return ValidationResult(True, data)
