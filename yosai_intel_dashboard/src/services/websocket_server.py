@@ -14,7 +14,12 @@ from websockets import WebSocketServerProtocol, serve
 from src.common.base import BaseComponent
 from src.common.config import ConfigProvider, ConfigService
 from src.websocket import metrics as websocket_metrics
-from yosai_intel_dashboard.src.core.events import EventBus
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    register_callback,
+    unregister_callback,
+    trigger_callback,
+)
 
 from .websocket_pool import WebSocketConnectionPool
 
@@ -26,7 +31,6 @@ class AnalyticsWebSocketServer(BaseComponent):
 
     def __init__(
         self,
-        event_bus: Optional[EventBus] = None,
         *,
         config: ConfigProvider | None = None,
         host: str = "0.0.0.0",
@@ -37,14 +41,12 @@ class AnalyticsWebSocketServer(BaseComponent):
         compression_threshold: int = 0,
     ) -> None:
         config = config or ConfigService()
-        event_bus = event_bus or EventBus()
         ping_interval = (
             ping_interval if ping_interval is not None else config.ping_interval
         )
         ping_timeout = ping_timeout if ping_timeout is not None else config.ping_timeout
         super().__init__(
             component_id="AnalyticsWebSocketServer",
-            event_bus=event_bus,
             config=config,
             host=host,
             port=port,
@@ -60,12 +62,12 @@ class AnalyticsWebSocketServer(BaseComponent):
         self._loop: asyncio.AbstractEventLoop | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._thread = threading.Thread(target=self._run, daemon=True)
-        self._subscription_id: str | None = None
         self._thread.start()
-        if self.event_bus:
-            self._subscription_id = self.event_bus.subscribe(
-                "analytics_update", self.broadcast
-            )
+        register_callback(
+            CallbackType.ANALYTICS_UPDATE,
+            self.broadcast,
+            component_id=self.component_id,
+        )
         logger.info("WebSocket server started on ws://%s:%s", self.host, self.port)
 
     async def _handler(self, websocket: WebSocketServerProtocol) -> None:
@@ -77,8 +79,7 @@ class AnalyticsWebSocketServer(BaseComponent):
             queued = list(self._queue)
             self._queue.clear()
             for event in queued:
-                if self.event_bus:
-                    self.event_bus.emit("analytics_update", event)
+                trigger_callback(CallbackType.ANALYTICS_UPDATE, event)
 
         try:
             async for _ in websocket:
@@ -100,18 +101,16 @@ class AnalyticsWebSocketServer(BaseComponent):
         try:
             pong_waiter = ws.ping()
             await asyncio.wait_for(pong_waiter, timeout=self.ping_timeout)
-            if self.event_bus:
-                self.event_bus.emit(
-                    "websocket_heartbeat",
-                    {"client": id(ws), "status": "alive"},
-                )
+            trigger_callback(
+                CallbackType.WEBSOCKET_HEARTBEAT,
+                {"client": id(ws), "status": "alive"},
+            )
         except asyncio.TimeoutError:
             websocket_metrics.record_ping_failure()
-            if self.event_bus:
-                self.event_bus.emit(
-                    "websocket_heartbeat",
-                    {"client": id(ws), "status": "timeout"},
-                )
+            trigger_callback(
+                CallbackType.WEBSOCKET_HEARTBEAT,
+                {"client": id(ws), "status": "timeout"},
+            )
             try:
                 await ws.close()
             finally:
@@ -151,9 +150,7 @@ class AnalyticsWebSocketServer(BaseComponent):
 
     def stop(self) -> None:
         """Stop the server thread and event loop."""
-        if self.event_bus and self._subscription_id:
-            self.event_bus.unsubscribe(self._subscription_id)
-            self._subscription_id = None
+        unregister_callback(CallbackType.ANALYTICS_UPDATE, self.broadcast)
         if self._loop is not None:
 
             async def _shutdown() -> None:
