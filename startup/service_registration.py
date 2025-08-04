@@ -111,6 +111,21 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=EventBusProtocol,
     )
 
+    from yosai_intel_dashboard.src.core.protocols import CallbackSystemProtocol
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+
+    container.register_singleton(
+        "callback_manager",
+        TrulyUnifiedCallbacks,
+        protocol=CallbackSystemProtocol,
+        factory=lambda c: TrulyUnifiedCallbacks(
+            security_validator=c.get("security_validator"),
+            event_bus=c.get("event_bus", EventBusProtocol),
+        ),
+    )
+
     # Register generic file storage service for analytics
     from yosai_intel_dashboard.src.core.storage.file_storage import FileStorageService
 
