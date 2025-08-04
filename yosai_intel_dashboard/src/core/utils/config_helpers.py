@@ -10,10 +10,7 @@ is not provided.
 
 from typing import Any
 
-from src.common.config import ConfigService
-from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
-    ConfigurationMixin,
-)
+from src.common.config import ConfigService, ConfigurationMixin
 
 
 _default_cfg = ConfigService()

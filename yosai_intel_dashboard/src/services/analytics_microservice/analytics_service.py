@@ -6,8 +6,11 @@ from typing import Any
 import asyncpg
 import redis.asyncio as aioredis
 
-from yosai_intel_dashboard.src.services.common.async_db import close_pool
 from yosai_intel_dashboard.models.ml import ModelRegistry
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
+    ServiceSettings,
+)
+from yosai_intel_dashboard.src.services.common.async_db import close_pool
 
 
 class AnalyticsService:
@@ -18,15 +21,13 @@ class AnalyticsService:
         redis: aioredis.Redis,
         pool: asyncpg.pool.Pool,
         model_registry: ModelRegistry,
-        *,
-        cache_ttl: int = 300,
-        model_dir: Path | None = None,
+        cfg: ServiceSettings,
     ) -> None:
         self.redis = redis
         self.pool = pool
         self.model_registry = model_registry
-        self.cache_ttl = cache_ttl
-        self.model_dir = model_dir or Path("model_store")
+        self.cache_ttl = cfg.cache_ttl
+        self.model_dir = Path(cfg.model_dir)
         self.models: dict[str, Any] = {}
 
     async def close(self) -> None:

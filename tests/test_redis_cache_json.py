@@ -3,7 +3,6 @@ import json
 import pickle
 import sys
 import types
-from tests.import_helpers import safe_import, import_optional
 
 
 def _setup_manager(monkeypatch, fake_redis):
@@ -11,10 +10,7 @@ def _setup_manager(monkeypatch, fake_redis):
         "config.database_manager",
         types.SimpleNamespace(DatabaseManager=object, MockConnection=object),
     )
-    redis_mod = sys.modules.get("redis")
-    if redis_mod is None:
-        redis_mod = types.SimpleNamespace()
-        safe_import('redis', redis_mod)
+    redis_mod = sys.modules["redis"]
     redis_mod.Redis = lambda *a, **k: fake_redis
     cm = importlib.import_module("core.plugins.config.cache_manager")
     monkeypatch.setattr(

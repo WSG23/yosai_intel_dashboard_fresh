@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import base64
-import os
-import redis
+from __future__ import annotations
 
+import base64
+
+import redis
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
@@ -14,13 +15,18 @@ from yosai_intel_dashboard.src.error_handling import (
     ErrorHandler,
     api_error_response,
 )
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
+    load_service_config,
+)
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 from yosai_intel_dashboard.src.utils.pydantic_decorators import (
     validate_input,
     validate_output,
 )
 from yosai_intel_dashboard.src.utils.sanitization import sanitize_text
-redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+
+_service_cfg = load_service_config()
+redis_client = redis.Redis.from_url(_service_cfg.redis_url)
 rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
 
 
@@ -32,9 +38,7 @@ class UploadRequestSchema(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "contents": [
-                        "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="
-                    ],
+                    "contents": ["data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="],
                     "filenames": ["hello.txt"],
                 }
             ]
@@ -47,9 +51,7 @@ class UploadResponseSchema(BaseModel):
 
     model_config = ConfigDict(
         json_schema_extra={
-            "examples": [
-                {"job_id": "123e4567-e89b-12d3-a456-426614174000"}
-            ]
+            "examples": [{"job_id": "123e4567-e89b-12d3-a456-426614174000"}]
         }
     )
 

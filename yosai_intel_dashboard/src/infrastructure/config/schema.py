@@ -6,9 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
-
 from database.utils import parse_connection_string
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 
 from .app_config import UploadConfig
 from .base import Config as DataclassConfig
@@ -32,6 +31,9 @@ class AppSettings(BaseModel):
     port: int = DEFAULT_APP_PORT
     secret_key: str = Field(default_factory=lambda: require_env_var("SECRET_KEY"))
     environment: str = "development"
+    jwt_secret_path: str | None = Field(
+        default=None, json_schema_extra={"env": "JWT_SECRET_PATH"}
+    )
 
 
 class DatabaseSettings(BaseModel):
