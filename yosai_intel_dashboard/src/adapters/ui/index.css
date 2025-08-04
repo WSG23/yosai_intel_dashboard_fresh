@@ -29,6 +29,7 @@
   --color-text-primary: #111827;
   --color-text-secondary: #6b7280;
   --color-border: #e5e7eb;
+  --disclosure-level: 2;
 }
 
 /* Dark mode support */
@@ -60,12 +61,13 @@ body {
   --color-success: #22c55e;
   --color-error: #ef4444;
   --color-warning: #f59e0b;
-  
+
   /* RGB values */
   --color-primary-rgb: 59, 130, 246;
   --color-success-rgb: 34, 197, 94;
   --color-error-rgb: 239, 68, 68;
   --color-warning-rgb: 245, 158, 11;
+  --disclosure-level: 2;
 }
 
 .app {
@@ -75,4 +77,29 @@ body {
 
 .main-content {
   background-color: var(--color-background-secondary);
+}
+
+/* Breakpoints mapped to disclosure levels */
+@media (max-width: 640px) {
+  :root {
+    --disclosure-level: 0;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  :root {
+    --disclosure-level: 1;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1440px) {
+  :root {
+    --disclosure-level: 2;
+  }
+}
+
+@media (min-width: 1441px) {
+  :root {
+    --disclosure-level: 3;
+  }
 }
