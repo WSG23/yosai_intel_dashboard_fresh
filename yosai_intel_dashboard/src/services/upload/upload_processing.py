@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from typing import Any
 
-from yosai_intel_dashboard.src.services.upload.protocols import UploadAnalyticsProtocol
+import pandas as pd
 
 
-class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
+class UploadAnalyticsProcessor:
     """Minimal stub for tests."""
 
     def __init__(self, *args, **kwargs) -> None:
@@ -57,6 +59,54 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         """Backward compatible helper to process uploaded ``data``."""
         validated = self._validate_data(data)
         return self._calculate_statistics(validated)
+
+    # ------------------------------------------------------------------
+    def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Normalize columns and basic cleaning for uploaded ``df``.
+
+        The method maps common headers to canonical names, lowercases and
+        underscores all column names, drops completely empty rows/columns and
+        removes duplicate columns. ``Timestamp`` values are parsed to
+        ``datetime64``.
+        """
+
+        if df.empty:
+            return df
+
+        # Drop empty rows and columns first to avoid unnecessary work
+        df = df.dropna(how="all").dropna(axis=1, how="all")
+
+        # Normalize column names
+        normalized = {col: col.strip().lower().replace(" ", "_") for col in df.columns}
+        df = df.rename(columns=normalized)
+
+        # Map known headers to standard names
+        header_map = {
+            "timestamp": "timestamp",
+            "person_id": "person_id",
+            "token_id": "token_id",
+            "device_name": "door_id",
+            "device": "door_id",
+            "door": "door_id",
+            "door_name": "door_id",
+            "access_result": "access_result",
+        }
+        df = df.rename(columns={c: header_map.get(c, c) for c in df.columns})
+
+        # Remove duplicate columns keeping the first occurrence
+        seen: set[str] = set()
+        unique_cols: list[str] = []
+        for col in df.columns:
+            if col not in seen:
+                seen.add(col)
+                unique_cols.append(col)
+        df = df[unique_cols]
+
+        # Parse timestamp column if present
+        if "timestamp" in df.columns:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+
+        return df
 
     # ------------------------------------------------------------------
     def analyze_uploaded_data(self):
