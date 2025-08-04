@@ -21,7 +21,6 @@ from starlette.requests import Request
 from starlette.types import ASGIApp
 
 from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
-from yosai_intel_dashboard.src.core.events import EventBus
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.services.analytics.analytics_service import get_analytics_service
 from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
@@ -45,6 +44,11 @@ from yosai_intel_dashboard.src.services.intel_analysis_service.core import (
     find_unusual_collaborations,
     propagate_risk,
 )
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    register_callback,
+    unregister_callback,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +56,8 @@ logger = logging.getLogger(__name__)
 # Application setup
 # ---------------------------------------------------------------------------
 
-event_bus = EventBus()
 cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
-analytics_service = CachedAnalyticsService(cache_manager, event_bus=event_bus)
+analytics_service = CachedAnalyticsService(cache_manager)
 ws_server: AnalyticsWebSocketServer | None = None
 
 app = FastAPI(dependencies=[Depends(require_permission("analytics.read"))])
@@ -100,7 +103,7 @@ async def get_service() -> CachedAnalyticsService:
 async def _startup() -> None:
     global ws_server
     await cache_manager.start()
-    ws_server = AnalyticsWebSocketServer(event_bus)
+    ws_server = AnalyticsWebSocketServer()
 
 
 @app.on_event("shutdown")
@@ -330,7 +333,11 @@ async def analytics_ws(websocket: WebSocket) -> None:
     def _handler(payload: dict) -> None:
         queue.put_nowait(json.dumps(payload))
 
-    sid = event_bus.subscribe("analytics_update", _handler)
+    register_callback(
+        CallbackType.ANALYTICS_UPDATE,
+        _handler,
+        component_id="analytics_ws",
+    )
     try:
         while True:
             msg = await queue.get()
@@ -338,7 +345,7 @@ async def analytics_ws(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         pass
     finally:
-        event_bus.unsubscribe(sid)
+        unregister_callback(CallbackType.ANALYTICS_UPDATE, _handler)
 
 
 @app.get("/sse/analytics")
@@ -348,7 +355,11 @@ async def analytics_sse() -> StreamingResponse:
     def _handler(payload: dict) -> None:
         queue.put_nowait(json.dumps(payload))
 
-    sid = event_bus.subscribe("analytics_update", _handler)
+    register_callback(
+        CallbackType.ANALYTICS_UPDATE,
+        _handler,
+        component_id="analytics_sse",
+    )
 
     async def _generator() -> AsyncIterator[str]:
         try:
@@ -356,9 +367,9 @@ async def analytics_sse() -> StreamingResponse:
                 data = await queue.get()
                 yield f"data: {data}\n\n"
         finally:
-            event_bus.unsubscribe(sid)
+            unregister_callback(CallbackType.ANALYTICS_UPDATE, _handler)
 
     return StreamingResponse(_generator(), media_type="text/event-stream")
 
 
-__all__ = ["app", "get_service", "event_bus", "ws_server"]
+__all__ = ["app", "get_service", "ws_server"]

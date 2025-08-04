@@ -2,7 +2,11 @@ import json
 
 from fastapi.testclient import TestClient
 
-from yosai_intel_dashboard.src.services.analytics.async_api import app, event_bus
+from yosai_intel_dashboard.src.services.analytics.async_api import app
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    trigger_callback,
+)
 
 
 def test_health_endpoint():
@@ -21,7 +25,7 @@ def test_chart_bad_type():
 def test_websocket_updates():
     client = TestClient(app)
     with client.websocket_connect("/ws/analytics") as ws:
-        event_bus.emit("analytics_update", {"a": 1})
+        trigger_callback(CallbackType.ANALYTICS_UPDATE, {"a": 1})
         data = ws.receive_text()
         assert json.loads(data)["a"] == 1
 

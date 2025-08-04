@@ -11,51 +11,12 @@ import threading
 
 from src.websocket import metrics as websocket_metrics
 from src.common.config import ConfigService
-
-
-def _load_server():
-    pkg_names = [
-        "yosai_intel_dashboard",
-        "yosai_intel_dashboard.src",
-        "yosai_intel_dashboard.src.core",
-    ]
-    for name in pkg_names:
-        sys.modules.setdefault(name, types.ModuleType(name))
-    events_mod = types.ModuleType("yosai_intel_dashboard.src.core.events")
-
-    class EventBus:
-        def __init__(self, *a, **kw):
-            pass
-
-        def emit(self, *a, **kw):
-            pass
-
-        def subscribe(self, event_type, handler):
-            return handler
-
-        def unsubscribe(self, token):
-            pass
-
-    events_mod.EventBus = EventBus
-    sys.modules["yosai_intel_dashboard.src.core.events"] = events_mod
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "yosai_intel_dashboard"
-        / "src"
-        / "services"
-        / "websocket_server.py"
-    )
-    spec = importlib.util.spec_from_file_location(
-        "yosai_intel_dashboard.src.services.websocket_server",
-        path,
-    )
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)  # type: ignore
-    return module.AnalyticsWebSocketServer
-
-
-AnalyticsWebSocketServer = _load_server()
+from yosai_intel_dashboard.src.services.websocket_server import AnalyticsWebSocketServer
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    register_callback,
+    unregister_callback,
+)
 
 
 class DummyWS:
@@ -81,26 +42,7 @@ class DummyWS:
 
 
 
-class DummyBus:
-    def __init__(self) -> None:
-        self.subs = {}
-
-    def emit(self, event_type, data):
-        for h in self.subs.get(event_type, []):
-            h(data)
-
-    def subscribe(self, event_type, handler):
-        self.subs.setdefault(event_type, []).append(handler)
-        return handler
-
-    def unsubscribe(self, token):
-        for handlers in self.subs.values():
-            if token in handlers:
-                handlers.remove(token)
-                break
-
-
-def _create_server(event_bus: DummyBus) -> AnalyticsWebSocketServer:
+def _create_server() -> AnalyticsWebSocketServer:
     # avoid starting actual websocket server
     original = AnalyticsWebSocketServer._run
     AnalyticsWebSocketServer._run = lambda self: None  # type: ignore
@@ -109,7 +51,7 @@ def _create_server(event_bus: DummyBus) -> AnalyticsWebSocketServer:
         'ping_interval': 0.01,
         'ping_timeout': 0.01,
     })
-    server = AnalyticsWebSocketServer(event_bus, config=cfg)
+    server = AnalyticsWebSocketServer(config=cfg)
     AnalyticsWebSocketServer._run = original
     return server
 
@@ -120,20 +62,27 @@ class DummyPool:
 
 
 def test_ping_client_publishes_alive():
-    bus = DummyBus()
-    events = []
-    bus.subscribe("websocket_heartbeat", lambda d: events.append(d))
-    server = _create_server(bus)
+    events: list[dict] = []
+
+    def handler(data):
+        events.append(data)
+
+    register_callback(CallbackType.WEBSOCKET_HEARTBEAT, handler, component_id="test")
+    server = _create_server()
     ws = DummyWS(True)
     asyncio.run(server._ping_client(ws))
     assert events and events[0]["status"] == "alive"
+    unregister_callback(CallbackType.WEBSOCKET_HEARTBEAT, handler)
 
 
 def test_ping_client_closes_on_timeout():
-    bus = DummyBus()
-    events = []
-    bus.subscribe("websocket_heartbeat", lambda d: events.append(d))
-    server = _create_server(bus)
+    events: list[dict] = []
+
+    def handler(data):
+        events.append(data)
+
+    register_callback(CallbackType.WEBSOCKET_HEARTBEAT, handler, component_id="test")
+    server = _create_server()
     ws = DummyWS(False)
     server.clients.add(ws)  # ensure removal
     start = websocket_metrics.websocket_ping_failures_total._value.get()
@@ -141,6 +90,7 @@ def test_ping_client_closes_on_timeout():
     assert events and events[0]["status"] == "timeout"
     assert ws.closed
     assert ws not in server.clients
+    unregister_callback(CallbackType.WEBSOCKET_HEARTBEAT, handler)
 
 
 def _run_loop(loop):
@@ -149,8 +99,7 @@ def _run_loop(loop):
 
 
 def test_stop_closes_clients_and_releases_pool():
-    bus = DummyBus()
-    server = _create_server(bus)
+    server = _create_server()
     loop = asyncio.new_event_loop()
     server._loop = loop
     server._thread = threading.Thread(target=_run_loop, args=(loop,), daemon=True)
@@ -168,8 +117,7 @@ def test_stop_closes_clients_and_releases_pool():
 
 
 def test_stop_cancels_heartbeat_task():
-    bus = DummyBus()
-    server = _create_server(bus)
+    server = _create_server()
     loop = asyncio.new_event_loop()
     server._loop = loop
     server._thread = threading.Thread(target=_run_loop, args=(loop,), daemon=True)
