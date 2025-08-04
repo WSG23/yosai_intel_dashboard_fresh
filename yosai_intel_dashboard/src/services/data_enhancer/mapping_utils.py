@@ -70,20 +70,20 @@ def _fuzzy_match_columns(
     }
 
     available_lower = {col.lower(): col for col in available_columns}
+    available_items = list(available_lower.items())
     for required_col, patterns in mapping_patterns.items():
-        best_match = None
-        for pattern in patterns:
-            if pattern.lower() in available_lower:
-                best_match = available_lower[pattern.lower()]
-                break
+        patterns_lower = [p.lower() for p in patterns]
+        best_match = next((available_lower[p] for p in patterns_lower if p in available_lower), None)
         if not best_match:
-            for pattern in patterns:
-                for available_col_lower, original_col in available_lower.items():
-                    if pattern in available_col_lower or available_col_lower in pattern:
-                        best_match = original_col
-                        break
-                if best_match:
-                    break
+            best_match = next(
+                (
+                    original_col
+                    for p in patterns_lower
+                    for lower, original_col in available_items
+                    if p in lower or lower in p
+                ),
+                None,
+            )
         if best_match:
             suggestions[required_col] = best_match
     return suggestions
