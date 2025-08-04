@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from typing import Callable, Iterator, List
+from types import ModuleType, SimpleNamespace
 
 # Make project package importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +23,7 @@ setup_common_fallbacks()
 
 import pytest
 
-from tests.import_helpers import safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 try:

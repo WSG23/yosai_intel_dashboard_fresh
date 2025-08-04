@@ -16,16 +16,19 @@ class DatabaseSettings:
     user: str
     password: str
     name: str
+    connection_timeout: Optional[int]
 
     @classmethod
     def from_env(cls) -> "DatabaseSettings":
         """Create settings from environment variables."""
+        timeout = os.getenv("DB_TIMEOUT")
         return cls(
             host=os.getenv("DB_HOST", "localhost"),
             port=int(os.getenv("DB_PORT", "5432")),
             user=os.getenv("DB_USER", "postgres"),
             password=os.getenv("DB_PASSWORD", ""),
             name=os.getenv("DB_NAME", "app"),
+            connection_timeout=int(timeout) if timeout is not None else None,
         )
 
 
@@ -37,16 +40,19 @@ class SecuritySettings:
     jwt_algorithm: str
     cors_origins: List[str]
     csrf_enabled: bool
+    max_upload_mb: Optional[int]
 
     @classmethod
     def from_env(cls) -> "SecuritySettings":
         """Create settings from environment variables."""
         origins = [o for o in os.getenv("CORS_ORIGINS", "").split(",") if o]
+        max_upload = os.getenv("MAX_UPLOAD_MB")
         return cls(
             secret_key=os.getenv("SECRET_KEY", "change-me"),
             jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
             cors_origins=origins,
             csrf_enabled=os.getenv("CSRF_ENABLED", "true").lower() == "true",
+            max_upload_mb=int(max_upload) if max_upload is not None else None,
         )
 
 
@@ -69,6 +75,18 @@ class AnalyticsSettings:
 
 
 @dataclass
+class PerformanceSettings:
+    """Performance tuning configuration."""
+
+    ai_confidence_threshold: Optional[int]
+
+    @classmethod
+    def from_env(cls) -> "PerformanceSettings":
+        value = os.getenv("AI_CONFIDENCE_THRESHOLD")
+        return cls(ai_confidence_threshold=int(value) if value is not None else None)
+
+
+@dataclass
 class AppSettings:
     """Top level application configuration."""
 
@@ -76,6 +94,7 @@ class AppSettings:
     database: DatabaseSettings
     security: SecuritySettings
     analytics: AnalyticsSettings
+    performance: PerformanceSettings
     name: str = "Yōsai Intel Dashboard"
 
     @classmethod
@@ -86,6 +105,7 @@ class AppSettings:
             database=DatabaseSettings.from_env(),
             security=SecuritySettings.from_env(),
             analytics=AnalyticsSettings.from_env(),
+            performance=PerformanceSettings.from_env(),
             name=os.getenv("APP_NAME", "Yōsai Intel Dashboard"),
         )
 
@@ -122,6 +142,7 @@ __all__ = [
     "DatabaseSettings",
     "SecuritySettings",
     "AnalyticsSettings",
+    "PerformanceSettings",
     "AppSettings",
     "ConfigManager",
     "get_settings",
