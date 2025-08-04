@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Shield } from 'lucide-react';
 import { navItems } from '../navigation/navItems';
+import { useNavbarTitle } from './NavbarTitleContext';
 import './Navbar.css';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { title } = useNavbarTitle();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(location.pathname);
   const [isMobile, setIsMobile] = useState(false);
@@ -38,6 +40,9 @@ const Navbar: React.FC = () => {
         <div className="navbar-brand">
           <Shield className="brand-icon" size={24} />
           <span className="brand-text">YOSAI Intelligence</span>
+          <span id="navbar-title" className="navbar-title">
+            {title}
+          </span>
         </div>
 
         {isMobile && (

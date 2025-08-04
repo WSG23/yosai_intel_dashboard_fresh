@@ -7,3 +7,4 @@ export { default as RealTimeAnalyticsPage } from './RealTimeAnalyticsPage';
 export { default as RealTimeMonitoring } from './RealTimeMonitoring';
 export { default as DashboardBuilder } from './DashboardBuilder';
 export { default as LearnMore } from './LearnMore';
+export { default as DataEnhancer } from './data_enhancer/DataEnhancer';
