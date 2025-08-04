@@ -3,6 +3,8 @@ Enhanced ML column classifier with heuristic fallbacks.
 Replaces plugins/ai_classification/services/column_mapper.py
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from pathlib import Path
@@ -28,10 +30,15 @@ class EnhancedColumnClassifier:
         self.logger = logging.getLogger(__name__)
 
         # Standard field patterns for heuristic fallback
+        #
+        # User and device identifiers are intentionally matched only against
+        # specific aliases to avoid overly broad detections:
+        #   - ``user_id``: matches "person", "user", or "employee"
+        #   - ``device_id``: matches "device" or "door"
         self.field_patterns = {
-            "device_id": [r"door", r"device", r"reader", r"panel", r"id"],
+            "device_id": [r"device", r"door"],
             "timestamp": [r"time", r"date", r"when", r"stamp", r"created"],
-            "user_id": [r"user", r"person", r"employee", r"card", r"token"],
+            "user_id": [r"person", r"user", r"employee"],
             "event_type": [r"event", r"action", r"type", r"status", r"result"],
             "floor": [r"floor", r"level", r"story"],
             "location": [r"location", r"place", r"area", r"zone"],
