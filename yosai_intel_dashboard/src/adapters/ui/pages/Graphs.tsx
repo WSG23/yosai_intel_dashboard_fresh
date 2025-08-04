@@ -1,71 +1,57 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
-  AreaChart,
-  Area,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
   ResponsiveContainer,
-  Brush,
 } from 'recharts';
-import Timeline from '../components/Timeline';
 import { graphsAPI, AvailableChart } from '../api/graphs';
 import { AccessibleVisualization } from '../components/accessibility';
-
+import { NetworkGraph, FacilityLayout } from './visualizations';
 
 const Graphs: React.FC = () => {
   const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
   const [selectedChart, setSelectedChart] = useState('');
   const [chartData, setChartData] = useState<any>(null);
-  const { variant, isMobile } = useResponsiveChart();
-  const [showDetails, setShowDetails] = useState(!isMobile);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setShowDetails(!isMobile);
-  }, [isMobile]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        setIsVisible(true);
-        observer.disconnect();
-      }
-    });
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-    return () => observer.disconnect();
-  }, []);
-
 
   useEffect(() => {
     const fetchCharts = async () => {
       try {
         const charts = await graphsAPI.getAvailableCharts();
-        setAvailableCharts(charts);
-        if (charts.length > 0) {
-          setSelectedChart(charts[0].type);
+        const extra: AvailableChart[] = [
+          {
+            type: 'network',
+            name: 'Network Graph',
+            description: 'Graph relationships',
+          },
+          {
+            type: 'facility',
+            name: 'Facility Layout',
+            description: '3D facility layout',
+          },
+        ];
+        const allCharts = [...charts, ...extra];
+        setAvailableCharts(allCharts);
+        if (allCharts.length > 0) {
+          setSelectedChart(allCharts[0].type);
         }
       } catch (err) {
         console.error('Failed to fetch chart list', err);
       }
     };
-
     fetchCharts();
   }, []);
 
   useEffect(() => {
-    if (!selectedChart) return;
+    if (selectedChart === 'network' || selectedChart === 'facility' || !selectedChart) {
+      return;
+    }
     const fetchData = async () => {
       try {
         const data = await graphsAPI.getChartData(selectedChart);
@@ -75,17 +61,43 @@ const Graphs: React.FC = () => {
         setChartData(null);
       }
     };
-
     fetchData();
   }, [selectedChart]);
 
-  const rawData = useMemo(() => {
-    if (!chartData) return null;
-    if (selectedChart === 'timeline') return chartData.hourly_distribution;
-    return chartData.temporal_patterns?.hourly_distribution ?? null;
-  }, [chartData, selectedChart]);
+  const renderChart = () => {
+    if (selectedChart === 'network') {
+      const links = [
+        { source: 'A', target: 'B' },
+        { source: 'B', target: 'C' },
+      ];
+      return (
+        <AccessibleVisualization
+          title="Network Relationships"
+          summary="Interactive graph showing relationships between nodes."
+          tableData={{
+            headers: ['Source', 'Target'],
+            rows: links.map((l) => [l.source, l.target]),
+          }}
+        >
+          <NetworkGraph />
+        </AccessibleVisualization>
+      );
+    }
 
-    if (selectedChart === 'timeline' && chartData.hourly_distribution) {
+    if (selectedChart === 'facility') {
+      const rooms = ['A', 'B', 'C'];
+      return (
+        <AccessibleVisualization
+          title="3D Facility Layout"
+          summary="Rotating 3D model of facility layout."
+          tableData={{ headers: ['Room'], rows: rooms.map((r) => [r]) }}
+        >
+          <FacilityLayout />
+        </AccessibleVisualization>
+      );
+    }
+
+    if (selectedChart === 'timeline' && chartData?.hourly_distribution) {
       const data = Object.entries(chartData.hourly_distribution).map(([hour, count]) => ({
         hour,
         count: Number(count),
@@ -112,10 +124,7 @@ const Graphs: React.FC = () => {
       );
     }
 
-    if (
-      selectedChart === 'patterns' &&
-      chartData.temporal_patterns?.hourly_distribution
-    ) {
+    if (selectedChart === 'patterns' && chartData?.temporal_patterns?.hourly_distribution) {
       const data = Object.entries(chartData.temporal_patterns.hourly_distribution).map(
         ([hour, count]) => ({
           hour,
@@ -144,22 +153,7 @@ const Graphs: React.FC = () => {
       );
     }
 
-
-    return (
-      <ResponsiveContainer
-        width="100%"
-        height={300}
-        onTouchStart={() => setShowDetails(true)}
-      >
-        <Chart data={displayData}>
-          {showDetails && <CartesianGrid strokeDasharray="3 3" />}
-          <XAxis dataKey="hour" />
-          <YAxis />
-          {showDetails && <Tooltip />}
-          <Series dataKey="count" {...props} />
-        </Chart>
-      </ResponsiveContainer>
-    );
+    return null;
   };
 
   return (
@@ -185,7 +179,6 @@ const Graphs: React.FC = () => {
         )}
       </ChunkGroup>
       <div role="presentation">{renderChart()}</div>
-
     </div>
   );
 };
