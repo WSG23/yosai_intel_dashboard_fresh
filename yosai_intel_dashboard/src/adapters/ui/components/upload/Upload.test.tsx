@@ -1,22 +1,23 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import Upload from './Upload';
-import { ZustandProvider } from '../../state';
+import { Provider } from 'react-redux';
+import { store } from '../../state';
 
 describe('Upload component', () => {
   it('does not show upload button with no files', () => {
     render(
-      <ZustandProvider>
+      <Provider store={store}>
         <Upload />
-      </ZustandProvider>
+      </Provider>
     );
     expect(screen.queryByRole('button', { name: /upload all/i })).toBeNull();
   });
 
   it('adds file and enables upload', async () => {
     const { container } = render(
-      <ZustandProvider>
+      <Provider store={store}>
         <Upload />
-      </ZustandProvider>
+      </Provider>
     );
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['data'], 'test.csv', { type: 'text/csv' });
@@ -28,9 +29,9 @@ describe('Upload component', () => {
 
   it('removes file from list', async () => {
     const { container } = render(
-      <ZustandProvider>
+      <Provider store={store}>
         <Upload />
-      </ZustandProvider>
+      </Provider>
     );
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(['data'], 'test.csv', { type: 'text/csv' });

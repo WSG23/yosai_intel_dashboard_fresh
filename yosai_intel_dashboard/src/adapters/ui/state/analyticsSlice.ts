@@ -1,4 +1,4 @@
-import { StateCreator } from 'zustand';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface AnalyticsData {
   total_records: number;
@@ -8,13 +8,27 @@ export interface AnalyticsData {
   device_distribution: Array<{ device: string; count: number }>;
 }
 
-export interface AnalyticsSlice {
+export interface AnalyticsState {
   analyticsCache: Record<string, AnalyticsData>;
-  setAnalytics: (key: string, data: AnalyticsData) => void;
 }
 
-export const createAnalyticsSlice: StateCreator<AnalyticsSlice, [], [], AnalyticsSlice> = (set) => ({
+const initialState: AnalyticsState = {
   analyticsCache: {},
-  setAnalytics: (key: string, data: AnalyticsData) =>
-    set((state) => ({ analyticsCache: { ...state.analyticsCache, [key]: data } })),
+};
+
+const analyticsSlice = createSlice({
+  name: 'analytics',
+  initialState,
+  reducers: {
+    setAnalytics(
+      state,
+      action: PayloadAction<{ key: string; data: AnalyticsData }>,
+    ) {
+      const { key, data } = action.payload;
+      state.analyticsCache[key] = data;
+    },
+  },
 });
+
+export const { setAnalytics } = analyticsSlice.actions;
+export default analyticsSlice.reducer;

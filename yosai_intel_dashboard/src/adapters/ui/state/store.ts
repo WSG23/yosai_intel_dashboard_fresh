@@ -1,46 +1,23 @@
-import { createStore } from 'zustand';
-import { useStore } from 'zustand';
-import { createSessionSlice, SessionSlice } from './sessionSlice';
-import { createAnalyticsSlice, AnalyticsSlice } from './analyticsSlice';
-import { createUploadSlice, UploadSlice } from './uploadSlice';
-import { createSelectionSlice, SelectionSlice } from './selectionSlice';
+import { configureStore } from '@reduxjs/toolkit';
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import sessionReducer from './sessionSlice';
+import analyticsReducer from './analyticsSlice';
+import uploadReducer from './uploadSlice';
+import selectionReducer from './selectionSlice';
+import historyReducer from './historySlice';
 
-export type BoundState =
-  SessionSlice &
-  AnalyticsSlice &
-  UploadSlice &
-  SelectionSlice;
+export const store = configureStore({
+  reducer: {
+    session: sessionReducer,
+    analytics: analyticsReducer,
+    upload: uploadReducer,
+    selection: selectionReducer,
+    history: historyReducer,
+  },
+});
 
-export const boundStore = createStore<BoundState>()((...a) => ({
-  ...createSessionSlice(...a),
-  ...createAnalyticsSlice(...a),
-  ...createUploadSlice(...a),
-  ...createSelectionSlice(...a),
-}));
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 
-export const useBoundStore = <T,>(selector: (state: BoundState) => T) =>
-  useStore(boundStore, selector);
-
-export const useSessionStore = () => useBoundStore((state) => ({
-  sessionId: state.sessionId,
-  setSessionId: state.setSessionId,
-}));
-
-export const useAnalyticsStore = () => useBoundStore((state) => ({
-  analyticsCache: state.analyticsCache,
-  setAnalytics: state.setAnalytics,
-}));
-
-export const useUploadStore = () =>
-  useBoundStore((state) => ({
-    uploadedFiles: state.uploadedFiles,
-    setUploadedFiles: state.setUploadedFiles,
-  }));
-
-export const useSelectionStore = () =>
-  useBoundStore((state) => ({
-    selectedThreats: state.selectedThreats,
-    setSelectedThreats: state.setSelectedThreats,
-    selectedRange: state.selectedRange,
-    setSelectedRange: state.setSelectedRange,
-  }));
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

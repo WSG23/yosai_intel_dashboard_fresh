@@ -1,22 +1,19 @@
 # State Management
 
-Legacy pages used several `dcc.Store` components placed in the base layout to
-share data between callbacks. The new React frontend relies on a global Zustand
-store located under `src/state` instead of Dash stores.
+The initial React frontend used a global Zustand store to replace the legacy
+Dash `dcc.Store` components. After evaluating our state needs we migrated to
+**Redux Toolkit**. Redux offers a richer ecosystem, built‑in dev tools and easy
+middleware integration, which simplifies features like undo/redo and time travel
+debugging.
 
-- **global-store** – application wide state shared by all users.
-- **session-store** – data scoped to the current user session.
-- **app-state-store** – cross page flags such as the initial load marker.
-- **theme-store** – remembers the selected color theme.
+Current slices:
 
-Callbacks previously read and wrote to these stores via the `data` property.
-Example:
+- **session** – data scoped to the active user session
+- **analytics** – cached analytics responses by key
+- **upload** – tracking files queued for upload
+- **selection** – page level selections such as highlighted threats
+- **history** – generic undo/redo stack shared across features
 
-```python
-@app.callback(Output('session-store', 'data'), Input('logout-btn', 'n_clicks'))
-def clear_session(_):
-    return {}
-```
-
-Use these stores instead of hidden inputs to avoid race conditions during
-multiple callback updates.
+All slices live under `src/adapters/ui/state` and are combined in
+`state/store.ts`. Use the exported `useAppDispatch` and `useAppSelector` hooks
+from the same module when reading or updating state.

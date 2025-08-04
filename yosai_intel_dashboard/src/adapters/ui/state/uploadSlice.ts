@@ -1,12 +1,23 @@
-import { StateCreator } from 'zustand';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UploadedFile } from '../components/upload/types';
 
-export interface UploadSlice {
+export interface UploadState {
   uploadedFiles: UploadedFile[];
-  setUploadedFiles: (files: UploadedFile[]) => void;
 }
 
-export const createUploadSlice: StateCreator<UploadSlice, [], [], UploadSlice> = (set) => ({
+const initialState: UploadState = {
   uploadedFiles: [],
-  setUploadedFiles: (files: UploadedFile[]) => set({ uploadedFiles: files }),
+};
+
+const uploadSlice = createSlice({
+  name: 'upload',
+  initialState,
+  reducers: {
+    setUploadedFiles(state, action: PayloadAction<UploadedFile[]>) {
+      state.uploadedFiles = action.payload;
+    },
+  },
 });
+
+export const { setUploadedFiles } = uploadSlice.actions;
+export default uploadSlice.reducer;

@@ -1,5 +1,6 @@
 export * from './store';
 export * from './sessionSlice';
 export * from './analyticsSlice';
-
-export * from './ZustandProvider';
+export * from './uploadSlice';
+export * from './selectionSlice';
+export * from './historySlice';

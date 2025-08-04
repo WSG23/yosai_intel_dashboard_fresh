@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Upload from './Upload';
-import { ZustandProvider } from '../../state';
+import { Provider } from 'react-redux';
+import { store } from '../../state';
 import { api } from '../../api/client';
 
 describe('Upload error handling', () => {
@@ -14,9 +15,9 @@ describe('Upload error handling', () => {
 
   it('shows error when upload fails', async () => {
     const { container } = render(
-      <ZustandProvider>
+      <Provider store={store}>
         <Upload />
-      </ZustandProvider>
+      </Provider>
     );
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const big = new File([new Array(1024 * 1024).fill('a').join('')], 'large.csv', { type: 'text/csv' });

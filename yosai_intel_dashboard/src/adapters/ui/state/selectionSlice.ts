@@ -1,16 +1,27 @@
-import { StateCreator } from 'zustand';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface SelectionSlice {
+export interface SelectionState {
   selectedThreats: string[];
   selectedRange: [number, number] | null;
-  setSelectedThreats: (ids: string[]) => void;
-  setSelectedRange: (range: [number, number] | null) => void;
 }
 
-export const createSelectionSlice: StateCreator<SelectionSlice, [], [], SelectionSlice> = (set) => ({
+const initialState: SelectionState = {
   selectedThreats: [],
   selectedRange: null,
-  setSelectedThreats: (ids) => set({ selectedThreats: ids }),
-  setSelectedRange: (range) => set({ selectedRange: range }),
+};
+
+const selectionSlice = createSlice({
+  name: 'selection',
+  initialState,
+  reducers: {
+    setSelectedThreats(state, action: PayloadAction<string[]>) {
+      state.selectedThreats = action.payload;
+    },
+    setSelectedRange(state, action: PayloadAction<[number, number] | null>) {
+      state.selectedRange = action.payload;
+    },
+  },
 });
 
+export const { setSelectedThreats, setSelectedRange } = selectionSlice.actions;
+export default selectionSlice.reducer;

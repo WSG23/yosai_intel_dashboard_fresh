@@ -1,11 +1,22 @@
-import { StateCreator } from 'zustand';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface SessionSlice {
+export interface SessionState {
   sessionId: string | null;
-  setSessionId: (id: string) => void;
 }
 
-export const createSessionSlice: StateCreator<SessionSlice, [], [], SessionSlice> = (set) => ({
+const initialState: SessionState = {
   sessionId: null,
-  setSessionId: (id: string) => set({ sessionId: id }),
+};
+
+const sessionSlice = createSlice({
+  name: 'session',
+  initialState,
+  reducers: {
+    setSessionId(state, action: PayloadAction<string>) {
+      state.sessionId = action.payload;
+    },
+  },
 });
+
+export const { setSessionId } = sessionSlice.actions;
+export default sessionSlice.reducer;

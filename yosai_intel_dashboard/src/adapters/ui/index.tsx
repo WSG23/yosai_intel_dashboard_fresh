@@ -10,33 +10,20 @@ const DashboardBuilder = React.lazy(() => import('./pages/DashboardBuilder'));
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
-import { ZustandProvider } from './state';
+import { Provider } from 'react-redux';
+import { store } from './state';
 import { SelectionProvider } from './core/interaction/SelectionContext';
+import './index.css';
 
-import "./index.css";
 const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl as HTMLElement);
   root.render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Suspense fallback={<div>Loading...</div>}>
-
-            <Routes>
-              <Route path="/" element={<Navigate to="/upload" replace />} />
-              <Route path="/upload" element={<Upload />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/graphs" element={<Graphs />} />
-              <Route path="/export" element={<Export />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/builder" element={<DashboardBuilder />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </QueryClientProvider>
-
-
+        <Provider store={store}>
+          <BrowserRouter>
+            <Suspense fallback={<div>Loading...</div>}>
               <Routes>
                 <Route path="/" element={<Navigate to="/upload" replace />} />
                 <Route path="/upload" element={<Upload />} />
@@ -44,12 +31,12 @@ if (rootEl) {
                 <Route path="/graphs" element={<Graphs />} />
                 <Route path="/export" element={<Export />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/builder" element={<DashboardBuilder />} />
               </Routes>
             </Suspense>
           </BrowserRouter>
-        </QueryClientProvider>
-      </SelectionProvider>
-
+        </Provider>
+      </QueryClientProvider>
     </React.StrictMode>
   );
 }
@@ -59,14 +46,13 @@ if (rtEl) {
   const rtRoot = ReactDOM.createRoot(rtEl as HTMLElement);
   rtRoot.render(
     <React.StrictMode>
-      <SelectionProvider>
-        <ZustandProvider>
+      <Provider store={store}>
+        <SelectionProvider>
           <Suspense fallback={<div>Loading...</div>}>
             <RealTimeAnalyticsPage />
           </Suspense>
-        </ZustandProvider>
-      </SelectionProvider>
-
+        </SelectionProvider>
+      </Provider>
     </React.StrictMode>
   );
 }
