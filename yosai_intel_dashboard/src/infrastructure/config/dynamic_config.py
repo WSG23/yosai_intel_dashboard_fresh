@@ -19,6 +19,9 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
+from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
+    ConfigurationMixin,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -328,6 +331,9 @@ class DynamicConfigManager(ConfigurationMixin, BaseConfigLoader):
 
     def get_security_level(self) -> int:
         return self.security.pbkdf2_iterations
+
+    def get_max_upload_size(self) -> int:
+        return self.get_max_upload_size_mb()
 
     def get_db_pool_size(self) -> int:
         return self.performance.db_pool_size

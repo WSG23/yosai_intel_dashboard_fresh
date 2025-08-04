@@ -2,7 +2,10 @@ from types import SimpleNamespace
 
 from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
-from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import ConfigurationMixin
+from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
+    ConfigurationMixin,
+)
+
 
 try:
     from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
@@ -21,24 +24,21 @@ except Exception:  # pragma: no cover - optional deps
 
 
 class FakeConfiguration(
-    ConfigurationMixin,
-    ConfigurationProtocol,
-    ConfigurationServiceProtocol,
-    ConfigProviderProtocol,
+    ConfigurationMixin, ConfigurationProtocol, ConfigurationServiceProtocol, ConfigProviderProtocol
 ):
     """Simple config for unit tests."""
 
     def __init__(self) -> None:
-        self.database = {}
-        self.app = SimpleNamespace(environment="development")
-        self.security = SimpleNamespace(
+        self._database = {}
+        self._app = SimpleNamespace(environment="development")
+        self._security = SimpleNamespace(
             max_upload_mb=10,
             rate_limit_requests=100,
             rate_limit_window_minutes=1,
             pbkdf2_iterations=100000,
             salt_bytes=32,
         )
-        self.analytics = SimpleNamespace(
+        self._analytics = SimpleNamespace(
             chunk_size=50000,
             max_display_rows=10000,
             max_memory_mb=1024,
@@ -59,11 +59,24 @@ class FakeConfiguration(
             bundle_threshold_kb=100,
             specificity_high=30,
         )
+
+    @property
+    def analytics(self) -> SimpleNamespace:
+        return self._analytics
+
+    @property
+    def database(self) -> dict:
+        return self._database
+
+    @property
+    def security(self) -> SimpleNamespace:
+        return self._security
+
     def get_database_config(self) -> dict:
         return self.database
 
     def get_app_config(self) -> dict:
-        return self.app
+        return self._app
 
     def get_security_config(self) -> dict:
         return vars(self.security)

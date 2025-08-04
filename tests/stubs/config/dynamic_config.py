@@ -4,7 +4,9 @@ class Security:
 
 from types import SimpleNamespace
 
-from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import ConfigurationMixin
+from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
+    ConfigurationMixin,
+)
 
 
 class Analytics:
