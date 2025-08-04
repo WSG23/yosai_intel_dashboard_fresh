@@ -2,11 +2,11 @@ from __future__ import annotations
 
 """Utility helpers for constructing and executing TimescaleDB queries."""
 
+import logging
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
 import asyncpg
-import logging
 from cachetools import LRUCache
 from sqlalchemy import text
 from sqlalchemy.sql import TextClause
@@ -39,14 +39,11 @@ def build_time_bucket_query(
     extra_filters: str | None = None,
 ) -> TextClause:
     """Return a time-bucketed aggregation query as :class:`TextClause`."""
-    builder = SecureQueryBuilder(
-        allowed_tables={table}, allowed_columns={time_column}
-    )
+    builder = SecureQueryBuilder(allowed_tables={table}, allowed_columns={time_column})
     table_q = builder.table(table)
     time_col = builder.column(time_column)
     filters = f" AND {extra_filters}" if extra_filters else ""
-    query_str = (
-        f"""
+    query_str = f"""
         SELECT time_bucket('{bucket_size}', {time_col}) AS bucket,
                {metric} AS value
         FROM {table_q}
@@ -54,9 +51,8 @@ def build_time_bucket_query(
         GROUP BY bucket
         ORDER BY bucket
         """
-    )
-    builder.build(query_str, logger=LOG)
-    return text(query_str)
+    sql, _ = builder.build(query_str, logger=LOG)
+    return text(sql)
 
 
 @lru_cache(maxsize=64)
@@ -69,9 +65,7 @@ def build_sliding_window_query(
     extra_filters: str | None = None,
 ) -> TextClause:
     """Return a sliding window aggregation query."""
-    builder = SecureQueryBuilder(
-        allowed_tables={table}, allowed_columns={time_column}
-    )
+    builder = SecureQueryBuilder(allowed_tables={table}, allowed_columns={time_column})
     table_q = builder.table(table)
     time_col = builder.column(time_column)
     window_points = max(int(window_seconds // step_seconds), 1)
@@ -83,8 +77,7 @@ def build_sliding_window_query(
         f"WHERE {time_col} >= $1 AND {time_col} < $2{filters}\n"
         f"GROUP BY bucket"
     )
-    query_str = (
-        f"""
+    query_str = f"""
         SELECT bucket,
                SUM(count_bucket) OVER (
                    ORDER BY bucket
@@ -93,9 +86,8 @@ def build_sliding_window_query(
         FROM ({inner}) AS sub
         ORDER BY bucket
         """
-    )
-    builder.build(query_str, logger=LOG)
-    return text(query_str)
+    sql, _ = builder.build(query_str, logger=LOG)
+    return text(sql)
 
 
 @monitor_query_performance()
