@@ -90,7 +90,14 @@ async def fetch_access_patterns(
         GROUP BY hour
         ORDER BY hour
     """
-    count_query = f"SELECT COUNT(*) FROM ({hourly_query}) AS sub"
+    count_query = """
+        SELECT COUNT(*) FROM (
+            SELECT extract(hour FROM timestamp) AS hour
+            FROM access_events
+            WHERE timestamp >= $1 AND timestamp <= $2
+            GROUP BY hour
+        ) AS sub
+    """
 
     query = hourly_query
     params = [start_date, end_date]
