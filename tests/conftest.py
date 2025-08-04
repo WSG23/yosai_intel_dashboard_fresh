@@ -26,15 +26,7 @@ setup_common_fallbacks()
 
 import pytest
 
-try:  # tests.import_helpers may be missing or provide non-callable attribute
-    from tests.import_helpers import safe_import  # type: ignore[attr-defined]
-    if not callable(safe_import):  # type: ignore[call-arg]
-        raise ImportError
-except Exception:  # pragma: no cover - best effort
-    def safe_import(name: str, loader: Callable[[], ModuleType]) -> ModuleType:
-        module = loader()
-        sys.modules[name] = module
-        return module
+import importlib
 
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
@@ -62,6 +54,14 @@ def _register_stub(module_name: str, module: ModuleType | None = None) -> Module
     if module is None:
         module = ModuleType(parts[-1])
     module.__path__ = getattr(module, "__path__", [])
+    def safe_import(name: str, factory):
+        try:
+            return importlib.import_module(name)
+        except Exception:
+            mod = factory()
+            sys.modules[name] = mod
+            return mod
+
     safe_import(module_name, lambda: module)
     sys.modules[module_name] = module
     return module
