@@ -9,15 +9,16 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
-from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
-from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
-from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
 from database.secure_exec import execute_command, execute_query
+from infrastructure.database.secure_query import SecureQueryBuilder
 from yosai_intel_dashboard.models.compliance import (
     DSARRequest,
     DSARRequestType,
     DSARStatus,
 )
+from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
+from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
+from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +202,9 @@ class DSARService:
             user_data = {}
 
             # Get user profile data
-            from yosai_intel_dashboard.src.services.optimized_queries import OptimizedQueryService
+            from yosai_intel_dashboard.src.services.optimized_queries import (
+                OptimizedQueryService,
+            )
 
             query_service = OptimizedQueryService(self.db)
             users = query_service.batch_get_users([user_id])
@@ -351,26 +354,37 @@ class DSARService:
                 )
                 return False
 
-            # Build dynamic update query (be careful with SQL injection)
-            allowed_fields = ["name", "department", "clearance_level"]
-            update_clauses = []
-            params = []
+            # Build dynamic update query using SecureQueryBuilder to validate
+            builder = SecureQueryBuilder(
+                allowed_tables={"people"},
+                allowed_columns={"name", "department", "clearance_level"},
+            )
+            update_clauses: List[str] = []
+            params: List[Any] = []
 
             for field, value in updates.items():
-                if field in allowed_fields:
-                    update_clauses.append(f"{field} = %s")
-                    params.append(value)
+                try:
+                    column = builder.column(field)
+                except ValueError:
+                    logger.warning(
+                        f"Invalid field in rectification request for {user_id}: {field}"
+                    )
+                    continue
+                update_clauses.append(f"{column} = %s")
+                params.append(value)
 
             if not update_clauses:
                 logger.warning(f"No valid fields to update for user {user_id}")
                 return False
 
+            table = builder.table("people")
             update_sql = f"""
-                UPDATE people 
+                UPDATE {table}
                 SET {', '.join(update_clauses)}, updated_at = %s
                 WHERE person_id = %s
-            """
+                """
             params.extend([datetime.now(timezone.utc), user_id])
+            update_sql, params = builder.build(update_sql, params, logger=logger)
 
             rows_affected = execute_command(self.db, update_sql, tuple(params))
 
