@@ -421,7 +421,7 @@ class ThreadSafeDatabaseManager(DatabaseManager):
 
 # Factory function
 def create_database_manager(config: DatabaseSettings) -> DatabaseManager:
-    """Create database manager from config.
+    """Create database manager using configuration.
 
     Deprecated: use :class:`DatabaseConnectionFactory` instead.
     """
