@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from __future__ import annotations
-
 import importlib.util
 import os
 import resource
@@ -13,7 +11,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Callable, Iterator, List
-from types import ModuleType, SimpleNamespace
 
 # Make project package importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
