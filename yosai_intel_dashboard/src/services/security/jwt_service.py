@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 
 from jose import jwt
@@ -9,7 +10,7 @@ from yosai_intel_dashboard.src.services.common.secrets import (
     invalidate_secret,
 )
 
-_SECRET_PATH = "secret/data/jwt#secret"
+JWT_SECRET_PATH_ENV = "JWT_SECRET_PATH"
 _JWT_SECRET_TTL = 300  # seconds
 
 _cached_secret: str | None = None
@@ -18,7 +19,10 @@ _cache_expires_at: float = 0.0
 
 def _read_jwt_secret() -> str:
     """Read the current JWT secret from Vault."""
-    return get_secret(_SECRET_PATH)
+    secret_path = os.getenv(JWT_SECRET_PATH_ENV)
+    if not secret_path:
+        raise RuntimeError("JWT_SECRET_PATH not configured")
+    return get_secret(secret_path)
 
 
 def jwt_secret() -> str:
@@ -36,7 +40,9 @@ def invalidate_jwt_secret_cache() -> None:
     global _cached_secret, _cache_expires_at
     _cached_secret = None
     _cache_expires_at = 0.0
-    invalidate_secret(_SECRET_PATH)
+    secret_path = os.getenv(JWT_SECRET_PATH_ENV)
+    if secret_path:
+        invalidate_secret(secret_path)
 
 
 def generate_service_jwt(service_name: str, expires_in: int = 300) -> str:
