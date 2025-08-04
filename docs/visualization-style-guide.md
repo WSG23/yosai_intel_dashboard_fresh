@@ -2,6 +2,10 @@
 
 This guide standardizes how visual elements appear across the dashboard. Each section shows the preferred styling and a minimal code sample using the built-in helpers.
 
+## Progressive Reveal
+
+When presenting dense or advanced metrics, wrap supplementary charts or controls in a `ProgressiveSection`. This keeps initial views approachable while allowing interested users to drill down for more detail.
+
 ## Drift Chart
 
 Use line charts to display model drift or other time‑series metrics.

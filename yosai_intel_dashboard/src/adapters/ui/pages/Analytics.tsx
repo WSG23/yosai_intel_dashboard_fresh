@@ -3,6 +3,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { useAnalyticsStore } from '../state/store';
 import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
+import ProgressiveSection from '../components/ProgressiveSection';
 const RiskDashboard = React.lazy(
   () => import('../components/security/RiskDashboard'),
 );
@@ -176,7 +177,11 @@ const Analytics: React.FC = () => {
             </div>
           </div>
 
-          <div className="analytics-sections">
+          <ProgressiveSection
+            title="Drill-down Metrics"
+            id="drilldown-metrics"
+            className="analytics-sections"
+          >
             <section className="patterns-section">
               <h2>Top Security Patterns</h2>
               <ChunkGroup className="patterns-list" limit={9}>
@@ -213,7 +218,7 @@ const Analytics: React.FC = () => {
                 ))}
               </ChunkGroup>
             </section>
-          </div>
+          </ProgressiveSection>
         </ClickExpand>
       )}
     </div>
