@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from yosai_intel_dashboard.src.infrastructure.config.secrets_validator import (
@@ -30,8 +32,8 @@ def test_resolves_vault_reference(monkeypatch):
     src = MappingSource(
         {
             "SECRET_KEY": "vault:secret/path#token",
-            "DB_PASSWORD": "p" * 32,
-            "AUTH0_CLIENT_SECRET": "s" * 32,
+            "DB_PASSWORD": os.urandom(32).hex(),
+            "AUTH0_CLIENT_SECRET": os.urandom(32).hex(),
         }
     )
 
@@ -49,9 +51,9 @@ def test_resolves_aws_reference(monkeypatch):
 
     src = MappingSource(
         {
-            "SECRET_KEY": "k" * 32,
+            "SECRET_KEY": os.urandom(32).hex(),
             "DB_PASSWORD": "aws-secrets:db/pass",
-            "AUTH0_CLIENT_SECRET": "s" * 32,
+            "AUTH0_CLIENT_SECRET": os.urandom(32).hex(),
         }
     )
 
