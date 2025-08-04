@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
 
 export type ChartVariant = 'line' | 'bar' | 'area';
-export type LegendDensity = 'compact' | 'comfortable';
+export type LegendDensity = 'compact' | 'comfortable' | 'expanded';
 export type TooltipMode = 'hover' | 'tap';
+
+const isTouchDevice = (): boolean => {
+  return (
+    (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+    (typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(pointer: coarse)').matches)
+  );
+};
 
 function getVariant(width: number): ChartVariant {
   if (width < 640) return 'area';
@@ -11,11 +20,17 @@ function getVariant(width: number): ChartVariant {
 }
 
 function getLegendDensity(width: number): LegendDensity {
-  return width < 640 ? 'compact' : 'comfortable';
+  if (width < 600) return 'compact';
+  if (width < 1024) return 'comfortable';
+  return 'expanded';
 }
 
-function getTooltipMode(width: number): TooltipMode {
-  return width < 640 ? 'tap' : 'hover';
+function getTooltipMode(width: number, touch: boolean): TooltipMode {
+  return width < 600 || touch ? 'tap' : 'hover';
+}
+
+function getEnableGestures(width: number, touch: boolean): boolean {
+  return touch && width < 1024;
 }
 
 /**
@@ -23,29 +38,32 @@ function getTooltipMode(width: number): TooltipMode {
  * Returns sizing info along with legend, tooltip and gesture settings.
  */
 export const useResponsiveChart = () => {
+  const initialWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+  const touch = isTouchDevice();
   const [variant, setVariant] = useState<ChartVariant>(() =>
-    getVariant(window.innerWidth),
+    getVariant(initialWidth),
   );
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 640);
+  const [isMobile, setIsMobile] = useState<boolean>(initialWidth < 640);
   const [legendDensity, setLegendDensity] = useState<LegendDensity>(() =>
-    getLegendDensity(window.innerWidth),
+    getLegendDensity(initialWidth),
   );
   const [tooltipMode, setTooltipMode] = useState<TooltipMode>(() =>
-    getTooltipMode(window.innerWidth),
+    getTooltipMode(initialWidth, touch),
   );
-  const [enableGestures, setEnableGestures] = useState<boolean>(
-    window.innerWidth < 640,
+  const [enableGestures, setEnableGestures] = useState<boolean>(() =>
+    getEnableGestures(initialWidth, touch),
   );
 
   useEffect(() => {
     const onResize = () => {
       const width = window.innerWidth;
+      const touch = isTouchDevice();
       setVariant(getVariant(width));
       const mobile = width < 640;
       setIsMobile(mobile);
       setLegendDensity(getLegendDensity(width));
-      setTooltipMode(getTooltipMode(width));
-      setEnableGestures(mobile);
+      setTooltipMode(getTooltipMode(width, touch));
+      setEnableGestures(getEnableGestures(width, touch));
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);

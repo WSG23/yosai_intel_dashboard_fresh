@@ -61,15 +61,13 @@ const DashboardBuilder: React.FC = () => {
     if (tpl) setCharts(tpl);
   };
 
-  const workspaceStyle: React.CSSProperties = {
-    position: 'relative',
-    flex: 1,
-    background: prefs.colorScheme === 'dark' ? '#1f2937' : '#f9fafb',
-  };
+  const workspaceClasses = `relative flex-1 ${
+    prefs.colorScheme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'
+  }`;
 
   const designStep = (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ width: 200, padding: 10, borderRight: '1px solid #ccc' }}>
+    <div className="flex h-full">
+      <div className="w-48 md:w-56 p-2.5 border-r border-gray-300 space-y-2">
         <ChunkGroup>
           <h3>Charts</h3>
           {chartTypes.map((type) => (
@@ -77,18 +75,22 @@ const DashboardBuilder: React.FC = () => {
               key={type}
               draggable
               onDragStart={(e) => handleDragStart(e, type)}
-              style={{ marginBottom: 8, padding: 4, border: '1px solid #ddd', cursor: 'grab' }}
+              className="mb-2 p-1 border border-gray-300 cursor-grab"
             >
               {type} Chart
             </div>
           ))}
-          <button onClick={saveCurrent} style={{ marginTop: 10, display: 'block' }}>Save Template</button>
-          <button onClick={loadCurrent} style={{ marginTop: 4, display: 'block' }}>Load Template</button>
+          <button onClick={saveCurrent} className="mt-2 block">
+            Save Template
+          </button>
+          <button onClick={loadCurrent} className="mt-1 block">
+            Load Template
+          </button>
         </ChunkGroup>
       </div>
       <div
         ref={workspaceRef}
-        style={workspaceStyle}
+        className={workspaceClasses}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
@@ -97,17 +99,15 @@ const DashboardBuilder: React.FC = () => {
             key={chart.id}
             draggable
             onDragStart={(e) => handleContainerDragStart(e, chart.id)}
-            onMouseUp={(e) => handleResize(chart.id, e.currentTarget as HTMLDivElement)}
+            onMouseUp={(e) =>
+              handleResize(chart.id, e.currentTarget as HTMLDivElement)
+            }
+            className="absolute border border-gray-400 bg-white resize overflow-auto"
             style={{
-              position: 'absolute',
               top: chart.y,
               left: chart.x,
               width: chart.w,
               height: chart.h,
-              border: '1px solid #999',
-              background: '#fff',
-              resize: 'both',
-              overflow: 'auto',
               transition: `all ${prefs.animationSpeed}s`,
             }}
           >

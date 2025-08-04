@@ -15,8 +15,8 @@
   background-color: var(--color-background);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xl);
-  min-width: 400px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: min(90vw, 25rem);
+  box-shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1);
 }
 
 .processing-status-modal h3 {
@@ -42,9 +42,9 @@
 
 .progress-bar-large {
   width: 100%;
-  height: 20px;
+  height: 1.25rem;
   background-color: var(--color-background-secondary);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   overflow: hidden;
 }
 
@@ -52,6 +52,7 @@
   height: 100%;
   background-color: var(--color-primary);
   transition: width 0.3s ease;
+  border-radius: 0.625rem;
 }
 
 .progress-text {

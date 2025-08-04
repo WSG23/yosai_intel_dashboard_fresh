@@ -2,7 +2,18 @@ import { renderHook, act } from '@testing-library/react';
 import useResponsiveChart from './useResponsiveChart';
 
 describe('useResponsiveChart', () => {
-  it('returns mobile configuration for small widths', () => {
+  afterEach(() => {
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      value: 0,
+      configurable: true,
+    });
+  });
+
+  it('returns mobile configuration for touch devices', () => {
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      value: 1,
+      configurable: true,
+    });
     (window as any).innerWidth = 500;
     const { result } = renderHook(() => useResponsiveChart());
     expect(result.current.variant).toBe('area');
@@ -13,10 +24,14 @@ describe('useResponsiveChart', () => {
   });
 
   it('switches settings on resize', () => {
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      value: 0,
+      configurable: true,
+    });
     (window as any).innerWidth = 1200;
     const { result } = renderHook(() => useResponsiveChart());
     expect(result.current.variant).toBe('line');
-    expect(result.current.legendDensity).toBe('comfortable');
+    expect(result.current.legendDensity).toBe('expanded');
     expect(result.current.enableGestures).toBe(false);
 
     act(() => {
@@ -30,6 +45,10 @@ describe('useResponsiveChart', () => {
     expect(result.current.enableGestures).toBe(false);
 
     act(() => {
+      Object.defineProperty(navigator, 'maxTouchPoints', {
+        value: 1,
+        configurable: true,
+      });
       (window as any).innerWidth = 500;
       window.dispatchEvent(new Event('resize'));
     });
