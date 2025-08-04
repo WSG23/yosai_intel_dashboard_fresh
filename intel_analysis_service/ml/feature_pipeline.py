@@ -61,4 +61,14 @@ def build_context_features(
     )
 
     features = features.sort_values("timestamp").fillna(0)
+
+    if "events" in features:
+        features["event_density"] = (
+            features["events"].rolling(window=3, min_periods=1).sum()
+        )
+    if "social" in features:
+        features["social_sentiment"] = (
+            features["social"].rolling(window=3, min_periods=1).mean()
+        )
+
     return features

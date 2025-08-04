@@ -18,6 +18,7 @@ class AnomalyDetector:
     """
 
     factor: float = 3.0
+    context_weights: Dict[str, float] | None = None
     thresholds: Dict[int, float] | None = None
     global_mean: float | None = None
     global_std: float | None = None
@@ -43,6 +44,14 @@ class AnomalyDetector:
         season = ts.dt.month
         default = (self.global_mean or 0.0) + self.factor * (self.global_std or 1.0)
         thresholds = season.map(self.thresholds).fillna(default)
+
+        context = pd.Series(0.0, index=df.index)
+        if self.context_weights:
+            for col, weight in self.context_weights.items():
+                if col in df:
+                    context += df[col] * weight
+        thresholds = thresholds + context
+
         values = df[value_col]
         anomalies = values > thresholds
         return pd.DataFrame({

@@ -17,9 +17,20 @@ def test_build_context_features_merges_sources():
     infra = pd.DataFrame({'timestamp': ts, 'infra': [0, 0]})
 
     features = build_context_features(weather, events, transport, social, infra)
-    assert set(features.columns) == {'timestamp', 'weather', 'events', 'transport', 'social', 'infra'}
+    assert set(features.columns) == {
+        'timestamp',
+        'weather',
+        'events',
+        'transport',
+        'social',
+        'infra',
+        'event_density',
+        'social_sentiment',
+    }
     assert len(features) == 2
     assert features.isna().sum().sum() == 0
+    assert features['event_density'].iloc[0] == 1
+    assert features['social_sentiment'].iloc[1] == 1.5
 
 
 def test_anomaly_detector_dynamic_threshold():
@@ -32,6 +43,16 @@ def test_anomaly_detector_dynamic_threshold():
     preds = detector.predict(test_df)
     assert preds['is_anomaly'].sum() == 1
     assert preds.iloc[2]['is_anomaly']
+
+
+def test_anomaly_detector_accounts_for_environment():
+    train_ts = pd.date_range('2024-01-01', periods=5, freq='D')
+    train_df = pd.DataFrame({'timestamp': train_ts, 'value': 1.0, 'event_density': 0.0})
+    detector = AnomalyDetector(factor=2.0, context_weights={'event_density': 2.0}).fit(train_df)
+
+    test_df = pd.DataFrame({'timestamp': [pd.Timestamp('2024-01-06')], 'value': [5.0], 'event_density': [3.0]})
+    preds = detector.predict(test_df)
+    assert not preds['is_anomaly'].iloc[0]
 
 
 def test_risk_scorer_seasonal_threshold():
