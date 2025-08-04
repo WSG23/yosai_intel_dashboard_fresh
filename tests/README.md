@@ -33,6 +33,26 @@ and registers lightweight stubs for optional dependencies like `hvac`,
 fixtures it exposes (for example `fake_unicode_processor` and `temp_dir`) are
 available to all tests.
 
+### Automatic stubbing of optional modules
+
+`tests/conftest.py` defines a session‑scoped fixture
+`auto_stub_dependencies` that pre‑stubs common third‑party packages such as
+`prometheus_client`, `redis` and `opentelemetry`.  Most tests can assume these
+modules are importable even when the real dependencies are not installed.
+
+To register additional stubs, request the fixture in your test and call it with
+the module name and an optional `ModuleType` instance:
+
+```python
+from types import ModuleType
+
+def test_custom(auto_stub_dependencies):
+    fake_mod = ModuleType("myopt")
+    auto_stub_dependencies("my_optional_lib", fake_mod)
+    import my_optional_lib
+    ...
+```
+
 ## Database Fixtures
 
 `tests/conftest.py` also provides database connection factories for common

@@ -5,12 +5,15 @@ from __future__ import annotations
 import importlib.util
 import os
 import resource
+import sys
 import warnings
 from contextlib import contextmanager
+from types import ModuleType, SimpleNamespace
 from typing import Callable, Iterator, List
 
 import pytest
 
+from tests.import_helpers import safe_import
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 try:
@@ -22,6 +25,76 @@ except Exception:  # pragma: no cover - optional dependency
     memory_usage = None  # type: ignore
 
 pytest_plugins = ["tests.config"]
+
+
+def _register_stub(module_name: str, module: ModuleType | None = None) -> ModuleType:
+    """Import ``module_name`` or install ``module`` as a lightweight stub."""
+    parts = module_name.split(".")
+    for i in range(1, len(parts)):
+        parent_name = ".".join(parts[:i])
+        parent = sys.modules.get(parent_name)
+        if parent is None:
+            parent = ModuleType(parts[i - 1])
+            parent.__path__ = []
+            sys.modules[parent_name] = parent
+    if module is None:
+        module = ModuleType(parts[-1])
+    module.__path__ = getattr(module, "__path__", [])
+    safe_import(module_name, lambda: module)
+    sys.modules[module_name] = module
+    return module
+
+
+for _mod, _stub in [
+    ("prometheus_client", ModuleType("prometheus_client")),
+    ("prometheus_fastapi_instrumentator", None),
+    ("redis", None),
+    ("opentelemetry", None),
+    ("opentelemetry.context", None),
+    ("opentelemetry.propagate", None),
+    ("opentelemetry.trace", None),
+    ("opentelemetry.sdk", None),
+    ("opentelemetry.sdk.resources", None),
+    ("opentelemetry.sdk.trace", None),
+    ("opentelemetry.sdk.trace.export", None),
+    ("opentelemetry.exporter.jaeger.thrift", None),
+    ("opentelemetry.instrumentation.fastapi", None),
+    ("structlog", None),
+]:
+    if _mod == "prometheus_client":
+        class _Metric:
+            def __init__(self, *a, **k):
+                pass
+
+            def labels(self, *a, **k):
+                return self
+
+            def inc(self, *a, **k):
+                pass
+
+            def observe(self, *a, **k):
+                pass
+
+            def set(self, *a, **k):
+                pass
+
+        _stub.Counter = _Metric
+        _stub.Gauge = _Metric
+        _stub.Histogram = _Metric
+        _stub.REGISTRY = SimpleNamespace(_names_to_collectors={})
+    _register_stub(_mod, _stub)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def auto_stub_dependencies() -> Callable[[str, ModuleType | None], ModuleType]:
+    """Register additional optional dependency stubs for tests.
+
+    Tests can request this fixture and call it with a module name and
+    optional ``ModuleType`` instance to make the stub available for the
+    duration of the test session.
+    """
+
+    return _register_stub
 
 
 DatabaseConnectionFactory = Callable[[], Iterator[DatabaseConnection]]
