@@ -23,3 +23,4 @@ def setup_common_fallbacks() -> None:
     prom_stub.Counter = object  # type: ignore[attr-defined]
     prom_stub.Histogram = object  # type: ignore[attr-defined]
     sys.modules.setdefault("prometheus_client", prom_stub)
+

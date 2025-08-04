@@ -35,10 +35,6 @@ from .hierarchical_cache_manager import (
     HierarchicalCacheConfig,
     HierarchicalCacheManager,
 )
-from .intelligent_multilevel_cache import (
-    IntelligentMultiLevelCache,
-    create_intelligent_cache_manager,
-)
 from .memory_manager import MemoryManager
 
 if TYPE_CHECKING:  # pragma: no cover - type hints only
@@ -106,6 +102,14 @@ _LAZY_EXPORTS = {
     "cache_with_lock": ("..infrastructure.cache.cache_manager", "cache_with_lock"),
     "BaseDatabaseService": (".base_database_service", "BaseDatabaseService"),
     "deprecated": (".deprecation", "deprecated"),
+    "IntelligentMultiLevelCache": (
+        ".intelligent_multilevel_cache",
+        "IntelligentMultiLevelCache",
+    ),
+    "create_intelligent_cache_manager": (
+        ".intelligent_multilevel_cache",
+        "create_intelligent_cache_manager",
+    ),
 }
 
 

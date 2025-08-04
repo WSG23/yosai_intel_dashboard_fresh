@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -80,9 +81,9 @@ class AIColumnMapperAdapter:
 
 
 if __name__ == "__main__":
-    import pandas as pd
     from example_ai_adapter import ComponentPluginAdapter
 
+    logging.basicConfig(level=logging.INFO)
     data = {
         "Time": ["2023-01-01 12:00"],
         "利用者ID": ["A1"],
@@ -92,4 +93,5 @@ if __name__ == "__main__":
     frame = pd.DataFrame(data)
     mapper = AIColumnMapperAdapter(ComponentPluginAdapter(), use_japanese=True)
     result = mapper.map_and_standardize(frame)
-    print(result.columns.tolist())
+    logger = logging.getLogger(__name__)
+    logger.info(result.columns.tolist())

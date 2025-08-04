@@ -18,7 +18,11 @@ class DatabaseAnalyticsHelper:
 
     def get_analytics(self) -> Dict[str, Any]:
         if not self.service:
-            return {"status": "error", "message": "Database not available"}
+            return {
+                "status": "error",
+                "message": "Database not available",
+                "error_code": "DB_NOT_AVAILABLE",
+            }
         return self.service.get_analytics()
 
 

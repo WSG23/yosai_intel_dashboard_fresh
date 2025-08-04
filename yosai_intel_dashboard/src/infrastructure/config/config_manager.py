@@ -137,6 +137,40 @@ class ConfigManager(ConfigurationMixin, ConfigurationProtocol):
         """Get configuration for a specific plugin."""
         return self.config.plugin_settings.get(name, {})
 
+    # Convenience properties for legacy service components -----------------
+    @property
+    def metrics_interval(self) -> float:
+        monitoring = self.get_monitoring_config()
+        return float(
+            getattr(
+                monitoring,
+                "metrics_interval_seconds",
+                getattr(monitoring, "metrics_interval", 1.0),
+            )
+        )
+
+    @property
+    def ping_interval(self) -> float:
+        monitoring = self.get_monitoring_config()
+        return float(getattr(monitoring, "health_check_interval", 30.0))
+
+    @property
+    def ping_timeout(self) -> float:
+        monitoring = self.get_monitoring_config()
+        return float(getattr(monitoring, "health_check_timeout", 10.0))
+
+    @property
+    def ai_confidence_threshold(self) -> float:
+        return float(self.get_ai_confidence_threshold())
+
+    @property
+    def max_upload_size_mb(self) -> int:
+        return int(self.get_max_upload_size_mb())
+
+    @property
+    def upload_chunk_size(self) -> int:
+        return int(self.get_upload_chunk_size())
+
     def get_upload_config(self) -> Dict[str, Any]:
         """Get upload configuration settings."""
         return vars(self.config.uploads)

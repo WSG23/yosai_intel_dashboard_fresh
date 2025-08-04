@@ -8,6 +8,7 @@ from yosai_intel_dashboard.src.services.analytics.file_processing_utils import (
 from yosai_intel_dashboard.src.services import AnalyticsService
 from tests.fakes import FakeUploadDataService, FakeUploadStore
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
+import pandas as pd
 
 
 def test_load_uploaded_data():
@@ -58,6 +59,30 @@ def test_summarize_dataframe():
     assert summary["active_doors"] == 2
     assert summary["date_range"]["start"] == "2024-01-01"
     assert summary["date_range"]["end"] == "2024-01-02"
+    assert summary["access_patterns"] == {"Granted": 1, "Denied": 1}
+    assert summary["top_users"] == [
+        {"user_id": "u1", "count": 1},
+        {"user_id": "u2", "count": 1},
+    ]
+    assert summary["top_doors"] == [
+        {"door_id": "d1", "count": 1},
+        {"door_id": "d2", "count": 1},
+    ]
+
+
+def test_summarize_dataframe_handles_missing_columns_and_empty():
+    df_missing = DataFrameBuilder().add_column("person_id", ["u1"]).build()
+    service = AnalyticsService()
+    missing = service.summarize_dataframe(df_missing)
+    assert missing["active_doors"] == 0
+    assert missing["access_patterns"] == {}
+    assert missing["date_range"] == {"start": "Unknown", "end": "Unknown"}
+    assert missing["top_doors"] == []
+
+    empty = service.summarize_dataframe(pd.DataFrame())
+    assert empty["total_events"] == 0
+    assert empty["active_users"] == 0
+    assert empty["top_users"] == []
 
 
 def test_count_and_date_helpers():

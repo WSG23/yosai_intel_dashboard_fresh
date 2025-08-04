@@ -253,6 +253,8 @@ def register_dependency_stubs() -> None:
         "prometheus_client",
         REGISTRY=types.SimpleNamespace(_names_to_collectors={}),
         Counter=_Counter,
+        Gauge=_Counter,
+        Histogram=_Counter,
         core=prom_core,
     )
     register_stub("prometheus_client", prom_client)
