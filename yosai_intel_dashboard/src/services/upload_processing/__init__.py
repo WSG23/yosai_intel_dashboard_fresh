@@ -1,5 +1,5 @@
 """Expose upload analytics processing helpers."""
 
-from .upload.upload_processing import UploadAnalyticsProcessor
+from .upload_analytics_processor import UploadAnalyticsProcessor
 
 __all__ = ["UploadAnalyticsProcessor"]
