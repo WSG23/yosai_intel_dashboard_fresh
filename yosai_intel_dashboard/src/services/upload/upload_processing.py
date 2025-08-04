@@ -2,8 +2,8 @@ from typing import Any, Dict
 
 import pandas as pd
 
-
-import pandas as pd
+from .protocols import UploadAnalyticsProtocol
+from yosai_intel_dashboard.src.utils.upload_store import get_uploaded_data_store
 
 
 class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
@@ -100,8 +100,10 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         """Backward compatible wrapper around :meth:`get_analytics_from_uploaded_data`."""
         return self.get_analytics_from_uploaded_data()
 
-    def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:  # pragma: no cover - simple stub
-        return {}
+    def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        """Retrieve all uploaded data from the shared store."""
+        store = get_uploaded_data_store()
+        return store.get_all_data()
 
 
 
