@@ -1,3 +1,3 @@
 export { default as Navbar } from './Navbar';
-export { default as ChunkGroup } from './ChunkGroup';
+export { default as ResponsiveShell } from './ResponsiveShell';
 

@@ -1,0 +1,26 @@
+.responsive-shell {
+  display: block;
+  width: 100%;
+}
+
+.responsive-shell__panel {
+  display: none;
+  background-color: var(--color-background-secondary);
+}
+
+.responsive-shell__main {
+  width: 100%;
+}
+
+@media (min-width: 1280px) {
+  .responsive-shell {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: var(--spacing-md);
+    align-items: start;
+  }
+
+  .responsive-shell__panel {
+    display: block;
+  }
+}
