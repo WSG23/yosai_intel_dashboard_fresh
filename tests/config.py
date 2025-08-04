@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from optional_dependencies import register_stub
+from optional_dependencies import register_fallback
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -55,7 +55,7 @@ def register_dependency_stubs() -> None:
             setattr(mod, key, value)
         return mod
 
-    register_stub("hvac", _simple_module("hvac", Client=object))
+    register_fallback("hvac", _simple_module("hvac", Client=object))
     sys.modules.setdefault("hvac", _simple_module("hvac", Client=object))
 
     class _DummyFernet:
@@ -71,7 +71,7 @@ def register_dependency_stubs() -> None:
         def decrypt(self, data: bytes) -> bytes:
             return data
 
-    register_stub(
+    register_fallback(
         "cryptography.fernet",
         _simple_module("cryptography.fernet", Fernet=_DummyFernet),
     )
@@ -80,7 +80,7 @@ def register_dependency_stubs() -> None:
         _simple_module("cryptography.fernet", Fernet=_DummyFernet),
     )
 
-    register_stub("boto3", _simple_module("boto3", client=lambda *a, **k: object()))
+    register_fallback("boto3", _simple_module("boto3", client=lambda *a, **k: object()))
     sys.modules.setdefault(
         "boto3", _simple_module("boto3", client=lambda *a, **k: object())
     )
@@ -95,7 +95,7 @@ def register_dependency_stubs() -> None:
         def __exit__(self, exc_type, exc, tb):
             pass
 
-    register_stub(
+    register_fallback(
         "mlflow",
         _simple_module(
             "mlflow",
@@ -118,7 +118,7 @@ def register_dependency_stubs() -> None:
         ),
     )
 
-    register_stub(
+    register_fallback(
         "asyncpg", _simple_module("asyncpg", create_pool=lambda *a, **k: None)
     )
     sys.modules.setdefault(
@@ -127,7 +127,7 @@ def register_dependency_stubs() -> None:
     try:
         import httpx  # noqa: F401
     except Exception:  # pragma: no cover - fallback when httpx unavailable
-        register_stub(
+        register_fallback(
             "httpx",
             _simple_module(
                 "httpx", ASGITransport=object, AsyncClient=object, Response=object
@@ -139,9 +139,9 @@ def register_dependency_stubs() -> None:
                 "httpx", ASGITransport=object, AsyncClient=object, Response=object
             ),
         )
-    register_stub("structlog", _simple_module("structlog", BoundLogger=object))
+    register_fallback("structlog", _simple_module("structlog", BoundLogger=object))
     sys.modules.setdefault("structlog", _simple_module("structlog", BoundLogger=object))
-    register_stub("confluent_kafka", _simple_module("confluent_kafka"))
+    register_fallback("confluent_kafka", _simple_module("confluent_kafka"))
     sys.modules.setdefault("confluent_kafka", _simple_module("confluent_kafka"))
 
     _dash = _simple_module("dash", Dash=object)
@@ -151,12 +151,12 @@ def register_dependency_stubs() -> None:
         "dash.dependencies", Input=object, Output=object, State=object
     )
     _dash._callback = _simple_module("dash._callback")
-    register_stub("dash", _dash)
-    register_stub("dash.html", _dash.html)
-    register_stub("dash.dcc", _dash.dcc)
-    register_stub("dash.dependencies", _dash.dependencies)
-    register_stub("dash._callback", _dash._callback)
-    register_stub(
+    register_fallback("dash", _dash)
+    register_fallback("dash.html", _dash.html)
+    register_fallback("dash.dcc", _dash.dcc)
+    register_fallback("dash.dependencies", _dash.dependencies)
+    register_fallback("dash._callback", _dash._callback)
+    register_fallback(
         "dash_bootstrap_components", _simple_module("dash_bootstrap_components")
     )
     sys.modules.setdefault("dash", _dash)
@@ -190,9 +190,9 @@ def register_dependency_stubs() -> None:
 
     _redis = _simple_module("redis", Redis=_DummyRedis)
     _redis.asyncio = _simple_module("redis.asyncio")
-    register_stub("redis", _redis)
-    register_stub("redis.asyncio", _redis.asyncio)
-    register_stub("requests", _simple_module("requests"))
+    register_fallback("redis", _redis)
+    register_fallback("redis.asyncio", _redis.asyncio)
+    register_fallback("requests", _simple_module("requests"))
     sys.modules.setdefault("redis", _redis)
     sys.modules.setdefault("redis.asyncio", _redis.asyncio)
     sys.modules.setdefault("requests", _simple_module("requests"))
@@ -203,16 +203,16 @@ def register_dependency_stubs() -> None:
     # only expose the minimal attributes used in tests.
 
     numpy_stub = _simple_module("numpy", asarray=lambda x, dtype=None: x)
-    register_stub("numpy", numpy_stub)
+    register_fallback("numpy", numpy_stub)
     sys.modules.setdefault("numpy", numpy_stub)
 
     pandas_stub = _simple_module("pandas", DataFrame=object)
-    register_stub("pandas", pandas_stub)
+    register_fallback("pandas", pandas_stub)
     sys.modules.setdefault("pandas", pandas_stub)
 
     psutil_stub = _simple_module("psutil")
     psutil_stub.__spec__ = importlib.machinery.ModuleSpec("psutil", loader=None)
-    register_stub("psutil", psutil_stub)
+    register_fallback("psutil", psutil_stub)
     sys.modules.setdefault("psutil", psutil_stub)
 
     class _SafeLoader:
@@ -233,7 +233,7 @@ def register_dependency_stubs() -> None:
         "yaml", SafeLoader=_SafeLoader, Node=object, safe_load=lambda *a, **k: {}
     )
     yaml_stub.__spec__ = importlib.machinery.ModuleSpec("yaml", loader=None)
-    register_stub("yaml", yaml_stub)
+    register_fallback("yaml", yaml_stub)
     sys.modules.setdefault("yaml", yaml_stub)
 
     class _Counter:
@@ -255,8 +255,8 @@ def register_dependency_stubs() -> None:
         Counter=_Counter,
         core=prom_core,
     )
-    register_stub("prometheus_client", prom_client)
-    register_stub("prometheus_client.core", prom_core)
+    register_fallback("prometheus_client", prom_client)
+    register_fallback("prometheus_client.core", prom_core)
     sys.modules.setdefault("prometheus_client", prom_client)
     sys.modules.setdefault("prometheus_client.core", prom_core)
 
@@ -275,7 +275,7 @@ def register_dependency_stubs() -> None:
     pydantic_stub.Field = lambda *a, **k: None
     pydantic_stub.ValidationError = Exception
     pydantic_stub.validator = _validator
-    register_stub("pydantic", pydantic_stub)
+    register_fallback("pydantic", pydantic_stub)
     sys.modules.setdefault("pydantic", pydantic_stub)
 
     # As a final fallback, provide a meta-path finder that returns empty
