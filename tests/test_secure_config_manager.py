@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import os
 import types
 
 import pytest
 from cryptography.fernet import Fernet
 
-from yosai_intel_dashboard.src.infrastructure.config.secure_config_manager import SecureConfigManager
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.infrastructure.config.secure_config_manager import (
+    SecureConfigManager,
+)
+
+pytest.importorskip("cryptography")
 
 
 def test_vault_secret_resolution(monkeypatch, tmp_path):

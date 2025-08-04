@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import pytest
 
-from database.utils import parse_connection_string
+from yosai_intel_dashboard.src.database.utils import parse_connection_string
 
 
 def test_parse_postgres():

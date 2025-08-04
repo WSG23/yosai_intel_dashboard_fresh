@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import assert_type
-
-from database.types import DBRow, DBRows
-
-
 # Stub heavy dependencies to avoid circular imports during test collection
 import sys
 import types
+from typing import assert_type
+
+from yosai_intel_dashboard.src.database.types import DBRow, DBRows
 
 dummy_conn = types.ModuleType("database.connection")
 

@@ -10,6 +10,7 @@ It also exposes a couple of small fixtures used across the suite.
 
 from __future__ import annotations
 
+import importlib
 import importlib.abc
 import importlib.machinery
 import os
@@ -319,6 +320,49 @@ def register_dependency_stubs() -> None:
     sys.modules.setdefault(
         "yosai_intel_dashboard.src.services.database", services_db_pkg
     )
+
+    services_pkg = importlib.import_module("services")
+    analytics_mod = importlib.import_module("analytics")
+    sys.modules.setdefault("services.analytics", analytics_mod)
+    setattr(services_pkg, "analytics", analytics_mod)
+
+    sys.modules.setdefault(
+        "services.analytics.core", importlib.import_module("analytics.core")
+    )
+    sys.modules.setdefault(
+        "services.analytics.core.utils",
+        importlib.import_module("analytics.core.utils"),
+    )
+    sys.modules.setdefault(
+        "services.analytics.core.callbacks",
+        importlib.import_module("analytics.core.callbacks"),
+    )
+    sys.modules.setdefault(
+        "services.analytics.security_patterns",
+        importlib.import_module("analytics.security_patterns"),
+    )
+    sys.modules.setdefault(
+        "services.analytics.security_patterns.pattern_detection",
+        importlib.import_module("analytics.security_patterns.pattern_detection"),
+    )
+    try:  # pragma: no cover - optional graph dependencies
+        sys.modules.setdefault(
+            "services.analytics.graph_analysis",
+            importlib.import_module("analytics.graph_analysis"),
+        )
+        sys.modules.setdefault(
+            "services.analytics.graph_analysis.algorithms",
+            importlib.import_module("analytics.graph_analysis.algorithms"),
+        )
+    except Exception:  # pragma: no cover
+        sys.modules.setdefault(
+            "services.analytics.graph_analysis",
+            types.ModuleType("services.analytics.graph_analysis"),
+        )
+        sys.modules.setdefault(
+            "services.analytics.graph_analysis.algorithms",
+            types.ModuleType("services.analytics.graph_analysis.algorithms"),
+        )
 
     class _MockConnection:
         def __init__(self):
