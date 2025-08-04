@@ -1,4 +1,5 @@
-"""Import fallbacks for optional dependencies."""
+"""Import resolution utilities."""
 
-# Importing ``fallbacks`` sets up stub modules automatically.
-from .fallbacks import setup_common_fallbacks  # noqa: F401
+from .resolver import ImportResolver, register_fallback, resolver, safe_import
+
+__all__ = ["ImportResolver", "register_fallback", "resolver", "safe_import"]
