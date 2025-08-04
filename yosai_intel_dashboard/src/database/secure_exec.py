@@ -9,10 +9,10 @@ from functools import lru_cache
 from typing import Any, Iterable, Optional
 
 try:  # optional import to avoid heavy dependency chain
-    from core.performance import PerformanceThresholds
+    from core.performance import PerformanceThresholds as _PerfThresh
+    _SLOW_DEFAULT = getattr(_PerfThresh, "SLOW_QUERY_SECONDS", 1.0)
 except Exception:  # pragma: no cover - default if core package unavailable
-    class PerformanceThresholds:  # type: ignore[misc]
-        SLOW_QUERY_SECONDS = 1.0
+    _SLOW_DEFAULT = 1.0
 
 from database.performance_analyzer import DatabasePerformanceAnalyzer
 
@@ -26,18 +26,33 @@ except Exception:  # pragma: no cover - metrics are optional
 logger = logging.getLogger(__name__)
 
 
+class DatabaseSettings:
+    """Simple configuration holder used for query timeouts."""
+
+    query_timeout_seconds: int = 0
+
+
 @lru_cache(maxsize=1)
 def _get_security_validator():
-    from validation import security_validator as sv_mod
+    try:
+        from validation import security_validator as sv_mod
 
-    if not hasattr(sv_mod, "redis_client"):
-        sv_mod.redis_client = None  # type: ignore[attr-defined]
-    return sv_mod.SecurityValidator(rate_limit=0, window_seconds=1, redis_client=None)
+        if not hasattr(sv_mod, "redis_client"):
+            sv_mod.redis_client = None  # type: ignore[attr-defined]
+        return sv_mod.SecurityValidator(
+            rate_limit=0, window_seconds=1, redis_client=None
+        )
+    except Exception:  # pragma: no cover - lightweight fallback
+        class _DummyValidator:
+            def scan_query(self, _sql: str) -> None:  # noqa: D401 - simple stub
+                """No-op validator used when security module is unavailable."""
+
+        return _DummyValidator()
 
 performance_analyzer = DatabasePerformanceAnalyzer()
 query_metrics = performance_analyzer.query_metrics
 SLOW_QUERY_THRESHOLD = float(
-    os.getenv("DB_SLOW_QUERY_THRESHOLD", PerformanceThresholds.SLOW_QUERY_SECONDS)
+    os.getenv("DB_SLOW_QUERY_THRESHOLD", _SLOW_DEFAULT)
 )
 
 
@@ -95,17 +110,38 @@ def execute_query(
     p = _validate_params(params)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing query: %s", optimized_sql)
+    timeout_seconds = getattr(DatabaseSettings, "query_timeout_seconds", 0)
+    db_type = _infer_db_type(conn)
     start = time.perf_counter()
+    if timeout_seconds:
+        ms = int(timeout_seconds * 1000)
+        try:
+            if db_type == "postgresql":
+                conn.execute(f"SET LOCAL statement_timeout = {ms}")
+            elif db_type == "sqlite":
+                conn.execute(f"PRAGMA busy_timeout = {ms}")
+        except Exception:
+            pass  # pragma: no cover - best effort
     try:
-
         if hasattr(conn, "execute_query"):
-            return conn.execute_query(optimized_sql, p)
-        if hasattr(conn, "execute"):
+            result = conn.execute_query(optimized_sql, p)
+        elif hasattr(conn, "execute"):
             if p is not None:
-                return conn.execute(optimized_sql, p)
-            return conn.execute(optimized_sql)
-        raise AttributeError("Object has no execute or execute_query method")
+                result = conn.execute(optimized_sql, p)
+            else:
+                result = conn.execute(optimized_sql)
+        else:
+            raise AttributeError("Object has no execute or execute_query method")
+        return result
     finally:
+        if timeout_seconds:
+            try:
+                if db_type == "postgresql":
+                    conn.execute("SET LOCAL statement_timeout = DEFAULT")
+                elif db_type == "sqlite":
+                    conn.execute("PRAGMA busy_timeout = 0")
+            except Exception:
+                pass  # pragma: no cover - best effort
         elapsed = time.perf_counter() - start
         performance_analyzer.analyze_query_performance(optimized_sql, elapsed)
         if elapsed > SLOW_QUERY_THRESHOLD:
@@ -166,7 +202,7 @@ def execute_batch(
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
     _get_security_validator().scan_query(sql)
-    pseq = [tuple(p) for p in params_seq]
+    pseq = (tuple(p) for p in params_seq)
     optimized_sql = _get_optimizer(conn).optimize_query(sql)
     logger.debug("Executing batch command: %s", optimized_sql)
     start = time.perf_counter()

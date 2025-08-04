@@ -3,7 +3,7 @@ from __future__ import annotations
 """Helpers for analyzing and creating database indexes."""
 
 import logging
-from typing import Any, List, Sequence
+from typing import Any, Iterable, List, Sequence
 
 from database.types import DBRows
 
@@ -62,17 +62,16 @@ class IndexOptimizer:
             conn = self.connection
             conn_name = conn.__class__.__name__
             index_name = f"idx_{table}_{'_'.join(columns)}"
-            existing: List[str] = []
             if conn_name == "SQLiteConnection":
                 rows: DBRows = execute_query(conn, "PRAGMA index_list(?)", (table,))
-                existing = [row.get("name") for row in rows]
+                existing: Iterable[str] = (row.get("name") for row in rows)
             elif conn_name == "PostgreSQLConnection":
                 rows: DBRows = execute_query(
                     conn,
                     "SELECT indexname FROM pg_indexes WHERE tablename=%s",
                     (table,),
                 )
-                existing = [row.get("indexname") for row in rows]
+                existing = (row.get("indexname") for row in rows)
             else:
                 return []
             if index_name not in existing:

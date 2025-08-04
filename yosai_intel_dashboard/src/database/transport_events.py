@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 
 @dataclass
@@ -24,12 +24,9 @@ def add_event(event: TrafficEvent) -> None:
     _events.append(event)
 
 
-def get_events(location: Optional[str] = None) -> List[TrafficEvent]:
-    """Return stored events, optionally filtered by location."""
-    events = _events
-    if location is not None:
-        events = [e for e in events if e.location == location]
-    return list(events)
+def get_events(location: Optional[str] = None) -> Iterator[TrafficEvent]:
+    """Yield stored events, optionally filtered by location."""
+    return (e for e in _events if location is None or e.location == location)
 
 
 def total_delay(location: str) -> int:
