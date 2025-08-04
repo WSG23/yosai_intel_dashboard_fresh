@@ -447,14 +447,15 @@ class CSSOptimizer:
                 else:
                     remaining_lines.append(line)
 
-            parts = ["".join(remaining_lines)]
+            segments: List[str] = []
+            segments.append("".join(remaining_lines))
             for rel in imports:
                 try:
                     path = main_css.parent / rel
-                    parts.append(path.read_text(encoding="utf-8"))
+                    segments.append(path.read_text(encoding="utf-8"))
                 except Exception as exc:
                     logger.error(f"❌ Error reading {path}: {exc}")
-            bundle = "".join(parts)
+            bundle = "".join(segments)
 
             out = self.output_dir / "main.min.css"
             tmp = out.with_suffix(".tmp.css")
