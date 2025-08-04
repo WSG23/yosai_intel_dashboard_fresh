@@ -29,6 +29,7 @@ from dash.dependencies import Input, Output, State
 
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
 from .events import CallbackEvent
+from ..event_bus import EventBus, EventPublisher
 
 # ---------------------------------------------------------------------------
 # Type aliases
@@ -53,17 +54,6 @@ class Operation:
 
     name: str
     func: CallbackHandler
-    timeout: Optional[float] = None
-    retries: int = 0
-
-
-@dataclass
-class EventCallback:
-    """Internal representation of an event callback."""
-
-    priority: int
-    func: CallbackHandler
-    secure: bool = False
     timeout: Optional[float] = None
     retries: int = 0
 
@@ -95,7 +85,7 @@ if TYPE_CHECKING:  # pragma: no cover - for type hints only
     )
 
 
-class TrulyUnifiedCallbacks:
+class TrulyUnifiedCallbacks(EventPublisher):
     """Unified system providing event, Dash and operation callbacks."""
 
     def __init__(
@@ -103,7 +93,9 @@ class TrulyUnifiedCallbacks:
         app: Dash | None = None,
         *,
         security_validator: SecurityValidator | None = None,
+        event_bus: EventBus | None = None,
     ) -> None:
+        super().__init__(event_bus)
         self.app: Dash | None = app
         if security_validator is None:
             from validation.security_validator import SecurityValidator
@@ -111,17 +103,11 @@ class TrulyUnifiedCallbacks:
             security_validator = SecurityValidator()
         self.security: SecurityValidator = security_validator
         self._lock: threading.RLock = threading.RLock()
-        self._event_callbacks: dict[CallbackEvent, list[EventCallback]] = defaultdict(
-            list
-        )
         self._dash_callbacks: dict[str, DashCallbackRegistration] = {}
         self._output_map: dict[str, str] = {}
         self._namespaces: dict[str, list[str]] = defaultdict(list)
         self._groups: dict[str, list[Operation]] = defaultdict(list)
         self._registered_components: set[str] = set()
-        self._event_metrics: dict[CallbackEvent, CallbackMetrics] = defaultdict(
-            lambda: CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
-        )
 
     # ------------------------------------------------------------------
     def callback(
@@ -339,10 +325,8 @@ class TrulyUnifiedCallbacks:
 
             func = wrapped
 
-        cb = EventCallback(priority, func, secure, timeout, retries)
         with self._lock:
-            self._event_callbacks[event].append(cb)
-            self._event_callbacks[event].sort(key=lambda c: c.priority)
+            self.event_bus.subscribe(event, func, priority=priority)
 
     # ------------------------------------------------------------------
     def unregister_event(self, event: CallbackEvent, func: CallbackHandler) -> None:
@@ -352,42 +336,15 @@ class TrulyUnifiedCallbacks:
         """
 
         with self._lock:
-            self._event_callbacks[event] = [
-                cb for cb in self._event_callbacks.get(event, []) if cb.func != func
-            ]
+            self.event_bus.unsubscribe(event, func)
 
     # ------------------------------------------------------------------
     def trigger_event(
         self, event: CallbackEvent, *args: Any, **kwargs: Any
     ) -> List[Any]:
         """Synchronously trigger callbacks registered for *event*."""
-        from ...core.error_handling import ErrorSeverity, error_handler, with_retry
 
-        results: List[Any] = []
-        callbacks = list(self._event_callbacks.get(event, []))
-        for cb in callbacks:
-            wrapped = with_retry(max_attempts=cb.retries + 1)(cb.func)
-            start = time.perf_counter()
-            try:
-                result = wrapped(*args, **kwargs)
-                duration = time.perf_counter() - start
-                if cb.timeout and duration > cb.timeout:
-                    raise TimeoutError(f"Operation exceeded {cb.timeout}s")
-                results.append(result)
-                metric = self._event_metrics[event]
-                metric["calls"] += 1
-                metric["total_time"] += duration
-            except Exception as exc:  # pragma: no cover - log and continue
-                error_handler.handle_error(
-                    exc,
-                    severity=ErrorSeverity.HIGH,
-                    context={"event": event.name, "callback": cb.func.__name__},
-                )
-                metric = self._event_metrics[event]
-                metric["calls"] += 1
-                metric["exceptions"] += 1
-            results.append(None)
-        return results
+        return self.event_bus.emit(event, *args, **kwargs)
 
     async def trigger_event_async(
         self, event: CallbackEvent, *args: Any, **kwargs: Any
@@ -397,37 +354,7 @@ class TrulyUnifiedCallbacks:
         Callbacks are executed concurrently using ``asyncio`` when possible.
         """
 
-        from ...core.error_handling import ErrorSeverity, error_handler, with_retry
-
-        async def _run(cb: EventCallback) -> Any:
-            wrapped = with_retry(max_attempts=cb.retries + 1)(cb.func)
-            start = time.perf_counter()
-            try:
-                if asyncio.iscoroutinefunction(wrapped):
-                    result = await wrapped(*args, **kwargs)
-                else:
-                    result = wrapped(*args, **kwargs)
-                duration = time.perf_counter() - start
-                if cb.timeout and duration > cb.timeout:
-                    raise TimeoutError(f"Operation exceeded {cb.timeout}s")
-                metric = self._event_metrics[event]
-                metric["calls"] += 1
-                metric["total_time"] += duration
-                return result
-            except Exception as exc:  # pragma: no cover - log and continue
-                error_handler.handle_error(
-                    exc,
-                    severity=ErrorSeverity.HIGH,
-                    context={"event": event.name, "callback": cb.func.__name__},
-                )
-                metric = self._event_metrics[event]
-                metric["calls"] += 1
-                metric["exceptions"] += 1
-                return None
-
-        callbacks = list(self._event_callbacks.get(event, []))
-        tasks = [asyncio.create_task(_run(cb)) for cb in callbacks]
-        return await asyncio.gather(*tasks) if tasks else []
+        return await self.event_bus.emit_async(event, *args, **kwargs)
 
     def get_event_callbacks(self, event: CallbackEvent) -> List[CallbackHandler]:
         """Return registered callbacks for *event*.
@@ -435,7 +362,7 @@ class TrulyUnifiedCallbacks:
         Thread-safe via an internal ``RLock``.
         """
         with self._lock:
-            return [cb.func for cb in self._event_callbacks.get(event, [])]
+            return self.event_bus.get_callbacks(event)
 
     def get_event_metrics(self, event: CallbackEvent) -> CallbackMetrics:
         """Return execution metrics for *event*.
@@ -444,9 +371,13 @@ class TrulyUnifiedCallbacks:
         """
 
         with self._lock:
-            return self._event_metrics.setdefault(
-                event, CallbackMetrics(calls=0, exceptions=0, total_time=0.0)
-            )
+            return self.event_bus.get_metrics(event)
+
+    def clear_all_callbacks(self) -> None:
+        """Remove all registered event callbacks."""
+
+        with self._lock:
+            self.event_bus.clear()
 
     # Operation groups --------------------------------------------------
     def register_operation(
