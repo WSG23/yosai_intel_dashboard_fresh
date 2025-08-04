@@ -7,6 +7,10 @@
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
+    "@aparajita/capacitor-biometric-auth": "^9.0.0",
+    "@capacitor/camera": "^7.0.1",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/geolocation": "^7.1.4",
     "@tanstack/react-query": "^5.83.0",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
@@ -35,6 +39,8 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/ios": "^7.4.2",
     "@fullhuman/postcss-purgecss": "^7.0.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -69,6 +75,8 @@
   "scripts": {
     "start": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts start",
     "build": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts build",
+    "build:android": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts build && npx cap sync android",
+    "build:ios": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts build && npx cap sync ios",
     "test": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
     "build-css": "sh scripts/build_css.sh",
