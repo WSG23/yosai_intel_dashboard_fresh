@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import importlib.util
 import os
@@ -15,7 +17,10 @@ spec.loader.exec_module(rbac)
 require_role = rbac.require_role
 require_permission = rbac.require_permission
 
-SECRET_KEY = os.urandom(16).hex()
+SECRET_KEY = os.getenv("TEST_SECRET_KEY", "dynamically-generated-test-key")
+API_TOKEN = os.getenv(
+    "TEST_API_TOKEN", "dynamically-generated-test-token"
+)  # noqa: F841
 
 
 class DummyService:

@@ -75,7 +75,10 @@ already defines a placeholder. If you skip this variable the tests will only
 show a warning but any database-dependent checks may fail.
 
 `SECRET_KEY` is **mandatory**. If it is missing the API initialization fails
-with a `RuntimeError` when the tests create the application context.
+with a `RuntimeError` when the tests create the application context. When
+running the test suite you can supply a custom value through the
+`TEST_SECRET_KEY` environment variable instead of setting `SECRET_KEY`
+directly.
 
 If the CSS bundle has not been built yet, generate it:
 ```bash
@@ -93,8 +96,11 @@ pip install -e .
 
 The module `tests/config.py` – loaded automatically by `pytest` – appends the
 project root to `sys.path`, sets minimal environment variables and registers
-lightweight stubs for optional dependencies. Importing it manually is rarely
-necessary, but it can be handy when running individual files.
+lightweight stubs for optional dependencies. It reads `TEST_SECRET_KEY` and
+`TEST_API_TOKEN` from the environment to populate the `SECRET_KEY` and
+`API_TOKEN` variables used during testing, falling back to dynamically generated
+defaults when they are absent. Importing it manually is rarely necessary, but it
+can be handy when running individual files.
 
 Without one of these steps you may encounter `ModuleNotFoundError` during test
 collection.
