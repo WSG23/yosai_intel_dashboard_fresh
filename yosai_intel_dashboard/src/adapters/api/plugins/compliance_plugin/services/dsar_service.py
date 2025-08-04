@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Protocol
 from uuid import uuid4
 
 from database.secure_exec import execute_command, execute_query
-from infrastructure.database.secure_query import SecureQueryBuilder
+from infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.models.compliance import (
     DSARRequest,
     DSARRequestType,

@@ -3,11 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List, Sequence, Callable, Awaitable
+from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Sequence
 
 import asyncpg
 
-from infrastructure.database.secure_query import SecureQueryBuilder
+from infrastructure.security.query_builder import SecureQueryBuilder
 
 from .validators.integrity_checker import IntegrityChecker
 
@@ -72,7 +72,10 @@ class MigrationManager:
         self.failures: List[str] = []
         self.pool_factory = pool_factory or asyncpg.create_pool
         for strat in self.strategies:
-            if getattr(strat, "pool_factory", asyncpg.create_pool) is asyncpg.create_pool:
+            if (
+                getattr(strat, "pool_factory", asyncpg.create_pool)
+                is asyncpg.create_pool
+            ):
                 strat.pool_factory = self.pool_factory
 
     async def setup(self) -> None:

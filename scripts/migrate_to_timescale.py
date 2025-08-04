@@ -30,7 +30,7 @@ from psycopg2.extras import DictCursor, execute_batch
 from tqdm import tqdm
 
 from database.secure_exec import execute_command, execute_query
-from infrastructure.database.secure_query import SecureQueryBuilder
+from infrastructure.security.query_builder import SecureQueryBuilder
 
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"
@@ -391,9 +391,7 @@ def insert_rows(cur: cursor, table: str, rows: List[dict[str, Any]]) -> None:
         return
     columns = rows[0].keys()
     values = (tuple(row[col] for col in columns) for row in rows)
-    builder = SecureQueryBuilder(
-        allowed_tables={table}, allowed_columns=set(columns)
-    )
+    builder = SecureQueryBuilder(allowed_tables={table}, allowed_columns=set(columns))
     tbl = builder.table(table)
     cols = ",".join(builder.column(c) for c in columns)
     placeholders = ",".join("%s" for _ in columns)
@@ -451,9 +449,7 @@ def migrate_table(
         if table == "access_events":
             builder = SecureQueryBuilder(allowed_tables={table})
             tbl = builder.table(table)
-            count_sql, _ = builder.build(
-                f"SELECT COUNT(*) FROM {tbl}", logger=LOG
-            )
+            count_sql, _ = builder.build(f"SELECT COUNT(*) FROM {tbl}", logger=LOG)
             execute_query(src, count_sql)
             total = src.fetchone()[0]
             pbar = tqdm(total=total - last_id, desc=table)
