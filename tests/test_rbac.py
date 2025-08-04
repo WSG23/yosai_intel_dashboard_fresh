@@ -1,5 +1,6 @@
 import asyncio
 import importlib.util
+import os
 
 import pytest
 from flask import Flask, session
@@ -14,6 +15,8 @@ spec.loader.exec_module(rbac)
 require_role = rbac.require_role
 require_permission = rbac.require_permission
 
+SECRET_KEY = os.urandom(16).hex()
+
 
 class DummyService:
     async def has_role(self, user_id: str, role: str) -> bool:
@@ -25,7 +28,7 @@ class DummyService:
 
 def test_require_role_async_allows():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -39,7 +42,7 @@ def test_require_role_async_allows():
 
 def test_require_role_async_forbidden():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -53,7 +56,7 @@ def test_require_role_async_forbidden():
 
 def test_require_permission_sync_allows():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -67,7 +70,7 @@ def test_require_permission_sync_allows():
 
 def test_require_permission_sync_forbidden():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -81,7 +84,7 @@ def test_require_permission_sync_forbidden():
 
 def test_require_role_sync_allows():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -95,7 +98,7 @@ def test_require_role_sync_allows():
 
 def test_require_role_sync_forbidden():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -109,7 +112,7 @@ def test_require_role_sync_forbidden():
 
 def test_require_permission_async_allows():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -123,7 +126,7 @@ def test_require_permission_async_allows():
 
 def test_require_permission_async_forbidden():
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -137,7 +140,7 @@ def test_require_permission_async_forbidden():
 
 def test_biometric_block_role(monkeypatch):
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"
@@ -152,7 +155,7 @@ def test_biometric_block_role(monkeypatch):
 
 def test_biometric_block_permission(monkeypatch):
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = SECRET_KEY
     app.config["RBAC_SERVICE"] = DummyService()
     with app.test_request_context():
         session["user_id"] = "u1"

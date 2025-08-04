@@ -121,7 +121,8 @@ class PostgreSQLConnection:
 
     def __init__(self, config: DatabaseSettings) -> None:
         try:
-            import psycopg2
+import psycopg2
+from psycopg2 import sql
             from psycopg2.extras import RealDictCursor
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise DatabaseError(
@@ -156,14 +157,22 @@ class PostgreSQLConnection:
         if name in self._prepared:
             return
         with self._connection.cursor() as cursor:
-            cursor.execute(f"PREPARE {name} AS {query}")
+            cursor.execute(
+                sql.SQL("PREPARE {} AS {}").format(
+                    sql.Identifier(name),
+                    sql.SQL(query),
+                )
+            )
         self._prepared.add(name)
 
     def execute_prepared(self, name: str, params: tuple) -> list:
-        placeholders = ", ".join(["%s"] * len(params))
-        sql = f"EXECUTE {name} ({placeholders})" if placeholders else f"EXECUTE {name}"
+        placeholders_sql = sql.SQL(", ").join(sql.Placeholder() for _ in params)
+        stmt = sql.SQL("EXECUTE {}{}").format(
+            sql.Identifier(name),
+            sql.SQL(" ({})").format(placeholders_sql) if params else sql.SQL(""),
+        )
         with self._connection.cursor() as cursor:
-            cursor.execute(sql, params if params else None)
+            cursor.execute(stmt, params if params else None)
             if cursor.description:
                 return list(cursor.fetchall())
             self._connection.commit()

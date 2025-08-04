@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 import sys
 import types
 from pathlib import Path
@@ -80,17 +81,19 @@ from yosai_intel_dashboard.src.security.roles import require_permission  # noqa:
 def auth_app(monkeypatch):
     """Create Flask app with stubbed Auth0 integration."""
 
-    MFA_SECRET = "base32secret3232"
+    mfa_secret = pyotp.random_base32()
+    auth0_client_secret = os.urandom(16).hex()
+    jwt_secret = os.urandom(16).hex()
 
     class DummySecretsManager:
         def get(self, key):
             return {
                 "AUTH0_CLIENT_ID": "cid",
-                "AUTH0_CLIENT_SECRET": "csecret",
+                "AUTH0_CLIENT_SECRET": auth0_client_secret,
                 "AUTH0_DOMAIN": "example.com",
                 "AUTH0_AUDIENCE": "https://api.example.com",
-                "JWT_SECRET": "jwtsecret",
-                "MFA_SECRET": MFA_SECRET,
+                "JWT_SECRET": jwt_secret,
+                "MFA_SECRET": mfa_secret,
             }.get(key)
 
     monkeypatch.setattr(auth, "SecretsManager", DummySecretsManager)
@@ -125,7 +128,7 @@ def auth_app(monkeypatch):
     )
 
     app = Flask(__name__)
-    app.secret_key = "testing"
+    app.secret_key = os.urandom(16).hex()
     auth.init_auth(app)
 
     @app.route("/protected")
@@ -201,7 +204,7 @@ def test_mfa_flow(auth_app) -> None:
     client.get("/callback?code=fake")
     resp = client.get("/admin")
     assert resp.status_code == 302
-    code = pyotp.TOTP("base32secret3232").now()
+    code = pyotp.TOTP(mfa_secret).now()
     client.get(f"/mfa/verify?code={code}")
     resp = client.get("/admin")
     assert resp.status_code == 200
