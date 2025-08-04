@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from __future__ import annotations
+
 import importlib.util
 import os
 import resource
@@ -9,8 +11,10 @@ import sys
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
 
 from typing import Callable, Iterator, List
+from types import ModuleType, SimpleNamespace
 
 # Make project package importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +26,16 @@ setup_common_fallbacks()
 
 import pytest
 
-from tests.import_helpers import safe_import
+try:  # tests.import_helpers may be missing or provide non-callable attribute
+    from tests.import_helpers import safe_import  # type: ignore[attr-defined]
+    if not callable(safe_import):  # type: ignore[call-arg]
+        raise ImportError
+except Exception:  # pragma: no cover - best effort
+    def safe_import(name: str, loader: Callable[[], ModuleType]) -> ModuleType:
+        module = loader()
+        sys.modules[name] = module
+        return module
+
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 try:
