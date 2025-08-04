@@ -8,6 +8,7 @@ from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
 from .attack_detection import AttackDetection
 from .audit_logger import AuditEvent, SecurityAuditLogger
+from .query_builder import SecureQueryBuilder, log_sanitized_query
 from .secrets_validator import SecretsValidator, register_health_endpoint
 from .secure_query_wrapper import (
     execute_secure_command,
@@ -56,6 +57,8 @@ __all__ = [
     "register_health_endpoint",
     "execute_secure_sql",
     "execute_secure_command",
+    "SecureQueryBuilder",
+    "log_sanitized_query",
     "SecurityAuditLogger",
     "AuditEvent",
 ]

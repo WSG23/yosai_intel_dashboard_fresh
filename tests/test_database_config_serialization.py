@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -66,6 +67,7 @@ def _load_database_config():
 
 
 DatabaseConfig = _load_database_config()
+TEST_PASSWORD = os.environ.get("DB_PASSWORD", os.urandom(16).hex())
 
 
 def test_database_config_round_trip():
@@ -75,7 +77,7 @@ def test_database_config_round_trip():
         port=5432,
         name="test",
         user="u",
-        password="pw",
+        password=TEST_PASSWORD,
     )
     cfg_dict = cfg.to_dict()
     new_cfg = DatabaseConfig.from_dict(cfg_dict)
@@ -83,7 +85,7 @@ def test_database_config_round_trip():
 
 
 def test_database_config_exclude_password():
-    cfg = DatabaseConfig(password="secret")
+    cfg = DatabaseConfig(password=TEST_PASSWORD)
     cfg_dict = cfg.to_dict(include_password=False)
     assert "password" not in cfg_dict
     new_cfg = DatabaseConfig.from_dict(cfg_dict)
@@ -92,7 +94,7 @@ def test_database_config_exclude_password():
 
 def test_database_config_encrypt_round_trip():
     key = Fernet.generate_key().decode()
-    cfg = DatabaseConfig(password="topsecret")
+    cfg = DatabaseConfig(password=TEST_PASSWORD)
     cfg_dict = cfg.to_dict(fernet_key=key)
     new_cfg = DatabaseConfig.from_dict(cfg_dict, fernet_key=key)
     assert new_cfg == cfg

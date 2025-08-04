@@ -23,7 +23,10 @@ except Exception:  # pragma: no cover
 
 def test_secrets_health_endpoint(monkeypatch):
     monkeypatch.setenv("YOSAI_ENV", "development")
-    monkeypatch.setenv("SECRET_KEY", "testkey")
+    monkeypatch.setenv(
+        "SECRET_KEY",
+        os.environ.get("SECRET_KEY", os.urandom(16).hex()),
+    )
     app = create_app(mode="simple")
     server = app.server
     rules = [r.rule for r in server.url_map.iter_rules()]

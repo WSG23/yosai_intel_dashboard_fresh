@@ -82,13 +82,12 @@ class AccessEventModel(BaseModel):
         if "access_result" in filters:
             parts.append("AND access_result = %s")
             params.append(filters["access_result"])
-        parts.append(
-            f"ORDER BY timestamp DESC LIMIT {DataProcessingLimits.DEFAULT_QUERY_LIMIT}"
-        )
+        parts.append("ORDER BY timestamp DESC LIMIT %s")
+        params.append(DataProcessingLimits.DEFAULT_QUERY_LIMIT)
         query = " ".join(parts)
 
         try:
-            df = execute_query(self.db, query, tuple(params) if params else None)
+            df = execute_query(self.db, query, tuple(params))
             return self._process_dataframe(df) if df is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error fetching access events: {e}")
