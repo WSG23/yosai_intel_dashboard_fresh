@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Iterable, Sequence, Tuple, Any, Set
+from typing import Iterable, Tuple, Any, Set
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -43,11 +44,22 @@ class SecureQueryBuilder:
     def build(
         self,
         sql: str,
-        params: Sequence[Any] | None = None,
-        *,
+        *tables_or_params: Any,
         timeout: int | None = None,
         logger: logging.Logger | None = None,
     ) -> Tuple[str, Sequence[Any] | None]:
+        params: Sequence[Any] | None = None
+        tables: Tuple[str, ...] = ()
+        if tables_or_params:
+            last = tables_or_params[-1]
+            if isinstance(last, Sequence) and not isinstance(last, (str, bytes)):
+                params = last
+                tables = tuple(tables_or_params[:-1])
+            else:
+                tables = tuple(tables_or_params)
+        if tables:
+            validated = tuple(_validate_identifier(t, self.allowed_tables) for t in tables)
+            sql = sql % validated
         tokens = sql.split()
         if len(tokens) > self.max_tokens:
             raise ValueError("Query exceeds complexity limits")
