@@ -26,7 +26,10 @@ def set_test_environment() -> None:
     """Populate minimal environment variables for tests."""
     os.environ.setdefault("YOSAI_ENV", "testing")
     os.environ.setdefault("FLASK_ENV", "testing")
-    os.environ.setdefault("SECRET_KEY", "testing")
+    os.environ.setdefault(
+        "SECRET_KEY",
+        os.environ.get("TEST_SECRET_KEY", os.urandom(32).hex()),
+    )
     # enable lightweight implementations for optional services
     os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 

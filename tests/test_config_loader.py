@@ -25,9 +25,14 @@ security:
     monkeypatch.setenv("SECRET_VAR", secret)
     monkeypatch.setenv("SECRET_KEY", secret)
     # required env vars
-    monkeypatch.setenv("DB_PASSWORD", "pwd")
+    monkeypatch.setenv(
+        "DB_PASSWORD", os.environ.get("DB_PASSWORD", os.urandom(16).hex())
+    )
     monkeypatch.setenv("AUTH0_CLIENT_ID", "cid")
-    monkeypatch.setenv("AUTH0_CLIENT_SECRET", "csecret")
+    monkeypatch.setenv(
+        "AUTH0_CLIENT_SECRET",
+        os.environ.get("AUTH0_CLIENT_SECRET", os.urandom(16).hex()),
+    )
     monkeypatch.setenv("AUTH0_DOMAIN", "domain")
     monkeypatch.setenv("AUTH0_AUDIENCE", "aud")
 
