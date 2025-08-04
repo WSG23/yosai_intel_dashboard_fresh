@@ -11,6 +11,7 @@ from security.unicode_security_validator import (
     UnicodeSecurityValidator as SecurityValidator,
 )
 
+from .behavioral_biometrics import verify_behavioral_biometrics
 from .jwt_service import (
     generate_refresh_jwt,
     generate_service_jwt,
@@ -100,6 +101,8 @@ def require_permission(permission: str) -> Callable:
             ]
             if permission not in perms:
                 return jsonify({"error": "forbidden"}), 403
+            if not verify_behavioral_biometrics(request):
+                return jsonify({"error": "biometric-anomaly"}), 403
             return func(*args, **kwargs)
 
         return wrapper
@@ -120,6 +123,8 @@ def require_role(role: str) -> Callable:
             ]
             if role not in roles:
                 return jsonify({"error": "forbidden"}), 403
+            if not verify_behavioral_biometrics(request):
+                return jsonify({"error": "biometric-anomaly"}), 403
             return func(*args, **kwargs)
 
         return wrapper
