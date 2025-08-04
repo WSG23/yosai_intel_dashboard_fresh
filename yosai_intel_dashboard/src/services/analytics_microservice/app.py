@@ -122,12 +122,15 @@ register_health_check(app, "database", _db_check)
 register_health_check(app, "message_broker", _broker_check)
 register_health_check(app, "external_api", _external_api_check)
 
-_SECRET_PATH = "secret/data/jwt#secret"
+JWT_SECRET_PATH_ENV = "JWT_SECRET_PATH"
 
 
 def _jwt_secret() -> str:
     """Return the current JWT secret."""
-    return get_secret(_SECRET_PATH)
+    secret_path = os.getenv(JWT_SECRET_PATH_ENV)
+    if not secret_path:
+        raise RuntimeError("JWT_SECRET_PATH not configured")
+    return get_secret(secret_path)
 
 
 def verify_token(authorization: str = Header("")) -> dict:

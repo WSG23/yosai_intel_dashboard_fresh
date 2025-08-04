@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from database.secure_exec import execute_command, execute_query
+from infrastructure.database.secure_query import SecureQueryBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -86,26 +87,32 @@ class ComplianceDatabase:
 
         return None
 
-    def validate_schema(self) -> Dict[str, Any]:
-        """
-        Validate that all required tables exist and have correct structure
+    def validate_schema(self, required_tables: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Validate that all required tables exist and have correct structure.
+
+        Args:
+            required_tables: Optional custom list of tables to validate. When
+                provided, values are validated using :class:`SecureQueryBuilder`.
 
         Returns:
             Dict containing validation results
         """
-        required_tables = [
-            "consent_log",
-            "dsar_requests",
-            "compliance_audit_log",
-            "data_retention_policies",
-        ]
+        if required_tables is None:
+            required_tables = [
+                "consent_log",
+                "dsar_requests",
+                "compliance_audit_log",
+                "data_retention_policies",
+            ]
 
+        builder = SecureQueryBuilder(allowed_tables=set(required_tables))
         results = {"valid": True, "missing_tables": [], "table_status": {}}
 
         for table in required_tables:
             try:
-                # Try to query table structure
-                sql = f"SELECT 1 FROM {table} LIMIT 1"
+                # Validate table name and build query safely
+                tbl = builder.table(table)
+                sql, _ = builder.build(f"SELECT 1 FROM {tbl} LIMIT 1", logger=logger)
 
                 if hasattr(self.db, "execute_query"):
                     execute_query(self.db, sql)
