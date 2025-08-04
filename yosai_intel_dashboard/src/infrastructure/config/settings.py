@@ -25,6 +25,7 @@ class DatabaseSettings:
     timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "30")))
 
 
+
 @dataclass
 class SecuritySettings:
     """Security related configuration."""
@@ -45,6 +46,7 @@ class SecuritySettings:
     )
 
 
+
 @dataclass
 class AnalyticsSettings:
     """Analytics service configuration."""
@@ -54,6 +56,18 @@ class AnalyticsSettings:
     enabled: bool = field(
         default_factory=lambda: os.getenv("ENABLE_ANALYTICS", "false").lower() == "true"
     )
+
+
+@dataclass
+class PerformanceSettings:
+    """Performance tuning configuration."""
+
+    ai_confidence_threshold: Optional[int]
+
+    @classmethod
+    def from_env(cls) -> "PerformanceSettings":
+        value = os.getenv("AI_CONFIDENCE_THRESHOLD")
+        return cls(ai_confidence_threshold=int(value) if value is not None else None)
 
 
 @dataclass
@@ -69,6 +83,7 @@ class AppSettings:
     name: str = field(
         default_factory=lambda: os.getenv("APP_NAME", "Yōsai Intel Dashboard")
     )
+
 
 
 class ConfigManager:
@@ -111,6 +126,7 @@ __all__ = [
     "DatabaseSettings",
     "SecuritySettings",
     "AnalyticsSettings",
+    "PerformanceSettings",
     "AppSettings",
     "ConfigManager",
     "get_settings",
