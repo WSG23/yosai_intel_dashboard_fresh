@@ -21,6 +21,7 @@ from dash import dcc, html
 
 from yosai_intel_dashboard.src.core.unicode import clean_unicode_surrogates
 from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 from .config import (
     AI_COLUMN_SERVICE_AVAILABLE,
@@ -112,14 +113,14 @@ class EnhancedFileProcessor:
                 except UnicodeDecodeError:
                     continue
                 except Exception as e:
-                    logger.error(f"Error with {encoding}: {str(e)}")
+                    logger.error(f"Error with {encoding}: {safe_text(e)}")
                     continue
 
             return None, "Could not decode file with any supported encoding"
 
         except Exception as e:
-            logger.error(f"File processing error: {str(e)}")
-            return None, f"Error processing file: {str(e)}"
+            logger.error(f"File processing error: {safe_text(e)}")
+            return None, f"Error processing file: {safe_text(e)}"
 
 
 class MultiBuildingDataEnhancer:
@@ -1072,7 +1073,7 @@ def handle_enhanced_column_mapping(n_clicks):
             ai_status = dbc.Alert(status_msg, color="info")
         except Exception as e:
             suggestions = {}
-            ai_status = dbc.Alert(f"AI service error: {str(e)}", color="warning")
+            ai_status = dbc.Alert(f"AI service error: {safe_text(e)}", color="warning")
     else:
         suggestions = {}
         ai_status = ""
@@ -1134,7 +1135,9 @@ def get_device_suggestions(df: pd.DataFrame) -> Tuple[Dict[str, Dict], Any]:
         ai_status = dbc.Alert(status_msg, color="info")
     except Exception as e:  # pragma: no cover - best effort
         suggestions = {}
-        ai_status = dbc.Alert(f"AI device service error: {str(e)}", color="warning")
+        ai_status = dbc.Alert(
+            f"AI device service error: {safe_text(e)}", color="warning"
+        )
     return suggestions, ai_status
 
 
@@ -1499,7 +1502,7 @@ def handle_enhanced_data_enhancement(n_clicks, *mapping_values):
         return status, preview, 100
 
     except Exception as e:
-        error_msg = dbc.Alert(f"Enhancement error: {str(e)}", color="danger")
+        error_msg = dbc.Alert(f"Enhancement error: {safe_text(e)}", color="danger")
         return error_msg, "", 80
 
 

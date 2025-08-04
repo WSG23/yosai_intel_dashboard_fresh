@@ -6,8 +6,13 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
 from database.secure_exec import execute_query
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+    cache_with_lock,
+)
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -69,8 +74,12 @@ class DatabaseAnalyticsService:
             breakdown = []
         else:
             total_events = int(df_summary["count"].sum())
-            success_events = df_summary[df_summary["status"] == "success"]["count"].sum()
-            success_rate = round((success_events / total_events) * 100, 2) if total_events else 0
+            success_events = df_summary[df_summary["status"] == "success"][
+                "count"
+            ].sum()
+            success_rate = (
+                round((success_events / total_events) * 100, 2) if total_events else 0
+            )
             breakdown = df_summary.to_dict("records")
 
         hourly_data = df_hourly.to_dict("records") if not df_hourly.empty else []
@@ -129,8 +138,8 @@ class DatabaseAnalyticsService:
             finally:
                 self.database_manager.release_connection(connection)
         except Exception as e:  # pragma: no cover - best effort
-            logger.error("Database analytics error: %s", e)
-            return {"status": "error", "message": str(e)}
+            logger.error("Database analytics error: %s", safe_text(e))
+            return {"status": "error", "message": safe_text(e)}
 
 
 __all__ = ["DatabaseAnalyticsService"]

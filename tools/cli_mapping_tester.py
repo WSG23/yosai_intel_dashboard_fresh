@@ -17,6 +17,8 @@ from typing import Any, Dict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 
 def setup_logging(verbose: bool = False) -> None:
     """Configure logging for CLI tool"""
@@ -91,8 +93,11 @@ async def test_mapping_service(
             }
 
         except Exception as ai_error:
-            logger.warning(f"AI suggestions failed: {ai_error}")
-            result["ai_suggestions"] = {"success": False, "error": str(ai_error)}
+            logger.warning(f"AI suggestions failed: {safe_text(ai_error)}")
+            result["ai_suggestions"] = {
+                "success": False,
+                "error": safe_text(ai_error),
+            }
 
         # Step 3: Test Device Learning Service
         logger.info("=== STEP 3: Device Learning Service ===")
@@ -128,8 +133,11 @@ async def test_mapping_service(
                 }
 
         except Exception as device_error:
-            logger.warning(f"Device learning failed: {device_error}")
-            result["device_learning"] = {"success": False, "error": str(device_error)}
+            logger.warning(f"Device learning failed: {safe_text(device_error)}")
+            result["device_learning"] = {
+                "success": False,
+                "error": safe_text(device_error),
+            }
 
         # Step 4: Test Mapping Application (if not suggest-only)
         if not suggest_only:
@@ -155,23 +163,23 @@ async def test_mapping_service(
                     }
 
             except Exception as app_error:
-                logger.warning(f"Mapping application failed: {app_error}")
+                logger.warning(f"Mapping application failed: {safe_text(app_error)}")
                 result["mapping_application"] = {
                     "success": False,
-                    "error": str(app_error),
+                    "error": safe_text(app_error),
                 }
 
         logger.info("=== MAPPING SERVICE PIPELINE COMPLETE ===")
         return result
 
     except Exception as e:
-        logger.error(f"Mapping service pipeline failed: {str(e)}")
+        logger.error(f"Mapping service pipeline failed: {safe_text(e)}")
         if verbose:
             logger.error(traceback.format_exc())
 
         return {
             "success": False,
-            "error": str(e),
+            "error": safe_text(e),
             "error_type": type(e).__name__,
             "file_path": file_path,
             "traceback": traceback.format_exc() if verbose else None,

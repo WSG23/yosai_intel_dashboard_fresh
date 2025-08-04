@@ -12,9 +12,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 # Apply callback patch first
 try:
-    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks as CallbackManager
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks as CallbackManager,
+    )
 
     if hasattr(CallbackManager, "handle_register") and not hasattr(
         CallbackManager, "register_handler"
@@ -22,7 +26,7 @@ try:
         CallbackManager.register_handler = CallbackManager.handle_register
         print("✅ Callback patch applied")
 except Exception as e:
-    print(f"⚠️  Callback patch failed: {e}")
+    print(f"⚠️  Callback patch failed: {safe_text(e)}")
 
 
 async def test_analytics_with_fix():
@@ -31,7 +35,9 @@ async def test_analytics_with_fix():
 
         import pandas as pd
 
-        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+            AnalyticsService,
+        )
 
         # Load the Enhanced Security Demo data
         parquet_path = Path("temp/uploaded_data/Enhanced_Security_Demo.csv.parquet")
@@ -52,8 +58,8 @@ async def test_analytics_with_fix():
             print(f"Health check: {health}")
 
         except Exception as e:
-            print(f"❌ AnalyticsService initialization failed: {e}")
-            return {"success": False, "error": str(e)}
+            print(f"❌ AnalyticsService initialization failed: {safe_text(e)}")
+            return {"success": False, "error": safe_text(e)}
 
         result = {"success": True, "tests": {}}
 
@@ -64,8 +70,11 @@ async def test_analytics_with_fix():
             result["tests"]["dashboard_summary"] = {"success": True, "result": summary}
             print(f"✅ Dashboard summary: {summary.get('status', 'unknown')}")
         except Exception as e:
-            result["tests"]["dashboard_summary"] = {"success": False, "error": str(e)}
-            print(f"❌ Dashboard summary failed: {e}")
+            result["tests"]["dashboard_summary"] = {
+                "success": False,
+                "error": safe_text(e),
+            }
+            print(f"❌ Dashboard summary failed: {safe_text(e)}")
 
         # Test 2: Access Pattern Analysis
         print("\n--- Access Pattern Analysis ---")
@@ -81,8 +90,11 @@ async def test_analytics_with_fix():
                 f"✅ Access patterns found: {len(access_patterns.get('patterns', []))}"
             )
         except Exception as e:
-            result["tests"]["access_patterns"] = {"success": False, "error": str(e)}
-            print(f"❌ Access patterns failed: {e}")
+            result["tests"]["access_patterns"] = {
+                "success": False,
+                "error": safe_text(e),
+            }
+            print(f"❌ Access patterns failed: {safe_text(e)}")
 
         # Test 3: Anomaly Detection
         print("\n--- Anomaly Detection ---")
@@ -96,8 +108,11 @@ async def test_analytics_with_fix():
                 f"✅ Anomalies detected: {len(anomalies) if isinstance(anomalies, list) else 'N/A'}"
             )
         except Exception as e:
-            result["tests"]["anomaly_detection"] = {"success": False, "error": str(e)}
-            print(f"❌ Anomaly detection failed: {e}")
+            result["tests"]["anomaly_detection"] = {
+                "success": False,
+                "error": safe_text(e),
+            }
+            print(f"❌ Anomaly detection failed: {safe_text(e)}")
 
         # Test 4: Data Processing
         print("\n--- Data Processing ---")
@@ -109,18 +124,21 @@ async def test_analytics_with_fix():
             }
             print(f"✅ Data processed: {len(processed)} rows")
         except Exception as e:
-            result["tests"]["data_processing"] = {"success": False, "error": str(e)}
-            print(f"❌ Data processing failed: {e}")
+            result["tests"]["data_processing"] = {
+                "success": False,
+                "error": safe_text(e),
+            }
+            print(f"❌ Data processing failed: {safe_text(e)}")
 
         print("\n=== ANALYTICS TESTING WITH FIX COMPLETE ===")
         return result
 
     except Exception as e:
-        print(f"Analytics testing failed: {e}")
+        print(f"Analytics testing failed: {safe_text(e)}")
         import traceback
 
         traceback.print_exc()
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": safe_text(e)}
 
 
 def main():

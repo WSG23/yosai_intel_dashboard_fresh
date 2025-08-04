@@ -13,6 +13,8 @@ from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadCon
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 
 async def test_analytics_with_mappings(verbose: bool = False) -> dict:
     try:
@@ -22,9 +24,15 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
         # Process the parquet file using pandas directly
         import pandas as pd
 
-        from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
-        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
-        from yosai_intel_dashboard.src.services.device_learning_service import DeviceLearningService
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+            AnalyticsService,
+        )
+        from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+            UploadAnalyticsProcessor,
+        )
+        from yosai_intel_dashboard.src.services.device_learning_service import (
+            DeviceLearningService,
+        )
 
         parquet_path = (
             Path(UploadConfig().folder) / "Enhanced_Security_Demo.csv.parquet"
@@ -94,8 +102,8 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
                     )  # Show first 10
 
                 except Exception as e:
-                    result["analytics_service"] = {"error": str(e)}
-                    print(f"AnalyticsService failed: {e}")
+                    result["analytics_service"] = {"error": safe_text(e)}
+                    print(f"AnalyticsService failed: {safe_text(e)}")
 
                 # Test UploadAnalyticsProcessor
                 print("\n--- Testing UploadAnalyticsProcessor ---")
@@ -124,12 +132,12 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
                                 f"DataFrame analysis completed: {type(analysis_result)}"
                             )
                         except Exception as e:
-                            result["upload_analytics"]["analysis_error"] = str(e)
-                            print(f"DataFrame analysis failed: {e}")
+                            result["upload_analytics"]["analysis_error"] = safe_text(e)
+                            print(f"DataFrame analysis failed: {safe_text(e)}")
 
                 except Exception as e:
-                    result["upload_analytics"] = {"error": str(e)}
-                    print(f"UploadAnalyticsProcessor failed: {e}")
+                    result["upload_analytics"] = {"error": safe_text(e)}
+                    print(f"UploadAnalyticsProcessor failed: {safe_text(e)}")
 
                 # Test analytics functions from data_processing.analytics_engine
                 print("\n--- Testing analytics engine functions ---")
@@ -147,8 +155,8 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
                     )
 
                 except Exception as e:
-                    result["analytics_engine_functions"] = {"error": str(e)}
-                    print(f"Analytics engine functions failed: {e}")
+                    result["analytics_engine_functions"] = {"error": safe_text(e)}
+                    print(f"Analytics engine functions failed: {safe_text(e)}")
 
                 return result
 
@@ -164,11 +172,11 @@ async def test_analytics_with_mappings(verbose: bool = False) -> dict:
             }
 
     except Exception as e:
-        print(f"Error testing analytics: {e}")
+        print(f"Error testing analytics: {safe_text(e)}")
         import traceback
 
         traceback.print_exc()
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": safe_text(e)}
 
 
 def main():

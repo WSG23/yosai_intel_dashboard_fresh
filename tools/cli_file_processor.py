@@ -18,6 +18,8 @@ from typing import Any, Dict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 
 def setup_logging(verbose: bool = False) -> None:
     """Configure logging for CLI tool"""
@@ -130,13 +132,13 @@ def process_file_simple(file_path: str, verbose: bool = False) -> Dict[str, Any]
         return result
 
     except Exception as e:
-        logger.error(f"Error processing file: {str(e)}")
+        logger.error(f"Error processing file: {safe_text(e)}")
         if verbose:
             logger.error(traceback.format_exc())
 
         return {
             "success": False,
-            "error": str(e),
+            "error": safe_text(e),
             "error_type": type(e).__name__,
             "file_path": file_path,
             "traceback": traceback.format_exc() if verbose else None,

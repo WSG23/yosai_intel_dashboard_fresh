@@ -8,22 +8,29 @@ import io
 import logging
 from typing import Any, Dict, Tuple
 
-
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_CHUNK_SIZE
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
 from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 
 # Core processing imports only - NO UI COMPONENTS
-from yosai_intel_dashboard.src.core.unicode import safe_format_number, safe_unicode_decode, sanitize_for_utf8
+from yosai_intel_dashboard.src.core.unicode import (
+    safe_format_number,
+    safe_unicode_decode,
+    sanitize_for_utf8,
+)
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DEFAULT_CHUNK_SIZE,
+)
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
 from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+    dataframe_from_bytes,
     decode_contents,
     validate_metadata,
-    dataframe_from_bytes,
 )
-
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 logger = logging.getLogger(__name__)
 
@@ -99,9 +106,14 @@ def process_uploaded_file(
         logger.error(
             "File processing error for %s: %s",
             safe_encode_text(filename),
-            e,
+            safe_text(e),
         )
-        return {"status": "error", "error": str(e), "data": None, "filename": filename}
+        return {
+            "status": "error",
+            "error": safe_text(e),
+            "data": None,
+            "filename": filename,
+        }
 
 
 def create_file_preview(
