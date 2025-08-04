@@ -23,6 +23,29 @@ jobs:
         run: |
           ./scripts/run_tests_and_smoke.sh
 
+  sql-scan:
+    needs: build-test
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Check for unsafe SQL strings
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.py')
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Scanning changed files:"
+            echo "$CHANGED_FILES"
+            PYTHONPATH=. python scripts/sql_migration_report.py $CHANGED_FILES
+            PYTHONPATH=. python scripts/detect_sql_strings.py $CHANGED_FILES
+          else
+            echo "No Python files changed."
+          fi
+
   profile-critical:
     needs: build-test
     runs-on: ubuntu-latest

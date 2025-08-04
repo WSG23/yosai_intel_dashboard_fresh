@@ -83,16 +83,18 @@ def main() -> int:
                 for lineno, kind in matches:
                     report.append((path, lineno, kind))
 
+    exit_code = 0
     if report:
         for path, lineno, kind in report:
             print(f"{path}:{lineno}: {kind} SQL construction")
+        exit_code = 1
     else:
         print("No SQL interpolation patterns found.")
 
     if args.rewrite:
         print("--rewrite not implemented; manual review needed.")
 
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":
