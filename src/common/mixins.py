@@ -9,8 +9,8 @@ from typing import Any, Dict, Protocol, Type, TypeVar, runtime_checkable
 class Loggable(Protocol):
     """Protocol for objects capable of logging messages."""
 
-    def log(self, message: str) -> None:
-        """Log ``message`` to the configured logger."""
+    def log(self, message: str, level: int = logging.INFO) -> None:
+        """Log ``message`` at ``level`` to the configured logger."""
         ...
 
 
@@ -39,9 +39,9 @@ class LoggingMixin:
         """Return a module-level logger named for the concrete class."""
         return logging.getLogger(self.__class__.__name__)
 
-    def log(self, message: str) -> None:
-        """Log ``message`` with ``INFO`` severity."""
-        self.logger.info(message)
+    def log(self, message: str, level: int = logging.INFO) -> None:
+        """Log ``message`` using :func:`logging.Logger.log`."""
+        self.logger.log(level, message)
 
 
 class SerializationMixin:
