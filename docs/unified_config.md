@@ -32,3 +32,12 @@ When loading configuration directly via `UnifiedLoader` the loader applies
 message. This mirrors the behaviour of the traditional dataclass configuration
 pipeline.
 
+## Accessing configuration in services
+
+Services should obtain settings through the helper functions exposed by the
+configuration module rather than reading environment variables directly. Use
+`get_app_config()` for application level settings and `get_database_config()`
+for database connection details. These configuration objects can then be
+passed into service constructors, keeping configuration concerns separated from
+business logic and making the codebase easier to test.
+
