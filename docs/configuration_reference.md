@@ -25,7 +25,7 @@ protobuf schema and the `YosaiConfig` loader.
 | `user` | `user` | `DB_USER` |
 | `password` | `` | `DB_PASSWORD` |
 | `url` | `` | `DATABASE_URL` |
-| `connection_timeout` | `30` | `` |
+| `connection_timeout` | `30` | `DB_TIMEOUT` |
 | `initial_pool_size` | `10` | `` |
 | `max_pool_size` | `20` | `` |
 | `async_pool_min_size` | `10` | `` |

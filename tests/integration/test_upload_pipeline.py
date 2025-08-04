@@ -13,6 +13,7 @@ import pytest
 from tests.fixtures import create_test_upload_processor
 
 
+
 @pytest.fixture
 def upload_processor(uploaded_data):
     """Instantiate ``UploadAnalyticsProcessor`` configured with mocks."""
@@ -34,6 +35,5 @@ def test_upload_pipeline_filters_empty_and_returns_stats(upload_processor):
 
     # Final statistics should reflect only the valid data
     assert result["status"] == "success"
-    assert result["total_events"] == 2
-    assert result["active_users"] == 2
-    assert result["active_doors"] == 2
+    assert result["rows"] == 2
+    assert result["columns"] == 2

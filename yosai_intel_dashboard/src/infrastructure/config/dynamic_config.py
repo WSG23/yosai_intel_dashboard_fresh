@@ -19,6 +19,7 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
+from .settings import get_settings
 from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
     ConfigurationMixin,
 )
@@ -138,7 +139,8 @@ class DynamicConfigManager(ConfigurationMixin, BaseConfigLoader):
                 RateLimitConfig(self.security.rate_limit_requests, self.security.rate_limit_window_minutes, 0),
             ).window_minutes = int(rate_limit_window)
 
-        max_upload = os.getenv("MAX_UPLOAD_MB")
+        settings = get_settings(reload=True)
+        max_upload = settings.security.max_upload_mb
         if max_upload is not None:
             value = int(max_upload)
             if value < 50:  # Prevent accidentally setting too small
@@ -160,7 +162,7 @@ class DynamicConfigManager(ConfigurationMixin, BaseConfigLoader):
         if db_pool is not None:
             self.performance.db_pool_size = int(db_pool)
 
-        ai_threshold = os.getenv("AI_CONFIDENCE_THRESHOLD")
+        ai_threshold = settings.performance.ai_confidence_threshold
         if ai_threshold is not None:
             self.performance.ai_confidence_threshold = int(ai_threshold)
 
@@ -183,7 +185,7 @@ class DynamicConfigManager(ConfigurationMixin, BaseConfigLoader):
                 value = 500
             self.performance.memory_usage_threshold_mb = value
 
-        db_timeout = os.getenv("DB_TIMEOUT")
+        db_timeout = settings.database.connection_timeout
         if db_timeout is not None:
             self.database.connection_timeout_seconds = int(db_timeout)
 
@@ -368,17 +370,22 @@ dynamic_config = DynamicConfigManager()
 
 def diagnose_upload_config() -> None:
     """Diagnostic function to check upload configuration"""
-    import os
+    settings = get_settings(reload=True)
 
     logger.info("=== Upload Configuration Diagnosis ===")
-    logger.info("Environment MAX_UPLOAD_MB: %s", os.getenv("MAX_UPLOAD_MB", "Not Set"))
+    env_upload = (
+        settings.security.max_upload_mb
+        if settings.security.max_upload_mb is not None
+        else "Not Set"
+    )
+    logger.info("Environment MAX_UPLOAD_MB: %s", env_upload)
     logger.info("Dynamic Config max_upload_mb: %sMB", dynamic_config.security.max_upload_mb)
     logger.info("Upload folder: %s", dynamic_config.upload.folder)
     logger.info("Max file size: %sMB", dynamic_config.upload.max_file_size_mb)
     logger.info("Calculated max bytes: %s", f"{dynamic_config.get_max_upload_size_bytes():,}")
     logger.info("Supports 50MB+ files: %s", dynamic_config.validate_large_file_support())
 
-    env_value = os.getenv("MAX_UPLOAD_MB")
+    env_value = settings.security.max_upload_mb
     if env_value and int(env_value) < 50:
         logger.warning(
             "\u26a0\ufe0f  WARNING: Environment variable MAX_UPLOAD_MB=%s is too small!",

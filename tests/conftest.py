@@ -14,6 +14,7 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 from typing import Callable, Iterator, List
+from types import ModuleType, SimpleNamespace
 
 # Make project package importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +35,7 @@ except Exception:  # pragma: no cover - best effort
         module = loader()
         sys.modules[name] = module
         return module
+
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 try:

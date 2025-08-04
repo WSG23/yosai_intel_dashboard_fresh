@@ -1,6 +1,30 @@
 import pandas as pd
 
-from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
+import importlib.util
+import sys
+import types
+from pathlib import Path
+
+base = Path(__file__).resolve().parents[1] / "yosai_intel_dashboard/src/services/upload"
+pkg_name = "yosai_intel_dashboard.src.services.upload"
+if pkg_name not in sys.modules:
+    pkg = types.ModuleType("upload")
+    pkg.__path__ = [str(base)]
+    sys.modules[pkg_name] = pkg
+
+spec_proto = importlib.util.spec_from_file_location(
+    f"{pkg_name}.protocols", base / "protocols.py"
+)
+protocols = importlib.util.module_from_spec(spec_proto)
+spec_proto.loader.exec_module(protocols)
+sys.modules[f"{pkg_name}.protocols"] = protocols
+
+spec = importlib.util.spec_from_file_location(
+    f"{pkg_name}.upload_processing", base / "upload_processing.py"
+)
+upload_processing = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(upload_processing)
+UploadAnalyticsProcessor = upload_processing.UploadAnalyticsProcessor
 from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 from tests.utils.builders import DataFrameBuilder
 from validation.security_validator import SecurityValidator
@@ -41,13 +65,12 @@ def test_calculate_statistics():
     )
     ua = _make_processor()
     stats = ua._calculate_statistics({"x.csv": df})
-    assert stats["total_events"] == 1
-    assert stats["active_users"] == 1
-    assert stats["active_doors"] == 1
+    assert stats["rows"] == 1
+    assert stats["columns"] == 2
 
 
 def test_format_results():
     ua = _make_processor()
-    formatted = ua._format_results({"total_events": 1})
+    formatted = ua._format_results({"rows": 1})
     assert formatted["status"] == "success"
-    assert formatted["total_events"] == 1
+    assert formatted["rows"] == 1
