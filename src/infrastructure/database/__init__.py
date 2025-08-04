@@ -1,5 +1,6 @@
-"""Simple database utilities."""
+"""Database infrastructure utilities."""
 
-from .factory import create_manager, create_from_env
+from .manager import DatabaseConfig, DatabaseManager
 
-__all__ = ["create_manager", "create_from_env"]
+__all__ = ["DatabaseConfig", "DatabaseManager"]
+
