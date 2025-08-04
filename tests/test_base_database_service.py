@@ -18,13 +18,17 @@ def _install_fake_module(monkeypatch, name, factory_attr):
 
 def test_postgresql_connection(monkeypatch):
     conn = _install_fake_module(monkeypatch, "psycopg2", "connect")
-    service = BaseDatabaseService(DatabaseSettings(type="postgresql"))
+    service = BaseDatabaseService(
+        DatabaseSettings(type="postgresql", user="user", password="pass")
+    )
     assert service.connection is conn
 
 
 def test_mysql_connection(monkeypatch):
     conn = _install_fake_module(monkeypatch, "pymysql", "connect")
-    service = BaseDatabaseService(DatabaseSettings(type="mysql"))
+    service = BaseDatabaseService(
+        DatabaseSettings(type="mysql", user="user", password="pass")
+    )
     assert service.connection is conn
 
 
@@ -33,7 +37,9 @@ def test_mongodb_connection(monkeypatch):
     conn = object()
     module.MongoClient = lambda *a, **k: conn
     safe_import('pymongo', module)
-    service = BaseDatabaseService(DatabaseSettings(type="mongodb"))
+    service = BaseDatabaseService(
+        DatabaseSettings(type="mongodb", user="user", password="pass")
+    )
     assert service.connection is conn
 
 
@@ -42,10 +48,14 @@ def test_redis_connection(monkeypatch):
     conn = object()
     module.Redis = lambda *a, **k: conn
     safe_import('redis', module)
-    service = BaseDatabaseService(DatabaseSettings(type="redis"))
+    service = BaseDatabaseService(
+        DatabaseSettings(type="redis", user="user", password="pass")
+    )
     assert service.connection is conn
 
 
 def test_unsupported_type():
     with pytest.raises(ValueError):
-        BaseDatabaseService(DatabaseSettings(type="invalid"))
+        BaseDatabaseService(
+            DatabaseSettings(type="invalid", user="user", password="pass")
+        )
