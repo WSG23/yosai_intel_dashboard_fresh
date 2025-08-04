@@ -4,16 +4,19 @@ Comprehensive CSS Quality Assurance & Performance Testing Suite
 for Yōsai Intel Dashboard with strict type safety
 """
 
+from __future__ import annotations
+
 import json
 import logging
-import os
 import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Union
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    dynamic_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,10 @@ try:
     import cssutils
 
     # cssutils expects string level, not integer constant
-    cssutils.log.setLevel("ERROR")  # Use string instead of logging.ERROR constant
+    try:
+        cssutils.log.setLevel("ERROR")  # Use string instead of logging.ERROR constant
+    except AttributeError:  # pragma: no cover - handle unexpected api
+        pass
 except ImportError:
     logger.info("Warning: cssutils not available - some CSS analysis features disabled")
     cssutils = None
@@ -129,7 +135,7 @@ class CSSQualityAnalyzer:
         processed_files = set()
 
         def calculate_size(css_file: Path) -> None:
-            nonlocal total_size, processed_files
+            nonlocal total_size
 
             if css_file in processed_files:
                 return
@@ -170,7 +176,7 @@ class CSSQualityAnalyzer:
             "KB",
             status,
             dynamic_config.css.bundle_threshold_kb,
-            f"Total CSS bundle size including all imports",
+            "Total CSS bundle size including all imports",
         )
 
     def analyze_design_token_usage(self) -> CSSMetric:
@@ -229,7 +235,7 @@ class CSSQualityAnalyzer:
             "%",
             status,
             90,
-            f"Percentage of values using design tokens vs hardcoded values",
+            "Percentage of values using design tokens vs hardcoded values",
         )
 
     def analyze_selector_specificity(self) -> CSSMetric:
@@ -303,7 +309,7 @@ class CSSQualityAnalyzer:
             "%",
             status,
             90,
-            f"Percentage of selectors with healthy specificity (< 30)",
+            "Percentage of selectors with healthy specificity (< 30)",
         )
 
     def check_accessibility_compliance(self) -> CSSMetric:
@@ -354,7 +360,7 @@ class CSSQualityAnalyzer:
             "%",
             status,
             90,
-            f"CSS accessibility compliance score",
+            "CSS accessibility compliance score",
         )
 
     def run_full_analysis(self) -> Dict[str, Any]:
@@ -441,13 +447,14 @@ class CSSOptimizer:
                 else:
                     remaining_lines.append(line)
 
-            bundle = "".join(remaining_lines)
+            parts = ["".join(remaining_lines)]
             for rel in imports:
                 try:
                     path = main_css.parent / rel
-                    bundle += path.read_text(encoding="utf-8")
+                    parts.append(path.read_text(encoding="utf-8"))
                 except Exception as exc:
                     logger.error(f"❌ Error reading {path}: {exc}")
+            bundle = "".join(parts)
 
             out = self.output_dir / "main.min.css"
             tmp = out.with_suffix(".tmp.css")
@@ -572,7 +579,7 @@ def print_report_summary(report: Dict[str, Any]) -> None:
 
     logger.info(f"\n📅 Generated: {report['timestamp']}")
 
-    logger.info(f"\n📏 QUALITY METRICS:")
+    logger.info("\n📏 QUALITY METRICS:")
     for metric in report["quality_metrics"]:
         status_emoji = {
             "excellent": "🟢",
@@ -583,10 +590,12 @@ def print_report_summary(report: Dict[str, Any]) -> None:
         }.get(metric["status"], "⚪")
 
         logger.info(
-            f"  {status_emoji} {metric['name'].replace('_', ' ').title()}: {metric['value']}{metric['unit']}"
+            f"  {status_emoji} "
+            f"{metric['name'].replace('_', ' ').title()}: "
+            f"{metric['value']}{metric['unit']}"
         )
 
-    logger.info(f"\n💡 RECOMMENDATIONS:")
+    logger.info("\n💡 RECOMMENDATIONS:")
     for i, rec in enumerate(report["recommendations"], 1):
         logger.info(f"  {i}. {rec}")
 
