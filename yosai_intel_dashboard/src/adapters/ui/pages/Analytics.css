@@ -1,7 +1,23 @@
+:root {
+  --analytics-max-width: 75rem;
+  --analytics-padding: clamp(1rem, 5vw, 2rem);
+  --analytics-bg: var(--color-background);
+  --analytics-text: var(--color-text-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --analytics-bg: #1e1e1e;
+    --analytics-text: #f5f5f5;
+  }
+}
+
 .analytics-container {
-  padding: var(--spacing-lg);
-  max-width: 1200px;
+  padding: var(--analytics-padding);
+  max-width: var(--analytics-max-width);
   margin: 0 auto;
+  background-color: var(--analytics-bg);
+  color: var(--analytics-text);
 }
 
 .analytics-header {
@@ -12,8 +28,8 @@
 }
 
 .analytics-header h1 {
-  color: var(--color-text-primary);
-  font-size: 2rem;
+  color: var(--analytics-text);
+  font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 600;
 }
 
