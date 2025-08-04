@@ -1,13 +1,19 @@
-"""Wrapper exposing :mod:`yosai_intel_dashboard.src.adapters.api`."""
+"""Wrapper exposing :mod:`yosai_intel_dashboard.src.adapters.api`.
+
+This module previously used ``import *`` to mirror all contents of
+``yosai_intel_dashboard.src.adapters.api``. To maintain a consistent coding
+style and avoid wildcard imports, we now load the target module explicitly and
+re-export it via ``sys.modules``. Importers of ``api`` will transparently receive
+the original adapter module without polluting this module's namespace.
+"""
+
+from __future__ import annotations
 
 import sys
+from importlib import import_module
 
-from yosai_intel_dashboard.src.adapters.api import *
+_api = import_module("yosai_intel_dashboard.src.adapters.api")
 
-# If app exists in the module, make it available
-try:
-    from yosai_intel_dashboard.src.adapters.api import app  # type: ignore
-except Exception:
-    pass
+# Re-export the adapter module so ``import api`` works as before.
+sys.modules[__name__] = _api
 
-sys.modules[__name__] = sys.modules["yosai_intel_dashboard.src.adapters.api"]
