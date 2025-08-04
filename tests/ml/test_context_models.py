@@ -47,10 +47,29 @@ def test_anomaly_detector_dynamic_threshold():
 
 def test_anomaly_detector_accounts_for_environment():
     train_ts = pd.date_range('2024-01-01', periods=5, freq='D')
-    train_df = pd.DataFrame({'timestamp': train_ts, 'value': 1.0, 'event_density': 0.0})
-    detector = AnomalyDetector(factor=2.0, context_weights={'event_density': 2.0}).fit(train_df)
+    train_df = pd.DataFrame(
+        {
+            'timestamp': train_ts,
+            'value': 1.0,
+            'event_density': 0.0,
+            'social_sentiment': 0.0,
+            'temperature': 20.0,
+        }
+    )
+    detector = AnomalyDetector(
+        factor=2.0,
+        context_weights={'event_density': 2.0, 'social_sentiment': 1.0, 'temperature': 0.5},
+    ).fit(train_df)
 
-    test_df = pd.DataFrame({'timestamp': [pd.Timestamp('2024-01-06')], 'value': [5.0], 'event_density': [3.0]})
+    test_df = pd.DataFrame(
+        {
+            'timestamp': [pd.Timestamp('2024-01-06')],
+            'value': [5.0],
+            'event_density': [3.0],
+            'social_sentiment': [2.0],
+            'temperature': [30.0],
+        }
+    )
     preds = detector.predict(test_df)
     assert not preds['is_anomaly'].iloc[0]
 

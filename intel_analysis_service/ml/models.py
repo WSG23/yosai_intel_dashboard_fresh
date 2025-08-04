@@ -19,6 +19,7 @@ class AnomalyDetector:
 
     factor: float = 3.0
     context_weights: Dict[str, float] | None = None
+    context_means: Dict[str, float] | None = None
     thresholds: Dict[int, float] | None = None
     global_mean: float | None = None
     global_std: float | None = None
@@ -35,6 +36,15 @@ class AnomalyDetector:
             month: float(g.mean() + self.factor * g.std(ddof=0))
             for month, g in grouped
         }
+
+        if self.context_weights:
+            self.context_means = {
+                col: float(df[col].mean())
+                for col in self.context_weights
+                if col in df
+            }
+        else:
+            self.context_means = {}
         return self
 
     def predict(self, df: pd.DataFrame, value_col: str = "value", timestamp_col: str = "timestamp") -> pd.DataFrame:
@@ -49,7 +59,8 @@ class AnomalyDetector:
         if self.context_weights:
             for col, weight in self.context_weights.items():
                 if col in df:
-                    context += df[col] * weight
+                    base = (self.context_means or {}).get(col, 0.0)
+                    context += (df[col] - base) * weight
         thresholds = thresholds + context
 
         values = df[value_col]
