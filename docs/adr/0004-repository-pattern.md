@@ -11,8 +11,18 @@ Recent updates added repositories for file system and database access:
 - ``FeatureFlagCacheRepository`` persists feature flag caches.
 - ``FileRepository`` handles file reads and writes for export services.
 - ``DBHealthRepository`` encapsulates database health checks.
+- ``RequirementsRepository`` loads package specifications for dependency
+  verification.
 
 Services receive these repositories via constructor injection, enabling easy mocking in unit tests.
+
+Example usage::
+
+    from repository.requirements import FileRequirementsRepository
+    from utils.dependency_checker import DependencyChecker
+
+    checker = DependencyChecker(FileRequirementsRepository(Path("requirements.txt")))
+    checker.verify_requirements()
 
 ## Consequences
 - Business logic remains storage agnostic.
