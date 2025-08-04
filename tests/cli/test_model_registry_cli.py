@@ -4,7 +4,7 @@ import types
 from pathlib import Path
 
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Dynamically load the ModelRegistry implementation while providing lightweight
 # stubs for heavy optional dependencies. ``tests.conftest`` already injects

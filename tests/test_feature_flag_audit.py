@@ -4,7 +4,7 @@ import sys
 import types
 from datetime import datetime, timezone
 
-from tests.import_helpers import safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 class DummyAuditLogger:

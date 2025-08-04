@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Dynamically import AsyncFileProcessor to avoid heavy service deps
 services_root = Path(__file__).resolve().parents[2] / "services"

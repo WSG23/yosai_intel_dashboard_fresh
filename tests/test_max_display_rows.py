@@ -6,7 +6,7 @@ import pandas as pd
 
 from config import create_config_manager
 from tests.config import FakeConfiguration
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 fake_cfg = FakeConfiguration()
 from yosai_intel_dashboard.src.infrastructure.config.constants import MAX_DISPLAY_ROWS

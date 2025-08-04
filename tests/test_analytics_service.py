@@ -1,6 +1,6 @@
 import sys
 import types
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 safe_import('flask_caching', types.SimpleNamespace(Cache=object))
 if "dask" not in sys.modules:

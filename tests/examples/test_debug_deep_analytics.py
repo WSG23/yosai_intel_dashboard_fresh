@@ -1,5 +1,5 @@
 from examples.debug_deep_analytics import (
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
     check_upload_store,
     create_test_dataset,
     find_hardcoded_values,

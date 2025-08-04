@@ -7,7 +7,7 @@ import types
 
 import pandas as pd
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Stub heavy optional dependencies before importing the services package
 safe_import('scipy', types.ModuleType("scipy"))

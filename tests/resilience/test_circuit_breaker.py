@@ -4,7 +4,7 @@ import sys
 import types
 
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 services_path = pathlib.Path(__file__).resolve().parents[2] / "services"
 stub_pkg = types.ModuleType("services")
