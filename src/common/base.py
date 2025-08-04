@@ -1,4 +1,4 @@
-"""Base building block for application components."""
+"""Base building block for application components (see ADR 0001)."""
 
 from __future__ import annotations
 

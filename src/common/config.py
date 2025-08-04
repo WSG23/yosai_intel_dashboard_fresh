@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Lightweight configuration service.
+"""Lightweight configuration service (see ADR 0002).
 
 The :class:`ConfigService` loads configuration values from the environment
 (or a provided mapping) and exposes them as read‑only properties.  It acts as a
@@ -9,10 +9,10 @@ central place for runtime settings used by small demo components within the
 settings during tests.
 """
 
+import os
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Mapping, Protocol
-import os
 
 
 class ConfigProvider(Protocol):

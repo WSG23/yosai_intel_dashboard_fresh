@@ -1,4 +1,5 @@
-"""Cross-cutting mixins for logging and serialization concerns."""
+"""Cross-cutting mixins for logging and serialization concerns (see ADR 0005)."""
+
 from __future__ import annotations
 
 import logging

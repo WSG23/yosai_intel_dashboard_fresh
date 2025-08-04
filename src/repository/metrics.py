@@ -1,9 +1,11 @@
-"""Metric repository abstractions and in-memory implementation."""
+"""Metric repository abstractions and in-memory implementation (see ADR 0004)."""
+
 from __future__ import annotations
 
-from typing import Any, Dict, Protocol, Callable
-from cachetools import TTLCache
 from threading import RLock
+from typing import Any, Callable, Dict, Protocol
+
+from cachetools import TTLCache
 
 
 class MetricsRepository(Protocol):
@@ -32,8 +34,15 @@ class InMemoryMetricsRepository:
         feature_importances: Dict[str, Any] | None = None,
     ) -> None:
         self._performance = performance or {"throughput": 100, "latency_ms": 50}
-        self._drift = drift or {"prediction_drift": 0.02, "feature_drift": {"age": 0.01}}
-        self._feature_importances = feature_importances or {"age": 0.3, "income": 0.2, "score": 0.1}
+        self._drift = drift or {
+            "prediction_drift": 0.02,
+            "feature_drift": {"age": 0.01},
+        }
+        self._feature_importances = feature_importances or {
+            "age": 0.3,
+            "income": 0.2,
+            "score": 0.1,
+        }
 
     def get_performance_metrics(self) -> Dict[str, Any]:
         return self._performance
@@ -55,7 +64,9 @@ class InMemoryMetricsRepository:
 class CachedMetricsRepository:
     """Wrap another repository and cache query results for a TTL."""
 
-    def __init__(self, repo: MetricsRepository, ttl: int = 60, maxsize: int = 128) -> None:
+    def __init__(
+        self, repo: MetricsRepository, ttl: int = 60, maxsize: int = 128
+    ) -> None:
         self._repo = repo
         self._cache: TTLCache[str, Dict[str, Any]] = TTLCache(maxsize=maxsize, ttl=ttl)
         self._lock = RLock()
@@ -76,7 +87,9 @@ class CachedMetricsRepository:
         return self._get_or_set("drift", self._repo.get_drift_data)
 
     def get_feature_importances(self) -> Dict[str, Any]:
-        return self._get_or_set("feature_importance", self._repo.get_feature_importances)
+        return self._get_or_set(
+            "feature_importance", self._repo.get_feature_importances
+        )
 
     def snapshot(self) -> Dict[str, Any]:
         return self._get_or_set(

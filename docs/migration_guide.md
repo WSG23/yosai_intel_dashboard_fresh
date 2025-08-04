@@ -23,6 +23,16 @@ sanitization helpers and SQL encoding functions.
 2. Publish events with `emit` and subscribe handlers with `subscribe`.
 3. See [ADR 0003](adr/0003-event-bus.md) and the [event flow diagram](architecture/event_processing_sequence.svg).
 
+### Repository Pattern
+1. Encapsulate data access behind repository interfaces.
+2. Inject repository implementations into services for persistence.
+3. See [ADR 0004](adr/0004-repository-pattern.md).
+
+### Mixins
+1. Compose reusable behavior via mixin classes.
+2. Use helpers like `LoggingMixin` and `SerializationMixin` for cross-cutting concerns.
+3. See [ADR 0005](adr/0005-mixins.md).
+
 ## Renamed and Relocated APIs
 
 Several legacy entry points were moved in this release. Importing the old

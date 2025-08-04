@@ -1,4 +1,4 @@
-"""Thread-safe in-memory event bus and publisher utilities."""
+"""Thread-safe in-memory event bus and publisher utilities (see ADR 0003)."""
 
 from __future__ import annotations
 
