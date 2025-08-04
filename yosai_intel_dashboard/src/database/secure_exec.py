@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
 import time
@@ -19,8 +17,6 @@ except Exception:  # pragma: no cover - default if core package unavailable
 from database.performance_analyzer import DatabasePerformanceAnalyzer
 
 from database.types import DBRows
-from database.query_cache import QueryCache
-from yosai_intel_dashboard.src.core.cache_manager import RedisCacheManager
 
 try:  # optional Prometheus integration
     from database.metrics import query_execution_seconds
