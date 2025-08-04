@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useAnalyticsStore } from '../state/store';
 import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
+import { ChunkGroup } from '../components/layout';
 import RiskDashboard from '../components/security/RiskDashboard';
 import { api } from '../api/client';
+import { HoverPreview, ClickExpand } from '../components/interaction/ContextDisclosure';
 import './Analytics.css';
 
 interface AnalyticsData {
@@ -108,7 +110,7 @@ const Analytics: React.FC = () => {
     <div className="analytics-container">
       <div className="analytics-header">
         <h1>Security Analytics</h1>
-        <div className="header-actions">
+        <ChunkGroup className="header-actions">
           <select
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
@@ -123,17 +125,19 @@ const Analytics: React.FC = () => {
             <Download size={20} />
             Export CSV
           </button>
-        </div>
+        </ChunkGroup>
       </div>
 
-      <RiskDashboard
-        score={riskData.score}
-        history={riskData.history}
-        factors={riskData.factors}
-      />
+      <HoverPreview preview={<div>Risk dashboard preview</div>}>
+        <RiskDashboard
+          score={riskData.score}
+          history={riskData.history}
+          factors={riskData.factors}
+        />
+      </HoverPreview>
 
       {analyticsData && (
-        <>
+        <ClickExpand preview={<div className="analytics-preview">Click to view analytics</div>}>
           <div className="stats-grid">
             <div className="stat-card">
               <h3>Total Records</h3>
@@ -146,7 +150,7 @@ const Analytics: React.FC = () => {
             <div className="stat-card">
               <h3>Date Range</h3>
               <p className="stat-value">
-                {new Date(analyticsData.date_range.start).toLocaleDateString()} - 
+                {new Date(analyticsData.date_range.start).toLocaleDateString()} -
                 {new Date(analyticsData.date_range.end).toLocaleDateString()}
               </p>
             </div>
@@ -155,7 +159,7 @@ const Analytics: React.FC = () => {
           <div className="analytics-sections">
             <section className="patterns-section">
               <h2>Top Security Patterns</h2>
-              <div className="patterns-list">
+              <ChunkGroup className="patterns-list" limit={9}>
                 {analyticsData.patterns.map((pattern, index) => (
                   <div key={index} className="pattern-item">
                     <div className="pattern-info">
@@ -163,7 +167,7 @@ const Analytics: React.FC = () => {
                       <span className="pattern-count">{pattern.count} occurrences</span>
                     </div>
                     <div className="pattern-bar">
-                      <div 
+                      <div
                         className="pattern-bar-fill"
                         style={{ width: `${pattern.percentage}%` }}
                       />
@@ -171,22 +175,22 @@ const Analytics: React.FC = () => {
                     </div>
                   </div>
                 ))}
-              </div>
+              </ChunkGroup>
             </section>
 
             <section className="devices-section">
               <h2>Device Distribution</h2>
-              <div className="device-grid">
+              <ChunkGroup className="device-grid" limit={9}>
                 {analyticsData.device_distribution.map((device, index) => (
                   <div key={index} className="device-card">
                     <span className="device-name">{device.device}</span>
                     <span className="device-count">{device.count}</span>
                   </div>
                 ))}
-              </div>
+              </ChunkGroup>
             </section>
           </div>
-        </>
+        </ClickExpand>
       )}
     </div>
   );

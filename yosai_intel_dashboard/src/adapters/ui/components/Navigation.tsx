@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { 
+import {
   Upload,
   BarChart3,
   TrendingUp,
@@ -12,45 +12,77 @@ import {
   Activity,
   LayoutDashboard
 } from 'lucide-react';
+import { useProficiencyStore } from '../yosai_intel_dashboard/src/adapters/ui/state/store';
+
+interface NavItem {
+  name: string;
+  href?: string;
+  icon?: any;
+  description?: string;
+  level: number;
+  children?: NavItem[];
+}
 
 // Navigation items configuration
-const navigationItems = [
+const navigationItems: NavItem[] = [
   {
     name: 'Upload',
     href: '/upload',
     icon: Upload,
-    description: 'Upload and process data files'
+    description: 'Upload and process data files',
+    level: 0,
   },
   {
     name: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
-    description: 'Deep insights and pattern analysis'
+    description: 'Deep insights and pattern analysis',
+    level: 0,
   },
   {
     name: 'Graphs',
     href: '/graphs',
     icon: TrendingUp,
-    description: 'Interactive charts and visualizations'
+    description: 'Interactive charts and visualizations',
+    level: 0,
   },
   {
     name: 'Export',
     href: '/export',
     icon: Download,
-    description: 'Export data in various formats'
+    description: 'Export data in various formats',
+    level: 0,
   },
   {
     name: 'Settings',
     href: '/settings',
     icon: Settings,
-    description: 'Application settings and preferences'
+    description: 'Application settings and preferences',
+    level: 0,
+    children: [
+      { name: 'Profile', href: '/settings/profile', level: 1 },
+      {
+        name: 'System',
+        href: '/settings/system',
+        level: 2,
+        children: [
+          { name: 'Debug', href: '/settings/system/debug', level: 3 },
+          {
+            name: 'Experimental',
+            href: '/settings/system/experimental',
+            level: 4,
+          },
+        ],
+      },
+    ],
   },
   {
     name: 'Builder',
     href: '/builder',
     icon: LayoutDashboard,
-    description: 'Custom dashboard builder'
-  }
+    description: 'Custom dashboard builder',
+    level: 0,
+  },
 ];
 
 interface NavigationProps {
@@ -58,68 +90,76 @@ interface NavigationProps {
   orientation?: 'horizontal' | 'vertical';
 }
 
-const Navigation: React.FC<NavigationProps> = ({ 
-  className = '', 
-  orientation = 'horizontal' 
-}) => {
+const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = 'horizontal' }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const isActive = (href: string) => {
-    return location.pathname === href;
-  };
+  const { level: userLevel, logFeatureUsage } = useProficiencyStore();
 
-  if (orientation === 'vertical') {
-    return (
-      <nav className={cn("flex flex-col space-y-2", className)} aria-label="Main navigation">
-        {navigationItems.map((item) => {
+  const isActive = (href?: string) => href && location.pathname === href;
+
+  const renderItems = (items: NavItem[], depth = 0): React.ReactNode => (
+    <ul
+      className={cn(
+        orientation === 'horizontal' && depth === 0
+          ? 'flex items-center space-x-1'
+          : 'flex flex-col space-y-2',
+        depth > 0 ? 'ml-4' : ''
+      )}
+    >
+      {items
+        .filter((item) => item.level <= userLevel)
+        .map((item) => {
           const Icon = item.icon;
-          return (
+          const active = isActive(item.href);
+          const hasChildren = item.children && item.children.length > 0;
+          const content = item.href ? (
             <Link
-              key={item.name}
               to={item.href}
-              onClick={() => navigate(item.href)}
+              onClick={() => {
+                logFeatureUsage(item.name);
+                navigate(item.href!);
+              }}
               className={cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                isActive(item.href)
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                active
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               )}
               title={item.description}
-              aria-current={isActive(item.href) ? "page" : undefined}
+              aria-current={active ? 'page' : undefined}
             >
-              <Icon className="h-5 w-5" />
-              <span>{item.name}</span>
+              {Icon && (
+                <Icon
+                  className={
+                    orientation === 'horizontal' && depth === 0 ? 'h-4 w-4' : 'h-5 w-5'
+                  }
+                />
+              )}
+              <span
+                className={
+                  orientation === 'horizontal' && depth === 0 ? 'hidden sm:inline' : undefined
+                }
+              >
+                {item.name}
+              </span>
             </Link>
+          ) : (
+            <span className="px-3 py-2 text-sm font-medium text-gray-500">{item.name}</span>
+          );
+
+          return (
+            <li key={item.name}>
+              {content}
+              {hasChildren && renderItems(item.children!, depth + 1)}
+            </li>
           );
         })}
-      </nav>
-    );
-  }
+    </ul>
+  );
 
   return (
-    <nav className={cn("flex items-center space-x-1", className)} aria-label="Main navigation">
-      {navigationItems.map((item) => {
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.name}
-            to={item.href}
-            onClick={() => navigate(item.href)}
-            className={cn(
-              "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-              isActive(item.href)
-                ? "bg-blue-100 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            )}
-            title={item.description}
-            aria-current={isActive(item.href) ? "page" : undefined}
-          >
-            <Icon className="h-4 w-4" />
-            <span className="hidden sm:inline">{item.name}</span>
-          </Link>
-        );
-      })}
+    <nav className={cn(className)} aria-label="Main navigation">
+      {renderItems(navigationItems)}
     </nav>
   );
 };
@@ -157,10 +197,12 @@ export const Header: React.FC = () => {
 // Sidebar component with navigation
 export const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
   return (
-    <aside className={cn(
-      "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out",
-      isOpen ? "translate-x-0" : "-translate-x-full"
-    )}>
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out',
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      )}
+    >
       <div className="flex flex-col h-full">
         {/* Sidebar header */}
         <div className="flex items-center justify-center h-16 px-4 bg-blue-600">
