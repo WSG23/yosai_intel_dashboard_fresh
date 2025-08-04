@@ -15,7 +15,6 @@ def test_diagnose_cli_runs(tmp_path, capsys):
         "def diagnose_upload_config():\n"
         "    print('=== Upload Configuration Diagnosis ===')\n"
         "dynamic_config = type('D', (), {\n"
-        "    'get_upload_chunk_size': lambda self: 1,\n"
         "    'get_max_parallel_uploads': lambda self: 2,\n"
         "    'get_validator_rules': lambda self: {}\n"
         "})()\n"

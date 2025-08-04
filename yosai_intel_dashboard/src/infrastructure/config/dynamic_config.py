@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
@@ -19,73 +19,13 @@ from .constants import (
 )
 from .environment import select_config_file
 
-# Inline minimal resolver functions to avoid importing the heavy ``utils``
-# package during initialization, which previously caused circular imports.
-def _resolve_ai_confidence_threshold(cfg: Any | None = None, *, default_resolver: Callable[[], float] | None = None) -> float:
-    if cfg is not None:
-        if hasattr(cfg, "performance") and hasattr(cfg.performance, "ai_confidence_threshold"):
-            return cfg.performance.ai_confidence_threshold
-        if hasattr(cfg, "ai_threshold"):
-            return cfg.ai_threshold
-    if default_resolver is not None:
-        try:
-            return default_resolver()
-        except Exception:
-            pass
-    return 0.0
-
-
-def _resolve_max_upload_size_mb(cfg: Any | None = None, *, default_resolver: Callable[[], int] | None = None) -> int:
-    if cfg is not None:
-        if hasattr(cfg, "upload") and hasattr(cfg.upload, "max_file_size_mb"):
-            return cfg.upload.max_file_size_mb
-        if hasattr(cfg, "max_size_mb"):
-            return cfg.max_size_mb
-        if hasattr(cfg, "security") and hasattr(cfg.security, "max_upload_mb"):
-            return cfg.security.max_upload_mb
-    if default_resolver is not None:
-        try:
-            return default_resolver()
-        except Exception:
-            pass
-    return 0
-
-
-def _resolve_upload_chunk_size(cfg: Any | None = None, *, default_resolver: Callable[[], int] | None = None) -> int:
-    if cfg is not None:
-        if hasattr(cfg, "uploads") and hasattr(cfg.uploads, "DEFAULT_CHUNK_SIZE"):
-            return cfg.uploads.DEFAULT_CHUNK_SIZE
-        if hasattr(cfg, "chunk_size"):
-            return cfg.chunk_size
-    if default_resolver is not None:
-        try:
-            return default_resolver()
-        except Exception:
-            pass
-    return 0
-
 logger = logging.getLogger(__name__)
 
 
 class DynamicConfigManager(BaseConfigLoader):
     """Loads constants and applies environment overrides."""
 
-    def __init__(
-        self,
-        *,
-        ai_confidence_resolver: Callable[..., float] = _resolve_ai_confidence_threshold,
-        max_upload_size_resolver: Callable[..., int] = _resolve_max_upload_size_mb,
-        upload_chunk_size_resolver: Callable[..., int] = _resolve_upload_chunk_size,
-        default_ai_confidence_resolver: Callable[[], float] | None = None,
-        default_max_upload_size_resolver: Callable[[], int] | None = None,
-        default_upload_chunk_size_resolver: Callable[[], int] | None = None,
-    ) -> None:
-        self._ai_confidence_resolver = ai_confidence_resolver
-        self._max_upload_size_resolver = max_upload_size_resolver
-        self._upload_chunk_size_resolver = upload_chunk_size_resolver
-        self._default_ai_confidence_resolver = default_ai_confidence_resolver
-        self._default_max_upload_size_resolver = default_max_upload_size_resolver
-        self._default_upload_chunk_size_resolver = default_upload_chunk_size_resolver
+    def __init__(self) -> None:
         self.security = SecurityConstants()
         self.performance = PerformanceConstants()
         self.css = CSSConstants()
@@ -403,29 +343,13 @@ class DynamicConfigManager(BaseConfigLoader):
             "specificity_high": self.css.specificity_high,
         }
 
-    def get_ai_confidence_threshold(self) -> int:
-        return self._ai_confidence_resolver(
-            self, default_resolver=self._default_ai_confidence_resolver
-        )
-
-    def get_max_upload_size_mb(self) -> int:
-        """Get maximum upload size in MB."""
-        return self._max_upload_size_resolver(
-            self, default_resolver=self._default_max_upload_size_resolver
-        )
-
     def get_max_upload_size_bytes(self) -> int:
         """Get maximum upload size in bytes."""
         return self.upload.max_file_size_bytes
 
     def validate_large_file_support(self) -> bool:
         """Check if configuration supports 50MB+ files."""
-        return self.get_max_upload_size_mb() >= 50
-
-    def get_upload_chunk_size(self) -> int:
-        return self._upload_chunk_size_resolver(
-            self, default_resolver=self._default_upload_chunk_size_resolver
-        )
+        return self.upload.max_file_size_mb >= 50
 
     def get_max_parallel_uploads(self) -> int:
         return getattr(self.uploads, "MAX_PARALLEL_UPLOADS", 4)
@@ -436,26 +360,6 @@ class DynamicConfigManager(BaseConfigLoader):
 
 # Global instance
 dynamic_config = DynamicConfigManager()
-
-
-class ConfigHelper:
-    """Convenience accessors for frequently used configuration values."""
-
-    @staticmethod
-    def ai_confidence_threshold() -> float:
-        return dynamic_config.get_ai_confidence_threshold()
-
-    @staticmethod
-    def max_upload_size_mb() -> int:
-        return dynamic_config.get_max_upload_size_mb()
-
-    @staticmethod
-    def upload_chunk_size() -> int:
-        return dynamic_config.get_upload_chunk_size()
-
-    @staticmethod
-    def rate_limit(tier: str = "default") -> Dict[str, int]:
-        return dynamic_config.get_rate_limit(tier)
 
 
 def diagnose_upload_config() -> None:

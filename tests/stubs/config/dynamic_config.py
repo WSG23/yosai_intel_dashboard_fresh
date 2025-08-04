@@ -21,26 +21,17 @@ class DynamicConfigManager:
             VALIDATOR_RULES={},
         )
 
-    def get_max_upload_size_mb(self):
-        return self.security.max_upload_mb
-
     def get_max_upload_size_bytes(self):
         return self.security.max_upload_mb * 1024 * 1024
 
     def validate_large_file_support(self):
         return True
 
-    def get_upload_chunk_size(self):
-        return self.uploads.DEFAULT_CHUNK_SIZE
-
     def get_max_parallel_uploads(self):
         return self.uploads.MAX_PARALLEL_UPLOADS
 
     def get_validator_rules(self):
         return self.uploads.VALIDATOR_RULES
-
-    def get_ai_confidence_threshold(self):
-        return self.performance.ai_confidence_threshold
 
     def get_db_pool_size(self):
         return 10
