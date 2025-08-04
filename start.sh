@@ -8,5 +8,4 @@ if [ -f .env ]; then
   source .env
   set +a
 fi
-
-exec gunicorn -c gunicorn.conf.py wsgi:server
+gunicorn -c gunicorn.conf.py wsgi:server
