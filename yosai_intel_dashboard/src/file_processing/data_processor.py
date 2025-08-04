@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Optional
 
 import pandas as pd
 
@@ -13,7 +12,6 @@ from yosai_intel_dashboard.src.core.error_handling import (
     ErrorSeverity,
     with_error_handling,
 )
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 from .format_detector import FormatDetector, UnsupportedFormatError
 from .readers import ArchiveReader, CSVReader, ExcelReader, FWFReader, JSONReader
@@ -36,11 +34,11 @@ class DataProcessor:
 
     def __init__(
         self,
-        readers: Optional[list] = None,
-        hint: Optional[Dict] = None,
+        readers: list | None = None,
+        hint: dict | None = None,
         *,
-        config: Optional[DataProcessorConfig] = None,
-        device_registry: Optional[Dict[str, Dict]] = None,
+        config: DataProcessorConfig | None = None,
+        device_registry: dict[str, dict] | None = None,
     ) -> None:
         self.format_detector = FormatDetector(
             readers
@@ -48,17 +46,17 @@ class DataProcessor:
         )
         self.hint = hint or {}
         self.config = config or DataProcessorConfig()
-        self.device_registry: Dict[str, Dict] = device_registry or {}
-        self.pipeline_metadata: Dict[str, Dict] = {}
+        self.device_registry: dict[str, dict] = device_registry or {}
+        self.pipeline_metadata: dict[str, dict] = {}
         self.unified_callbacks = TrulyUnifiedCallbacks()
         import re
 
         self._person_id_re = re.compile(self.config.person_id_pattern)
         self._badge_id_re = re.compile(self.config.badge_id_pattern)
         # Cache expensive lookups
-        self._device_lookup_cache: Dict[str, Dict] = {}
-        self._person_id_cache: Dict[str, bool] = {}
-        self._badge_id_cache: Dict[str, bool] = {}
+        self._device_lookup_cache: dict[str, dict] = {}
+        self._person_id_cache: dict[str, bool] = {}
+        self._badge_id_cache: dict[str, bool] = {}
 
     def _normalize_timestamps(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -122,7 +120,7 @@ class DataProcessor:
         registry = self.device_registry
         cache = self._device_lookup_cache
 
-        def lookup(name: str) -> Dict:
+        def lookup(name: str) -> dict:
             if name in cache:
                 return cache[name]
             if name in registry:
