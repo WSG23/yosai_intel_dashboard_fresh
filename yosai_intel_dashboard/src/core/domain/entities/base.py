@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 """Base classes for data models used throughout the application."""
 import logging
 from dataclasses import dataclass, field
@@ -33,7 +35,7 @@ class BaseModel:
 class AccessEventModel(BaseModel):
     """Model for access control events"""
 
-    events: List[Dict[str, Any]] = field(default_factory=list)
+    events: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     def load_from_dataframe(self, df: pd.DataFrame) -> bool:
         """Load events from pandas DataFrame"""
@@ -42,7 +44,7 @@ class AccessEventModel(BaseModel):
                 logger.warning("Empty DataFrame provided to AccessEventModel")
                 return False
 
-            self.events = df.to_dict("records")
+            self.events = df.copy()
             logger.info(f"Loaded {len(self.events)} access events")
             return True
 
@@ -52,30 +54,36 @@ class AccessEventModel(BaseModel):
 
     def get_user_activity(self) -> Dict[str, int]:
         """Get user activity summary"""
-        if not self.events:
+        if self.events.empty:
             return {}
 
         try:
-            user_counts = {}
-            for event in self.events:
-                user_id = event.get("user_id") or event.get("person_id") or "unknown"
-                user_counts[user_id] = user_counts.get(user_id, 0) + 1
-            return user_counts
+            user_col = None
+            for col in ["user_id", "person_id"]:
+                if col in self.events.columns:
+                    user_col = col
+                    break
+            if user_col is None:
+                return {}
+            return self.events[user_col].value_counts().to_dict()
         except Exception as e:
             logger.error(f"Error calculating user activity: {e}")
             return {}
 
     def get_door_activity(self) -> Dict[str, int]:
         """Get door activity summary"""
-        if not self.events:
+        if self.events.empty:
             return {}
 
         try:
-            door_counts = {}
-            for event in self.events:
-                door_id = event.get("door_id") or event.get("location") or "unknown"
-                door_counts[door_id] = door_counts.get(door_id, 0) + 1
-            return door_counts
+            door_col = None
+            for col in ["door_id", "location"]:
+                if col in self.events.columns:
+                    door_col = col
+                    break
+            if door_col is None:
+                return {}
+            return self.events[door_col].value_counts().to_dict()
         except Exception as e:
             logger.error(f"Error calculating door activity: {e}")
             return {}
@@ -95,38 +103,31 @@ class AccessEventModel(BaseModel):
 
     def _get_access_patterns(self) -> Dict[str, Any]:
         """Analyze access patterns"""
-        if not self.events:
+        if self.events.empty:
             return {}
 
         try:
-            patterns = {
-                "total_access_attempts": len(self.events),
+            df = self.events
+            patterns: Dict[str, Any] = {
+                "total_access_attempts": len(df),
                 "successful_attempts": 0,
                 "failed_attempts": 0,
                 "hourly_distribution": {},
             }
 
-            for event in self.events:
-                # Count success/failure
-                result = str(event.get("access_result", "")).lower()
-                if "grant" in result or "success" in result:
-                    patterns["successful_attempts"] += 1
-                elif "den" in result or "fail" in result:
-                    patterns["failed_attempts"] += 1
+            if "access_result" in df.columns:
+                results = df["access_result"].astype(str).str.lower()
+                patterns["successful_attempts"] = results.str.contains(
+                    "grant|success", regex=True
+                ).sum()
+                patterns["failed_attempts"] = results.str.contains(
+                    "den|fail", regex=True
+                ).sum()
 
-                # Hour distribution
-                timestamp = event.get("timestamp", "")
-                if timestamp:
-                    try:
-                        if isinstance(timestamp, str):
-                            hour = pd.to_datetime(timestamp).hour
-                        else:
-                            hour = timestamp.hour
-                        patterns["hourly_distribution"][hour] = (
-                            patterns["hourly_distribution"].get(hour, 0) + 1
-                        )
-                    except Exception:
-                        pass
+            if "timestamp" in df.columns:
+                times = pd.to_datetime(df["timestamp"], errors="coerce")
+                hourly = times.dropna().dt.hour.value_counts().sort_index()
+                patterns["hourly_distribution"] = hourly.to_dict()
 
             return patterns
         except Exception as e:
