@@ -1,5 +1,7 @@
 """Tests for the intel analysis core modules."""
 
+from __future__ import annotations
+
 import pathlib
 import sys
 
@@ -46,4 +48,3 @@ def test_risk_propagation() -> None:
     links = [("a", "b", 0.2), ("b", "c", 0.5)]
     risks = propagate_risk(base, links, iterations=2, decay=1.0)
     assert risks["b"] > 0.0 and risks["c"] > 0.0
-
