@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from src.common.events import EventBus
 from yosai_intel_dashboard.src.services.event_publisher import publish_event
+from yosai_intel_dashboard.src.services.analytics.core.interfaces import EventBusProtocol
 
 
 class Publisher:
     """Publish analytics updates to an event bus."""
 
-    def __init__(self, event_bus: EventBus | None) -> None:
+    def __init__(self, event_bus: Any | None = None) -> None:
         self.event_bus = event_bus
 
     def publish(self, payload: Dict[str, Any], event: str = "analytics_update") -> None:

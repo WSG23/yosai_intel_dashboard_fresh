@@ -25,10 +25,14 @@ class CallbackEvent(Enum):
     UI_UPDATE = auto()
     SYSTEM_ERROR = auto()
     SYSTEM_WARNING = auto()
+    ANALYTICS_UPDATE = auto()
+    WEBSOCKET_HEARTBEAT = auto()
     THREAT_DETECTED = auto()
     ANOMALY_DETECTED = auto()
     SCORE_CALCULATED = auto()
     VALIDATION_FAILED = auto()
 
+CallbackType = CallbackEvent
 
-__all__ = ["CallbackEvent"]
+
+__all__ = ["CallbackEvent", "CallbackType"]

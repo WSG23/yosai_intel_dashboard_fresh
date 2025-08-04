@@ -4,8 +4,8 @@ from datetime import datetime
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Query
-from monitoring.request_metrics import model_monitoring_requests_total
 
+from monitoring.request_metrics import model_monitoring_requests_total
 from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
 
 # Expose routes without a version so the adapter can mount them under /v1 and
@@ -28,15 +28,16 @@ async def get_model_monitoring_events(
     await manager.connect()
     assert manager.pool is not None
 
-    query = "SELECT * FROM model_monitoring_events WHERE model_name = $1"
+    parts = ["SELECT * FROM model_monitoring_events WHERE model_name = $1"]
     params: List[Any] = [model_name]
     if start is not None:
         params.append(start)
-        query += f" AND time >= ${len(params)}"
+        parts.append(f"AND time >= ${len(params)}")
     if end is not None:
         params.append(end)
-        query += f" AND time <= ${len(params)}"
-    query += " ORDER BY time DESC"
+        parts.append(f"AND time <= ${len(params)}")
+    parts.append("ORDER BY time DESC")
+    query = " ".join(parts)
 
     rows = await manager.pool.fetch(query, *params)
     return [dict(r) for r in rows]

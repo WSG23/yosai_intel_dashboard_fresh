@@ -5,9 +5,12 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict
 
-from src.common.events import EventBus
 from yosai_intel_dashboard.src.core.cache_manager import CacheManager
 from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    trigger_callback,
+)
 
 
 class CachedAnalyticsService:
@@ -17,11 +20,9 @@ class CachedAnalyticsService:
         self,
         cache_manager: CacheManager,
         ttl_seconds: int = 300,
-        event_bus: EventBus | None = None,
     ) -> None:
         self.cache_manager = cache_manager
         self.ttl_seconds = ttl_seconds
-        self.event_bus = event_bus
 
     async def _compute_metrics(
         self, facility_id: str, date_range: str
@@ -42,11 +43,10 @@ class CachedAnalyticsService:
             return cached
         metrics = await self._compute_metrics(facility_id, date_range)
         await self.cache_manager.set(key, metrics, self.ttl_seconds)
-        if self.event_bus:
-            try:
-                self.event_bus.emit("analytics_update", metrics)
-            except Exception:  # pragma: no cover - best effort
-                pass
+        try:
+            trigger_callback(CallbackType.ANALYTICS_UPDATE, metrics)
+        except Exception:  # pragma: no cover - best effort
+            pass
         return metrics
 
     def get_analytics_summary_sync(

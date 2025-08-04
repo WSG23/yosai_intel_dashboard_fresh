@@ -5,6 +5,11 @@ import types
 from pathlib import Path
 
 from src.common.config import ConfigService
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    register_callback,
+    unregister_callback,
+)
 
 
 def _load_provider():
@@ -41,27 +46,21 @@ def _load_provider():
     return module.WebSocketDataProvider
 
 
-class DummyBus:
-    def __init__(self) -> None:
-        self._subs = {}
-    def emit(self, event_type, data):
-        for h in self._subs.get(event_type, []):
-            h(data)
-    def subscribe(self, event_type, handler):
-        self._subs.setdefault(event_type, []).append(handler)
-
-
 def test_websocket_data_provider_publishes():
     Provider = _load_provider()
-    bus = DummyBus()
-    events = []
-    bus.subscribe("analytics_update", lambda d: events.append(d))
+    events: list[dict] = []
+
+    def handler(data):
+        events.append(data)
+
+    register_callback(CallbackType.ANALYTICS_UPDATE, handler, component_id="test")
     cfg = ConfigService({
         'metrics_interval': 0.01,
         'ping_interval': 0.01,
         'ping_timeout': 0.01,
     })
-    provider = Provider(bus, config=cfg)
+    provider = Provider(config=cfg)
     time.sleep(0.05)
     provider.stop()
+    unregister_callback(CallbackType.ANALYTICS_UPDATE, handler)
     assert events
