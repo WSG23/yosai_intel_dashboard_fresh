@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import base64
 from pathlib import Path
-from typing import Dict, List
-
+from typing import Any, Dict, List
 
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
 
