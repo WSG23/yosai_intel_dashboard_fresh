@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import asyncpg
 import pytest
 
@@ -41,59 +42,63 @@ class DummyPool:
         return _AcquireContext()
 
 
-@pytest.mark.asyncio
-async def test_database_manager_success(monkeypatch):
-    pool = DummyPool()
+def test_database_manager_success(monkeypatch):
+    async def run() -> None:
+        pool = DummyPool()
 
-    async def fake_create_pool(**kwargs):
-        return pool
+        async def fake_create_pool(**kwargs):
+            return pool
 
-    monkeypatch.setattr(asyncpg, "create_pool", fake_create_pool)
+        monkeypatch.setattr(asyncpg, "create_pool", fake_create_pool)
 
-    config = DatabaseConfig(
-        host="localhost",
-        port=5432,
-        database="db",
-        username="user",
-        password="pass",
-        min_connections=1,
-        max_connections=5,
-        timeout=10.0,
-    )
-    manager = DatabaseManager(config)
-    await manager.initialize()
-
-    res = await manager.execute_query("SELECT 1")
-    assert res == ["ok"]
-    cmd_res = await manager.execute_command("UPDATE x")
-    assert cmd_res == "EXEC"
-    assert await manager.health_check() is True
-    assert manager.is_healthy is True
-
-    await manager.close()
-    assert pool.closed is True
-
-
-@pytest.mark.asyncio
-async def test_initialize_failure(monkeypatch, caplog):
-    async def fake_create_pool(**kwargs):
-        raise RuntimeError("boom")
-
-    monkeypatch.setattr(asyncpg, "create_pool", fake_create_pool)
-
-    config = DatabaseConfig(
-        host="localhost",
-        port=5432,
-        database="db",
-        username="user",
-        password="pass",
-        min_connections=1,
-        max_connections=5,
-        timeout=10.0,
-    )
-    manager = DatabaseManager(config)
-
-    with pytest.raises(RuntimeError):
+        config = DatabaseConfig(
+            host="localhost",
+            port=5432,
+            database="db",
+            username="user",
+            password="pass",
+            min_connections=1,
+            max_connections=5,
+            timeout=10.0,
+        )
+        manager = DatabaseManager(config)
         await manager.initialize()
-    assert manager.is_healthy is False
-    assert "Failed to initialize database pool" in caplog.text
+
+        res = await manager.execute_query("SELECT 1")
+        assert res == ["ok"]
+        cmd_res = await manager.execute_command("UPDATE x")
+        assert cmd_res == "EXEC"
+        assert await manager.health_check() is True
+        assert manager.is_healthy is True
+
+        await manager.close()
+        assert pool.closed is True
+
+    asyncio.run(run())
+
+
+def test_initialize_failure(monkeypatch, caplog):
+    async def run() -> None:
+        async def fake_create_pool(**kwargs):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr(asyncpg, "create_pool", fake_create_pool)
+
+        config = DatabaseConfig(
+            host="localhost",
+            port=5432,
+            database="db",
+            username="user",
+            password="pass",
+            min_connections=1,
+            max_connections=5,
+            timeout=10.0,
+        )
+        manager = DatabaseManager(config)
+
+        with pytest.raises(RuntimeError):
+            await manager.initialize()
+        assert manager.is_healthy is False
+        assert "Failed to initialize database pool" in caplog.text
+
+    asyncio.run(run())
