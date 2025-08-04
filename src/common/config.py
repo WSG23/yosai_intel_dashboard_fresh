@@ -14,6 +14,10 @@ from types import MappingProxyType
 from typing import Any, Mapping, Protocol
 import os
 
+from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
+    ConfigurationMixin,
+)
+
 
 class ConfigProvider(Protocol):
     """Protocol describing the configuration attributes used by components."""
@@ -30,15 +34,21 @@ class ConfigProvider(Protocol):
     @property
     def ai_confidence_threshold(self) -> float: ...
 
+    def get_ai_confidence_threshold(self) -> float: ...
+
     @property
     def max_upload_size_mb(self) -> int: ...
+
+    def get_max_upload_size_mb(self) -> int: ...
 
     @property
     def upload_chunk_size(self) -> int: ...
 
+    def get_upload_chunk_size(self) -> int: ...
+
 
 @dataclass(frozen=True)
-class ConfigService(ConfigProvider):
+class ConfigService(ConfigurationMixin, ConfigProvider):
     """Simple immutable configuration container."""
 
     _settings: Mapping[str, Any]
