@@ -141,10 +141,7 @@ def register_builtin_services() -> None:
         "SecurityValidator",
         "validation.security_validator:SecurityValidator",
     )
-    register_service(
-        "UploadAnalyticsProcessor",
-        "services.analytics.upload_analytics:UploadAnalyticsProcessor",
-    )
+    register_service("UploadAnalyticsProcessor", "services.upload_processing:UploadAnalyticsProcessor")
 
     register_service(
         "AsyncFileProcessor", "services.async_file_processor:AsyncFileProcessor"
