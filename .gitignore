@@ -63,6 +63,7 @@ data/learned_mappings.json
 !package.json
 !package-lock.json
 !yosai_intel_dashboard/src/adapters/ui/tsconfig.json
+!public/manifest.json
 !dashboards/grafana/*.json
 !dashboards/performance/*.json
 !monitoring/grafana/*.json
