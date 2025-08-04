@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useAnalyticsStore } from '../state/store';
 import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
-import RiskDashboard from '../components/security/RiskDashboard';
+const RiskDashboard = React.lazy(
+  () => import('../components/security/RiskDashboard'),
+);
 import { api } from '../api/client';
-import { HoverPreview, ClickExpand } from '../components/interaction/ContextDisclosure';
+import {
+  HoverPreview,
+  ClickExpand,
+} from '../components/interaction/ContextDisclosure';
 import './Analytics.css';
 
 interface AnalyticsData {
@@ -49,7 +54,6 @@ const Analytics: React.FC = () => {
       return;
     }
     fetchAnalytics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourceType]);
 
   const fetchAnalytics = async () => {
@@ -61,7 +65,9 @@ const Analytics: React.FC = () => {
       setAnalytics(sourceType, data);
     } catch (err) {
       console.error('Analytics fetch error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch analytics');
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch analytics',
+      );
     } finally {
       setLoading(false);
     }
@@ -69,12 +75,18 @@ const Analytics: React.FC = () => {
 
   const handleExport = () => {
     if (!analyticsData) return;
-    
+
     const csvContent = [
       ['Pattern', 'Count', 'Percentage'],
-      ...analyticsData.patterns.map(p => [p.pattern, p.count, `${p.percentage}%`])
-    ].map(row => row.join(',')).join('\n');
-    
+      ...analyticsData.patterns.map((p) => [
+        p.pattern,
+        p.count,
+        `${p.percentage}%`,
+      ]),
+    ]
+      .map((row) => row.join(','))
+      .join('\n');
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -129,19 +141,27 @@ const Analytics: React.FC = () => {
       </div>
 
       <HoverPreview preview={<div>Risk dashboard preview</div>}>
-        <RiskDashboard
-          score={riskData.score}
-          history={riskData.history}
-          factors={riskData.factors}
-        />
+        <Suspense fallback={<div>Loading risk dashboard...</div>}>
+          <RiskDashboard
+            score={riskData.score}
+            history={riskData.history}
+            factors={riskData.factors}
+          />
+        </Suspense>
       </HoverPreview>
 
       {analyticsData && (
-        <ClickExpand preview={<div className="analytics-preview">Click to view analytics</div>}>
+        <ClickExpand
+          preview={
+            <div className="analytics-preview">Click to view analytics</div>
+          }
+        >
           <div className="stats-grid">
             <div className="stat-card">
               <h3>Total Records</h3>
-              <p className="stat-value">{analyticsData.total_records.toLocaleString()}</p>
+              <p className="stat-value">
+                {analyticsData.total_records.toLocaleString()}
+              </p>
             </div>
             <div className="stat-card">
               <h3>Unique Devices</h3>
@@ -150,8 +170,8 @@ const Analytics: React.FC = () => {
             <div className="stat-card">
               <h3>Date Range</h3>
               <p className="stat-value">
-                {new Date(analyticsData.date_range.start).toLocaleDateString()} -
-                {new Date(analyticsData.date_range.end).toLocaleDateString()}
+                {new Date(analyticsData.date_range.start).toLocaleDateString()}{' '}
+                -{new Date(analyticsData.date_range.end).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -164,14 +184,18 @@ const Analytics: React.FC = () => {
                   <div key={index} className="pattern-item">
                     <div className="pattern-info">
                       <span className="pattern-name">{pattern.pattern}</span>
-                      <span className="pattern-count">{pattern.count} occurrences</span>
+                      <span className="pattern-count">
+                        {pattern.count} occurrences
+                      </span>
                     </div>
                     <div className="pattern-bar">
                       <div
                         className="pattern-bar-fill"
                         style={{ width: `${pattern.percentage}%` }}
                       />
-                      <span className="pattern-percentage">{pattern.percentage}%</span>
+                      <span className="pattern-percentage">
+                        {pattern.percentage}%
+                      </span>
                     </div>
                   </div>
                 ))}
