@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 
-from database.events import list_events
 from integrations.events import ingest_all
+from yosai_intel_dashboard.src.database.events import list_events
 from yosai_intel_dashboard.src.models.visitor_patterns import generate_attendance_report
 
 

@@ -6,7 +6,10 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+import pytest
 from cryptography.fernet import Fernet
+
+pytest.importorskip("cryptography")
 
 
 def _load_database_config():

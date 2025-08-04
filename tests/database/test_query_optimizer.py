@@ -1,5 +1,7 @@
-from database.query_optimizer import DatabaseQueryOptimizer
-from database.secure_exec import execute_query
+from __future__ import annotations
+
+from yosai_intel_dashboard.src.database.query_optimizer import DatabaseQueryOptimizer
+from yosai_intel_dashboard.src.database.secure_exec import execute_query
 
 
 def test_postgresql_hint_injection_and_cache():

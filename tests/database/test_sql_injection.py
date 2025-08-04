@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 import pytest
 
-from database.secure_exec import execute_command, execute_query
 from yosai_intel_dashboard.src.core.exceptions import ValidationError
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_command,
+    execute_query,
+)
 
 
 class DummyConn:

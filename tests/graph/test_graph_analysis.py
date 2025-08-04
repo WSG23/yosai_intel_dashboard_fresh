@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from analytics.graph_analysis import (
+import pytest
+
+pytest.importorskip("networkx")
+pytest.importorskip("sklearn")
+
+from services.analytics.graph_analysis import (
     GraphModel,
     build_graph_from_logs,
 )
-from analytics.graph_analysis.algorithms import (
+from services.analytics.graph_analysis.algorithms import (
     betweenness_centrality,
     louvain_communities,
     risk_propagation,
