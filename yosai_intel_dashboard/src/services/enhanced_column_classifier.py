@@ -37,6 +37,13 @@ class EnhancedColumnClassifier:
             "location": [r"location", r"place", r"area", r"zone"],
         }
 
+        # Precompile regex patterns for faster heuristic matching
+        self._compiled_patterns = [
+            (re.compile(pattern), field)
+            for field, patterns in self.field_patterns.items()
+            for pattern in patterns
+        ]
+
         # Try to load ML model
         self._load_model()
 
@@ -123,15 +130,17 @@ class EnhancedColumnClassifier:
         best_field = None
         best_score = 0.0
 
-        for field, patterns in self.field_patterns.items():
-            for pattern in patterns:
-                if re.search(pattern, header_lower):
-                    score = len(pattern) / len(header_lower)
-                    if score > best_score:
-                        best_field = field
-                        best_score = score
+        threshold = 0.3
+        for regex, field in self._compiled_patterns:
+            if regex.search(header_lower):
+                score = len(regex.pattern) / len(header_lower)
+                if score > best_score:
+                    best_field = field
+                    best_score = score
+                    if best_score >= threshold:
+                        break
 
-        if best_score >= 0.3:
+        if best_score >= threshold:
             return best_field, min(best_score + 0.1, 0.8)
         return None, 0.0
 
