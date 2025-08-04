@@ -9,9 +9,13 @@ from integrations.weather.clients import (
     NOAAClient,
     OpenWeatherMapClient,
 )
-from integrations.weather.etl import WeatherEvent, run_weather_etl
-from yosai_intel_dashboard.src.services.intel_analysis_service.core.behavioral_cliques import (
+from yosai_intel_dashboard.src.services.environment import (
+    WeatherEvent,
+    run_weather_etl,
     correlate_access_with_weather,
+    merge_environmental_data,
+    SocialMediaConnector,
+    LocalEventConnector,
 )
 
 
@@ -113,3 +117,26 @@ def test_correlate_access_with_weather_flags_spikes():
         access_records, weather, window=timedelta(minutes=5), spike_threshold=5
     )
     assert flagged == [t]
+
+
+def test_merge_environmental_data_combines_sources():
+    t = datetime.now(timezone.utc)
+    weather = [
+        WeatherEvent(
+            timestamp=t,
+            temperature=1,
+            humidity=2,
+            precipitation=0,
+            wind=0,
+            visibility=0,
+            pressure=0,
+            lightning=False,
+        )
+    ]
+    social = SocialMediaConnector(lambda: [{"timestamp": t, "sentiment": 0.5}])
+    local = LocalEventConnector(lambda: [{"timestamp": t, "events": 2}])
+    events = list(social.fetch()) + list(local.fetch())
+    merged = merge_environmental_data(weather, events)
+    assert "sentiment" in merged and "events" in merged
+    assert merged.iloc[0]["sentiment"] == 0.5
+    assert merged.iloc[0]["events"] == 2
