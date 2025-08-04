@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Union
+from typing import Any, Dict
 
 import pandas as pd
 
@@ -34,8 +34,9 @@ class AccessEventModel(BaseModel):
     ) -> pd.DataFrame:
         """Get access events with optional filtering"""
 
-        base_query = """
-        SELECT 
+        parts = [
+            """
+        SELECT
             event_id,
             timestamp,
             person_id,
@@ -46,9 +47,10 @@ class AccessEventModel(BaseModel):
             door_held_open_time,
             entry_without_badge,
             device_status
-        FROM access_events 
+        FROM access_events
         WHERE 1=1
-        """
+        """,
+        ]
 
         params = []
 
@@ -58,35 +60,35 @@ class AccessEventModel(BaseModel):
 
         # Build dynamic query with filters
         if "start_date" in filters:
-            base_query += " AND timestamp >= %s"
+            parts.append("AND timestamp >= %s")
             params.append(filters["start_date"])
 
         if "end_date" in filters:
-            base_query += " AND timestamp <= %s"
+            parts.append("AND timestamp <= %s")
             params.append(filters["end_date"])
 
         if "person_id" in filters:
             if user is not None:
                 _sql_validator.validate_resource_access(user, filters["person_id"])
-            base_query += " AND person_id = %s"
+            parts.append("AND person_id = %s")
             params.append(filters["person_id"])
 
         if "door_id" in filters:
             if user is not None:
                 _sql_validator.validate_resource_access(user, filters["door_id"])
-            base_query += " AND door_id = %s"
+            parts.append("AND door_id = %s")
             params.append(filters["door_id"])
 
         if "access_result" in filters:
-            base_query += " AND access_result = %s"
+            parts.append("AND access_result = %s")
             params.append(filters["access_result"])
-
-        base_query += (
-            f" ORDER BY timestamp DESC LIMIT {DataProcessingLimits.DEFAULT_QUERY_LIMIT}"
+        parts.append(
+            f"ORDER BY timestamp DESC LIMIT {DataProcessingLimits.DEFAULT_QUERY_LIMIT}"
         )
+        query = " ".join(parts)
 
         try:
-            df = execute_query(self.db, base_query, tuple(params) if params else None)
+            df = execute_query(self.db, query, tuple(params) if params else None)
             return self._process_dataframe(df) if df is not None else pd.DataFrame()
         except Exception as e:
             logging.error(f"Error fetching access events: {e}")
@@ -120,12 +122,16 @@ class AccessEventModel(BaseModel):
     def get_summary_stats(self) -> Dict[str, Any]:
         """Get comprehensive summary statistics"""
         query = """
-        SELECT 
+        SELECT
             COUNT(*) as total_events,
             COUNT(DISTINCT person_id) as unique_people,
             COUNT(DISTINCT door_id) as unique_doors,
-            SUM(CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END) as granted_events,
-            SUM(CASE WHEN access_result = 'Denied' THEN 1 ELSE 0 END) as denied_events
+            SUM(
+                CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END
+            ) as granted_events,
+            SUM(
+                CASE WHEN access_result = 'Denied' THEN 1 ELSE 0 END
+            ) as denied_events
         FROM access_events
         WHERE timestamp >= date('now', '-30 days')
         """
@@ -186,10 +192,12 @@ class AccessEventModel(BaseModel):
     def get_user_activity(self, limit: int = 20) -> pd.DataFrame:
         """Get top active users"""
         query = """
-        SELECT 
+        SELECT
             person_id,
             COUNT(*) as total_events,
-            SUM(CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END) as granted_events,
+              SUM(
+                  CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END
+              ) as granted_events,
             MAX(timestamp) as last_access
         FROM access_events
         WHERE timestamp >= date('now', '-30 days')
@@ -209,10 +217,12 @@ class AccessEventModel(BaseModel):
     def get_door_activity(self, limit: int = 20) -> pd.DataFrame:
         """Get most accessed doors"""
         query = """
-        SELECT 
+        SELECT
             door_id,
             COUNT(*) as total_events,
-            SUM(CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END) as granted_events,
+              SUM(
+                  CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END
+              ) as granted_events,
             COUNT(DISTINCT person_id) as unique_users
         FROM access_events
         WHERE timestamp >= date('now', '-30 days')
@@ -236,7 +246,9 @@ class AccessEventModel(BaseModel):
         SELECT
             date(timestamp) as date,
             COUNT(*) as total_events,
-            SUM(CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END) as granted_events,
+              SUM(
+                  CASE WHEN access_result = 'Granted' THEN 1 ELSE 0 END
+              ) as granted_events,
             COUNT(DISTINCT person_id) as unique_users,
             COUNT(DISTINCT door_id) as unique_doors
         FROM access_events

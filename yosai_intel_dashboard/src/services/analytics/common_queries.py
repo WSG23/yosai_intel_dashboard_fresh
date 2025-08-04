@@ -99,14 +99,15 @@ async def fetch_access_patterns(
         ) AS sub
     """
 
-    query = hourly_query
+    parts = [hourly_query]
     params = [start_date, end_date]
     if limit is not None:
-        query += f" LIMIT ${len(params) + 1}"
+        parts.append(f"LIMIT ${len(params) + 1}")
         params.append(limit)
     if offset is not None:
-        query += f" OFFSET ${len(params) + 1}"
+        parts.append(f"OFFSET ${len(params) + 1}")
         params.append(offset)
+    query = " ".join(parts)
 
     start = time.perf_counter()
     queries_total.inc()
