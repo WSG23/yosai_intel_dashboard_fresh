@@ -1,6 +1,6 @@
 import React, { useState, useId } from 'react';
 
-interface ProgressiveSectionProps {
+export interface ProgressiveSectionProps {
   title: string;
   children: React.ReactNode;
   /** Whether the section starts expanded */

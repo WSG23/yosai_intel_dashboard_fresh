@@ -4,7 +4,7 @@ This guide standardizes how visual elements appear across the dashboard. Each se
 
 ## Progressive Reveal
 
-When presenting dense or advanced metrics, wrap supplementary charts or controls in a `ProgressiveSection`. This keeps initial views approachable while allowing interested users to drill down for more detail.
+When presenting dense or advanced metrics, wrap supplementary charts or controls in a `ProgressiveSection`. This keeps initial views approachable while allowing interested users to drill down for more detail. Always ensure the section's toggle clearly describes what will be revealed.
 
 ## Drift Chart
 

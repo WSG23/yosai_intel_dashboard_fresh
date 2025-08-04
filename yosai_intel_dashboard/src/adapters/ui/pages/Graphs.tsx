@@ -20,6 +20,7 @@ const Graphs: React.FC = () => {
   const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
   const [selectedChart, setSelectedChart] = useState('');
   const [chartData, setChartData] = useState<any>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     const fetchCharts = async () => {
@@ -194,6 +195,14 @@ const Graphs: React.FC = () => {
         </ProgressiveSection>
       </ChunkGroup>
       <div role="presentation">{renderChart()}</div>
+      {showDetails && chartData && (
+        <pre
+          aria-label="chart-details"
+          className="mt-4 whitespace-pre-wrap text-xs border p-2 rounded"
+        >
+          {JSON.stringify(chartData, null, 2)}
+        </pre>
+      )}
     </div>
   );
 };
