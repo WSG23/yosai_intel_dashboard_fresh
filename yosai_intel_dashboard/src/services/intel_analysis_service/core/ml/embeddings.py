@@ -5,7 +5,10 @@ from typing import Dict, Iterable, List, Mapping
 
 import networkx as nx
 import numpy as np
-from gensim.models import Word2Vec
+try:  # pragma: no cover - optional dependency
+    from gensim.models import Word2Vec
+except Exception:  # pragma: no cover - handled at runtime
+    Word2Vec = None  # type: ignore
 
 
 class Node2Vec:
@@ -51,6 +54,8 @@ class Node2Vec:
         return walks
 
     def fit(self, graph: nx.Graph) -> "Node2Vec":
+        if Word2Vec is None:  # pragma: no cover - optional dependency
+            raise ImportError("gensim is required for Node2Vec embeddings")
         walks = self._generate_walks(graph)
         self.model = Word2Vec(
             sentences=walks,
@@ -111,4 +116,50 @@ class GraphSAGE:
 
     def get_embeddings(self) -> Mapping[str, np.ndarray]:
         """Return node embeddings produced by the last call to :meth:`fit`."""
+        return self._embeddings
+
+
+class GCN:
+    """Very small Graph Convolutional Network style embedder.
+
+    The implementation intentionally avoids any learning and instead performs
+    repeated neighbourhood aggregation similar to the propagation step of a
+    GCN.  It is deterministic and therefore suitable for use in unit tests
+    without requiring external deep learning frameworks.
+    """
+
+    def __init__(self, dimensions: int = 16, num_layers: int = 2) -> None:
+        self.dimensions = dimensions
+        self.num_layers = num_layers
+        self._embeddings: Dict[str, np.ndarray] = {}
+
+    def fit(
+        self, graph: nx.Graph, features: Mapping[str, Iterable[float]] | None = None
+    ) -> "GCN":
+        nodes = list(graph.nodes())
+        if features is None:
+            features = {str(n): np.eye(len(nodes))[i] for i, n in enumerate(nodes)}
+
+        # Build normalised adjacency matrix
+        A = nx.to_numpy_array(graph, nodelist=nodes)
+        I = np.eye(len(nodes))
+        A_hat = A + I
+        D_hat = np.diag(np.power(np.sum(A_hat, axis=1), -0.5))
+        adj_norm = D_hat @ A_hat @ D_hat
+
+        h = np.asarray([features[str(n)] for n in nodes])
+        for _ in range(self.num_layers):
+            h = adj_norm @ h
+
+        self._embeddings = {}
+        for i, n in enumerate(nodes):
+            vec = h[i]
+            if vec.shape[0] < self.dimensions:
+                vec = np.pad(vec, (0, self.dimensions - vec.shape[0]))
+            else:
+                vec = vec[: self.dimensions]
+            self._embeddings[str(n)] = vec
+        return self
+
+    def get_embeddings(self) -> Mapping[str, np.ndarray]:
         return self._embeddings
