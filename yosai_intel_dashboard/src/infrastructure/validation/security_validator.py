@@ -25,18 +25,16 @@ import os
 import re
 from functools import lru_cache
 from pathlib import Path
-
 from typing import Any, Callable, Iterable
-
-
 
 try:  # pragma: no cover - allow using the validator without full core package
     from yosai_intel_dashboard.src.core.exceptions import (
-        ValidationError,
-        TemporaryBlockError,
         PermanentBanError,
+        TemporaryBlockError,
+        ValidationError,
     )
 except Exception:  # pragma: no cover
+
     class ValidationError(Exception):
         """Fallback validation error when core package is unavailable."""
 
@@ -45,6 +43,7 @@ except Exception:  # pragma: no cover
 
     class PermanentBanError(Exception):
         pass
+
 
 try:  # pragma: no cover
     from yosai_intel_dashboard.src.infrastructure.cache import redis_client
@@ -188,7 +187,7 @@ class SecurityValidator(CompositeValidator):
         redis_client: Any | None = None,
         rate_limit: int | None = None,
         window_seconds: int | None = None,
-
+        authorize_resource: Callable[[Any, str], bool] | None = None,
     ) -> None:
         base_rules = list(
             rules
@@ -240,7 +239,6 @@ class SecurityValidator(CompositeValidator):
             self.logger.error("Permanent ban for %s", identifier)
             raise PermanentBanError("Rate limit exceeded")
 
-
     @lru_cache(maxsize=128)
     def _cached_validate(self, value: str) -> ValidationResult:
         return super().validate(value)
@@ -265,13 +263,11 @@ class SecurityValidator(CompositeValidator):
         """Return a safe filename stripped of path components."""
         name = os.path.basename(filename)
         if name != filename or not name or name in {".", ".."}:
-            return self._augment(
-                ValidationResult(False, name, ["invalid_filename"])
-            )
+            return self._augment(ValidationResult(False, name, ["invalid_filename"]))
         return self._augment(ValidationResult(True, name))
 
-    def validate_resource_id(self, user: Any, resource_id: Any) -> Any:
-        """Validate that ``user`` is authorized for ``resource_id``."""
+    def validate_resource_access(self, user: Any, resource_id: Any) -> Any:
+        """Ensure ``user`` is authorized to access ``resource_id``."""
         rule = IDORRule(user, self._authorize_resource)
         result = rule.validate(str(resource_id))
         if not result.valid:
@@ -330,7 +326,6 @@ class SecurityValidator(CompositeValidator):
                     raise ValidationError("File extension does not match content")
 
     def validate_file_meta(self, filename: str, content: bytes) -> ValidationResult:
-
         """Validate filename, size limits and basic file signatures."""
         issues: list[str] = []
         size_bytes = len(content)
@@ -421,7 +416,9 @@ class SecurityValidator(CompositeValidator):
                 filename,
                 "; ".join(result_dict["issues"]),
             )
-            result = ValidationResult(False, {"filename": filename}, result_dict["issues"])
+            result = ValidationResult(
+                False, {"filename": filename}, result_dict["issues"]
+            )
             self.notify_anomaly(filename, result)
             return self._augment(result)
         logger.info("File '%s' passed validation", filename)

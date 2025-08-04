@@ -1,13 +1,19 @@
 """Container bootstrap utilities."""
+
 from __future__ import annotations
 
 import logging
 
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from startup.registry_startup import register_optional_services
 from startup.service_registration import register_all_application_services
-from yosai_intel_dashboard.src.infrastructure.config.common_indexes import COMMON_INDEXES
+
 from yosai_intel_dashboard.src.database.index_optimizer import IndexOptimizer
+from yosai_intel_dashboard.src.infrastructure.config.common_indexes import (
+    COMMON_INDEXES,
+)
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,5 +35,6 @@ def bootstrap_container() -> ServiceContainer:
         logger.warning("Failed to apply common index recommendations: %s", exc)
 
     return container
+
 
 __all__ = ["bootstrap_container"]

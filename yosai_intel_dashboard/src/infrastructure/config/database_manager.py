@@ -17,11 +17,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
 from database.query_optimizer import DatabaseQueryOptimizer
-from database.secure_exec import execute_batch, execute_command, execute_query
-from database.types import DBRows, DatabaseConnection
 from database.replicated_connection import ReplicatedDatabaseConnection
+from database.secure_exec import execute_batch, execute_command, execute_query
+from database.types import DatabaseConnection, DBRows
 from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
-
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .connection_pool import DatabaseConnectionPool
@@ -421,7 +420,7 @@ class ThreadSafeDatabaseManager(DatabaseManager):
 
 # Factory function
 def create_database_manager(config: DatabaseSettings) -> DatabaseManager:
-    """Create database manager using configuration.
+    """Create a database manager using the provided configuration.
 
     Deprecated: use :class:`DatabaseConnectionFactory` instead.
     """
@@ -479,7 +478,9 @@ class EnhancedPostgreSQLManager(DatabaseManager):
             shrink_interval=getattr(self.config, "shrink_interval", 0),
         )
 
-    def execute_query_with_retry(self, query: str, params: Optional[Dict] = None) -> DBRows:
+    def execute_query_with_retry(
+        self, query: str, params: Optional[Dict] = None
+    ) -> DBRows:
         encoded_query = UnicodeSQLProcessor.encode_query(query)
         optimized_query = self.optimizer.optimize_query(encoded_query)
 
