@@ -1,6 +1,7 @@
-from __future__ import annotations
+from typing import Any, Dict, List
 
-from typing import Any
+import pandas as pd
+
 
 import pandas as pd
 
@@ -268,7 +269,80 @@ class UploadAnalyticsProcessor:
             "active_doors": len(doors),
         }
 
-    def _format_results(self, stats: Dict[str, Any]) -> Dict[str, Any]:
+    # ------------------------------------------------------------------
+    def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Return analytics summary for ``df``.
+
+        Computes event counts, unique entity counts, access result
+        distribution, date range and top users/doors. Missing columns and
+        empty dataframes are handled gracefully.
+        """
+
+        if df.empty:
+            return {
+                "total_events": 0,
+                "active_users": 0,
+                "active_doors": 0,
+                "unique_users": 0,
+                "unique_doors": 0,
+                "access_patterns": {},
+                "date_range": {"start": "Unknown", "end": "Unknown"},
+                "top_users": [],
+                "top_doors": [],
+            }
+
+        total_events = len(df)
+
+        def _unique(col: str) -> int:
+            return int(df[col].nunique(dropna=True)) if col in df.columns else 0
+
+        active_users = _unique("person_id")
+        active_doors = _unique("door_id")
+
+        access_patterns = (
+            df["access_result"].value_counts().to_dict()
+            if "access_result" in df.columns
+            else {}
+        )
+
+        date_range = {"start": "Unknown", "end": "Unknown"}
+        if "timestamp" in df.columns:
+            valid_ts = pd.to_datetime(df["timestamp"], errors="coerce").dropna()
+            if not valid_ts.empty:
+                date_range = {
+                    "start": str(valid_ts.min().date()),
+                    "end": str(valid_ts.max().date()),
+                }
+
+        top_users: List[Dict[str, Any]] = []
+        if "person_id" in df.columns:
+            user_counts = df["person_id"].value_counts().head(10)
+            top_users = [
+                {"user_id": uid, "count": int(cnt)} for uid, cnt in user_counts.items()
+            ]
+
+        top_doors: List[Dict[str, Any]] = []
+        if "door_id" in df.columns:
+            door_counts = df["door_id"].value_counts().head(10)
+            top_doors = [
+                {"door_id": did, "count": int(cnt)} for did, cnt in door_counts.items()
+            ]
+
+        return {
+            "total_events": total_events,
+            "active_users": active_users,
+            "active_doors": active_doors,
+            "unique_users": active_users,
+            "unique_doors": active_doors,
+            "access_patterns": access_patterns,
+            "date_range": date_range,
+            "top_users": top_users,
+            "top_doors": top_doors,
+        }
+
+    # ------------------------------------------------------------------
+    def _format_results(self, stats):
+
         """Return final result dictionary with ``status`` key."""
         result = dict(stats)
         result["status"] = "success"
