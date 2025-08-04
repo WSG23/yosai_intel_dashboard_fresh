@@ -6,7 +6,7 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.services.mapping.models import RuleBasedModel
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Insert stub before importing the adapter
 stub = importlib.util.module_from_spec(

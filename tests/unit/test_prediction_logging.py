@@ -1,7 +1,7 @@
 import os
 import sys
 from types import ModuleType, SimpleNamespace
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Stub resilience metrics to avoid optional dependency errors
 metrics_mod = ModuleType("services.resilience.metrics")

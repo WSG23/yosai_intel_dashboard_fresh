@@ -1,4 +1,4 @@
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 # tests need minimal stubs for heavy dependencies
 import sys
 import types

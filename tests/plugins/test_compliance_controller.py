@@ -4,7 +4,7 @@ from enum import Enum
 from types import ModuleType, SimpleNamespace
 
 from flask import Flask
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 def _create_client(monkeypatch):

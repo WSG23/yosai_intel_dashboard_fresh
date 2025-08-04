@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Provide minimal Flask stub required by utility modules
 if "flask" not in sys.modules:

@@ -3,7 +3,7 @@ import types
 from pathlib import Path
 
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:

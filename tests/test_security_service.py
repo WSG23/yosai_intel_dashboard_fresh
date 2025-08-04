@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 os.environ.setdefault("CACHE_TTL_SECONDS", "1")
 os.environ.setdefault("JWKS_CACHE_TTL", "1")
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 validation_path = Path(__file__).resolve().parents[1] / "validation"
 pkg = types.ModuleType("validation")

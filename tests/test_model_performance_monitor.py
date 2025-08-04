@@ -1,7 +1,7 @@
 import sys
 from datetime import datetime
 from types import ModuleType, SimpleNamespace
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # minimal config stub to avoid heavy imports
 cfg_mod = ModuleType("config")
