@@ -5,6 +5,7 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from yosai_intel_dashboard.src.services.upload.protocols import UploadDataServiceProtocol, UploadStorageProtocol
+from yosai_intel_dashboard.src.infrastructure.callbacks import CallbackType
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +34,13 @@ class FileProcessor:
         self,
         filename: str,
         content: str,
-        progress_cb: Callable[[str, int], None] | None,
+        progress_cb: Callable[[int], None] | None,
     ) -> Dict[str, Any]:
-        df = await self.processor.process_file(
-            content, filename, progress_callback=progress_cb
-        )
+        if progress_cb:
+            self.processor.callbacks.register_callback(
+                CallbackType.PROGRESS, progress_cb, component_id=filename
+            )
+        df = await self.processor.process_file(content, filename)
         mapping: Dict[str, str] = {}
         try:
             mapping = self.data_service.load_mapping(filename)
@@ -65,7 +68,7 @@ class FileProcessor:
         for name, parts in file_parts.items():
             content = self._combine_parts(parts)
 
-            def _cb(_n: str, pct: int) -> None:
+            def _cb(pct: int) -> None:
                 if task_progress:
                     overall = int(((processed + pct / 100) / total) * 100)
                     task_progress(overall)

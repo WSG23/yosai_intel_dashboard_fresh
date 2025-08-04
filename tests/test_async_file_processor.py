@@ -55,6 +55,10 @@ AsyncFileProcessor = async_module.AsyncFileProcessor
 cfg = types.SimpleNamespace(
     analytics=types.SimpleNamespace(chunk_size=2, max_memory_mb=1024)
 )
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    UnifiedCallbackRegistry,
+)
 
 
 def test_async_file_processor_progress(tmp_path):
@@ -62,10 +66,16 @@ def test_async_file_processor_progress(tmp_path):
     path = tmp_path / "data.csv"
     df.to_csv(path, index=False)
 
-    processor = AsyncFileProcessor(chunk_size=2, config=cfg)
+    registry = UnifiedCallbackRegistry()
+    processor = AsyncFileProcessor(
+        chunk_size=2, config=cfg, callback_registry=registry
+    )
 
     async def job(progress):
-        return await processor.load_csv(path, progress_callback=progress)
+        registry.register_callback(
+            CallbackType.PROGRESS, progress, component_id=str(path)
+        )
+        return await processor.load_csv(path, component_id=str(path))
 
     tid = create_task(job)
     last = 0

@@ -83,6 +83,10 @@ assert spec.loader is not None
 spec.loader.exec_module(async_mod)
 AsyncFileProcessor = async_mod.AsyncFileProcessor
 cfg = dyn
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    UnifiedCallbackRegistry,
+)
 
 
 def test_read_csv_chunks_and_load(tmp_path: Path):
@@ -115,15 +119,13 @@ def test_process_excel_file(tmp_path: Path):
         + contents
     )
 
-    proc = AsyncFileProcessor(config=cfg)
+    registry = UnifiedCallbackRegistry()
+    proc = AsyncFileProcessor(config=cfg, callback_registry=registry)
     progress = []
-    result = asyncio.run(
-        proc.process_file(
-            data_uri,
-            "s.xlsx",
-            progress_callback=lambda _f, p: progress.append(p),
-        )
+    registry.register_callback(
+        CallbackType.PROGRESS, lambda p: progress.append(p), component_id="s.xlsx"
     )
+    result = asyncio.run(proc.process_file(data_uri, "s.xlsx"))
 
     assert result.equals(df)
     assert progress and progress[-1] == 100

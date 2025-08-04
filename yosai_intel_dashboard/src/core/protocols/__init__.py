@@ -116,7 +116,6 @@ class FileProcessorProtocol(Protocol):
         self,
         content: str,
         filename: str,
-        progress_callback: Optional[Callable[[str, int], None]] = None,
     ) -> pd.DataFrame:
         """Process uploaded file content into a DataFrame."""
         ...

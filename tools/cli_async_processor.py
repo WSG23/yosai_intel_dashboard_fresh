@@ -47,9 +47,16 @@ async def process_file_with_service(
         logger.info(f"Processing file with AsyncFileProcessor: {file_path}")
 
         # Import and create AsyncFileProcessor
-        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import AsyncFileProcessor
+        from yosai_intel_dashboard.src.services.data_processing.async_file_processor import (
+            AsyncFileProcessor,
+        )
+        from yosai_intel_dashboard.src.infrastructure.callbacks import (
+            CallbackType,
+            UnifiedCallbackRegistry,
+        )
 
-        processor = AsyncFileProcessor()
+        registry = UnifiedCallbackRegistry()
+        processor = AsyncFileProcessor(callback_registry=registry)
 
         # Read file content and encode as base64 (like your upload system)
         with open(path, "rb") as f:
@@ -64,16 +71,18 @@ async def process_file_with_service(
         # Progress callback to track processing
         progress_data = {"last_progress": 0}
 
-        def progress_callback(filename: str, progress: int):
+        def progress_callback(progress: int) -> None:
             if progress != progress_data["last_progress"]:
                 logger.info(f"Processing progress: {progress}%")
                 progress_data["last_progress"] = progress
 
+        registry.register_callback(
+            CallbackType.PROGRESS, progress_callback, component_id=path.name
+        )
+
         # Process file with AsyncFileProcessor
         logger.info("Starting AsyncFileProcessor...")
-        df = await processor.process_file(
-            content_with_prefix, path.name, progress_callback
-        )
+        df = await processor.process_file(content_with_prefix, path.name)
 
         # Gather results
         result = {

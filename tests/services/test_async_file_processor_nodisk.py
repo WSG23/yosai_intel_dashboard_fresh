@@ -54,6 +54,10 @@ assert spec.loader is not None
 spec.loader.exec_module(async_mod)
 AsyncFileProcessor = async_mod.AsyncFileProcessor
 cfg = config_mod.dynamic_config
+from yosai_intel_dashboard.src.infrastructure.callbacks import (
+    CallbackType,
+    UnifiedCallbackRegistry,
+)
 
 
 def _setup_temp_patches(monkeypatch, stored_data):
@@ -98,13 +102,13 @@ def test_process_file_csv_no_disk(monkeypatch):
 
     monkeypatch.setattr(pd, "read_csv", fake_read_csv)
 
-    proc = AsyncFileProcessor(config=cfg)
+    registry = UnifiedCallbackRegistry()
+    proc = AsyncFileProcessor(config=cfg, callback_registry=registry)
     progress = []
-    result = asyncio.run(
-        proc.process_file(
-            data_uri, "test.csv", progress_callback=lambda _f, p: progress.append(p)
-        )
+    registry.register_callback(
+        CallbackType.PROGRESS, lambda p: progress.append(p), component_id="test.csv"
     )
+    result = asyncio.run(proc.process_file(data_uri, "test.csv"))
 
     assert result.equals(expected)
     assert progress and progress[-1] == 100
@@ -129,13 +133,13 @@ def test_process_file_excel_no_disk(monkeypatch):
 
     monkeypatch.setattr(pd, "read_excel", fake_read_excel)
 
-    proc = AsyncFileProcessor(config=cfg)
+    registry = UnifiedCallbackRegistry()
+    proc = AsyncFileProcessor(config=cfg, callback_registry=registry)
     progress = []
-    result = asyncio.run(
-        proc.process_file(
-            data_uri, "file.xlsx", progress_callback=lambda _f, p: progress.append(p)
-        )
+    registry.register_callback(
+        CallbackType.PROGRESS, lambda p: progress.append(p), component_id="file.xlsx"
     )
+    result = asyncio.run(proc.process_file(data_uri, "file.xlsx"))
 
     assert result.equals(expected)
     assert progress and progress[-1] == 100
@@ -157,13 +161,13 @@ def test_process_file_json_no_disk(monkeypatch):
 
     monkeypatch.setattr(pd, "read_json", fake_read_json)
 
-    proc = AsyncFileProcessor(config=cfg)
+    registry = UnifiedCallbackRegistry()
+    proc = AsyncFileProcessor(config=cfg, callback_registry=registry)
     progress = []
-    result = asyncio.run(
-        proc.process_file(
-            data_uri, "file.json", progress_callback=lambda _f, p: progress.append(p)
-        )
+    registry.register_callback(
+        CallbackType.PROGRESS, lambda p: progress.append(p), component_id="file.json"
     )
+    result = asyncio.run(proc.process_file(data_uri, "file.json"))
 
     assert result.equals(expected)
     assert progress and progress[-1] == 100
