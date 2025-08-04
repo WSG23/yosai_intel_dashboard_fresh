@@ -2,34 +2,107 @@
 /* 02-layout/_grid.css - Grid System */
 /* =================================================================== */
 
-/* Container System */
+/* ------------------------------------------------------------------- */
+/* Breakpoint Variables                                                */
+/* ------------------------------------------------------------------- */
+:root {
+  --grid-bp-mobile: 320px;
+  --grid-bp-tablet: 768px;
+  --grid-bp-desktop: 1024px;
+  --grid-bp-wide: 1440px;
+  --grid-bp-ultra: 2560px;
+}
+
+/* ------------------------------------------------------------------- */
+/* Container System                                                    */
+/* ------------------------------------------------------------------- */
 .container {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: var(--space-4);
-  padding-right: var(--space-4);
+  padding-left: var(--space-responsive-sm);
+  padding-right: var(--space-responsive-sm);
 }
 
-.container--sm { max-width: var(--breakpoint-sm); }
-.container--md { max-width: var(--breakpoint-md); }
-.container--lg { max-width: var(--breakpoint-lg); }
-.container--xl { max-width: var(--breakpoint-xl); }
-.container--2xl { max-width: var(--breakpoint-2xl); }
+.container--sm { max-width: var(--grid-bp-tablet); }
+.container--md { max-width: var(--grid-bp-desktop); }
+.container--lg { max-width: var(--grid-bp-wide); }
+.container--xl { max-width: var(--grid-bp-ultra); }
 .container--full { max-width: none; }
 
-/* Dashboard Layout Grid */
+/* ------------------------------------------------------------------- */
+/* Container Query Utility                                             */
+/* ------------------------------------------------------------------- */
+.container-query {
+  container-type: inline-size;
+}
+
+/* ------------------------------------------------------------------- */
+/* Fluid 12-column Grid                                                */
+/* ------------------------------------------------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-responsive-sm);
+  container-type: inline-size;
+}
+
+/* Nested grid support */
+.grid > .grid {
+  gap: var(--space-responsive-xs);
+}
+
+/* Column span utilities */
+.col-span-1  { grid-column: span 1 / span 1; }
+.col-span-2  { grid-column: span 2 / span 2; }
+.col-span-3  { grid-column: span 3 / span 3; }
+.col-span-4  { grid-column: span 4 / span 4; }
+.col-span-5  { grid-column: span 5 / span 5; }
+.col-span-6  { grid-column: span 6 / span 6; }
+.col-span-7  { grid-column: span 7 / span 7; }
+.col-span-8  { grid-column: span 8 / span 8; }
+.col-span-9  { grid-column: span 9 / span 9; }
+.col-span-10 { grid-column: span 10 / span 10; }
+.col-span-11 { grid-column: span 11 / span 11; }
+.col-span-12 { grid-column: span 12 / span 12; }
+
+/* ------------------------------------------------------------------- */
+/* Responsive Grid Gaps via Container Queries                          */
+/* ------------------------------------------------------------------- */
+@container (max-width: calc(var(--grid-bp-tablet) - 1px)) {
+  .grid { gap: var(--space-responsive-xs); }
+}
+
+@container (min-width: var(--grid-bp-tablet)) and (max-width: calc(var(--grid-bp-desktop) - 1px)) {
+  .grid { gap: var(--space-responsive-sm); }
+}
+
+@container (min-width: var(--grid-bp-desktop)) and (max-width: calc(var(--grid-bp-wide) - 1px)) {
+  .grid { gap: var(--space-responsive-md); }
+}
+
+@container (min-width: var(--grid-bp-wide)) and (max-width: calc(var(--grid-bp-ultra) - 1px)) {
+  .grid { gap: var(--space-responsive-lg); }
+}
+
+@container (min-width: var(--grid-bp-ultra)) {
+  .grid { gap: var(--space-responsive-xl); }
+}
+
+/* ------------------------------------------------------------------- */
+/* Dashboard Layout Grid                                               */
+/* ------------------------------------------------------------------- */
 .dashboard-grid {
   display: grid;
-  grid-template-areas: 
+  grid-template-areas:
     "navbar navbar navbar"
     "left-panel map-panel right-panel"
     "bottom-panel bottom-panel bottom-panel";
   grid-template-columns: 20% 1fr 20%;
   grid-template-rows: auto 1fr auto;
   height: 100vh;
-  gap: var(--space-4);
-  padding: var(--space-4);
+  gap: var(--space-responsive-md);
+  padding: var(--space-responsive-md);
 }
 
 .dashboard-grid__navbar { grid-area: navbar; }
@@ -38,10 +111,10 @@
 .dashboard-grid__right { grid-area: right-panel; }
 .dashboard-grid__bottom { grid-area: bottom-panel; }
 
-/* Responsive Grid */
-@media (max-width: 1024px) {
+/* Responsive layout */
+@media (max-width: 768px) {
   .dashboard-grid {
-    grid-template-areas: 
+    grid-template-areas:
       "navbar"
       "map-panel"
       "left-panel"
@@ -52,26 +125,35 @@
   }
 }
 
-/* Flex Grid System */
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  margin-left: calc(var(--space-4) * -0.5);
-  margin-right: calc(var(--space-4) * -0.5);
+@media (min-width: 768px) and (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 25% 1fr;
+    grid-template-areas:
+      "navbar navbar"
+      "left-panel map-panel"
+      "bottom-panel bottom-panel";
+  }
 }
 
-.col {
-  flex: 1;
-  padding-left: calc(var(--space-4) * 0.5);
-  padding-right: calc(var(--space-4) * 0.5);
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .dashboard-grid {
+    grid-template-columns: 20% 1fr 20%;
+    grid-template-areas:
+      "navbar navbar navbar"
+      "left-panel map-panel right-panel"
+      "bottom-panel bottom-panel bottom-panel";
+  }
 }
 
-/* Column Fractions */
-.col-1 { flex: 0 0 8.333333%; }
-.col-2 { flex: 0 0 16.666667%; }
-.col-3 { flex: 0 0 25%; }
-.col-4 { flex: 0 0 33.333333%; }
-.col-6 { flex: 0 0 50%; }
-.col-8 { flex: 0 0 66.666667%; }
-.col-9 { flex: 0 0 75%; }
-.col-12 { flex: 0 0 100%; }
+@media (min-width: 1440px) and (max-width: 2559px) {
+  .dashboard-grid {
+    grid-template-columns: 15% 1fr 15%;
+  }
+}
+
+@media (min-width: 2560px) {
+  .dashboard-grid {
+    grid-template-columns: 12.5% 1fr 12.5%;
+  }
+}
+
