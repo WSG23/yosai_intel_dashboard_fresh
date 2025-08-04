@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Upload, BarChart3, LineChart, Download, Settings, Plus } from 'lucide-react';
 import { useSwipe } from '../../lib/gestures';
@@ -23,6 +23,12 @@ const BottomNav: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(
     Math.max(0, navItems.findIndex((n) => n.path === location.pathname))
   );
+
+  useEffect(() => {
+    setActiveIndex(
+      Math.max(0, navItems.findIndex((n) => n.path === location.pathname))
+    );
+  }, [location.pathname]);
 
   const swipeRef = useSwipe((dir) => {
     if (dir === 'left') {
