@@ -18,6 +18,7 @@ from typing import (
     Tuple,
     runtime_checkable,
 )
+import warnings
 
 import pandas as pd
 
@@ -348,6 +349,11 @@ class EventBusProtocol(Protocol):
         self, event_type: str, data: Dict[str, Any], source: str | None = None
     ) -> None:
         """Backward compatible alias for :meth:`emit`."""
+        warnings.warn(
+            "publish is deprecated; use emit",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.emit(event_type, data, source)
 
     @abstractmethod

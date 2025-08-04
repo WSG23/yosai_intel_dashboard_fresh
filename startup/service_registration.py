@@ -12,6 +12,7 @@ from yosai_intel_dashboard.src.core.interfaces.protocols import (
 )
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.services.metadata_enhancement_engine import register_metadata_services
+import warnings
 
 
 def register_all_application_services(container: ServiceContainer) -> None:
@@ -31,6 +32,11 @@ def register_all_application_services(container: ServiceContainer) -> None:
 
 def register_all_services(container: ServiceContainer) -> None:
     """Backward compatible alias for register_all_application_services."""
+    warnings.warn(
+        "register_all_services is deprecated; use register_all_application_services",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     register_all_application_services(container)
 
 
