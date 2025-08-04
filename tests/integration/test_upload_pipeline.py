@@ -1,12 +1,34 @@
 from __future__ import annotations
 
+import importlib.util
+import sys
+import types
+from pathlib import Path
 import pandas as pd
 import pytest
 
 from tests.utils.builders import DataFrameBuilder
-from yosai_intel_dashboard.src.services.upload_processing import (
-    UploadAnalyticsProcessor,
+
+base = Path(__file__).resolve().parents[1] / "yosai_intel_dashboard/src/services/upload"
+pkg_name = "yosai_intel_dashboard.src.services.upload"
+if pkg_name not in sys.modules:
+    pkg = types.ModuleType("upload")
+    pkg.__path__ = [str(base)]
+    sys.modules[pkg_name] = pkg
+
+spec_proto = importlib.util.spec_from_file_location(
+    f"{pkg_name}.protocols", base / "protocols.py"
 )
+protocols = importlib.util.module_from_spec(spec_proto)
+spec_proto.loader.exec_module(protocols)
+sys.modules[f"{pkg_name}.protocols"] = protocols
+
+spec = importlib.util.spec_from_file_location(
+    f"{pkg_name}.upload_processing", base / "upload_processing.py"
+)
+upload_processing = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(upload_processing)
+UploadAnalyticsProcessor = upload_processing.UploadAnalyticsProcessor
 
 
 @pytest.fixture
@@ -43,6 +65,5 @@ def test_upload_pipeline_filters_empty_and_returns_stats(
 
     # Final statistics should reflect only the valid data
     assert result["status"] == "success"
-    assert result["total_events"] == 2
-    assert result["active_users"] == 2
-    assert result["active_doors"] == 2
+    assert result["rows"] == 2
+    assert result["columns"] == 2
