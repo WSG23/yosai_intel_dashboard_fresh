@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 """
 Complete Integration Tests for Analytics System
 """
 import pandas as pd
 import pytest
 
-from yosai_intel_dashboard.src.services import create_analytics_service, get_analytics_service
 from yosai_intel_dashboard.src.core.domain.entities import ModelFactory
+from yosai_intel_dashboard.src.services import (
+    create_analytics_service,
+    get_analytics_service,
+)
 
 
 def test_analytics_service_creation():
@@ -39,13 +44,17 @@ def test_model_factory():
     models = ModelFactory.create_models_from_dataframe(df)
     assert "access" in models
     assert "anomaly" in models
+    access_model = models["access"]
+    assert isinstance(access_model.events, pd.DataFrame)
+    assert access_model.get_user_activity() == {"user1": 1, "user2": 1}
+    assert access_model.get_door_activity() == {"door1": 1, "door2": 1}
 
 
 def test_model_factory_absent(monkeypatch):
     """ModelFactory gracefully handles missing registry entry"""
     from importlib import reload
 
-    import yosai_intel_dashboard.src.services as services.registry as reg
+    import yosai_intel_dashboard.src.services.registry as reg
 
     original = reg.get_service
 
