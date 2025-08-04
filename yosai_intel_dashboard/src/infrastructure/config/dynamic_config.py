@@ -18,6 +18,7 @@ from .constants import (
     UploadLimits,
 )
 from .environment import select_config_file
+from yosai_intel_dashboard.src.core.utils import get_max_upload_size_mb
 
 logger = logging.getLogger(__name__)
 
@@ -329,7 +330,7 @@ class DynamicConfigManager(BaseConfigLoader):
         return self.security.pbkdf2_iterations
 
     def get_max_upload_size(self) -> int:
-        return self.security.max_upload_mb
+        return get_max_upload_size_mb(self)
 
     def get_db_pool_size(self) -> int:
         return self.performance.db_pool_size
@@ -345,11 +346,11 @@ class DynamicConfigManager(BaseConfigLoader):
 
     def get_max_upload_size_bytes(self) -> int:
         """Get maximum upload size in bytes."""
-        return self.upload.max_file_size_bytes
+        return get_max_upload_size_mb(self) * 1024 * 1024
 
     def validate_large_file_support(self) -> bool:
         """Check if configuration supports 50MB+ files."""
-        return self.upload.max_file_size_mb >= 50
+        return get_max_upload_size_mb(self) >= 50
 
     def get_max_parallel_uploads(self) -> int:
         return getattr(self.uploads, "MAX_PARALLEL_UPLOADS", 4)
