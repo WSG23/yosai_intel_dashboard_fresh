@@ -98,7 +98,11 @@ class PersonRepository(IPersonRepository):
 
     # --------------------------------------------------------------
     async def get_by_id(self, person_id: str) -> Optional[Person]:
-        query = "SELECT * FROM people WHERE person_id = %s"
+        query = (
+            "SELECT person_id, name, employee_id, department, clearance_level, "
+            "access_groups, is_visitor, host_person_id, created_at, last_active, "
+            "risk_score FROM people WHERE person_id = %s"
+        )
 
         rows = await asyncio.to_thread(self.conn.execute_query, query, (person_id,))
         if rows:
@@ -107,7 +111,11 @@ class PersonRepository(IPersonRepository):
 
     # --------------------------------------------------------------
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[Person]:
-        query = "SELECT * FROM people ORDER BY person_id LIMIT %s OFFSET %s"
+        query = (
+            "SELECT person_id, name, employee_id, department, clearance_level, "
+            "access_groups, is_visitor, host_person_id, created_at, last_active, "
+            "risk_score FROM people ORDER BY person_id LIMIT %s OFFSET %s"
+        )
         rows = await asyncio.to_thread(self.conn.execute_query, query, (limit, offset))
         return [_row_to_person(r) for r in rows]
 
@@ -184,7 +192,11 @@ class AccessEventRepository(IAccessEventRepository):
         limit: int = 100,
         offset: int = 0,
     ) -> List[AccessEvent]:
-        query_parts = ["SELECT * FROM access_events WHERE person_id=%s"]
+        query_parts = [
+            "SELECT event_id, timestamp, person_id, door_id, badge_id, access_result, "
+            "badge_status, door_held_open_time, entry_without_badge, device_status, raw_data "
+            "FROM access_events WHERE person_id=%s"
+        ]
         params: list = [person_id]
         if start_date:
             query_parts.append("AND timestamp >= %s")
@@ -209,7 +221,11 @@ class AccessEventRepository(IAccessEventRepository):
         limit: int = 100,
         offset: int = 0,
     ) -> List[AccessEvent]:
-        query_parts = ["SELECT * FROM access_events WHERE door_id=%s"]
+        query_parts = [
+            "SELECT event_id, timestamp, person_id, door_id, badge_id, access_result, "
+            "badge_status, door_held_open_time, entry_without_badge, device_status, raw_data "
+            "FROM access_events WHERE door_id=%s"
+        ]
         params: list = [door_id]
         if start_date:
             query_parts.append("AND timestamp >= %s")
@@ -251,7 +267,11 @@ class AccessEventRepository(IAccessEventRepository):
 
     # --------------------------------------------------------------
     async def get_recent_events(self, limit: int = 100) -> List[AccessEvent]:
-        query = "SELECT * FROM access_events ORDER BY timestamp DESC LIMIT %s"
+        query = (
+            "SELECT event_id, timestamp, person_id, door_id, badge_id, access_result, "
+            "badge_status, door_held_open_time, entry_without_badge, device_status, raw_data "
+            "FROM access_events ORDER BY timestamp DESC LIMIT %s"
+        )
         rows = await asyncio.to_thread(self.conn.execute_query, query, (limit,))
         return [_row_to_event(r) for r in rows]
 
@@ -264,7 +284,11 @@ class DoorRepository(IDoorRepository):
 
     # --------------------------------------------------------------
     async def get_by_id(self, door_id: str) -> Optional[Door]:
-        query = "SELECT * FROM doors WHERE door_id=%s"
+        query = (
+            "SELECT door_id, door_name, facility_id, area_id, floor, door_type, "
+            "required_clearance, is_critical, device_id, is_active, created_at "
+            "FROM doors WHERE door_id=%s"
+        )
         rows = await asyncio.to_thread(self.conn.execute_query, query, (door_id,))
         if rows:
             return _row_to_door(rows[0])
@@ -274,7 +298,11 @@ class DoorRepository(IDoorRepository):
     async def get_by_facility(
         self, facility_id: str, *, limit: int = 100, offset: int = 0
     ) -> List[Door]:
-        query = "SELECT * FROM doors WHERE facility_id=%s ORDER BY door_id LIMIT %s OFFSET %s"
+        query = (
+            "SELECT door_id, door_name, facility_id, area_id, floor, door_type, "
+            "required_clearance, is_critical, device_id, is_active, created_at "
+            "FROM doors WHERE facility_id=%s ORDER BY door_id LIMIT %s OFFSET %s"
+        )
         rows = await asyncio.to_thread(
             self.conn.execute_query, query, (facility_id, limit, offset)
         )
@@ -282,6 +310,10 @@ class DoorRepository(IDoorRepository):
 
     # --------------------------------------------------------------
     async def get_critical_doors(self) -> List[Door]:
-        query = "SELECT * FROM doors WHERE is_critical=1"
+        query = (
+            "SELECT door_id, door_name, facility_id, area_id, floor, door_type, "
+            "required_clearance, is_critical, device_id, is_active, created_at "
+            "FROM doors WHERE is_critical=1"
+        )
         rows = await asyncio.to_thread(self.conn.execute_query, query)
         return [_row_to_door(r) for r in rows]
