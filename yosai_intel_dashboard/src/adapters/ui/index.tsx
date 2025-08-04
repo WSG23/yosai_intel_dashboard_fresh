@@ -7,6 +7,10 @@ import { queryClient } from './queryClient';
 import { ZustandProvider } from './state';
 import { SelectionProvider } from './core/interaction/SelectionContext';
 import BottomNav from './components/navigation/BottomNav';
+import { config } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+
+config.autoAddCss = false;
 
 const RealTimeAnalyticsPage = React.lazy(() => import('./pages/RealTimeAnalyticsPage')) as any;
 RealTimeAnalyticsPage.preload = () => import('./pages/RealTimeAnalyticsPage');
