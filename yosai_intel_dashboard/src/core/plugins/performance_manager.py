@@ -53,21 +53,20 @@ class PluginPerformanceManager(BaseModel):
     # ------------------------------------------------------------------
     def detect_performance_issues(self) -> List[Dict[str, Any]]:
         """Detect plugins exceeding performance thresholds."""
-        alerts: List[Dict[str, Any]] = []
         with self._metrics_lock:
-            for plugin, records in self.metrics.items():
-                for record in records:
-                    for metric, value in record.items():
-                        threshold = self.performance_thresholds.get(metric)
-                        if threshold and value > threshold:
-                            alert = {
-                                "plugin": plugin,
-                                "metric": metric,
-                                "value": value,
-                                "threshold": threshold,
-                            }
-                            self.alert_history.append(alert)
-                            alerts.append(alert)
+            alerts = [
+                {
+                    "plugin": plugin,
+                    "metric": metric,
+                    "value": value,
+                    "threshold": threshold,
+                }
+                for plugin, records in self.metrics.items()
+                for record in records
+                for metric, value in record.items()
+                if (threshold := self.performance_thresholds.get(metric)) and value > threshold
+            ]
+            self.alert_history.extend(alerts)
         return alerts
 
     # ------------------------------------------------------------------
