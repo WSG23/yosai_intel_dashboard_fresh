@@ -8,6 +8,8 @@ from .protocols import (
     AnalyticsProviderProtocol,
     ConfigProviderProtocol,
 )
+from .config_protocol import ConfigurationProtocol
+
 # Service protocol imports are deferred to avoid heavy dependencies
 
 if TYPE_CHECKING:  # pragma: no cover - only for static typing
@@ -20,6 +22,7 @@ __all__ = [
     "ConfigurationProviderProtocol",
     "AnalyticsProviderProtocol",
     "ConfigProviderProtocol",
+    "ConfigurationProtocol",
     "UploadValidatorProtocol",
     "ExportServiceProtocol",
     "DoorMappingServiceProtocol",

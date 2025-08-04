@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
 from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
+from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import ConfigurationMixin
 
 from .base import CacheConfig, Config
 from .config_transformer import ConfigTransformer
@@ -35,7 +36,7 @@ from .schema import (
 from .unified_loader import UnifiedLoader
 
 
-class ConfigManager(ConfigurationProtocol):
+class ConfigManager(ConfigurationMixin, ConfigurationProtocol):
     """Orchestrate loading, validating and transforming configuration."""
 
     def __init__(
@@ -90,6 +91,11 @@ class ConfigManager(ConfigurationProtocol):
 
         self.validation = self.validator.run_checks(cfg)
         self.config = ConfigSchema.from_dataclass(cfg)
+        # expose common sections directly for mixin helpers
+        self.security = self.config.security
+        self.uploads = self.config.uploads
+        # some configurations may provide performance settings
+        self.performance = getattr(self.config, "performance", None)
 
     def get_database_config(self) -> DatabaseSettings:
         """Get database configuration."""
