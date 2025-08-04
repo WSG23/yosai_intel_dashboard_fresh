@@ -8,8 +8,17 @@ import resource
 import sys
 import warnings
 from contextlib import contextmanager
-from types import ModuleType, SimpleNamespace
+from pathlib import Path
+
 from typing import Callable, Iterator, List
+
+# Make project package importable
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from yosai_intel_dashboard.src.core.imports.fallbacks import setup_common_fallbacks
+
+setup_common_fallbacks()
 
 import pytest
 
@@ -121,6 +130,17 @@ DEFAULT_MAX_MEMORY_MB = int(os.environ.get("PYTEST_MAX_MEMORY_MB", "512"))
 
 
 @pytest.fixture(autouse=True)
+def setup_test_environment():
+    """Purge project modules from ``sys.modules`` before each test."""
+    prefix = "yosai_intel_dashboard"
+    for name in [m for m in list(sys.modules) if m.startswith(prefix)]:
+        sys.modules.pop(name, None)
+    yield
+    for name in [m for m in list(sys.modules) if m.startswith(prefix)]:
+        sys.modules.pop(name, None)
+
+
+@pytest.fixture(autouse=True)
 def profile_and_limit_memory(request):
     """Profile memory usage and enforce per-test memory caps."""
     max_mb = DEFAULT_MAX_MEMORY_MB
@@ -165,6 +185,16 @@ def fake_unicode_processor():
     from .fake_unicode_processor import FakeUnicodeProcessor
 
     return FakeUnicodeProcessor()
+
+
+@pytest.fixture
+def mock_analytics_processor():
+    """Fixture returning an ``UploadAnalyticsProcessor`` instance."""
+    from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+        UploadAnalyticsProcessor,
+    )
+
+    return UploadAnalyticsProcessor()
 
 
 @pytest.fixture
