@@ -74,4 +74,5 @@ class ConfigurationMixin:
         return 1024
 
 
+
 __all__ = ["ConfigurationMixin"]

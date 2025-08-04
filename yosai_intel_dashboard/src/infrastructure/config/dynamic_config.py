@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
+from .configuration_mixin import ConfigurationMixin
 from .constants import (
     AnalyticsConstants,
     CSSConstants,

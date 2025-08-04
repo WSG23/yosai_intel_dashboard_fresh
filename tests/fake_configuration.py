@@ -6,6 +6,7 @@ from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import 
     ConfigurationMixin,
 )
 
+
 try:
     from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
 except Exception:  # pragma: no cover - optional deps
