@@ -12,7 +12,11 @@ import logging
 from typing import Dict
 
 from database.connection import create_database_connection
-from database.secure_exec import execute_command
+from security.secure_query_wrapper import (
+    execute_secure_command,
+    execute_secure_sql,
+)
+from infrastructure.database.secure_query import SecureQueryBuilder
 from database.types import DBRows
 
 logger = logging.getLogger(__name__)
@@ -24,22 +28,25 @@ class BaselineMetricsDB:
     def __init__(self, table_name: str = "behavior_baselines") -> None:
         self.conn = create_database_connection()
         self.table_name = table_name
+        # Validate table name against allow-list
+        self.builder = SecureQueryBuilder(allowed_tables={self.table_name})
         self._ensure_table()
 
     # ------------------------------------------------------------------
     def _ensure_table(self) -> None:
-        execute_command(
-            self.conn,
-            f"""
-            CREATE TABLE IF NOT EXISTS {self.table_name} (
+        table = self.builder.table(self.table_name)
+        create_sql = (
+            """
+            CREATE TABLE IF NOT EXISTS {table} (
                 entity_type VARCHAR(10) NOT NULL,
                 entity_id VARCHAR(50) NOT NULL,
                 metric VARCHAR(50) NOT NULL,
                 value FLOAT NOT NULL,
                 PRIMARY KEY (entity_type, entity_id, metric)
             )
-            """,
-        )
+            """
+        ).replace("{table}", table)
+        execute_secure_command(self.conn, create_sql)
 
     # ------------------------------------------------------------------
     def update_baseline(
@@ -47,14 +54,18 @@ class BaselineMetricsDB:
     ) -> None:
         for metric, value in metrics.items():
             try:
-                execute_command(
-                    self.conn,
-                    f"""
-                    INSERT INTO {self.table_name} (entity_type, entity_id, metric, value)
+                table = self.builder.table(self.table_name)
+                insert_sql = (
+                    """
+                    INSERT INTO {table} (entity_type, entity_id, metric, value)
                     VALUES (?, ?, ?, ?)
                     ON CONFLICT(entity_type, entity_id, metric)
                     DO UPDATE SET value = excluded.value
-                    """,
+                    """
+                ).replace("{table}", table)
+                execute_secure_command(
+                    self.conn,
+                    insert_sql,
                     (entity_type, entity_id, metric, float(value)),
                 )
             except Exception as exc:  # pragma: no cover - log and continue
@@ -63,11 +74,14 @@ class BaselineMetricsDB:
     # ------------------------------------------------------------------
     def get_baseline(self, entity_type: str, entity_id: str) -> Dict[str, float]:
         try:
-            rows: DBRows = execute_query(
-                self.conn,
-                f"SELECT metric, value FROM {self.table_name} WHERE entity_type=? AND entity_id=?",
-                (entity_type, entity_id),
+            table = self.builder.table(self.table_name)
+            select_sql = (
+                "SELECT metric, value FROM {table} WHERE entity_type=? AND entity_id=?"
+            ).replace("{table}", table)
+            sql, params = self.builder.build(
+                select_sql, (entity_type, entity_id), logger=logger
             )
+            rows: DBRows = execute_secure_sql(self.conn, sql, params)
             return {row["metric"]: float(row["value"]) for row in rows}
         except Exception as exc:  # pragma: no cover - log and continue
             logger.warning("Failed to fetch baseline metrics: %s", exc)
