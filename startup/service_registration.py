@@ -6,11 +6,12 @@ import warnings
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import (
     ConfigurationProtocol,
-    EventBusProtocol,
     LoggingProtocol,
     SecurityServiceProtocol,
     StorageProtocol,
 )
+from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
+
 from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     ServiceContainer,
 )
@@ -156,7 +157,6 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from yosai_intel_dashboard.src.core.interfaces.protocols import (
         AnalyticsServiceProtocol,
         ConfigProviderProtocol,
-        EventBusProtocol,
         StorageProtocol,
     )
     from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
@@ -164,6 +164,11 @@ def register_analytics_services(container: ServiceContainer) -> None:
         UploadDataServiceProtocol,
         get_database_analytics_retriever,
     )
+    from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+
     from yosai_intel_dashboard.src.mapping.factories.service_factory import (
         create_mapping_service,
     )
@@ -225,6 +230,9 @@ def register_analytics_services(container: ServiceContainer) -> None:
         factory=lambda c: UploadAnalyticsProcessor(
             c.get("security_validator"),
             c.get("processor", ProcessorProtocol),
+            c.get("callback_manager", TrulyUnifiedCallbacks),
+            c.get("dynamic_config").analytics,
+            c.get("event_bus", EventBusProtocol),
         ),
     )
     container.register_singleton(

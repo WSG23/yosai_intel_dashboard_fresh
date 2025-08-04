@@ -1,44 +1,36 @@
+from __future__ import annotations
+
 import pandas as pd
 
-import importlib.util
-import sys
-import types
-from pathlib import Path
 
-base = Path(__file__).resolve().parents[1] / "yosai_intel_dashboard/src/services/upload"
-pkg_name = "yosai_intel_dashboard.src.services.upload"
-if pkg_name not in sys.modules:
-    pkg = types.ModuleType("upload")
-    pkg.__path__ = [str(base)]
-    sys.modules[pkg_name] = pkg
-
-spec_proto = importlib.util.spec_from_file_location(
-    f"{pkg_name}.protocols", base / "protocols.py"
-)
-protocols = importlib.util.module_from_spec(spec_proto)
-spec_proto.loader.exec_module(protocols)
-sys.modules[f"{pkg_name}.protocols"] = protocols
-
-spec = importlib.util.spec_from_file_location(
-    f"{pkg_name}.upload_processing", base / "upload_processing.py"
-)
-upload_processing = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(upload_processing)
-UploadAnalyticsProcessor = upload_processing.UploadAnalyticsProcessor
-from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 from tests.utils.builders import DataFrameBuilder
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+    UploadAnalyticsProcessor,
+)
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
 
 def _make_processor():
     from flask import Flask
 
     from yosai_intel_dashboard.src.core.cache import cache
+    from yosai_intel_dashboard.src.core.events import EventBus
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+        dynamic_config,
+    )
 
     cache.init_app(Flask(__name__))
     vs = SecurityValidator()
     processor = Processor(validator=vs)
-    return UploadAnalyticsProcessor(vs, processor)
+    event_bus = EventBus()
+    callbacks = TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=vs)
+    return UploadAnalyticsProcessor(
+        vs, processor, callbacks, dynamic_config.analytics, event_bus
+    )
 
 
 def test_load_data_helper(monkeypatch):
