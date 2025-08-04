@@ -17,7 +17,7 @@ def set_env(monkeypatch, secret: str) -> None:
     monkeypatch.setenv("SECRET_KEY", secret)
     monkeypatch.setenv("DB_PASSWORD", secret)
     for var in REQUIRED_AUTH_VARS:
-        monkeypatch.setenv(var, "value")
+        monkeypatch.setenv(var, os.environ.get(var, os.urandom(16).hex()))
 
 
 def test_invalid_secrets_raise(monkeypatch):

@@ -1,4 +1,5 @@
 import importlib
+import os
 import sys
 import types
 
@@ -175,7 +176,10 @@ def _create_app(monkeypatch, origins):
 
 @pytest.mark.unit
 def test_allowed_origin(monkeypatch):
-    monkeypatch.setenv("SECRET_KEY", "test")
+    monkeypatch.setenv(
+        "SECRET_KEY",
+        os.environ.get("SECRET_KEY", os.urandom(16).hex()),
+    )
     app = _create_app(monkeypatch, ["https://allowed.com"])
     client = TestClient(app)
     resp = client.get("/v1/csrf-token", headers={"Origin": "https://allowed.com"})
@@ -184,7 +188,10 @@ def test_allowed_origin(monkeypatch):
 
 @pytest.mark.unit
 def test_blocked_origin(monkeypatch):
-    monkeypatch.setenv("SECRET_KEY", "test")
+    monkeypatch.setenv(
+        "SECRET_KEY",
+        os.environ.get("SECRET_KEY", os.urandom(16).hex()),
+    )
     app = _create_app(monkeypatch, ["https://allowed.com"])
     client = TestClient(app)
     resp = client.get("/v1/csrf-token", headers={"Origin": "https://other.com"})
