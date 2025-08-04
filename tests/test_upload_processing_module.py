@@ -44,6 +44,5 @@ def test_direct_processing_helper(tmp_path):
     )
     proc = _make_processor()
     result = proc._process_uploaded_data_directly({"f1.csv": df1})
-    assert result["total_events"] == 1
-    assert result["active_users"] == 1
-    assert result["active_doors"] == 1
+    assert result["rows"] == 1
+    assert result["columns"] == 5

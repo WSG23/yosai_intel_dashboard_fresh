@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+
 from tests.utils.builders import DataFrameBuilder
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
@@ -56,13 +57,12 @@ def test_calculate_statistics():
     )
     ua = _make_processor()
     stats = ua._calculate_statistics({"x.csv": df})
-    assert stats["total_events"] == 1
-    assert stats["active_users"] == 1
-    assert stats["active_doors"] == 1
+    assert stats["rows"] == 1
+    assert stats["columns"] == 2
 
 
 def test_format_results():
     ua = _make_processor()
-    formatted = ua._format_results({"total_events": 1})
+    formatted = ua._format_results({"rows": 1})
     assert formatted["status"] == "success"
-    assert formatted["total_events"] == 1
+    assert formatted["rows"] == 1

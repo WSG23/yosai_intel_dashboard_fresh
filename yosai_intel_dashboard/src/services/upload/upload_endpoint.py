@@ -15,8 +15,8 @@ from yosai_intel_dashboard.src.error_handling import (
     ErrorHandler,
     api_error_response,
 )
-from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
-    load_service_config,
+from yosai_intel_dashboard.src.infrastructure.config.loader import (
+    ConfigurationLoader,
 )
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
 from yosai_intel_dashboard.src.utils.pydantic_decorators import (
@@ -25,7 +25,7 @@ from yosai_intel_dashboard.src.utils.pydantic_decorators import (
 )
 from yosai_intel_dashboard.src.utils.sanitization import sanitize_text
 
-_service_cfg = load_service_config()
+_service_cfg = ConfigurationLoader().get_service_config()
 redis_client = redis.Redis.from_url(_service_cfg.redis_url)
 rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
 

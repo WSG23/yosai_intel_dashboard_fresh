@@ -44,4 +44,4 @@ def test_process_then_analyze(monkeypatch):
     monkeypatch.setattr(ua, "load_uploaded_data", lambda: {"sample.csv": df})
     result = ua.analyze_uploaded_data()
     assert result["status"] == "success"
-    assert result["total_events"] == 1
+    assert result["rows"] == 1

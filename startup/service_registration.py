@@ -11,6 +11,7 @@ from yosai_intel_dashboard.src.core.interfaces.protocols import (
     StorageProtocol,
 )
 from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
+
 from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     ServiceContainer,
 )
@@ -54,6 +55,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigManager,
         ConfigTransformer,
         ConfigValidator,
+        ConfigurationLoader,
         create_config_manager,
     )
     from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
@@ -78,6 +80,11 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigManager,
         protocol=ConfigurationProtocol,
         factory=lambda c: create_config_manager(container=c),
+    )
+    container.register_singleton(
+        "configuration_loader",
+        ConfigurationLoader,
+        protocol=ConfigurationProtocol,
     )
     container.register_singleton(
         "dynamic_config",
@@ -109,6 +116,21 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         "event_bus",
         EventBus,
         protocol=EventBusProtocol,
+    )
+
+    from yosai_intel_dashboard.src.core.protocols import CallbackSystemProtocol
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+
+    container.register_singleton(
+        "callback_manager",
+        TrulyUnifiedCallbacks,
+        protocol=CallbackSystemProtocol,
+        factory=lambda c: TrulyUnifiedCallbacks(
+            security_validator=c.get("security_validator"),
+            event_bus=c.get("event_bus", EventBusProtocol),
+        ),
     )
 
     # Register generic file storage service for analytics
@@ -146,6 +168,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
         TrulyUnifiedCallbacks,
     )
+
     from yosai_intel_dashboard.src.mapping.factories.service_factory import (
         create_mapping_service,
     )
@@ -287,12 +310,26 @@ def register_analytics_services(container: ServiceContainer) -> None:
 
 
 def register_security_services(container: ServiceContainer) -> None:
+    from config.configuration_loader import ConfigurationLoader
     from validation.security_validator import SecurityValidator
+    from yosai_intel_dashboard.src.infrastructure.cache import redis_client
+
+    def _create_validator(_: ServiceContainer) -> SecurityValidator:
+        cfg = ConfigurationLoader.get_service_config("security")
+        rate_limit = getattr(cfg, "rate_limit_requests", None)
+        window = getattr(cfg, "rate_limit_window_minutes", None)
+        window_seconds = window * 60 if window is not None else None
+        return SecurityValidator(
+            redis_client=redis_client,
+            rate_limit=rate_limit,
+            window_seconds=window_seconds,
+        )
 
     container.register_singleton(
         "security_validator",
         SecurityValidator,
         protocol=SecurityServiceProtocol,
+        factory=_create_validator,
     )
 
 

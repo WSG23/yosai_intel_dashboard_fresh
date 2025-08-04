@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from yosai_intel_dashboard.src.infrastructure.config.config_loader import ServiceSettings, load_service_config
+from yosai_intel_dashboard.src.infrastructure.config.loader import (
+    ConfigurationLoader,
+    ServiceSettings,
+)
 
 
 def test_load_service_config_defaults(monkeypatch):
@@ -14,7 +17,7 @@ def test_load_service_config_defaults(monkeypatch):
     ]:
         monkeypatch.delenv(var, raising=False)
 
-    cfg = load_service_config()
+    cfg = ConfigurationLoader().get_service_config()
     assert cfg.redis_url == ServiceSettings.redis_url
     assert cfg.cache_ttl == ServiceSettings.cache_ttl
     assert cfg.model_dir == ServiceSettings.model_dir
@@ -31,7 +34,7 @@ def test_load_service_config_overrides(monkeypatch):
     monkeypatch.setenv("MODEL_REGISTRY_BUCKET", "bucket")
     monkeypatch.setenv("MLFLOW_URI", "http://mlflow")
 
-    cfg = load_service_config()
+    cfg = ConfigurationLoader().get_service_config()
     assert cfg.redis_url == "redis://example:6380/1"
     assert cfg.cache_ttl == 123
     assert cfg.model_dir == Path("/tmp/models")
