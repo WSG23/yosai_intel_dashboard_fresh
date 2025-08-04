@@ -5,6 +5,7 @@ import types
 from pathlib import Path
 
 import pytest
+from tests.fixtures import MockCallbackManager, MockUploadDataStore
 
 # Stubs to avoid heavy dependencies
 sys.modules['yosai_intel_dashboard.src.infrastructure.callbacks.events'] = types.SimpleNamespace(CallbackEvent=object)
@@ -24,12 +25,7 @@ afh.FileHandler = FileHandler
 sys.modules['yosai_intel_dashboard.src.services.data_processing.file_handler'] = afh
 
 astore = types.ModuleType('yosai_intel_dashboard.src.utils.upload_store')
-class UploadedDataStore:
-    def __init__(self, storage_dir=None):
-        self.storage_dir = storage_dir
-    def add_file(self, name, df):
-        pass
-astore.UploadedDataStore = UploadedDataStore
+astore.UploadedDataStore = MockUploadDataStore
 sys.modules['yosai_intel_dashboard.src.utils.upload_store'] = astore
 
 spec = importlib.util.spec_from_file_location('ufc', Path('yosai_intel_dashboard/src/services/unified_file_controller.py'))
@@ -38,8 +34,8 @@ spec.loader.exec_module(ufc)
 
 
 def test_disallowed_extension(tmp_path):
-    manager = object()
-    store = UploadedDataStore(storage_dir=tmp_path)
+    manager = MockCallbackManager()
+    store = MockUploadDataStore(storage_dir=tmp_path)
     csv_bytes = b"a,b\n1,2"
     b64 = base64.b64encode(csv_bytes).decode()
     content = f"data:text/csv;base64,{b64}"

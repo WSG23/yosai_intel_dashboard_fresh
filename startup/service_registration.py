@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
+import warnings
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import (
     ConfigurationProtocol,
-    EventBusProtocol,
     LoggingProtocol,
     SecurityServiceProtocol,
     StorageProtocol,
 )
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from yosai_intel_dashboard.src.services.metadata_enhancement_engine import register_metadata_services
-import warnings
+from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
+
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
+from yosai_intel_dashboard.src.services.metadata_enhancement_engine import (
+    register_metadata_services,
+)
 
 
 def register_all_application_services(container: ServiceContainer) -> None:
@@ -24,8 +29,12 @@ def register_all_application_services(container: ServiceContainer) -> None:
     register_metadata_services(container)
     register_security_services(container)
     register_export_services(container)
-    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-    from yosai_intel_dashboard.src.services.upload.service_registration import register_upload_services
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+        dynamic_config,
+    )
+    from yosai_intel_dashboard.src.services.upload.service_registration import (
+        register_upload_services,
+    )
 
     register_upload_services(container, config=dynamic_config)
 
@@ -46,15 +55,18 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigManager,
         ConfigTransformer,
         ConfigValidator,
+        ConfigurationLoader,
         create_config_manager,
     )
+    from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
+    from yosai_intel_dashboard.src.core.logging import LoggingService
     from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
         DatabaseConnectionFactory,
         DatabaseSettings,
     )
-    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import dynamic_config
-    from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
-    from yosai_intel_dashboard.src.core.logging import LoggingService
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+        dynamic_config,
+    )
     from yosai_intel_dashboard.src.services.configuration_service import (
         ConfigurationServiceProtocol,
         DynamicConfigurationService,
@@ -68,6 +80,11 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigManager,
         protocol=ConfigurationProtocol,
         factory=lambda c: create_config_manager(container=c),
+    )
+    container.register_singleton(
+        "configuration_loader",
+        ConfigurationLoader,
+        protocol=ConfigurationProtocol,
     )
     container.register_singleton(
         "dynamic_config",
@@ -85,6 +102,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=LoggingProtocol,
     )
     from yosai_intel_dashboard.src.error_handling import ErrorHandler
+
     container.register_singleton("error_handler", ErrorHandler)
     container.register_singleton(
         "database_connection_factory",
@@ -100,6 +118,21 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=EventBusProtocol,
     )
 
+    from yosai_intel_dashboard.src.core.protocols import CallbackSystemProtocol
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+
+    container.register_singleton(
+        "callback_manager",
+        TrulyUnifiedCallbacks,
+        protocol=CallbackSystemProtocol,
+        factory=lambda c: TrulyUnifiedCallbacks(
+            security_validator=c.get("security_validator"),
+            event_bus=c.get("event_bus", EventBusProtocol),
+        ),
+    )
+
     # Register generic file storage service for analytics
     from yosai_intel_dashboard.src.core.storage.file_storage import FileStorageService
 
@@ -109,7 +142,9 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=StorageProtocol,
     )
 
-    from yosai_intel_dashboard.src.infrastructure.config.cache_manager import get_cache_manager
+    from yosai_intel_dashboard.src.infrastructure.config.cache_manager import (
+        get_cache_manager,
+    )
 
     container.register_singleton(
         "cache_manager",
@@ -122,13 +157,27 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from yosai_intel_dashboard.src.core.interfaces.protocols import (
         AnalyticsServiceProtocol,
         ConfigProviderProtocol,
-        EventBusProtocol,
         StorageProtocol,
     )
+    from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
+        MappingServiceProtocol,
+        UploadDataServiceProtocol,
+        get_database_analytics_retriever,
+    )
+    from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+
     from yosai_intel_dashboard.src.mapping.factories.service_factory import (
         create_mapping_service,
     )
-    from yosai_intel_dashboard.src.services.analytics.calculator import create_calculator
+    from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+        AnalyticsService,
+    )
+    from yosai_intel_dashboard.src.services.analytics.calculator import (
+        create_calculator,
+    )
     from yosai_intel_dashboard.src.services.analytics.protocols import (
         CalculatorProtocol,
         DataLoadingProtocol,
@@ -137,21 +186,27 @@ def register_analytics_services(container: ServiceContainer) -> None:
         ReportGeneratorProtocol,
         UploadAnalyticsProtocol,
     )
-    from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
-    from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
-    from yosai_intel_dashboard.src.services.controllers.upload_controller import UploadProcessingController
-    from yosai_intel_dashboard.src.services.controllers.protocols import UploadProcessingControllerProtocol
-    from yosai_intel_dashboard.src.services.data_loading_service import DataLoadingService
+    from yosai_intel_dashboard.src.services.controllers.protocols import (
+        UploadProcessingControllerProtocol,
+    )
+    from yosai_intel_dashboard.src.services.controllers.upload_controller import (
+        UploadProcessingController,
+    )
+    from yosai_intel_dashboard.src.services.data_loading_service import (
+        DataLoadingService,
+    )
     from yosai_intel_dashboard.src.services.data_processing.processor import Processor
-    from yosai_intel_dashboard.src.services.data_processing_service import DataProcessingService
-    from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
-        MappingServiceProtocol,
-        UploadDataServiceProtocol,
-        get_database_analytics_retriever,
+    from yosai_intel_dashboard.src.services.data_processing_service import (
+        DataProcessingService,
     )
     from yosai_intel_dashboard.src.services.protocols.processor import ProcessorProtocol
     from yosai_intel_dashboard.src.services.publishing_service import PublishingService
-    from yosai_intel_dashboard.src.services.report_generation_service import ReportGenerationService
+    from yosai_intel_dashboard.src.services.report_generation_service import (
+        ReportGenerationService,
+    )
+    from yosai_intel_dashboard.src.services.upload_processing import (
+        UploadAnalyticsProcessor,
+    )
 
     container.register_singleton(
         "data_processing_service",
@@ -175,6 +230,9 @@ def register_analytics_services(container: ServiceContainer) -> None:
         factory=lambda c: UploadAnalyticsProcessor(
             c.get("security_validator"),
             c.get("processor", ProcessorProtocol),
+            c.get("callback_manager", TrulyUnifiedCallbacks),
+            c.get("dynamic_config").analytics,
+            c.get("event_bus", EventBusProtocol),
         ),
     )
     container.register_singleton(
@@ -218,6 +276,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
         protocol=PublishingProtocol,
         factory=lambda c: PublishingService(c.get("event_bus")),
     )
+
     def _create_analytics_service(c):
         factory = c.get("database_connection_factory")
         db_conn = factory.create() if factory else None
@@ -251,17 +310,33 @@ def register_analytics_services(container: ServiceContainer) -> None:
 
 
 def register_security_services(container: ServiceContainer) -> None:
+    from config.configuration_loader import ConfigurationLoader
     from validation.security_validator import SecurityValidator
+    from yosai_intel_dashboard.src.infrastructure.cache import redis_client
+
+    def _create_validator(_: ServiceContainer) -> SecurityValidator:
+        cfg = ConfigurationLoader.get_service_config("security")
+        rate_limit = getattr(cfg, "rate_limit_requests", None)
+        window = getattr(cfg, "rate_limit_window_minutes", None)
+        window_seconds = window * 60 if window is not None else None
+        return SecurityValidator(
+            redis_client=redis_client,
+            rate_limit=rate_limit,
+            window_seconds=window_seconds,
+        )
 
     container.register_singleton(
         "security_validator",
         SecurityValidator,
         protocol=SecurityServiceProtocol,
+        factory=_create_validator,
     )
 
 
 def register_export_services(container: ServiceContainer) -> None:
-    from yosai_intel_dashboard.src.core.interfaces.protocols import ExportServiceProtocol
+    from yosai_intel_dashboard.src.core.interfaces.protocols import (
+        ExportServiceProtocol,
+    )
     from yosai_intel_dashboard.src.services.export_service import ExportService
 
     container.register_transient(
@@ -274,7 +349,9 @@ def register_export_services(container: ServiceContainer) -> None:
 def register_learning_services(container: ServiceContainer) -> None:
     """Register device learning service with the container."""
 
-    from yosai_intel_dashboard.src.services.device_learning_service import create_device_learning_service
+    from yosai_intel_dashboard.src.services.device_learning_service import (
+        create_device_learning_service,
+    )
 
     container.register_singleton(
         "device_learning_service",

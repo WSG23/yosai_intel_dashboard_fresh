@@ -38,6 +38,7 @@ safe_import('structlog', types.ModuleType("structlog"))
 sys.modules["structlog"].BoundLogger = object
 
 from yosai_intel_dashboard.src.services.analytics.data.loader import DataLoader  # noqa: E402
+from tests.fixtures import MockProcessor
 
 
 class DummyUploadProc:
@@ -78,18 +79,10 @@ class DummyController:
         return {"status": "success"}
 
 
-class DummyProcessor:
-    def __init__(self, df):
-        self.df = df
-
-    def get_processed_database(self):
-        return self.df, {}
-
-
 def test_load_patterns_dataframe():
     df = pd.DataFrame({"a": [1, 2, 3]})
     controller = DummyController({"f.csv": df})
-    loader = DataLoader(controller, DummyProcessor(pd.DataFrame()))
+    loader = DataLoader(controller, MockProcessor(pd.DataFrame()))
 
     combined, rows = loader.load_patterns_dataframe(None)
     assert rows == len(df)
@@ -99,7 +92,7 @@ def test_load_patterns_dataframe():
 def test_delegated_methods():
     df = pd.DataFrame({"a": [1]})
     controller = DummyController({"f.csv": df})
-    loader = DataLoader(controller, DummyProcessor(pd.DataFrame()))
+    loader = DataLoader(controller, MockProcessor(pd.DataFrame()))
 
     assert loader.load_uploaded_data() == {"f.csv": df}
     assert loader.clean_uploaded_dataframe(df).equals(df)

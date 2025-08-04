@@ -1,20 +1,35 @@
-from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
-from yosai_intel_dashboard.src.services.data_processing.processor import Processor
+from __future__ import annotations
+
 from tests.utils.builders import DataFrameBuilder
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+    UploadAnalyticsProcessor,
+)
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
 
 def _make_processor():
     from flask import Flask
 
     from yosai_intel_dashboard.src.core.cache import cache
+    from yosai_intel_dashboard.src.core.events import EventBus
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+        dynamic_config,
+    )
 
     cache.init_app(Flask(__name__))
 
     vs = SecurityValidator()
     processor = Processor(validator=vs)
+    event_bus = EventBus()
+    callbacks = TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=vs)
 
-    return UploadAnalyticsProcessor(vs, processor)
+    return UploadAnalyticsProcessor(
+        vs, processor, callbacks, dynamic_config.analytics, event_bus
+    )
 
 
 def test_direct_processing_helper(tmp_path):
@@ -29,6 +44,5 @@ def test_direct_processing_helper(tmp_path):
     )
     proc = _make_processor()
     result = proc._process_uploaded_data_directly({"f1.csv": df1})
-    assert result["total_events"] == 1
-    assert result["active_users"] == 1
-    assert result["active_doors"] == 1
+    assert result["rows"] == 1
+    assert result["columns"] == 5

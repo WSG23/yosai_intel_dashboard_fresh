@@ -4,6 +4,7 @@ import sys
 import types
 from pathlib import Path
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+from tests.fixtures import MockProcessor
 
 safe_import('yosai_intel_dashboard', types.ModuleType("yosai_intel_dashboard"))
 sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
@@ -12,18 +13,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-class DummyFileProcessor:
-    def process_file_async(self, content, filename):
-        return "job1"
-
-    def get_job_status(self, job_id):
-        return {"status": "done"}
-
-
 def _create_app(monkeypatch):
 
     container = types.SimpleNamespace(
-        services={"file_processor": DummyFileProcessor()},
+        services={"file_processor": MockProcessor()},
         get=lambda key: container.services[key],
         register_singleton=lambda key, value: container.services.__setitem__(
             key, value

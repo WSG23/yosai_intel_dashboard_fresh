@@ -5,7 +5,9 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
+from yosai_intel_dashboard.src.adapters.ui.components.ui_builder import (
+    UploadUIBuilder,
+)
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from yosai_intel_dashboard.src.services.async_file_processor import AsyncFileProcessor
 from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import get_ai_column_suggestions

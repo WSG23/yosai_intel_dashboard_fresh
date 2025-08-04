@@ -9,6 +9,7 @@ from flask import Flask
 from pathlib import Path
 import types
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+from tests.fixtures import MockProcessor
 
 safe_import('yosai_intel_dashboard', types.ModuleType("yosai_intel_dashboard"))
 sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
@@ -107,25 +108,6 @@ def test_upload_returns_error_on_exception(monkeypatch):
     assert body == {"code": "internal", "message": "boom"}
 
 
-class DummyValidator:
-    def validate_file_upload(self, filename, content):
-        if filename.endswith(".exe"):
-            raise ValueError("unsupported")
-        if len(content) > 5:
-            raise ValueError("too_large")
-
-
-class DummyFileProcessor:
-    def __init__(self):
-        self.validator = DummyValidator()
-
-    def process_file_async(self, contents, filename):
-        return "job123"
-
-    def get_job_status(self, job_id):
-        return {}
-
-
 def _create_validator_app(monkeypatch):
     fake_reg = types.ModuleType("services.upload.service_registration")
     fake_reg.register_upload_services = lambda c: None
@@ -134,7 +116,7 @@ def _create_validator_app(monkeypatch):
     upload_ep = importlib.import_module("yosai_intel_dashboard.src.services.upload_endpoint")
 
     app = Flask(__name__)
-    bp = upload_ep.create_upload_blueprint(DummyFileProcessor(), handler=ErrorHandler())
+    bp = upload_ep.create_upload_blueprint(MockProcessor(), handler=ErrorHandler())
     app.register_blueprint(bp)
     return app
 
