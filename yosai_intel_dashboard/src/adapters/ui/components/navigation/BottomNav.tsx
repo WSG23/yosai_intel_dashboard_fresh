@@ -1,21 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Upload, BarChart3, LineChart, Download, Settings, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useSwipe } from '../../lib/gestures';
-
-interface NavItem {
-  path: string;
-  label: string;
-  icon: React.ReactNode;
-}
-
-const navItems: NavItem[] = [
-  { path: '/upload', label: 'Upload', icon: <Upload size={24} /> },
-  { path: '/analytics', label: 'Analytics', icon: <BarChart3 size={24} /> },
-  { path: '/graphs', label: 'Graphs', icon: <LineChart size={24} /> },
-  { path: '/export', label: 'Export', icon: <Download size={24} /> },
-  { path: '/settings', label: 'Settings', icon: <Settings size={24} /> },
-];
+import { navItems } from './navItems';
 
 const BottomNav: React.FC = () => {
   const location = useLocation();
@@ -53,7 +40,7 @@ const BottomNav: React.FC = () => {
               }`}
               aria-label={item.label}
             >
-              {item.icon}
+              <item.icon size={24} />
             </Link>
           </li>
         ))}
