@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 services_root = Path(__file__).resolve().parents[1] / "services"
 services_pkg = types.ModuleType("services")

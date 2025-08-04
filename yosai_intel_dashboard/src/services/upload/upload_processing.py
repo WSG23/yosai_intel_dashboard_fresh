@@ -2,7 +2,8 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.services.upload.protocols import UploadAnalyticsProtocol
+
+import pandas as pd
 
 
 class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
@@ -37,6 +38,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Return basic statistics for ``df``."""
+
         total_events = len(df)
         active_users = df["person_id"].nunique() if "person_id" in df.columns else 0
         active_doors = df["door_id"].nunique() if "door_id" in df.columns else 0
@@ -46,6 +48,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
             ts = pd.to_datetime(df["timestamp"], errors="coerce").dropna()
             if not ts.empty:
                 date_range = {"start": str(ts.min().date()), "end": str(ts.max().date())}
+
 
         return {
             "total_events": int(total_events),
@@ -79,6 +82,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         return self.summarize_dataframe(combined)
 
     def _format_results(self, stats: Dict[str, Any]) -> Dict[str, Any]:
+
         """Return final result dictionary with ``status`` key."""
         result = dict(stats)
         result["status"] = result.get("status", "success")
@@ -86,6 +90,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
 
     # ------------------------------------------------------------------
     def _process_uploaded_data_directly(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
+
         """Backward compatible helper to process uploaded ``data``."""
         validated = self._validate_data(data)
         return self._calculate_statistics(validated)
@@ -97,6 +102,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
 
     def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:  # pragma: no cover - simple stub
         return {}
+
 
 
 # Expose commonly used methods at module level for convenience

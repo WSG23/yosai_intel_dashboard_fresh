@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Protocol
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 import pandas as pd
 
 from validation.security_validator import SecurityValidator
@@ -59,7 +61,7 @@ class AnalyticsOrchestrator:
                     csv_bytes = df.to_csv(index=False).encode("utf-8")
                     self.validator.validate_file_upload(name, csv_bytes)
                 except Exception as exc:  # pragma: no cover - validation failures
-                    logger.error("Validation failed for %s: %s", name, exc)
+                    logger.error("Validation failed for %s: %s", name, safe_text(exc))
                     continue
                 cleaned = self.loader.clean_uploaded_dataframe(df)
                 processed = self.processor.process_access_events(cleaned)
@@ -79,13 +81,19 @@ class AnalyticsOrchestrator:
                 try:
                     self.repository.save_summary(summary)
                 except Exception as exc:  # pragma: no cover - best effort
-                    logger.debug("Repository save failed: %s", exc)
+                    logger.debug("Repository save failed: %s", safe_text(exc))
 
             self.publisher.publish(summary)
             return summary
         except Exception as exc:  # pragma: no cover - best effort
-            logger.exception("Processing uploaded data failed: %s", exc)
-            result = {"status": "error", "message": str(exc)}
+            logger.exception(
+                "Processing uploaded data failed: %s", safe_text(exc)
+            )
+            result = {
+                "status": "error",
+                "message": safe_text(exc),
+                "error_code": "PROCESSING_FAILED",
+            }
             self.publisher.publish(result)
             return result
 

@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 
-from tests.import_helpers import safe_import  # noqa: E402
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import  # noqa: E402
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder  # noqa: E402
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore  # noqa: E402
 

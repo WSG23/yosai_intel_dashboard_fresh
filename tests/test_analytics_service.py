@@ -1,6 +1,6 @@
 import sys
 import types
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 safe_import('flask_caching', types.SimpleNamespace(Cache=object))
 if "dask" not in sys.modules:
@@ -97,7 +97,7 @@ def test_get_real_uploaded_data_no_files(monkeypatch):
 def test_service_receives_config(monkeypatch):
     """Provided config should be stored on the service instance."""
 
-    import yosai_intel_dashboard.src.services as services.analytics_service as mod
+    import yosai_intel_dashboard.src.services.analytics_service as mod
 
     # ensure a fresh global instance
     mod._analytics_service = None
@@ -143,3 +143,5 @@ def test_summarize_dataframe_basic():
     assert summary["date_range"] == {"start": "2024-01-01", "end": "2024-01-02"}
     assert summary["top_users"][0]["user_id"] == "u1"
     assert summary["top_users"][0]["count"] == 2
+    assert summary["top_doors"][0]["door_id"] == "d1"
+    assert summary["top_doors"][0]["count"] == 2

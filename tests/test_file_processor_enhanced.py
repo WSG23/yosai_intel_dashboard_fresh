@@ -4,7 +4,7 @@ import pandas as pd
 
 from tests.config import FakeConfiguration
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 fake_cfg = FakeConfiguration()
 from yosai_intel_dashboard.src.services.data_enhancer.mapping_utils import (

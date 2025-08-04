@@ -14,7 +14,7 @@ import pytest
 from dash import dcc, html
 from src.common.config import ConfigService
 
-from tests.import_helpers import import_optional, safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Stub heavy optional analytics dependencies
 for _mod in (

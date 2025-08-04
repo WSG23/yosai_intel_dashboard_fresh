@@ -4,7 +4,7 @@ import pathlib
 
 import pytest
 from fastapi.testclient import TestClient
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Use lightweight imports
 os.environ["LIGHTWEIGHT_SERVICES"] = "1"

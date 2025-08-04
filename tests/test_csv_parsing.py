@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 stub_dynamic_config = SimpleNamespace(
     security=SimpleNamespace(max_upload_mb=10),

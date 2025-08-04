@@ -5,7 +5,7 @@ import types
 
 import pytest
 from fastapi.testclient import TestClient
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Provide stubs when optional dependencies are missing
 fw = importlib.import_module("tests.stubs.flask_wtf")

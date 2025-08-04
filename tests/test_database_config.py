@@ -6,7 +6,7 @@ from yosai_intel_dashboard.src.infrastructure.config.connection_pool import Data
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import MockConnection
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import PoolExhaustedError
 from tests.config import FakeConfiguration
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
 def factory():

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from tests.import_helpers import safe_import, import_optional
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 otel = types.ModuleType("opentelemetry")
 context_mod = types.ModuleType("opentelemetry.context")

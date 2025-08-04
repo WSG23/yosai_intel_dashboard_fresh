@@ -10,7 +10,7 @@ import pyotp
 import pytest
 from flask import Flask, redirect
 
-from tests.import_helpers import safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Ensure package path for yosai_intel_dashboard
 safe_import("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
