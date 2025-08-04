@@ -5,6 +5,7 @@ import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
 import RiskDashboard from '../components/security/RiskDashboard';
 import { api } from '../api/client';
+import { HoverPreview, ClickExpand } from '../components/interaction/ContextDisclosure';
 import './Analytics.css';
 
 interface AnalyticsData {
@@ -127,14 +128,16 @@ const Analytics: React.FC = () => {
         </ChunkGroup>
       </div>
 
-      <RiskDashboard
-        score={riskData.score}
-        history={riskData.history}
-        factors={riskData.factors}
-      />
+      <HoverPreview preview={<div>Risk dashboard preview</div>}>
+        <RiskDashboard
+          score={riskData.score}
+          history={riskData.history}
+          factors={riskData.factors}
+        />
+      </HoverPreview>
 
       {analyticsData && (
-        <>
+        <ClickExpand preview={<div className="analytics-preview">Click to view analytics</div>}>
           <div className="stats-grid">
             <div className="stat-card">
               <h3>Total Records</h3>
@@ -147,7 +150,7 @@ const Analytics: React.FC = () => {
             <div className="stat-card">
               <h3>Date Range</h3>
               <p className="stat-value">
-                {new Date(analyticsData.date_range.start).toLocaleDateString()} - 
+                {new Date(analyticsData.date_range.start).toLocaleDateString()} -
                 {new Date(analyticsData.date_range.end).toLocaleDateString()}
               </p>
             </div>
@@ -187,7 +190,7 @@ const Analytics: React.FC = () => {
               </ChunkGroup>
             </section>
           </div>
-        </>
+        </ClickExpand>
       )}
     </div>
   );

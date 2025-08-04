@@ -1,17 +1,25 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
-from api.cache import cached_json_response
 from pydantic import BaseModel, ConfigDict
 
-from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
-from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
+from api.cache import cached_json_response
+from shared.errors.types import ErrorCode
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+)
+from yosai_intel_dashboard.src.core.security import validate_user_input
 from yosai_intel_dashboard.src.error_handling import http_error
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
+from yosai_intel_dashboard.src.services.analytics.proficiency_endpoint import (
+    router as proficiency_router,
+)
 from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
 from yosai_intel_dashboard.src.services.security import require_permission
-from yosai_intel_dashboard.src.core.security import validate_user_input
-from shared.errors.types import ErrorCode
 
 # Routes now use an unversioned prefix and are mounted under /v1 by the
 # adapter. This simplifies preparing future versions while keeping unversioned
@@ -21,6 +29,7 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 cfg = get_cache_config()
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
 _cached_service = CachedAnalyticsService(_cache_manager)
+router.include_router(proficiency_router)
 
 
 async def init_cache_manager() -> None:
@@ -32,11 +41,7 @@ class AnalyticsQuery(BaseModel):
     range: Optional[str] = Query(default="30d")
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {"facility_id": "fac-123", "range": "7d"}
-            ]
-        }
+        json_schema_extra={"examples": [{"facility_id": "fac-123", "range": "7d"}]}
     )
 
 
@@ -97,9 +102,7 @@ async def get_chart_data(
     range_val = validate_user_input(query.range or "", "range")
     data = _cached_service.get_analytics_summary_sync(facility_id, range_val)
     if chart_type == "patterns":
-        return cached_json_response(
-            {"type": "patterns", "data": data}, max_age=cfg.ttl
-        )
+        return cached_json_response({"type": "patterns", "data": data}, max_age=cfg.ttl)
     if chart_type == "timeline":
         return cached_json_response(
             {"type": "timeline", "data": data.get("hourly_distribution", {})},
