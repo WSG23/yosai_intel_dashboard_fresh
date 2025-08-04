@@ -14,7 +14,9 @@ import pytest
 from database.types import DatabaseConnection
 
 try:
-    from memory_profiler import memory_usage
+    from memory_profiler import memory_usage  # type: ignore
+    if not callable(memory_usage):  # handle older or module-style imports
+        memory_usage = None  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
     memory_usage = None  # type: ignore
 

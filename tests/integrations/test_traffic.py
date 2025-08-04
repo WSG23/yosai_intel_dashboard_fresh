@@ -28,7 +28,7 @@ def test_feed_parsing() -> None:
     parse_here_traffic(here_data)
     parse_transit_feed(transit_data)
 
-    events = transport_events.get_events()
+    events = list(transport_events.get_events())
     assert len(events) == 4
     assert transport_events.total_delay("Main St") == 11
 
