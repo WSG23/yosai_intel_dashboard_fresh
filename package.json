@@ -63,7 +63,8 @@
     "postcss-import": "^16.1.1",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.11",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "scripts": {
     "start": "cd yosai_intel_dashboard/src/adapters/ui && react-scripts start",
