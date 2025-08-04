@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 const SuspenseList = (React as any).SuspenseList;
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
 import { ZustandProvider } from './state';
 import { SelectionProvider } from './core/interaction/SelectionContext';
+import BottomNav from './components/navigation/BottomNav';
 
 const RealTimeAnalyticsPage = React.lazy(() => import('./pages/RealTimeAnalyticsPage')) as any;
 RealTimeAnalyticsPage.preload = () => import('./pages/RealTimeAnalyticsPage');
@@ -33,8 +34,16 @@ import "./index.css";
 const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl as HTMLElement);
-  root.render(
-    <React.StrictMode>
+  const AppRoot: React.FC = () => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+      const handleResize = () => setIsMobile(window.innerWidth <= 768);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return (
       <SelectionProvider>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
@@ -51,9 +60,16 @@ if (rootEl) {
                 </Routes>
               </Suspense>
             </SuspenseList>
+            {isMobile && <BottomNav />}
           </BrowserRouter>
         </QueryClientProvider>
       </SelectionProvider>
+    );
+  };
+
+  root.render(
+    <React.StrictMode>
+      <AppRoot />
     </React.StrictMode>
   );
 
