@@ -15,6 +15,8 @@ import types
 from pathlib import Path
 
 import pytest
+import importlib.machinery
+import importlib.abc
 from optional_dependencies import register_stub
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -184,6 +186,111 @@ def register_dependency_stubs() -> None:
     sys.modules.setdefault("redis", _redis)
     sys.modules.setdefault("redis.asyncio", _redis.asyncio)
     sys.modules.setdefault("requests", _simple_module("requests"))
+
+    # Common scientific and monitoring libraries can be heavy optional
+    # dependencies.  Provide lightweight stand-ins so modules importing
+    # them at module level do not fail during test collection.  The stubs
+    # only expose the minimal attributes used in tests.
+
+    numpy_stub = _simple_module("numpy", asarray=lambda x, dtype=None: x)
+    register_stub("numpy", numpy_stub)
+    sys.modules.setdefault("numpy", numpy_stub)
+
+    pandas_stub = _simple_module("pandas", DataFrame=object)
+    register_stub("pandas", pandas_stub)
+    sys.modules.setdefault("pandas", pandas_stub)
+
+    psutil_stub = _simple_module("psutil")
+    psutil_stub.__spec__ = importlib.machinery.ModuleSpec("psutil", loader=None)
+    register_stub("psutil", psutil_stub)
+    sys.modules.setdefault("psutil", psutil_stub)
+
+    class _SafeLoader:
+        @classmethod
+        def add_constructor(cls, *a, **k):
+            pass
+
+        def __init__(self, *a, **k):
+            self._root = None
+
+        def get_single_data(self):
+            return {}
+
+        def dispose(self):
+            pass
+
+    yaml_stub = _simple_module(
+        "yaml", SafeLoader=_SafeLoader, Node=object, safe_load=lambda *a, **k: {}
+    )
+    yaml_stub.__spec__ = importlib.machinery.ModuleSpec("yaml", loader=None)
+    register_stub("yaml", yaml_stub)
+    sys.modules.setdefault("yaml", yaml_stub)
+
+    class _Counter:
+        def __init__(self, *a, **k):
+            pass
+
+        def inc(self, *a, **k):
+            pass
+
+    class _CollectorRegistry:
+        pass
+
+    prom_core = _simple_module(
+        "prometheus_client.core", CollectorRegistry=_CollectorRegistry
+    )
+    prom_client = _simple_module(
+        "prometheus_client",
+        REGISTRY=types.SimpleNamespace(_names_to_collectors={}),
+        Counter=_Counter,
+        core=prom_core,
+    )
+    register_stub("prometheus_client", prom_client)
+    register_stub("prometheus_client.core", prom_core)
+    sys.modules.setdefault("prometheus_client", prom_client)
+    sys.modules.setdefault("prometheus_client.core", prom_core)
+
+    pydantic_stub = _simple_module("pydantic")
+    class _BaseModel:
+        pass
+
+    def _validator(*a, **k):
+        def _wrap(fn):
+            return fn
+
+        return _wrap
+
+    pydantic_stub.BaseModel = _BaseModel
+    pydantic_stub.Field = lambda *a, **k: None
+    pydantic_stub.ValidationError = Exception
+    pydantic_stub.validator = _validator
+    register_stub("pydantic", pydantic_stub)
+    sys.modules.setdefault("pydantic", pydantic_stub)
+
+    # As a final fallback, provide a meta-path finder that returns empty
+    # modules for any remaining missing imports.  Each stubbed module
+    # lazily creates placeholders for arbitrary attributes so ``from pkg
+    # import name`` succeeds without the real dependency installed.
+
+    class _LazyModule(types.ModuleType):
+        def __getattr__(self, name: str) -> types.ModuleType:
+            mod = _simple_module(f"{self.__name__}.{name}")
+            setattr(self, name, mod)
+            return mod
+
+    class _MissingModuleFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+        def find_spec(self, fullname, path, target=None):  # type: ignore[override]
+            if fullname in sys.modules:
+                return None
+            return importlib.machinery.ModuleSpec(fullname, self)
+
+        def create_module(self, spec):  # type: ignore[override]
+            return _LazyModule(spec.name)
+
+        def exec_module(self, module):  # type: ignore[override]
+            module.__spec__ = importlib.machinery.ModuleSpec(module.__name__, self)
+
+    sys.meta_path.append(_MissingModuleFinder())
 
     config_pkg = _simple_module("yosai_intel_dashboard.src.infrastructure.config")
     config_pkg.__path__ = [

@@ -2,10 +2,11 @@ import asyncio
 from fastapi import FastAPI, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
+import os
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 import pytest
 
-serializer = URLSafeTimedSerializer("secret")
+serializer = URLSafeTimedSerializer(os.urandom(16).hex())
 app = FastAPI()
 
 

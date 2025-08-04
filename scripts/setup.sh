@@ -29,5 +29,5 @@ alembic -c "$ROOT_DIR/database/migrations/alembic.ini" upgrade head
 
 # Optionally run a single replication cycle
 if [ "$RUN_REPLICATION" = "1" ]; then
-    python "$ROOT_DIR/scripts/replicate_to_timescale.py" &
+    python3 "$ROOT_DIR/scripts/replicate_to_timescale.py" &
 fi

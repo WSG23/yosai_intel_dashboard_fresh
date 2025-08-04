@@ -123,6 +123,7 @@ class PostgreSQLConnection:
         try:
             import psycopg2
             from psycopg2 import sql
+
             from psycopg2.extras import RealDictCursor
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise DatabaseError(
@@ -183,6 +184,7 @@ class PostgreSQLConnection:
                     name=sql_mod.Identifier(name)
                 )
                 cursor.execute(stmt)
+
             if cursor.description:
                 return list(cursor.fetchall())
             self._connection.commit()

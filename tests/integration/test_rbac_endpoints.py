@@ -4,6 +4,7 @@ from enum import Enum
 from types import ModuleType, SimpleNamespace
 
 import pytest
+import os
 from flask import Flask
 
 
@@ -129,7 +130,7 @@ def _create_app(monkeypatch, rbac_service):
     )
 
     app = Flask(__name__)
-    app.secret_key = "test"
+    app.secret_key = os.urandom(16).hex()
     app.config["RBAC_SERVICE"] = rbac_service
     app.register_blueprint(module.compliance_bp)
     return app, login_mod

@@ -59,6 +59,24 @@ class CallbackRegistry:
 
         return decorator
 
+    # ------------------------------------------------------------------
+    def register_callback(
+        self,
+        outputs: Output | Iterable[Output],
+        inputs: Iterable[Input] | Input | None = None,
+        states: Iterable[State] | State | None = None,
+        **kwargs: Any,
+    ) -> Callable[[CallbackHandler], CallbackHandler]:
+        """Alias of :meth:`handle_register` for API consistency."""
+
+        return self.handle_register(outputs, inputs, states, **kwargs)
+
+    # ``register_handler`` remains the canonical internal name used by
+    # :class:`CallbackUnifier` and other helpers.  Providing it here keeps the
+    # interface aligned with :class:`TrulyUnifiedCallbacks` and avoids the
+    # proliferation of differing registration patterns across the codebase.
+    register_handler = register_callback
+
 
 class ComponentCallbackManager(metaclass=AutoRegister):
     """Base class for components that register callbacks."""

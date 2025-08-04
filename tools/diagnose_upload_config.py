@@ -11,13 +11,22 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
 from src.common.config import ConfigService
+import importlib
+
+
+# Prefer the new clean-architecture module path but allow tests to
+# provide a lightweight stub by optionally importing the legacy module
+# via ``importlib``.  This keeps compatibility for existing tests while
+# avoiding the deprecated direct "config" import style.
 try:  # allow tests to provide a lightweight stub
-    from config.dynamic_config import diagnose_upload_config, dynamic_config  # type: ignore
+    dynamic_mod = importlib.import_module("config.dynamic_config")
 except Exception:  # pragma: no cover - fallback to real implementation
-    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-        diagnose_upload_config,
-        dynamic_config,
+    dynamic_mod = importlib.import_module(
+        "yosai_intel_dashboard.src.infrastructure.config.dynamic_config"
     )
+
+diagnose_upload_config = dynamic_mod.diagnose_upload_config
+dynamic_config = dynamic_mod.dynamic_config
 
 
 def main(argv: list[str] | None = None) -> int:

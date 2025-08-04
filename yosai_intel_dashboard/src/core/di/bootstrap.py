@@ -6,7 +6,7 @@ import logging
 from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from startup.registry_startup import register_optional_services
 from startup.service_registration import register_all_application_services
-from config.common_indexes import COMMON_INDEXES
+from yosai_intel_dashboard.src.infrastructure.config.common_indexes import COMMON_INDEXES
 from yosai_intel_dashboard.src.database.index_optimizer import IndexOptimizer
 
 logger = logging.getLogger(__name__)

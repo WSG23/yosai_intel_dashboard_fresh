@@ -24,7 +24,7 @@ class ServiceConfig:
 def load_config(path: str) -> ServiceConfig:
     data: Dict[str, Any] = {}
     if path:
-        data = yaml.safe_load(Path(path).read_text())
+        data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     with SCHEMA_PATH.open("r", encoding="utf-8") as f:
         schema = yaml.safe_load(f)
     jsonschema.validate(data, schema)
