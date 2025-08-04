@@ -4,21 +4,24 @@ import { createSessionSlice, SessionSlice } from './sessionSlice';
 import { createAnalyticsSlice, AnalyticsSlice } from './analyticsSlice';
 import { createUploadSlice, UploadSlice } from './uploadSlice';
 import { createSelectionSlice, SelectionSlice } from './selectionSlice';
-import { createProficiencySlice, ProficiencySlice } from './proficiencySlice';
+import { createUiSlice, UiSlice } from './uiSlice';
+
 
 export type BoundState =
   SessionSlice &
   AnalyticsSlice &
   UploadSlice &
   SelectionSlice &
-  ProficiencySlice;
+  UiSlice;
+
 
 export const boundStore = createStore<BoundState>()((...a) => ({
   ...createSessionSlice(...a),
   ...createAnalyticsSlice(...a),
   ...createUploadSlice(...a),
   ...createSelectionSlice(...a),
-  ...createProficiencySlice(...a),
+  ...createUiSlice(...a),
+
 }));
 
 export const useBoundStore = <T,>(selector: (state: BoundState) => T) =>
@@ -48,12 +51,9 @@ export const useSelectionStore = () =>
     setSelectedRange: state.setSelectedRange,
   }));
 
-export const useProficiencyStore = () =>
+export const useUiStore = () =>
   useBoundStore((state) => ({
-    metrics: state.metrics,
-    level: state.level,
-    setLevel: state.setLevel,
-    logFeatureUsage: state.logFeatureUsage,
-    logDwellTime: state.logDwellTime,
-    logError: state.logError,
+    tableDensity: state.tableDensity,
+    setTableDensity: state.setTableDensity,
+
   }));
