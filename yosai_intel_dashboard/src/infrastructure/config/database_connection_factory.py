@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
 from .connection_pool import DatabaseConnectionPool
 from .connection_retry import ConnectionRetryManager, RetryConfig
 from .database_exceptions import ConnectionRetryExhausted, DatabaseError
@@ -54,13 +56,17 @@ class DatabaseConnectionFactory:
         try:
             return self._retry.run_with_retry(self._manager._create_connection)  # type: ignore[attr-defined]
         except ConnectionRetryExhausted as exc:  # pragma: no cover - defensive
-            logger.error("Exhausted retries creating database connection: %s", exc)
+            logger.error(
+                "Exhausted retries creating database connection: %s", safe_text(exc)
+            )
             raise
         except DatabaseError:
             raise
         except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Unexpected error creating database connection: %s", exc)
-            raise DatabaseError(str(exc)) from exc
+            logger.error(
+                "Unexpected error creating database connection: %s", safe_text(exc)
+            )
+            raise DatabaseError(safe_text(exc)) from exc
 
     def create_pool(
         self,
