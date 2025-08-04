@@ -4,4 +4,5 @@ export type { Step } from './Stepper';
 export * from './lasso';
 export * from './useLassoSelection';
 export { default as TaskLauncher } from './TaskLauncher';
-export { default as Wizard } from './Wizard';\
+export { default as Wizard } from './Wizard';
+

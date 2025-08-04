@@ -7,7 +7,7 @@ jest.mock('react-router-dom', () => ({
   MemoryRouter: ({ children }: any) => <div>{children}</div>,
 }), { virtual: true });
 import Navigation, { Header, Sidebar } from './Navigation';
-import { boundStore } from '../yosai_intel_dashboard/src/adapters/ui/state/store';
+import { boundStore } from '../state/store';
 
 const MemoryRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div>{children}</div>
