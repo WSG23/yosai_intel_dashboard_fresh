@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Type
 
 from dash import Dash
 from dash.dependencies import Input, Output, State
+
+from src.common.meta import AutoRegister
 
 if TYPE_CHECKING:  # pragma: no cover
     from .unified_callbacks import CallbackHandler
 else:  # pragma: no cover - fallback to generic callable at runtime
     CallbackHandler = Callable[..., Any]
+
 
 class CallbackRegistry:
     """Minimal registry tracking registered callbacks."""
@@ -57,12 +60,16 @@ class CallbackRegistry:
         return decorator
 
 
-class ComponentCallbackManager:
+class ComponentCallbackManager(metaclass=AutoRegister):
     """Base class for components that register callbacks."""
+
+    REGISTRY: Dict[str, Type["ComponentCallbackManager"]] = {}
 
     def __init__(self, registry: CallbackRegistry) -> None:
         self.registry = registry
         self.component_name = self.__class__.__name__.replace("CallbackManager", "")
 
-    def register_all(self) -> Dict[str, CallbackHandler]:  # pragma: no cover - interface
+    def register_all(
+        self,
+    ) -> Dict[str, CallbackHandler]:  # pragma: no cover - interface
         raise NotImplementedError
