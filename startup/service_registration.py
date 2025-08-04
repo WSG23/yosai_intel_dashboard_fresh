@@ -54,6 +54,7 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigManager,
         ConfigTransformer,
         ConfigValidator,
+        ConfigurationLoader,
         create_config_manager,
     )
     from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
@@ -78,6 +79,11 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigManager,
         protocol=ConfigurationProtocol,
         factory=lambda c: create_config_manager(container=c),
+    )
+    container.register_singleton(
+        "configuration_loader",
+        ConfigurationLoader,
+        protocol=ConfigurationProtocol,
     )
     container.register_singleton(
         "dynamic_config",
