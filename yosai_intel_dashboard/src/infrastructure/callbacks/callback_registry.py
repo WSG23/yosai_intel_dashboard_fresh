@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Type
+import logging
+from collections import defaultdict
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Dict, Iterable, List, Type
 
 from dash import Dash
 from dash.dependencies import Input, Output, State
@@ -91,3 +94,96 @@ class ComponentCallbackManager(metaclass=AutoRegister):
         self,
     ) -> Dict[str, CallbackHandler]:  # pragma: no cover - interface
         raise NotImplementedError
+
+
+logger = logging.getLogger(__name__)
+
+
+class CallbackType(str, Enum):
+    """Enumeration of supported callback types."""
+
+    EVENT = "event"
+    DASH = "dash"
+    OPERATION = "operation"
+    GENERAL = "general"
+
+
+class UnifiedCallbackRegistry:
+    """Registry storing callbacks globally and per component."""
+
+    def __init__(self) -> None:
+        self._callbacks: DefaultDict[CallbackType, List[CallbackHandler]] = defaultdict(
+            list
+        )
+        self._component_callbacks: DefaultDict[
+            str, DefaultDict[CallbackType, List[CallbackHandler]]
+        ] = defaultdict(lambda: defaultdict(list))
+
+    # ------------------------------------------------------------------
+    def register_callback(
+        self,
+        callback_type: CallbackType,
+        func: CallbackHandler,
+        *,
+        component: str | None = None,
+    ) -> None:
+        """Register ``func`` for ``callback_type`` optionally scoped to ``component``."""
+
+        self._callbacks[callback_type].append(func)
+        if component is not None:
+            self._component_callbacks[component][callback_type].append(func)
+
+    # ------------------------------------------------------------------
+    def trigger_callback(
+        self,
+        callback_type: CallbackType,
+        *args: Any,
+        component: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Invoke callbacks of ``callback_type`` with provided arguments.
+
+        If ``component`` is provided, only callbacks registered to that component
+        are executed, in addition to any global callbacks of the same type.
+        Exceptions raised by callbacks are logged but do not interrupt other
+        callbacks.
+        """
+
+        callbacks: List[CallbackHandler] = list(self._callbacks.get(callback_type, []))
+        if component is not None:
+            callbacks.extend(
+                self._component_callbacks.get(component, {}).get(callback_type, [])
+            )
+
+        for cb in callbacks:
+            try:
+                cb(*args, **kwargs)
+            except Exception:  # pragma: no cover - logging side effect
+                logger.exception(
+                    "Error in callback %s for %s",
+                    getattr(cb, "__name__", cb),
+                    callback_type,
+                )
+
+    # ------------------------------------------------------------------
+    def unregister_component(self, component: str) -> None:
+        """Remove all callbacks registered by ``component``."""
+
+        comp_callbacks = self._component_callbacks.pop(component, {})
+        for ctype, funcs in comp_callbacks.items():
+            global_list = self._callbacks.get(ctype)
+            if not global_list:
+                continue
+            for func in funcs:
+                try:
+                    global_list.remove(func)
+                except ValueError:
+                    pass
+
+
+__all__ = [
+    "CallbackRegistry",
+    "ComponentCallbackManager",
+    "CallbackType",
+    "UnifiedCallbackRegistry",
+]
