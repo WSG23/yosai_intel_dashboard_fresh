@@ -424,10 +424,10 @@ class CrossBorderTransferService:
         }
 
         max_score = max(
-            [sensitivity_scores.get(dt, 30) for dt in data_types], default=30
+            (sensitivity_scores.get(dt, 30) for dt in data_types), default=30
         )
         avg_score = (
-            sum([sensitivity_scores.get(dt, 30) for dt in data_types]) / len(data_types)
+            sum(sensitivity_scores.get(dt, 30) for dt in data_types) / len(data_types)
             if data_types
             else 30
         )
