@@ -6,7 +6,19 @@ from importlib import import_module
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from yosai_intel_dashboard.src.infrastructure.config import DatabaseSettings
+# ``DatabaseSettings`` is imported lazily to avoid heavy dependencies during tests
+try:  # pragma: no cover - fallback when full config package isn't available
+    from yosai_intel_dashboard.src.infrastructure.config import DatabaseSettings
+except Exception:  # pragma: no cover - minimal protocol for tests
+    from typing import Protocol
+
+    class DatabaseSettings(Protocol):
+        type: str
+        async_pool_min_size: int
+        async_pool_max_size: int
+        async_connection_timeout: int
+
+        def get_connection_string(self) -> str: ...
 
 
 def _module_available(name: str) -> bool:
