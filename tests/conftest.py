@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from __future__ import annotations
+
 import importlib.util
 import os
 import resource
@@ -9,6 +11,7 @@ import sys
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
 
 from typing import Callable, Iterator, List
 from types import ModuleType, SimpleNamespace

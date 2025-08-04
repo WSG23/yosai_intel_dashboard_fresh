@@ -40,8 +40,8 @@ from yosai_intel_dashboard.src.infrastructure.config import (
     get_app_config,
     get_database_config,
 )
-from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
-    load_service_config,
+from yosai_intel_dashboard.src.infrastructure.config.loader import (
+    ConfigurationLoader,
 )
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
@@ -71,7 +71,7 @@ app = service.app
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
-service_cfg = load_service_config()
+service_cfg = ConfigurationLoader().get_service_config()
 app_cfg = get_app_config()
 
 # Configure a Redis backed rate limiter

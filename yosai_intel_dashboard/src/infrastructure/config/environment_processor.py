@@ -8,6 +8,7 @@ import os
 import re
 from typing import Any, Mapping, Optional
 from .constants import RateLimitConfig
+from .settings import get_settings
 
 
 class EnvironmentProcessor:
@@ -49,6 +50,8 @@ class EnvironmentProcessor:
     # ------------------------------------------------------------------
     def apply(self, config: Any) -> None:
         """Apply overrides to ``config`` in-place."""
+        settings = get_settings(reload=True)
+
         if hasattr(config, "app"):
             app = config.app
             if host := self.env.get("YOSAI_HOST"):
@@ -74,7 +77,7 @@ class EnvironmentProcessor:
                 db.host = host
             if (port := self._to_int("DB_PORT")) is not None:
                 db.port = port
-            if (timeout := self._to_int("DB_TIMEOUT")) is not None:
+            if (timeout := settings.database.connection_timeout) is not None:
                 db.connection_timeout = timeout
             if user := self.env.get("DB_USER"):
                 db.user = user
@@ -94,7 +97,7 @@ class EnvironmentProcessor:
             if hasattr(sec, "rate_limit_window_minutes"):
                 if (v := self._to_int("RATE_LIMIT_WINDOW")) is not None:
                     sec.rate_limit_window_minutes = v
-            if (val := self._to_int("MAX_UPLOAD_MB")) is not None:
+            if (val := settings.security.max_upload_mb) is not None:
                 if val < 50 and hasattr(sec, "max_file_size_mb"):
                     print(
                         "WARNING: MAX_UPLOAD_MB="
@@ -139,7 +142,7 @@ class EnvironmentProcessor:
             perf = config.performance
             if (v := self._to_int("DB_POOL_SIZE")) is not None:
                 perf.db_pool_size = v
-            if (v := self._to_int("AI_CONFIDENCE_THRESHOLD")) is not None:
+            if (v := settings.performance.ai_confidence_threshold) is not None:
                 perf.ai_confidence_threshold = v
             if (v := self._to_int("MEMORY_THRESHOLD_MB")) is not None:
                 perf.memory_usage_threshold_mb = v

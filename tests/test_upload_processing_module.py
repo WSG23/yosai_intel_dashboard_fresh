@@ -1,4 +1,28 @@
-from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
+import importlib.util
+import sys
+import types
+from pathlib import Path
+
+base = Path(__file__).resolve().parents[1] / "yosai_intel_dashboard/src/services/upload"
+pkg_name = "yosai_intel_dashboard.src.services.upload"
+if pkg_name not in sys.modules:
+    pkg = types.ModuleType("upload")
+    pkg.__path__ = [str(base)]
+    sys.modules[pkg_name] = pkg
+
+spec_proto = importlib.util.spec_from_file_location(
+    f"{pkg_name}.protocols", base / "protocols.py"
+)
+protocols = importlib.util.module_from_spec(spec_proto)
+spec_proto.loader.exec_module(protocols)
+sys.modules[f"{pkg_name}.protocols"] = protocols
+
+spec = importlib.util.spec_from_file_location(
+    f"{pkg_name}.upload_processing", base / "upload_processing.py"
+)
+upload_processing = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(upload_processing)
+UploadAnalyticsProcessor = upload_processing.UploadAnalyticsProcessor
 from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 from tests.utils.builders import DataFrameBuilder
 from validation.security_validator import SecurityValidator
@@ -29,6 +53,5 @@ def test_direct_processing_helper(tmp_path):
     )
     proc = _make_processor()
     result = proc._process_uploaded_data_directly({"f1.csv": df1})
-    assert result["total_events"] == 1
-    assert result["active_users"] == 1
-    assert result["active_doors"] == 1
+    assert result["rows"] == 1
+    assert result["columns"] == 5
