@@ -5,8 +5,12 @@ from __future__ import annotations
 from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import UnifiedUploadController
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
+from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import (
+    UnifiedUploadController,
+)
 
 
 def register_callbacks(app, container) -> None:
@@ -14,7 +18,7 @@ def register_callbacks(app, container) -> None:
     callbacks = TrulyUnifiedCallbacks(app)
     controller = UnifiedUploadController()
 
-    @callbacks.register_handler(
+    @callbacks.callback(
         [Output("to-column-map-btn", "disabled"), Output("uploaded-df-store", "data")],
         [Input("drag-drop-upload", "contents"), Input("drag-drop-upload", "filename")],
         callback_id="file_upload_handle",
