@@ -51,3 +51,28 @@ def test_build_rejects_malicious_table_name():
             "SELECT * FROM %s",
             "access_events; DROP TABLE users;",
         )
+
+
+def test_build_select_valid_query():
+    builder = SecureQueryBuilder(
+        allowed_tables={"access_events"}, allowed_columns={"id", "time"}
+    )
+    sql, params = builder.build_select("access_events", ["id"], {"time": "2024-01-01"})
+    assert sql == "SELECT id FROM access_events WHERE time = $1"
+    assert params == ("2024-01-01",)
+
+
+def test_build_select_rejects_table():
+    builder = SecureQueryBuilder(
+        allowed_tables={"access_events"}, allowed_columns={"id"}
+    )
+    with pytest.raises(ValueError):
+        builder.build_select("users", ["id"], {"id": 1})
+
+
+def test_build_select_rejects_column():
+    builder = SecureQueryBuilder(
+        allowed_tables={"access_events"}, allowed_columns={"id"}
+    )
+    with pytest.raises(ValueError):
+        builder.build_select("access_events", ["id"], {"user_id": 1})

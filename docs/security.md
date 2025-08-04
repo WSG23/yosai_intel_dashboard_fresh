@@ -29,6 +29,8 @@ To reduce the risk of SQL injection vulnerabilities:
 
 - Always use parameterized queries with placeholders like `%s` or `?` rather than formatting values into query strings.
 - Prefer the `execute_query` and `execute_command` helpers which enforce parameter validation.
+- Use `SecureQueryBuilder.build_select` to assemble `SELECT` statements with
+  allow-listed tables and columns.
 - Never concatenate untrusted input with SQL keywords or table names.
 - Validate user-supplied data types before executing a query.
 
