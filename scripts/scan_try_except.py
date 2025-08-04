@@ -140,10 +140,10 @@ def main() -> None:
     findings = find_redundant_trys(args.path)
     for file, entries in findings.items():
         for line, func_name, func_line in entries:
-            location = f"{file}:{line}"
+            parts = [f"{file}:{line}"]
             if func_name:
-                location += f" (in {func_name} at line {func_line})"
-            print(location)
+                parts.append(f" (in {func_name} at line {func_line})")
+            print("".join(parts))
         if args.patch:
             patch = generate_patch(file, entries)
             if patch:
