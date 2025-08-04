@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
+import ProgressiveSection from '../components/ProgressiveSection';
 import {
   LineChart,
   Line,
@@ -183,6 +184,20 @@ const Graphs: React.FC = () => {
             ))}
           </select>
         )}
+        <ProgressiveSection
+          title="Advanced Settings"
+          id="graph-advanced-settings"
+          className="mt-2"
+        >
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={showDetails}
+              onChange={(e) => setShowDetails(e.target.checked)}
+            />
+            <span>Show chart details</span>
+          </label>
+        </ProgressiveSection>
       </ChunkGroup>
       <div role="presentation">{renderChart()}</div>
 
