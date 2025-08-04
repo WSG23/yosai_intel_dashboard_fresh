@@ -4,6 +4,10 @@ class Security:
 
 from types import SimpleNamespace
 
+from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
+    ConfigurationMixin,
+)
+
 
 class Analytics:
     max_display_rows = 100
@@ -11,7 +15,7 @@ class Analytics:
     max_memory_mb = 1024
 
 
-class DynamicConfigManager:
+class DynamicConfigManager(ConfigurationMixin):
     def __init__(self) -> None:
         self.security = SimpleNamespace(max_upload_mb=50)
         self.performance = SimpleNamespace(ai_confidence_threshold=75)
@@ -22,10 +26,10 @@ class DynamicConfigManager:
         )
 
     def get_max_upload_size_bytes(self):
-        return self.security.max_upload_mb * 1024 * 1024
+        return self.get_max_upload_size_mb() * 1024 * 1024
 
     def validate_large_file_support(self):
-        return True
+        return self.get_max_upload_size_mb() >= 50
 
     def get_max_parallel_uploads(self):
         return self.uploads.MAX_PARALLEL_UPLOADS
