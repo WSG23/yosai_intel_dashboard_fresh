@@ -40,8 +40,8 @@ class OptimizedQueryService:
         try:
             rows = execute_secure_query(self.db, query, params)
         except Exception:  # Fallback for databases without ANY()
-            placeholders = ", ".join(f"${i + 1}" for i in range(len(user_ids)))
-            query = f"SELECT * FROM people WHERE person_id IN ({placeholders})"
+            placeholders = ", ".join("%s" for _ in user_ids)
+            query = "SELECT * FROM people WHERE person_id IN (%s)" % placeholders
             params = tuple(user_ids)
             rows = execute_secure_query(self.db, query, params)
 
