@@ -11,7 +11,7 @@ from cachetools import LRUCache
 from sqlalchemy import text
 from sqlalchemy.sql import TextClause
 
-from infrastructure.database.secure_query import SecureQueryBuilder
+from infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
 
 LOG = logging.getLogger(__name__)

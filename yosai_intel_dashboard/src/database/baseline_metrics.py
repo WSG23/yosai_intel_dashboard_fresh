@@ -12,12 +12,12 @@ import logging
 from typing import Dict
 
 from database.connection import create_database_connection
+from database.types import DBRows
+from infrastructure.security.query_builder import SecureQueryBuilder
 from security.secure_query_wrapper import (
     execute_secure_command,
     execute_secure_sql,
 )
-from infrastructure.database.secure_query import SecureQueryBuilder
-from database.types import DBRows
 
 logger = logging.getLogger(__name__)
 

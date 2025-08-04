@@ -1,4 +1,5 @@
 import importlib
+import os
 import sys
 import types
 
@@ -192,7 +193,10 @@ def _create_app(monkeypatch):
 
 @pytest.mark.unit
 def test_metrics_endpoint_records_upload(monkeypatch):
-    monkeypatch.setenv("SECRET_KEY", "test")
+    monkeypatch.setenv(
+        "SECRET_KEY",
+        os.environ.get("SECRET_KEY", os.urandom(16).hex()),
+    )
     app = _create_app(monkeypatch)
     client = TestClient(app)
 

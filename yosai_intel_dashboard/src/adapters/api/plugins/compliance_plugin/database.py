@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
 
 from database.secure_exec import execute_command, execute_query
-from infrastructure.database.secure_query import SecureQueryBuilder
+from infrastructure.security.query_builder import SecureQueryBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,9 @@ class ComplianceDatabase:
 
         return None
 
-    def validate_schema(self, required_tables: Optional[List[str]] = None) -> Dict[str, Any]:
+    def validate_schema(
+        self, required_tables: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Validate that all required tables exist and have correct structure.
 
         Args:

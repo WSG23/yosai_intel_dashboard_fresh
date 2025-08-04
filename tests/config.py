@@ -33,6 +33,7 @@ def set_test_environment() -> None:
     os.environ.setdefault("FLASK_ENV", "testing")
     os.environ.setdefault("SECRET_KEY", SECRET_KEY)
     os.environ.setdefault("API_TOKEN", API_TOKEN)
+
     # enable lightweight implementations for optional services
     os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 

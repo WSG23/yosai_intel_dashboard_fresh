@@ -7,8 +7,7 @@ import re
 from typing import Any, Dict, Iterable, List, Sequence
 
 from database.secure_exec import execute_query
-from infrastructure.database.secure_query import SecureQueryBuilder
-
+from infrastructure.security.query_builder import SecureQueryBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -88,11 +87,13 @@ class QueryOptimizer:
             )
             table_q = builder.table(table)
             col_q = builder.column(column)
-            sql, _ = builder.build(
-                f"SELECT COUNT(DISTINCT {col_q}) AS distinct, COUNT(*) AS total "
-                f"FROM {table_q}",
-                logger=logger,
+            query = (
+                "SELECT COUNT(DISTINCT "
+                + col_q
+                + ") AS distinct, COUNT(*) AS total FROM "
+                + table_q
             )
+            sql, _ = builder.build(query, logger=logger)
             stats = execute_query(self.connection, sql)
             if not stats:
                 return False
@@ -108,4 +109,3 @@ class QueryOptimizer:
 
 
 __all__ = ["QueryOptimizer"]
-
