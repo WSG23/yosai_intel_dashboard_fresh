@@ -4,7 +4,7 @@
 Data access logic was scattered across services, coupling business code to specific storage implementations.
 
 ## Decision
-Apply the Repository pattern to abstract persistence behind interfaces. Concrete repositories implement data access for each entity while clients depend on interfaces.
+Apply the Repository pattern to abstract persistence behind interfaces. Concrete repositories implement data access for each entity while clients depend on interfaces. See the [repository diagram](../architecture/repositories.svg) for a high-level overview of these relationships.
 
 Recent updates added repositories for file system and database access:
 
