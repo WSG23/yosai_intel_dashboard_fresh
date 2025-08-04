@@ -30,6 +30,14 @@ The benchmarks were executed via `pytest` in
   assembly time.
 - Data sensitivity scoring switches to generator expressions to avoid
   temporary list allocations.
+- Automated performance analyzer now highlights inefficient string
+  concatenations, nested loops, and large list comprehensions with file and
+  line references.
+- Boundary descriptions and data-quality alerts use f-strings instead of
+  manual concatenation, reducing intermediate string objects.
+- Legacy import checks leverage iterator chaining to avoid nested loops.
+- Test data generators employ generator expressions for large ranges to
+  minimize peak memory use.
 
 ## Tuning notes
 

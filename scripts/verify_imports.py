@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 import re
 from pathlib import Path
 
@@ -12,19 +13,17 @@ from scripts.update_imports import PATTERNS, ROOT
 def _check_file(path: Path, compiled: list[re.Pattern[str]]) -> list[str]:
     results = []
     for lineno, line in enumerate(path.read_text().splitlines(), 1):
-        for pattern in compiled:
-            if pattern.search(line):
-                results.append(f"{path}:{lineno}:{line}")
-                break
+        if any(pattern.search(line) for pattern in compiled):
+            results.append(f"{path}:{lineno}:{line}")
     return results
 
 
 def verify_paths(paths: list[Path]) -> int:
     compiled = [re.compile(p) for p in PATTERNS]
     issues: list[str] = []
-    for root in paths:
-        for py_file in root.rglob("*.py"):
-            issues.extend(_check_file(py_file, compiled))
+    files = itertools.chain.from_iterable(root.rglob("*.py") for root in paths)
+    for py_file in files:
+        issues.extend(_check_file(py_file, compiled))
     if issues:
         for issue in issues:
             print(issue)
