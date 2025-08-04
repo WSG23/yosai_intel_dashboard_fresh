@@ -10,7 +10,9 @@ import {
   Database,
   Shield,
   Activity,
-  LayoutDashboard
+  LayoutDashboard,
+  Menu,
+  X
 } from 'lucide-react';
 import { useProficiencyStore } from '../yosai_intel_dashboard/src/adapters/ui/state/store';
 
@@ -24,7 +26,7 @@ interface NavItem {
 }
 
 // Navigation items configuration
-const navigationItems: NavItem[] = [
+export const navigationItems: NavItem[] = [
   {
     name: 'Upload',
     href: '/upload',
@@ -166,36 +168,54 @@ const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = '
 
 // Header component with navigation
 export const Header: React.FC = () => {
+  const [menuOpen, setMenuOpen] = React.useState(false);
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo/Title */}
-          <div className="flex items-center">
-            <Shield className="h-8 w-8 text-blue-600 mr-3" />
-            <h1 className="text-xl font-bold text-gray-900">
-              Yosai Intel Dashboard
-            </h1>
-          </div>
+    <>
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo/Title */}
+            <div className="flex items-center">
+              <Shield className="h-8 w-8 text-blue-600 mr-3" />
+              <h1 className="text-xl font-bold text-gray-900">
+                Yosai Intel Dashboard
+              </h1>
+            </div>
 
-          {/* Navigation */}
-          <Navigation />
+            {/* Navigation */}
+            <div className="hidden sm:block">
+              <Navigation />
+            </div>
 
-          {/* Status indicator */}
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1">
-              <Activity className="h-4 w-4 text-green-500" />
-              <span className="text-sm text-gray-600">Connected</span>
+            {/* Hamburger */}
+            <button
+              className="sm:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+
+            {/* Status indicator */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
+                <Activity className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-gray-600">Connected</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <Sidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+    </>
   );
 };
 
 // Sidebar component with navigation
-export const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
+export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
+  isOpen,
+  onClose,
+}) => {
   return (
     <aside
       className={cn(
@@ -205,9 +225,18 @@ export const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
     >
       <div className="flex flex-col h-full">
         {/* Sidebar header */}
-        <div className="flex items-center justify-center h-16 px-4 bg-blue-600">
-          <Shield className="h-8 w-8 text-white mr-2" />
-          <h2 className="text-lg font-semibold text-white">Yosai Intel</h2>
+        <div className="flex items-center justify-between h-16 px-4 bg-blue-600">
+          <div className="flex items-center">
+            <Shield className="h-8 w-8 text-white mr-2" />
+            <h2 className="text-lg font-semibold text-white">Yosai Intel</h2>
+          </div>
+          <button
+            className="p-2 text-white rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-white"
+            onClick={onClose}
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Navigation */}

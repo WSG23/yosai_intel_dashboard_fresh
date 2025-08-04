@@ -9,6 +9,7 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  gap: 8px;
 }
 
 .nav--vertical {
@@ -28,14 +29,16 @@
 .nav-link {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
+  gap: 8px;
+  padding: 8px;
   color: var(--text-secondary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-md);
   transition: all var(--duration-normal) var(--ease-out);
   position: relative;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .nav-link:hover {
@@ -95,7 +98,7 @@
 }
 
 .navbar-nav-link {
-  padding: var(--space-3);
+  padding: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -103,6 +106,8 @@
   text-decoration: none;
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .navbar-nav-link:hover {
@@ -145,13 +150,13 @@
 .navbar__nav {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: 8px;
 }
 
 .navbar__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 8px;
 }
 
 /* Icon loading and caching improvements */
