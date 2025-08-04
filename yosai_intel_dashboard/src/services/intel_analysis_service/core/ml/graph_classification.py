@@ -16,7 +16,9 @@ class GraphClassifier:
     """Classify graphs based on learned embeddings.
 
     The classifier can optionally integrate with :class:`Neo4jClient` allowing
-    graphs to be read from and embeddings written back to a Neo4j database.
+    graphs to be read from and written to a Neo4j database.  Embeddings produced
+    during training are persisted back to Neo4j so that other components or
+    subsequent workflows can reuse them.
     """
 
     def __init__(
@@ -32,9 +34,36 @@ class GraphClassifier:
     # Data access helpers
     # ------------------------------------------------------------------
     def load_graph_from_neo4j(self) -> nx.Graph:
+        """Retrieve the current graph from Neo4j.
+
+        Raises
+        ------
+        ValueError
+            If the classifier was initialised without a ``Neo4jClient``.
+        """
         if self.neo4j_client is None:
             raise ValueError("Neo4j client not configured")
         return self.neo4j_client.get_graph()
+
+    def write_graph_to_neo4j(self, graph: nx.Graph) -> None:
+        """Persist ``graph`` to Neo4j using the configured client.
+
+        Nodes and edges along with their attributes are written via the
+        :class:`Neo4jClient`.  When no client is configured a ``ValueError`` is
+        raised.  The helper is primarily intended for tests and simple
+        end-to-end demos where graphs are manipulated in-memory before being
+        pushed to Neo4j.
+        """
+
+        if self.neo4j_client is None:
+            raise ValueError("Neo4j client not configured")
+
+        for node, data in graph.nodes(data=True):
+            self.neo4j_client.add_node(str(node), **data)
+        for src, dst, data in graph.edges(data=True):
+            rel_type = data.get("type", "RELATED")
+            attrs = {k: v for k, v in data.items() if k != "type"}
+            self.neo4j_client.add_edge(str(src), str(dst), rel_type, **attrs)
 
     def _graph_embedding(self, graph: nx.Graph) -> np.ndarray:
         """Return an embedding for ``graph`` and persist it if possible."""
@@ -42,10 +71,12 @@ class GraphClassifier:
         embeddings = self.embedder.get_embeddings()
         if self.neo4j_client is not None:
             self.neo4j_client.write_node_embeddings(embeddings)
-            embeddings = {
+            stored = {
                 k: np.asarray(v, dtype=float)
                 for k, v in self.neo4j_client.read_node_embeddings().items()
             }
+            if stored:
+                embeddings = stored
         return np.mean(list(embeddings.values()), axis=0)
 
     # ------------------------------------------------------------------
