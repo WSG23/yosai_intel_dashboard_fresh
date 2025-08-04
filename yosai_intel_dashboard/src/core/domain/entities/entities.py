@@ -3,11 +3,48 @@
 Core entity models for the Yōsai Intel system
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Generic, Tuple, TypeVar, Union
 
-from yosai_intel_dashboard.src.utils.result_types import Result, failure, success
+T = TypeVar("T")
+E = TypeVar("E")
+
+
+@dataclass(frozen=True)
+class Success(Generic[T]):
+    value: T
+
+    def is_success(self) -> bool:
+        return True
+
+    def is_failure(self) -> bool:
+        return False
+
+
+@dataclass(frozen=True)
+class Failure(Generic[E]):
+    error: E
+
+    def is_success(self) -> bool:
+        return False
+
+    def is_failure(self) -> bool:
+        return True
+
+
+Result = Union[Success[T], Failure[E]]
+
+
+def success(value: T) -> Success[T]:
+    return Success(value)
+
+
+def failure(error: E) -> Failure[E]:
+    return Failure(error)
+
 
 from .enums import DoorType
 from .events import AccessEvent
