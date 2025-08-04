@@ -1,5 +1,7 @@
 """Upload service protocol definitions."""
 
+from __future__ import annotations
+
 from abc import abstractmethod
 from typing import (
     Any,
@@ -17,9 +19,21 @@ from typing import (
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from yosai_intel_dashboard.src.services.protocols.device_learning import DeviceLearningServiceProtocol
+from yosai_intel_dashboard.src.core.interfaces.protocols import (
+    FileProcessorProtocol,
+)
+from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
+from yosai_intel_dashboard.src.infrastructure.config.constants import AnalyticsConstants
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
+from yosai_intel_dashboard.src.services.protocols.device_learning import (
+    DeviceLearningServiceProtocol,
+)
+from yosai_intel_dashboard.src.services.protocols.processor import ProcessorProtocol
 
 
 @runtime_checkable
@@ -147,6 +161,16 @@ class UploadAnalyticsProtocol(Protocol):
     """Protocol for analyzing uploaded data."""
 
     @abstractmethod
+    def __init__(
+        self,
+        validator: "UploadSecurityProtocol",
+        processor: ProcessorProtocol,
+        callback_manager: TrulyUnifiedCallbacks,
+        analytics_config: AnalyticsConstants,
+        event_bus: EventBusProtocol,
+    ) -> None: ...
+
+    @abstractmethod
     def analyze_uploaded_data(self) -> Dict[str, Any]:
         """Analyze uploaded data and return metrics."""
         ...
@@ -222,7 +246,9 @@ def get_device_learning_service(
     c = _get_container(container)
     if c and c.has("device_learning_service"):
         return c.get("device_learning_service")
-    from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_device_learning_service as _get
+    from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
+        get_device_learning_service as _get,
+    )
 
     return _get()
 

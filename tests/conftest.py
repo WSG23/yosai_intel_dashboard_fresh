@@ -9,7 +9,7 @@ import sys
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
-
+from types import ModuleType, SimpleNamespace
 from typing import Callable, Iterator, List
 
 # Make project package importable
@@ -22,7 +22,7 @@ setup_common_fallbacks()
 
 import pytest
 
-from tests.import_helpers import safe_import
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 try:
@@ -69,8 +69,10 @@ for _mod, _stub in [
     ("opentelemetry.exporter.jaeger.thrift", None),
     ("opentelemetry.instrumentation.fastapi", None),
     ("structlog", None),
+    ("sklearn", None),
 ]:
     if _mod == "prometheus_client":
+
         class _Metric:
             def __init__(self, *a, **k):
                 pass
@@ -190,11 +192,26 @@ def fake_unicode_processor():
 @pytest.fixture
 def mock_analytics_processor():
     """Fixture returning an ``UploadAnalyticsProcessor`` instance."""
+    from validation.security_validator import SecurityValidator
+    from yosai_intel_dashboard.src.core.events import EventBus
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+        dynamic_config,
+    )
     from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
         UploadAnalyticsProcessor,
     )
+    from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
-    return UploadAnalyticsProcessor()
+    vs = SecurityValidator()
+    processor = Processor(validator=vs)
+    event_bus = EventBus()
+    callbacks = TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=vs)
+    return UploadAnalyticsProcessor(
+        vs, processor, callbacks, dynamic_config.analytics, event_bus
+    )
 
 
 @pytest.fixture

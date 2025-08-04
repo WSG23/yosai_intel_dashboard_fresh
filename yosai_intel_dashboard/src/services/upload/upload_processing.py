@@ -1,16 +1,37 @@
+from __future__ import annotations
+
 from typing import Any, Dict
 
 import pandas as pd
 
-
-import pandas as pd
+from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
+from yosai_intel_dashboard.src.infrastructure.config.constants import AnalyticsConstants
+from yosai_intel_dashboard.src.services.protocols.processor import ProcessorProtocol
+from yosai_intel_dashboard.src.services.upload.protocols import (
+    UploadAnalyticsProtocol,
+    UploadSecurityProtocol,
+)
 
 
 class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
     """Process and analyze uploaded access control data."""
 
-    def __init__(self, *args, **kwargs) -> None:  # pragma: no cover - simple stub
-        pass
+    def __init__(
+        self,
+        validator: UploadSecurityProtocol,
+        processor: ProcessorProtocol,
+        callback_manager: TrulyUnifiedCallbacks,
+        analytics_config: AnalyticsConstants,
+        event_bus: EventBusProtocol,
+    ) -> None:
+        self.validator = validator
+        self.processor = processor
+        self.callback_manager = callback_manager
+        self.analytics_config = analytics_config
+        self.event_bus = event_bus
 
     # ------------------------------------------------------------------
     # Public helpers
@@ -31,7 +52,9 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
 
         cleaned = df.dropna(how="all").copy()
         cleaned.columns = [c.strip().lower().replace(" ", "_") for c in cleaned.columns]
-        cleaned = cleaned.rename(columns={"device_name": "door_id", "event_time": "timestamp"})
+        cleaned = cleaned.rename(
+            columns={"device_name": "door_id", "event_time": "timestamp"}
+        )
         if "timestamp" in cleaned.columns:
             cleaned["timestamp"] = pd.to_datetime(cleaned["timestamp"], errors="coerce")
         return cleaned.dropna(how="all")
@@ -47,8 +70,10 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         if "timestamp" in df.columns:
             ts = pd.to_datetime(df["timestamp"], errors="coerce").dropna()
             if not ts.empty:
-                date_range = {"start": str(ts.min().date()), "end": str(ts.max().date())}
-
+                date_range = {
+                    "start": str(ts.min().date()),
+                    "end": str(ts.max().date()),
+                }
 
         return {
             "total_events": int(total_events),
@@ -76,21 +101,26 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
     def _calculate_statistics(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
         """Calculate statistics for validated ``data``."""
         if not data:
-            return {"total_events": 0, "active_users": 0, "active_doors": 0, "date_range": {"start": "Unknown", "end": "Unknown"}}
+            return {
+                "total_events": 0,
+                "active_users": 0,
+                "active_doors": 0,
+                "date_range": {"start": "Unknown", "end": "Unknown"},
+            }
 
         combined = pd.concat(list(data.values()), ignore_index=True)
         return self.summarize_dataframe(combined)
 
     def _format_results(self, stats: Dict[str, Any]) -> Dict[str, Any]:
-
         """Return final result dictionary with ``status`` key."""
         result = dict(stats)
         result["status"] = result.get("status", "success")
         return result
 
     # ------------------------------------------------------------------
-    def _process_uploaded_data_directly(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
-
+    def _process_uploaded_data_directly(
+        self, data: Dict[str, pd.DataFrame]
+    ) -> Dict[str, Any]:
         """Backward compatible helper to process uploaded ``data``."""
         validated = self._validate_data(data)
         return self._calculate_statistics(validated)
@@ -100,13 +130,16 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         """Backward compatible wrapper around :meth:`get_analytics_from_uploaded_data`."""
         return self.get_analytics_from_uploaded_data()
 
-    def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:  # pragma: no cover - simple stub
+    def load_uploaded_data(
+        self,
+    ) -> Dict[str, pd.DataFrame]:  # pragma: no cover - simple stub
         return {}
 
 
-
 # Expose commonly used methods at module level for convenience
-get_analytics_from_uploaded_data = UploadAnalyticsProcessor.get_analytics_from_uploaded_data
+get_analytics_from_uploaded_data = (
+    UploadAnalyticsProcessor.get_analytics_from_uploaded_data
+)
 clean_uploaded_dataframe = UploadAnalyticsProcessor.clean_uploaded_dataframe
 summarize_dataframe = UploadAnalyticsProcessor.summarize_dataframe
 
