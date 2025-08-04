@@ -13,6 +13,7 @@ from .database_connection_factory import DatabaseConnectionFactory, RetryStrateg
 from .dynamic_config import DynamicConfigManager, dynamic_config
 from .environment_processor import EnvironmentProcessor
 from .hierarchical_loader import HierarchicalLoader
+from .loader import ConfigurationLoader, ServiceSettings
 from .proto_adapter import to_dataclasses
 from .protocols import (
     ConfigLoaderProtocol,
@@ -119,6 +120,8 @@ __all__ = [
     "HierarchicalLoader",
     "ConfigTransformer",
     "UnifiedLoader",
+    "ConfigurationLoader",
+    "ServiceSettings",
     "to_dataclasses",
     "ConfigLoaderProtocol",
     "ConfigValidatorProtocol",

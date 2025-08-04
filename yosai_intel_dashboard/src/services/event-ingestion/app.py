@@ -17,8 +17,8 @@ from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.src.core.security import RateLimiter
 from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
-from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
-    load_service_config,
+from yosai_intel_dashboard.src.infrastructure.config.loader import (
+    ConfigurationLoader,
 )
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
@@ -90,7 +90,7 @@ async def _consume_loop() -> None:
 @app.on_event("startup")
 async def startup() -> None:
     # Load environment driven settings
-    load_service_config()
+    ConfigurationLoader().get_service_config()
     service.initialize()
     asyncio.create_task(
         trace_async_operation("consume_loop", "ingest", _consume_loop())

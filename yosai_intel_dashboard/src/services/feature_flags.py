@@ -38,8 +38,8 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - simplified fallback
     RedisFeatureFlagStore = InMemoryFeatureFlagStore
 
-from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
-    load_service_config,
+from yosai_intel_dashboard.src.infrastructure.config.loader import (
+    ConfigurationLoader,
 )
 
 from ..repository import (
@@ -79,7 +79,7 @@ class FeatureFlagManager:
         redis_url: str | None = None,
         cache_repo: FeatureFlagCacheRepository | None = None,
     ) -> None:
-        cfg = load_service_config()
+        cfg = ConfigurationLoader().get_service_config()
         redis_url = redis_url or cfg.redis_url
         try:
             self._store = RedisFeatureFlagStore(redis_url=redis_url)
