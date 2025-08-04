@@ -17,9 +17,11 @@ from src.common.mixins import LoggingMixin, SerializationMixin
 from yosai_intel_dashboard.src.services.analytics_summary import (
     generate_sample_analytics,
 )
-from yosai_intel_dashboard.src.infrastructure.callbacks import (
-    CallbackType,
+from yosai_intel_dashboard.src.infrastructure.callbacks.dispatcher import (
     trigger_callback,
+)
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import (
+    CallbackEvent as CallbackType,
 )
 
 
