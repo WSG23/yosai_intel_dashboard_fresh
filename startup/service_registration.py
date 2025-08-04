@@ -20,33 +20,52 @@ from yosai_intel_dashboard.src.services.metadata_enhancement_engine import (
 )
 
 
-def register_all_application_services(container: ServiceContainer) -> None:
-    """Register all application services with the container."""
+def register_infrastructure_services(container: ServiceContainer) -> None:
+    """Register core infrastructure services."""
 
     register_core_infrastructure(container)
-    register_analytics_services(container)
+
+
+def register_business_services(container: ServiceContainer) -> None:
+    """Register business level services."""
+
     register_learning_services(container)
     register_metadata_services(container)
-    register_security_services(container)
     register_export_services(container)
+
+
+def register_upload_services(container: ServiceContainer) -> None:
+    """Register upload related services using dynamic configuration."""
+
     from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
         dynamic_config,
     )
     from yosai_intel_dashboard.src.services.upload.service_registration import (
-        register_upload_services,
+        register_upload_services as _register_upload_services,
     )
 
-    register_upload_services(container, config=dynamic_config)
+    _register_upload_services(container, config=dynamic_config)
 
 
 def register_all_services(container: ServiceContainer) -> None:
-    """Backward compatible alias for register_all_application_services."""
+    """Register all services with the container."""
+
+    register_infrastructure_services(container)
+    register_security_services(container)
+    register_business_services(container)
+    register_analytics_services(container)
+    register_upload_services(container)
+
+
+def register_all_application_services(container: ServiceContainer) -> None:
+    """Backward compatible alias for ``register_all_services``."""
+
     warnings.warn(
-        "register_all_services is deprecated; use register_all_application_services",
+        "register_all_application_services is deprecated; use register_all_services",
         DeprecationWarning,
         stacklevel=2,
     )
-    register_all_application_services(container)
+    register_all_services(container)
 
 
 def register_core_infrastructure(container: ServiceContainer) -> None:
@@ -357,3 +376,27 @@ def register_learning_services(container: ServiceContainer) -> None:
         "device_learning_service",
         create_device_learning_service(),
     )
+
+
+def create_production_container() -> ServiceContainer:
+    """Create and validate a production-ready service container."""
+
+    container = ServiceContainer()
+    register_all_services(container)
+    container.validate_registrations()
+    return container
+
+
+production_container = create_production_container()
+
+
+__all__ = [
+    "register_all_services",
+    "register_infrastructure_services",
+    "register_business_services",
+    "register_analytics_services",
+    "register_upload_services",
+    "register_security_services",
+    "create_production_container",
+    "production_container",
+]
