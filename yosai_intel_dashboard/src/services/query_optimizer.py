@@ -88,11 +88,13 @@ class QueryOptimizer:
             )
             table_q = builder.table(table)
             col_q = builder.column(column)
-            sql, _ = builder.build(
-                f"SELECT COUNT(DISTINCT {col_q}) AS distinct, COUNT(*) AS total "
-                f"FROM {table_q}",
-                logger=logger,
+            query = (
+                "SELECT COUNT(DISTINCT "
+                + col_q
+                + ") AS distinct, COUNT(*) AS total FROM "
+                + table_q
             )
+            sql, _ = builder.build(query, logger=logger)
             stats = execute_query(self.connection, sql)
             if not stats:
                 return False
