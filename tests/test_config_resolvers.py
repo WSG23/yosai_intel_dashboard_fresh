@@ -5,7 +5,11 @@ from types import SimpleNamespace
 
 spec = importlib.util.spec_from_file_location(
     "utils.config_resolvers",
-    Path(__file__).resolve().parents[1] / "utils" / "config_resolvers.py",
+    Path(__file__).resolve().parents[1]
+    / "yosai_intel_dashboard"
+    / "src"
+    / "utils"
+    / "config_resolvers.py",
 )
 config_resolvers = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config_resolvers)
@@ -43,7 +47,7 @@ def test_resolve_ai_confidence_threshold_default():
 
 def test_resolve_max_upload_size_mb_all_attrs():
     cfg = Dummy()
-    assert config_resolvers.resolve_max_upload_size_mb(cfg) == 42
+    assert config_resolvers.resolve_max_upload_size_mb(cfg) == 84
 
 
 def test_resolve_max_upload_size_mb_alt_attrs():
@@ -64,7 +68,7 @@ def test_resolve_max_upload_size_mb_default():
 
 def test_resolve_upload_chunk_size_attrs():
     cfg = Dummy()
-    assert config_resolvers.resolve_upload_chunk_size(cfg) == 256
+    assert config_resolvers.resolve_upload_chunk_size(cfg) == 512
 
 
 def test_resolve_upload_chunk_size_alt_attr():
