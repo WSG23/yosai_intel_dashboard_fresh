@@ -84,7 +84,7 @@ def test_timescale_policies(tmp_path):
             "SELECT job_id FROM timescaledb_information.jobs WHERE hypertable_name='access_events' AND proc_name='policy_compression'"
         )
         job = cur.fetchone()[0]
-        cur.execute(f"SELECT run_job({job})")
+        cur.execute("SELECT run_job(%s)", (job,))
         conn.commit()
 
         cur.execute(
@@ -96,7 +96,7 @@ def test_timescale_policies(tmp_path):
             "SELECT job_id FROM timescaledb_information.jobs WHERE hypertable_name='access_events' AND proc_name='policy_retention'"
         )
         job = cur.fetchone()[0]
-        cur.execute(f"SELECT run_job({job})")
+        cur.execute("SELECT run_job(%s)", (job,))
         conn.commit()
         cur.execute("SELECT COUNT(*) FROM access_events")
         assert cur.fetchone()[0] == 0

@@ -6,6 +6,7 @@ import logging
 
 from startup.registry_startup import register_optional_services
 from startup.service_registration import register_all_application_services
+
 from yosai_intel_dashboard.src.database.index_optimizer import IndexOptimizer
 from yosai_intel_dashboard.src.infrastructure.config.common_indexes import (
     COMMON_INDEXES,

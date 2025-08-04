@@ -86,9 +86,7 @@ def get_last_timestamp(cur: DictCursor) -> datetime:
 def update_timestamp(cur: DictCursor, ts: datetime) -> None:
     builder = SecureQueryBuilder(allowed_tables={CHECKPOINT_TABLE})
     table = builder.table(CHECKPOINT_TABLE)
-    sql, params = builder.build(
-        f"UPDATE {table} SET last_ts = %s", (ts,), logger=LOG
-    )
+    sql, params = builder.build(f"UPDATE {table} SET last_ts = %s", (ts,), logger=LOG)
     execute_command(cur, sql, params)
 
 
@@ -121,8 +119,8 @@ def insert_rows(cur: DictCursor, rows: list[dict[str, Any]]) -> None:
         f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
         " ON CONFLICT (event_id) DO NOTHING"
     )
-    builder.build(query, logger=LOG)
-    execute_values(cur, query, values)
+    sql, _ = builder.build(query, logger=LOG)
+    execute_values(cur, sql, values)
 
 
 def replicate_once(src, tgt) -> None:

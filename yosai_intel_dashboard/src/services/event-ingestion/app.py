@@ -6,18 +6,16 @@ import os
 import pathlib
 from typing import Any, Dict
 
-from fastapi import Header, status
-
+from fastapi import Header, Request, status
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from shared.errors.types import ErrorCode
 from tracing import trace_async_operation
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.src.core.security import RateLimiter
-from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
     load_service_config,
@@ -26,6 +24,7 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+from yosai_intel_dashboard.src.services.auth import validate_authorization_header
 from yosai_intel_dashboard.src.services.security import verify_service_jwt
 from yosai_intel_dashboard.src.services.streaming.service import StreamingService
 
@@ -76,21 +75,9 @@ async def rate_limit(request: Request, call_next):
     return response
 
 
-
 def verify_token(authorization: str = Header("")) -> dict:
-    if not authorization.startswith("Bearer "):
-        raise http_error(
-            ErrorCode.UNAUTHORIZED,
-            "unauthorized",
-            status.HTTP_401_UNAUTHORIZED,
-        )
-    token = authorization.split(" ", 1)[1]
-    if not verify_service_jwt(token):
-        raise http_error(
-            ErrorCode.UNAUTHORIZED,
-            "unauthorized",
-            status.HTTP_401_UNAUTHORIZED,
-        )
+    """FastAPI dependency verifying Authorization header."""
+    return validate_authorization_header(authorization, verify_service_jwt)
 
 
 async def _consume_loop() -> None:

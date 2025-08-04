@@ -122,12 +122,15 @@ class PostgreSQLConnection:
     def __init__(self, config: DatabaseSettings) -> None:
         try:
             import psycopg2
+            from psycopg2 import sql
+
             from psycopg2.extras import RealDictCursor
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise DatabaseError(
                 "psycopg2 is required for PostgreSQL connections"
             ) from exc
 
+        self._sql = sql
         self._connection = psycopg2.connect(
             host=config.host,
             port=config.port,
@@ -155,15 +158,33 @@ class PostgreSQLConnection:
     def prepare_statement(self, name: str, query: str) -> None:
         if name in self._prepared:
             return
+        sql_mod = self._sql
         with self._connection.cursor() as cursor:
-            cursor.execute(f"PREPARE {name} AS {query}")
+            stmt = sql_mod.SQL("PREPARE {name} AS {query}").format(
+                name=sql_mod.Identifier(name),
+                query=sql_mod.SQL(query),
+            )
+            cursor.execute(stmt)
         self._prepared.add(name)
 
     def execute_prepared(self, name: str, params: tuple) -> list:
-        placeholders = ", ".join(["%s"] * len(params))
-        sql = f"EXECUTE {name} ({placeholders})" if placeholders else f"EXECUTE {name}"
+        sql_mod = self._sql
         with self._connection.cursor() as cursor:
-            cursor.execute(sql, params if params else None)
+            if params:
+                placeholders = sql_mod.SQL(", ").join(
+                    sql_mod.Placeholder() for _ in params
+                )
+                stmt = sql_mod.SQL("EXECUTE {name} ({params})").format(
+                    name=sql_mod.Identifier(name),
+                    params=placeholders,
+                )
+                cursor.execute(stmt, params)
+            else:
+                stmt = sql_mod.SQL("EXECUTE {name}").format(
+                    name=sql_mod.Identifier(name)
+                )
+                cursor.execute(stmt)
+
             if cursor.description:
                 return list(cursor.fetchall())
             self._connection.commit()

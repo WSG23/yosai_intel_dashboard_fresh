@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
 import time
@@ -19,8 +17,6 @@ except Exception:  # pragma: no cover - default if core package unavailable
 from database.performance_analyzer import DatabasePerformanceAnalyzer
 
 from database.types import DBRows
-from database.query_cache import QueryCache
-from yosai_intel_dashboard.src.core.cache_manager import RedisCacheManager
 
 try:  # optional Prometheus integration
     from database.metrics import query_execution_seconds
@@ -159,9 +155,40 @@ def execute_command(
             query_execution_seconds.observe(elapsed)
 
 
+def execute_batch(
+    conn: Any,
+    sql: str,
+    params_seq: Iterable[Iterable[Any]],
+    *,
+    timeout: Optional[int] = None,
+):
+    """Execute a batch of parameterized commands safely on ``conn``."""
+    if not isinstance(sql, str):
+        raise TypeError("sql must be a string")
+    _get_security_validator().scan_query(sql)
+    pseq = [tuple(p) for p in params_seq]
+    optimized_sql = _get_optimizer(conn).optimize_query(sql)
+    logger.debug("Executing batch command: %s", optimized_sql)
+    start = time.perf_counter()
+    try:
+        if hasattr(conn, "execute_batch"):
+            return conn.execute_batch(optimized_sql, pseq)
+        if hasattr(conn, "executemany"):
+            return conn.executemany(optimized_sql, pseq)
+        raise AttributeError("Object has no execute_batch or executemany method")
+    finally:
+        elapsed = time.perf_counter() - start
+        performance_analyzer.analyze_query_performance(optimized_sql, elapsed)
+        if elapsed > SLOW_QUERY_THRESHOLD:
+            logger.warning("Slow query (%.6f s): %s", elapsed, optimized_sql)
+        if query_execution_seconds is not None:
+            query_execution_seconds.observe(elapsed)
+
+
 __all__ = [
     "execute_query",
     "execute_command",
+    "execute_batch",
     "execute_secure_query",
     "query_metrics",
     "performance_analyzer",

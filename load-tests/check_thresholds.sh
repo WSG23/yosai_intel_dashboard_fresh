@@ -4,8 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(dirname "$0")"
 REPO_ROOT="$SCRIPT_DIR/.."
 BUDGETS_FILE="$REPO_ROOT/config/performance_budgets.yml"
-FAILED_RATE=$(python -c "import yaml,sys;print(yaml.safe_load(open('$BUDGETS_FILE'))['http_req_failed_rate'])")
-DURATION_P95=$(python -c "import yaml,sys;print(yaml.safe_load(open('$BUDGETS_FILE'))['http_req_duration_p95'])")
+FAILED_RATE=$(python3 -c "import yaml,sys;print(yaml.safe_load(open('$BUDGETS_FILE'))['http_req_failed_rate'])")
+DURATION_P95=$(python3 -c "import yaml,sys;print(yaml.safe_load(open('$BUDGETS_FILE'))['http_req_duration_p95'])")
 
 for f in "$@"; do
   rate=$(jq -r '.metrics.http_req_failed.rate' "$f")
@@ -23,4 +23,4 @@ for f in "$@"; do
 
 done
 
-python "$REPO_ROOT/tools/performance_report.py" "$@"
+python3 "$REPO_ROOT/tools/performance_report.py" "$@"

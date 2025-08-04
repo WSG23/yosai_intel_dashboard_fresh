@@ -17,6 +17,10 @@ from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
 )
 
 
+diagnose_upload_config = dynamic_mod.diagnose_upload_config
+dynamic_config = dynamic_mod.dynamic_config
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Print diagnostics for upload configuration"

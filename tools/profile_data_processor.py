@@ -1,5 +1,7 @@
 """Profile :class:`DataProcessor.process` using cProfile or pyinstrument."""
 
+from __future__ import annotations
+
 import argparse
 import cProfile
 import pstats
@@ -42,8 +44,10 @@ def main() -> None:
         processor.process(args.file_path)
         profiler.stop()
         output = args.output or "profile.html"
-        Path(output).write_text(profiler.output_html())
-        print(profiler.output_text(unicode=True, color=True))
+        Path(output).write_text(profiler.output_html(), encoding="utf-8")
+        # ``unicode`` parameter was for Python 2 compatibility; Unicode is the
+        # default in modern Python versions.
+        print(profiler.output_text(color=True))
     else:
         profiler = cProfile.Profile()
         profiler.enable()

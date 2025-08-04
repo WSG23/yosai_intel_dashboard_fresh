@@ -7,15 +7,19 @@ from dash import html
 from dash._callback_context import callback_context
 from dash.dependencies import Input, Output
 
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_device_learning_service
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
+    get_device_learning_service,
+)
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
 
 
 def register_callbacks(app, container) -> None:
     """Register device learning callbacks."""
     callbacks = TrulyUnifiedCallbacks(app)
 
-    @callbacks.register_handler(
+    @callbacks.callback(
         Output("device-learning-status", "children"),
         [
             Input("file-upload-store", "data"),

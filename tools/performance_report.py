@@ -23,7 +23,7 @@ def _metric_value(obj: Dict[str, Any], key: str) -> float:
 
 
 def parse_result(path: Path) -> Dict[str, float]:
-    data = json.loads(path.read_text())
+    data = json.loads(path.read_text(encoding="utf-8"))
     metrics = data.get("metrics", {})
     failed = metrics.get("http_req_failed", {})
     duration = metrics.get("http_req_duration", {})
@@ -36,7 +36,7 @@ def parse_result(path: Path) -> Dict[str, float]:
 def load_previous(report_dir: Path) -> Dict[str, float]:
     prev = report_dir / "latest.json"
     if prev.exists():
-        return json.loads(prev.read_text())
+        return json.loads(prev.read_text(encoding="utf-8"))
     return {}
 
 
@@ -44,7 +44,7 @@ def alert_channels(alerts_file: Path) -> List[str]:
     if not alerts_file.exists():
         return []
     try:
-        data = yaml.safe_load(alerts_file.read_text()) or {}
+        data = yaml.safe_load(alerts_file.read_text(encoding="utf-8")) or {}
     except Exception:
         return []
     channels = set()
@@ -103,9 +103,11 @@ def main() -> None:
     report_md = "\n".join(contents)
 
     # Store historical and latest reports
-    (report_dir / f"report-{timestamp}.md").write_text(report_md)
-    (report_dir / "latest.md").write_text(report_md)
-    (report_dir / "latest.json").write_text(json.dumps(metrics, indent=2))
+    (report_dir / f"report-{timestamp}.md").write_text(report_md, encoding="utf-8")
+    (report_dir / "latest.md").write_text(report_md, encoding="utf-8")
+    (report_dir / "latest.json").write_text(
+        json.dumps(metrics, indent=2), encoding="utf-8"
+    )
 
     print(report_md)
 

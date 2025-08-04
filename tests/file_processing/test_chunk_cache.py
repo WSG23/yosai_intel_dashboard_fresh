@@ -99,11 +99,12 @@ def test_cache_rejects_pickle(tmp_path, monkeypatch):
 
     evil_file = tmp_path / "evil_triggered"
 
+    def _touch(path: Path) -> None:
+        path.write_text("")
+
     class Exploit:
         def __reduce__(self):
-            import builtins
-
-            return (builtins.exec, (f"open('{evil_file}', 'w').close()",))
+            return (_touch, (evil_file,))
 
     cache_file.write_bytes(pickle.dumps(Exploit()))
 
