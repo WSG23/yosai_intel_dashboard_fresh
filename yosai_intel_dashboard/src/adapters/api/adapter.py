@@ -18,8 +18,8 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from itsdangerous import BadSignature, URLSafeTimedSerializer
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from api.analytics_router import init_cache_manager
 from api.analytics_router import router as analytics_router
@@ -29,7 +29,6 @@ from api.routes.feature_flags import router as feature_flags_router
 from middleware.performance import TimingMiddleware
 from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 from middleware.security_headers import SecurityHeadersMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
 from monitoring.request_metrics import (
     upload_file_bytes,
     upload_files_total,
@@ -40,19 +39,7 @@ from yosai_intel_dashboard.src.core.rbac import create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
 from yosai_intel_dashboard.src.infrastructure.config import get_security_config
 from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
-from yosai_intel_dashboard.src.services.security import verify_service_jwt
-
-bearer_scheme = HTTPBearer()
-
-
-def verify_token(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> None:
-    """Validate Authorization header using JWT service tokens."""
-    if not verify_service_jwt(credentials.credentials):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
-        )
+from yosai_intel_dashboard.src.services.auth import require_service_token
 
 
 def create_api_app() -> "FastAPI":
@@ -73,7 +60,9 @@ def create_api_app() -> "FastAPI":
     # Apply rate limiting
     import redis
 
-    redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+    redis_client = redis.Redis.from_url(
+        os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    )
     limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
     service.app.add_middleware(RateLimitMiddleware, limiter=limiter)
     build_dir = os.path.abspath(
@@ -126,7 +115,7 @@ def create_api_app() -> "FastAPI":
     api_v1.include_router(explanations_router)
     api_v1.include_router(feature_flags_router)
 
-    service.app.include_router(api_v1, dependencies=[Depends(verify_token)])
+    service.app.include_router(api_v1, dependencies=[Depends(require_service_token)])
 
     legacy_router = APIRouter()
     legacy_router.include_router(analytics_router)
@@ -136,7 +125,7 @@ def create_api_app() -> "FastAPI":
 
     service.app.include_router(
         legacy_router,
-        dependencies=[Depends(verify_token), Depends(add_deprecation_warning)],
+        dependencies=[Depends(require_service_token), Depends(add_deprecation_warning)],
         deprecated=True,
     )
 
