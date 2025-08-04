@@ -55,6 +55,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "@playwright/test": "^1.46.0",
     "autoprefixer": "^10.4.21",
     "axe-core": "^4.10.3",
     "cssnano": "^7.1.0",
@@ -87,6 +88,7 @@
     "lint:a11y": "pa11y http://localhost:8050",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
+    "playwright:test": "playwright test",
     "graphql": "node graphql/index.js"
   },
   "eslintConfig": {

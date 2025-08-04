@@ -1,18 +1,32 @@
 /* Upload component styles */
+:root {
+  --upload-border: #007bff;
+  --upload-padding: clamp(1.5rem, 5vw, 3rem);
+  --upload-bg: #fafafa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --upload-border: #66aaff;
+    --upload-bg: #1f1f1f;
+  }
+}
+
 .upload-dropzone {
-  border: 2px dashed #007bff;
-  border-radius: 8px;
-  padding: 3rem;
+  border: 0.125rem dashed var(--upload-border);
+  border-radius: 0.5rem;
+  padding: var(--upload-padding);
   text-align: center;
   cursor: pointer;
-  background-color: #fafafa;
-  min-height: 200px;
+  background-color: var(--upload-bg);
+  min-height: 12.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
 }
+
 
 .upload-dropzone--active {
   border-color: #28a745;
@@ -31,14 +45,14 @@
 
 .alerts-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 1.25rem;
+  right: 1.25rem;
   z-index: 9999;
-  max-width: 400px;
+  max-width: 25rem;
 }
 
 .upload-container {
-  max-width: 1400px;
+  max-width: min(90%, 87.5rem);
   margin: 0 auto;
 }
 
