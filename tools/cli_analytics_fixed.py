@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Analytics with callback fix applied
+Test Analytics without callback patch
 """
 
 from __future__ import annotations
@@ -14,12 +14,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
-
-async def test_analytics_with_fix():
+async def test_analytics():
     try:
-        print("=== TESTING ANALYTICS WITH CALLBACK FIX ===")
+        print("=== TESTING ANALYTICS SERVICE ===")
 
         import pandas as pd
 
@@ -118,7 +116,7 @@ async def test_analytics_with_fix():
             }
             print(f"❌ Data processing failed: {safe_text(e)}")
 
-        print("\n=== ANALYTICS TESTING WITH FIX COMPLETE ===")
+        print("\n=== ANALYTICS TESTING COMPLETE ===")
         return result
 
     except Exception as e:
@@ -131,7 +129,7 @@ async def test_analytics_with_fix():
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    result = asyncio.run(test_analytics_with_fix())
+    result = asyncio.run(test_analytics())
     print("\n" + "=" * 50)
     print("FINAL RESULTS:")
     print(json.dumps(result, indent=2, default=str))
