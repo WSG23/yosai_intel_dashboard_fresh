@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
+from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
+
 from database.utils import parse_connection_string
 
 from .app_config import UploadConfig
@@ -25,7 +27,7 @@ class AppSettings(BaseModel):
     """Application settings."""
 
     title: str = "Yōsai Intel Dashboard"
-    debug: bool = True
+    debug: bool = Field(default=False, json_schema_extra={"env": "YOSAI_DEBUG"})
     host: str = DEFAULT_APP_HOST
     port: int = DEFAULT_APP_PORT
     secret_key: str = Field(default_factory=lambda: require_env_var("SECRET_KEY"))
@@ -39,8 +41,8 @@ class DatabaseSettings(BaseModel):
     host: str = DEFAULT_DB_HOST
     port: int = DEFAULT_DB_PORT
     name: str = "yosai.db"
-    user: str = "user"
-    password: str = ""
+    user: str = Field(..., json_schema_extra={"env": "DB_USER"})
+    password: str = Field(..., json_schema_extra={"env": "DB_PASSWORD"})
     url: str = ""
     connection_timeout: int = dynamic_config.get_db_connection_timeout()
     initial_pool_size: int = dynamic_config.get_db_pool_size()
@@ -89,6 +91,12 @@ class DatabaseSettings(BaseModel):
                     )
                 else:
                     values.url = f"mysql://{values.host}:{values.port}/{values.name}"
+        return values
+
+    @model_validator(mode="after")
+    def require_credentials(cls, values: "DatabaseSettings") -> "DatabaseSettings":
+        if values.type != "sqlite" and (not values.user or not values.password):
+            raise ConfigurationError("Database credentials are required")
         return values
 
     def get_connection_string(self) -> str:  # pragma: no cover - util
