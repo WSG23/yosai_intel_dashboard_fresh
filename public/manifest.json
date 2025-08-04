@@ -1,0 +1,20 @@
+{
+  "short_name": "Yosai Dashboard",
+  "name": "Yosai Intel Dashboard",
+  "icons": [
+    {
+      "src": "../yosai_intel_dashboard/src/adapters/ui/assets/yosai_logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "../yosai_intel_dashboard/src/adapters/ui/assets/yosai_logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}
