@@ -35,15 +35,13 @@ from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter
-
 from yosai_intel_dashboard.src.error_handling import http_error
-from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+from yosai_intel_dashboard.src.infrastructure.config import (
+    get_app_config,
+    get_database_config,
+)
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
     load_service_config,
-)
-from yosai_intel_dashboard.src.infrastructure.config.constants import (
-    DEFAULT_CACHE_HOST,
-    DEFAULT_CACHE_PORT,
 )
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
@@ -73,8 +71,11 @@ app = service.app
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
+service_cfg = load_service_config()
+app_cfg = get_app_config()
+
 # Configure a Redis backed rate limiter
-redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+redis_client = redis.Redis.from_url(service_cfg.redis_url)
 rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
 app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
 
@@ -113,7 +114,6 @@ async def rate_limit(request: Request, call_next):
     return response
 
 
-
 async def _external_api_check(_: FastAPI) -> Dict[str, Any]:
     return {"healthy": True, "circuit_breaker": "closed", "retries": 0}
 
@@ -122,14 +122,12 @@ register_health_check(app, "database", _db_check)
 register_health_check(app, "message_broker", _broker_check)
 register_health_check(app, "external_api", _external_api_check)
 
-JWT_SECRET_PATH_ENV = "JWT_SECRET_PATH"
-
 
 def _jwt_secret() -> str:
     """Return the current JWT secret."""
-    secret_path = os.getenv(JWT_SECRET_PATH_ENV)
+    secret_path = app_cfg.jwt_secret_path
     if not secret_path:
-        raise RuntimeError("JWT_SECRET_PATH not configured")
+        raise RuntimeError("JWT secret path not configured")
     return get_secret(secret_path)
 
 
@@ -211,7 +209,7 @@ async def _startup() -> None:
     # Ensure the JWT secret can be retrieved on startup
     _jwt_secret()
 
-    if os.getenv("JWT_SECRET", "change-me") == "change-me":
+    if app_cfg.secret_key == "change-me":
         raise RuntimeError("invalid JWT secret")
 
     cfg = get_database_config()
@@ -224,26 +222,21 @@ async def _startup() -> None:
         timeout=cfg.connection_timeout,
     )
 
-    redis_url = os.getenv(
-        "REDIS_URL",
-        f"redis://{DEFAULT_CACHE_HOST}:{DEFAULT_CACHE_PORT}/0",
-    )
-    redis = aioredis.from_url(redis_url, decode_responses=True)
-    cache_ttl = int(os.getenv("CACHE_TTL", "300"))
+    redis = aioredis.from_url(service_cfg.redis_url, decode_responses=True)
 
-    model_dir = Path(os.environ.get("MODEL_DIR", "model_store"))
+    model_dir = Path(service_cfg.model_dir)
     model_dir.mkdir(parents=True, exist_ok=True)
 
-    db_url = os.getenv("MODEL_REGISTRY_DB", "sqlite:///model_registry.db")
-    bucket = os.getenv("MODEL_REGISTRY_BUCKET", "local-models")
-    mlflow_uri = os.getenv("MLFLOW_URI")
-    registry = ModelRegistry(db_url, bucket, mlflow_uri=mlflow_uri)
+    registry = ModelRegistry(
+        service_cfg.registry_db,
+        service_cfg.registry_bucket,
+        mlflow_uri=service_cfg.mlflow_uri,
+    )
     service_obj = AnalyticsService(
         redis,
         pool,
         registry,
-        cache_ttl=cache_ttl,
-        model_dir=model_dir,
+        service_cfg,
     )
     service_obj.preload_active_models()
     app.state.analytics_service = service_obj
