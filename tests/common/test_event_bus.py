@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.common.events import EventBus, EventPublisher
+from src.common.base import BaseComponent
 
 
 def test_publish_and_unsubscribe():
@@ -24,12 +25,11 @@ def test_event_publisher_mixin():
     bus = EventBus()
     received: dict[str, int] = {}
 
-    class Publisher(EventPublisher):
-        def __init__(self, eb: EventBus):
-            super().__init__(eb)
+    class Publisher(EventPublisher, BaseComponent):
+        pass
 
     bus.subscribe("evt", lambda payload: received.update(payload))
-    publisher = Publisher(bus)
+    publisher = Publisher(event_bus=bus)
     publisher.publish_event("evt", {"c": 3})
 
     assert received == {"c": 3}

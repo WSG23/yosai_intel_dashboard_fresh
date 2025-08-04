@@ -9,14 +9,11 @@ from src.common.mixins import LoggingMixin, SerializationMixin
 
 
 class DummyLoggingComponent(LoggingMixin, BaseComponent):
-    def __init__(self) -> None:
-        super().__init__()
+    pass
 
 
 class DummySerializationComponent(SerializationMixin, BaseComponent):
-    def __init__(self, value: int, component_id: str | None = None) -> None:
-        super().__init__(component_id)
-        self.value = value
+    pass
 
 
 def test_logging_mixin_logs(caplog):
@@ -27,7 +24,7 @@ def test_logging_mixin_logs(caplog):
 
 
 def test_serialization_mixin_roundtrip():
-    comp = DummySerializationComponent(5)
+    comp = DummySerializationComponent(value=5)
     data = comp.to_dict()
     assert data["value"] == 5
     new_comp = DummySerializationComponent.from_dict(data)

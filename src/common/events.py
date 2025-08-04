@@ -7,6 +7,7 @@ from copy import deepcopy
 from threading import RLock
 from types import MappingProxyType
 from typing import Any, Callable, Dict, List, Mapping
+import warnings
 
 
 class EventBus:
@@ -76,16 +77,32 @@ class EventBus:
 
 
 class EventPublisher:
-    """Mixin providing convenience methods for publishing events."""
+    """Mixin providing convenience methods for publishing events.
 
-    __slots__ = ("_event_bus",)
+    The mixin no longer performs its own dependency wiring.  ``event_bus`` and
+    any other dependencies should be provided via ``BaseComponent``.  The
+    ``__init__`` method remains as a deprecation shim so that existing code
+    calling ``super().__init__(event_bus)`` continues to work, but callers are
+    encouraged to pass ``event_bus`` through ``BaseComponent.__init__``
+    directly.
+    """
 
-    def __init__(self, event_bus: EventBus) -> None:
-        self._event_bus = event_bus
+    def __init__(self, event_bus: EventBus | None = None, **deps: Any) -> None:
+        if event_bus is not None or deps:
+            warnings.warn(
+                "EventPublisher.__init__ is deprecated; pass dependencies via "
+                "BaseComponent.__init__ instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if event_bus is not None:
+                setattr(self, "event_bus", event_bus)
+            for name, value in deps.items():
+                setattr(self, name, value)
 
     def publish_event(self, event_type: str, payload: Mapping[str, Any]) -> None:
-        """Publish an event via the configured ``EventBus``."""
-        self._event_bus.emit(event_type, payload)
+        """Publish an event via the configured ``event_bus``."""
+        self.event_bus.emit(event_type, payload)
 
 
 __all__ = ["EventBus", "EventPublisher"]
