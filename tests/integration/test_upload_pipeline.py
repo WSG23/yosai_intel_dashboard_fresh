@@ -1,57 +1,12 @@
-import importlib.util
-import sys
-import types
-from pathlib import Path
+from __future__ import annotations
 
 import pandas as pd
 import pytest
 
 from tests.utils.builders import DataFrameBuilder
-
-
-# ---------------------------------------------------------------------------
-# Load ``UploadAnalyticsProcessor`` directly with minimal stubs to avoid heavy
-# dependency chains during test import.
-MODULE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "yosai_intel_dashboard"
-    / "src"
-    / "services"
-    / "upload"
-    / "upload_processing.py"
+from yosai_intel_dashboard.src.services.upload_processing import (
+    UploadAnalyticsProcessor,
 )
-
-# Create lightweight package stubs for the import hierarchy
-for name in [
-    "yosai_intel_dashboard",
-    "yosai_intel_dashboard.src",
-    "yosai_intel_dashboard.src.services",
-    "yosai_intel_dashboard.src.services.upload",
-]:
-    module = types.ModuleType(name)
-    module.__path__ = []  # mark as package
-    sys.modules.setdefault(name, module)
-
-# Stub the protocols module required by ``upload_processing``
-protocols_stub = types.ModuleType(
-    "yosai_intel_dashboard.src.services.upload.protocols"
-)
-
-class UploadAnalyticsProtocol:  # minimal protocol stub
-    def analyze_uploaded_data(self): ...
-    def load_uploaded_data(self): ...
-
-
-protocols_stub.UploadAnalyticsProtocol = UploadAnalyticsProtocol
-sys.modules[
-    "yosai_intel_dashboard.src.services.upload.protocols"
-] = protocols_stub
-
-spec = importlib.util.spec_from_file_location("upload_processing", MODULE_PATH)
-upload_module = importlib.util.module_from_spec(spec)
-assert spec.loader is not None
-spec.loader.exec_module(upload_module)
-UploadAnalyticsProcessor = upload_module.UploadAnalyticsProcessor
 
 
 @pytest.fixture
@@ -75,7 +30,9 @@ def uploaded_data(valid_df):
     return {"empty.csv": pd.DataFrame(), "valid.csv": valid_df}
 
 
-def test_upload_pipeline_filters_empty_and_returns_stats(upload_processor, uploaded_data, monkeypatch):
+def test_upload_pipeline_filters_empty_and_returns_stats(
+    upload_processor, uploaded_data, monkeypatch
+):
     # Ensure the validation step removes empty dataframes
     validated = upload_processor._validate_data(uploaded_data)
     assert list(validated.keys()) == ["valid.csv"]
