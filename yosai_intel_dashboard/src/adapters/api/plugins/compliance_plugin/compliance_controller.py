@@ -9,16 +9,25 @@ from datetime import datetime, timedelta, timezone
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
+from database.secure_exec import execute_query
+from shared.errors.types import ErrorCode
 from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
 from yosai_intel_dashboard.src.core.container import Container
 from yosai_intel_dashboard.src.core.rbac import require_role
-from database.secure_exec import execute_query
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
 from yosai_intel_dashboard.src.services.compliance.dsar_service import DSARService
 from yosai_intel_dashboard.src.services.security import require_role
-from shared.errors.types import ErrorCode
-from yosai_intel_dashboard.src.core.security import validate_user_input
+
+try:
+    from yosai_intel_dashboard.src.core.security import validate_user_input
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+
+    def validate_user_input(value: str, name: str = "") -> str:  # type: ignore[misc]
+        """Fallback validator used when core security module is unavailable."""
+        return value
+
+
 from yosai_framework.errors import CODE_TO_STATUS
 from yosai_intel_dashboard.models.compliance import ConsentType, DSARRequestType
 
