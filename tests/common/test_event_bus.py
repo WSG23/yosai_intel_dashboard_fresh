@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
+
+import pytest
+
 from src.common.events import EventBus, EventPublisher
 from src.common.base import BaseComponent
 
@@ -33,3 +37,15 @@ def test_event_publisher_mixin():
     publisher.publish_event("evt", {"c": 3})
 
     assert received == {"c": 3}
+
+
+def test_event_history_immutable():
+    bus = EventBus()
+    bus.emit("evt", {"a": 1})
+    event = bus._history[0]
+
+    with pytest.raises(FrozenInstanceError):
+        event.type = "other"  # type: ignore[misc]
+
+    with pytest.raises(TypeError):
+        event.data["a"] = 2  # type: ignore[index]

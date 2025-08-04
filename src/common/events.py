@@ -4,10 +4,19 @@ from __future__ import annotations
 
 from collections import defaultdict
 from copy import deepcopy
+from dataclasses import dataclass
 from threading import RLock
 from types import MappingProxyType
 from typing import Any, Callable, Dict, List, Mapping
 import warnings
+
+
+@dataclass(frozen=True)
+class Event:
+    """Immutable event record stored by :class:`EventBus`."""
+
+    type: str
+    data: Mapping[str, Any]
 
 
 class EventBus:
@@ -26,7 +35,7 @@ class EventBus:
         )
         self._lock = RLock()
         self._counter = 0
-        self._history: List[Dict[str, Any]] = []
+        self._history: List[Event] = []
 
     def subscribe(
         self, event_type: str, handler: Callable[[Mapping[str, Any]], None]
@@ -56,7 +65,7 @@ class EventBus:
         with self._lock:
             handlers = list(self._subscribers.get(event_type, {}).values())
         immutable_payload = MappingProxyType(deepcopy(dict(payload)))
-        self._history.append({"type": event_type, "data": dict(immutable_payload)})
+        self._history.append(Event(type=event_type, data=immutable_payload))
         for handler in handlers:
             handler(immutable_payload)
 
@@ -71,9 +80,14 @@ class EventBus:
         history = (
             self._history
             if event_type is None
-            else [e for e in self._history if e["type"] == event_type]
+            else list(filter(lambda e: e.type == event_type, self._history))
         )
-        return history[-limit:]
+        return list(
+            map(
+                lambda e: {"type": e.type, "data": {k: v for k, v in e.data.items()}},
+                history,
+            )
+        )[-limit:]
 
 
 class EventPublisher:
@@ -105,4 +119,4 @@ class EventPublisher:
         self.event_bus.emit(event_type, payload)
 
 
-__all__ = ["EventBus", "EventPublisher"]
+__all__ = ["Event", "EventBus", "EventPublisher"]
