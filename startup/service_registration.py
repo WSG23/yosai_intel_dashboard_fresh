@@ -137,7 +137,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
         ReportGeneratorProtocol,
         UploadAnalyticsProtocol,
     )
-    from yosai_intel_dashboard.src.services.analytics.upload_analytics import UploadAnalyticsProcessor
+    from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
     from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
     from yosai_intel_dashboard.src.services.controllers.upload_controller import UploadProcessingController
     from yosai_intel_dashboard.src.services.controllers.protocols import UploadProcessingControllerProtocol
