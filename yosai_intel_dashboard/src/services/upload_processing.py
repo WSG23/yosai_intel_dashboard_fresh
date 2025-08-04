@@ -8,11 +8,6 @@ fully fledged implementation and can be imported directly from this module
 without any additional patching.
 """
 
-from yosai_intel_dashboard.src.utils.upload_store import (
-    UploadedDataStore,
-    get_uploaded_data_store,
-)
-
 from .upload.upload_processing import (
     UploadAnalyticsProcessor,
     clean_uploaded_dataframe,

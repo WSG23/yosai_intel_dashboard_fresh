@@ -4,18 +4,8 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-    TrulyUnifiedCallbacks,
-)
-from yosai_intel_dashboard.src.infrastructure.config.constants import AnalyticsConstants
-from yosai_intel_dashboard.src.services.protocols.processor import ProcessorProtocol
-from yosai_intel_dashboard.src.services.upload.protocols import (
-    UploadAnalyticsProtocol,
-    UploadSecurityProtocol,
-
-)
-
+from .protocols import UploadAnalyticsProtocol
+from yosai_intel_dashboard.src.utils.upload_store import get_uploaded_data_store
 
 class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
     """Process and analyze uploaded access control data."""
@@ -138,9 +128,10 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         """Public entry point for analysis of uploaded data."""
         return self.get_analytics_from_uploaded_data()
 
-    def load_uploaded_data(
-        self,
-    ) -> Dict[str, pd.DataFrame]:  # pragma: no cover - simple stub
+    def load_uploaded_data(self) -> Dict[str, pd.DataFrame]:
+        """Retrieve all uploaded data from the shared store."""
+        store = get_uploaded_data_store()
+        return store.get_all_data()
 
         return {}
 
