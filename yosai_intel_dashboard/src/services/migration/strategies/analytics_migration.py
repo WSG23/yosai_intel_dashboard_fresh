@@ -33,7 +33,8 @@ class AnalyticsMigration(MigrationStrategy):
         table = builder.table(self.TABLE)
         while True:
             select_sql, params = builder.build(
-                "SELECT * FROM %s OFFSET $1 LIMIT $2" % table,
+                "SELECT * FROM %s OFFSET $1 LIMIT $2",
+                table,
                 (start, self.CHUNK_SIZE),
                 logger=LOG,
             )
@@ -41,7 +42,8 @@ class AnalyticsMigration(MigrationStrategy):
             if not rows:
                 break
             insert_sql, _ = builder.build(
-                "INSERT INTO %s VALUES($1:record)" % table,
+                "INSERT INTO %s VALUES($1:record)",
+                table,
                 logger=LOG,
             )
             await self.target_pool.executemany(insert_sql, rows)

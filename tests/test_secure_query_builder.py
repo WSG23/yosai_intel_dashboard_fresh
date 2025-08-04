@@ -1,5 +1,4 @@
 import logging
-
 import pytest
 
 import importlib.util
@@ -31,13 +30,22 @@ def test_rejects_malicious_column_name():
 
 def test_log_redaction(caplog):
     builder = SecureQueryBuilder(allowed_tables={"access_events"})
-    table = builder.table("access_events")
     logger = logging.getLogger("secure_test")
     with caplog.at_level(logging.DEBUG, logger="secure_test"):
         builder.build(
-            f"SELECT * FROM {table} WHERE id=%s",
+            "SELECT * FROM %s WHERE id=$1",
+            builder.table("access_events"),
             (123,),
             logger=logger,
         )
     assert "123" not in caplog.text
     assert "?" in caplog.text
+
+
+def test_build_rejects_malicious_table_name():
+    builder = SecureQueryBuilder(allowed_tables={"access_events"})
+    with pytest.raises(ValueError):
+        builder.build(
+            "SELECT * FROM %s",
+            "access_events; DROP TABLE users;",
+        )
