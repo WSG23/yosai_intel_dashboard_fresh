@@ -1,3 +1,3 @@
 export { default as Navbar } from './Navbar';
-export { default as SmartMenu } from './SmartMenu';
-export { default as CollapsiblePanel } from './CollapsiblePanel';
+export { default as ChunkGroup } from './ChunkGroup';
+

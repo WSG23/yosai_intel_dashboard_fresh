@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { ChunkGroup } from '../components/layout';
 
 interface Filter {
   id: number;
@@ -44,7 +45,7 @@ const QueryBuilder: React.FC = () => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <h2 className="font-semibold mb-2">Available Filters</h2>
-          <div className="space-y-2">
+          <ChunkGroup className="space-y-2" limit={9}>
             {availableFilters.map((f) => (
               <div
                 key={f.field}
@@ -55,11 +56,11 @@ const QueryBuilder: React.FC = () => {
                 {f.label}
               </div>
             ))}
-          </div>
+          </ChunkGroup>
         </div>
         <div>
           <h2 className="font-semibold mb-2">Build Query</h2>
-          <div
+          <ChunkGroup
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
             className="min-h-[150px] border-2 border-dashed p-2 rounded"
@@ -86,7 +87,7 @@ const QueryBuilder: React.FC = () => {
             {filters.length === 0 && (
               <p className="text-gray-500 text-sm">Drag filters here</p>
             )}
-          </div>
+          </ChunkGroup>
         </div>
       </div>
 
