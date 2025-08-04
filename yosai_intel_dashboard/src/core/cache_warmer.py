@@ -7,7 +7,7 @@ import json
 import logging
 from collections import Counter
 from pathlib import Path
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Iterator, Optional
 
 from .base_model import BaseModel
 from .hierarchical_cache_manager import HierarchicalCacheManager
@@ -29,9 +29,9 @@ class UsagePatternAnalyzer(BaseModel):
         """Record cache access for *key*."""
         self._counter[key] += 1
 
-    def top_keys(self, limit: int = 5) -> List[str]:
-        """Return the most frequently used keys."""
-        return [k for k, _ in self._counter.most_common(limit)]
+    def top_keys(self, limit: int = 5) -> Iterator[str]:
+        """Return an iterator over the most frequently used keys."""
+        return (k for k, _ in self._counter.most_common(limit))
 
     # ------------------------------------------------------------------
     def save(self, path: str | Path) -> None:
@@ -65,11 +65,11 @@ class IntelligentCacheWarmer:
         self.analyzer.record(key)
 
     async def warm(self, limit: int = 5) -> None:
-        """Asynchronously prefill caches for the most used keys."""
-        keys = self.analyzer.top_keys(limit)
-        if not keys:
-            return
+        """Asynchronously prefill caches for the most used keys.
 
+        Iterates over the generator returned by
+        :meth:`UsagePatternAnalyzer.top_keys`.
+        """
         loop = asyncio.get_event_loop()
 
         async def _load(key: str) -> None:
@@ -78,7 +78,7 @@ class IntelligentCacheWarmer:
                 await self.cache.set(key, value, level=1)
                 await self.cache.set(key, value, level=2)
 
-        await asyncio.gather(*(_load(k) for k in keys))
+        await asyncio.gather(*(_load(k) for k in self.analyzer.top_keys(limit)))
 
     # ------------------------------------------------------------------
     async def warm_from_file(self, path: str | Path, limit: int = 5) -> None:

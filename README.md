@@ -789,6 +789,10 @@ await cache.warm(["recent_events", "top_users"], load_from_db)
 Calling `ServiceContainer.warm_caches()` runs the warmer automatically if it is
 registered with the container.
 
+Note: `UsagePatternAnalyzer.top_keys()` now yields an iterator rather than a
+list. Iterate over the result or convert it to a list if you need to access the
+keys multiple times.
+
 Set the `CACHE_WARM_KEYS` environment variable with a comma separated list of
 keys to have the application pre-warm them during startup.
 
