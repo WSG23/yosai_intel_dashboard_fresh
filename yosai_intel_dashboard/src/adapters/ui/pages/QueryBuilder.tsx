@@ -3,6 +3,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { Stepper, Step } from '../components/interaction';
 import { isFeatureEnabled } from '../plugins/featureFlags';
 
+
 interface Filter {
   id: number;
   field: string;
@@ -94,6 +95,7 @@ const QueryBuilder: React.FC = () => {
               )}
             </div>
           </div>
+
         </div>
       ),
       next: (ctx) => (showPreview && ctx.filters.length > 0 ? 'preview' : undefined),

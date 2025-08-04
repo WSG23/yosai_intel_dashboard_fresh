@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { getPreferences } from '../services/preferences';
 import { saveTemplate, loadTemplate, ChartTemplate } from '../lib/dashboardTemplates';
+import { ChunkGroup } from '../components/layout';
+
 
 const chartTypes = ['Line', 'Bar', 'Pie'];
 
@@ -65,22 +67,24 @@ const DashboardBuilder: React.FC = () => {
     background: prefs.colorScheme === 'dark' ? '#1f2937' : '#f9fafb',
   };
 
-  return (
+  const designStep = (
     <div style={{ display: 'flex', height: '100%' }}>
       <div style={{ width: 200, padding: 10, borderRight: '1px solid #ccc' }}>
-        <h3>Charts</h3>
-        {chartTypes.map((type) => (
-          <div
-            key={type}
-            draggable
-            onDragStart={(e) => handleDragStart(e, type)}
-            style={{ marginBottom: 8, padding: 4, border: '1px solid #ddd', cursor: 'grab' }}
-          >
-            {type} Chart
-          </div>
-        ))}
-        <button onClick={saveCurrent} style={{ marginTop: 10, display: 'block' }}>Save Template</button>
-        <button onClick={loadCurrent} style={{ marginTop: 4, display: 'block' }}>Load Template</button>
+        <ChunkGroup>
+          <h3>Charts</h3>
+          {chartTypes.map((type) => (
+            <div
+              key={type}
+              draggable
+              onDragStart={(e) => handleDragStart(e, type)}
+              style={{ marginBottom: 8, padding: 4, border: '1px solid #ddd', cursor: 'grab' }}
+            >
+              {type} Chart
+            </div>
+          ))}
+          <button onClick={saveCurrent} style={{ marginTop: 10, display: 'block' }}>Save Template</button>
+          <button onClick={loadCurrent} style={{ marginTop: 4, display: 'block' }}>Load Template</button>
+        </ChunkGroup>
       </div>
       <div
         ref={workspaceRef}
@@ -112,6 +116,18 @@ const DashboardBuilder: React.FC = () => {
         ))}
       </div>
     </div>
+  );
+
+  const steps = [
+    { title: 'Design', content: designStep },
+    { title: 'Review', content: <div>Review your dashboard before saving.</div> },
+  ];
+
+  return (
+    <>
+      <TaskLauncher />
+      <Wizard steps={steps} storageKey="dashboard-builder-wizard" />
+    </>
   );
 };
 

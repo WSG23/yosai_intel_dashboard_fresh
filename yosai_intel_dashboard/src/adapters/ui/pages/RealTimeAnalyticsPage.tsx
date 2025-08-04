@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 
 import ErrorBoundary from '../components/ErrorBoundary';
 import {
@@ -22,6 +22,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
 import { AccessibleVisualization } from '../components/accessibility';
+import { ChunkGroup } from '../components/layout';
 
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
@@ -102,8 +103,8 @@ const RealTimeAnalyticsPage: React.FC = () => {
 
   return (
     <div className="p-3">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
+      <ChunkGroup className="flex items-center justify-between mb-3">
+        <ChunkGroup className="flex items-center space-x-2">
           <h2>Real-Time Analytics</h2>
           {!paused && <Badge className="bg-green-500 text-white">Live</Badge>}
           {paused && (
@@ -111,8 +112,8 @@ const RealTimeAnalyticsPage: React.FC = () => {
               Paused{pending ? ` (${pending})` : ''}
             </Badge>
           )}
-        </div>
-        <div className="space-x-2">
+        </ChunkGroup>
+        <ChunkGroup className="space-x-2">
           {!paused ? (
             <Button size="sm" onClick={() => setPaused(true)}>
               Pause
@@ -132,9 +133,9 @@ const RealTimeAnalyticsPage: React.FC = () => {
               </Button>
             </>
           )}
-        </div>
-      </div>
-      <div className="mb-4 space-y-1">
+        </ChunkGroup>
+      </ChunkGroup>
+      <ChunkGroup className="mb-4 space-y-1">
         <div>Total Events: {data.total_events ?? 0}</div>
         <div>
           Active Users:{' '}
@@ -144,7 +145,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
           Active Doors:{' '}
           {data.active_doors ?? data.unique_doors ?? topDoors.length}
         </div>
-      </div>
+      </ChunkGroup>
 
       {topUsers.length > 0 && (
         <AccessibleVisualization
