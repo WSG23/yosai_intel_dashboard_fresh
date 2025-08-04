@@ -7,26 +7,32 @@ Importing this module initialises the test environment by:
 
 It also exposes a couple of small fixtures used across the suite.
 """
+
 from __future__ import annotations
 
+import importlib.abc
+import importlib.machinery
 import os
 import sys
 import types
 from pathlib import Path
 
 import pytest
-import importlib.machinery
-import importlib.abc
+
 from optional_dependencies import register_stub
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+SECRET_KEY = os.getenv("TEST_SECRET_KEY", "dynamically-generated-test-key")
+API_TOKEN = os.getenv("TEST_API_TOKEN", "dynamically-generated-test-token")
 
 
 def set_test_environment() -> None:
     """Populate minimal environment variables for tests."""
     os.environ.setdefault("YOSAI_ENV", "testing")
     os.environ.setdefault("FLASK_ENV", "testing")
-    os.environ.setdefault("SECRET_KEY", "testing")
+    os.environ.setdefault("SECRET_KEY", SECRET_KEY)
+    os.environ.setdefault("API_TOKEN", API_TOKEN)
     # enable lightweight implementations for optional services
     os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 
@@ -51,8 +57,7 @@ def register_dependency_stubs() -> None:
     sys.modules.setdefault("hvac", _simple_module("hvac", Client=object))
 
     class _DummyFernet:
-        def __init__(self, *a, **k):
-            ...
+        def __init__(self, *a, **k): ...
 
         @staticmethod
         def generate_key() -> bytes:
@@ -69,7 +74,8 @@ def register_dependency_stubs() -> None:
         _simple_module("cryptography.fernet", Fernet=_DummyFernet),
     )
     sys.modules.setdefault(
-        "cryptography.fernet", _simple_module("cryptography.fernet", Fernet=_DummyFernet)
+        "cryptography.fernet",
+        _simple_module("cryptography.fernet", Fernet=_DummyFernet),
     )
 
     register_stub("boto3", _simple_module("boto3", client=lambda *a, **k: object()))
@@ -110,7 +116,9 @@ def register_dependency_stubs() -> None:
         ),
     )
 
-    register_stub("asyncpg", _simple_module("asyncpg", create_pool=lambda *a, **k: None))
+    register_stub(
+        "asyncpg", _simple_module("asyncpg", create_pool=lambda *a, **k: None)
+    )
     sys.modules.setdefault(
         "asyncpg", _simple_module("asyncpg", create_pool=lambda *a, **k: None)
     )
@@ -251,6 +259,7 @@ def register_dependency_stubs() -> None:
     sys.modules.setdefault("prometheus_client.core", prom_core)
 
     pydantic_stub = _simple_module("pydantic")
+
     class _BaseModel:
         pass
 
@@ -294,7 +303,9 @@ def register_dependency_stubs() -> None:
 
     config_pkg = _simple_module("yosai_intel_dashboard.src.infrastructure.config")
     config_pkg.__path__ = [
-        str(PROJECT_ROOT / "yosai_intel_dashboard" / "src" / "infrastructure" / "config")
+        str(
+            PROJECT_ROOT / "yosai_intel_dashboard" / "src" / "infrastructure" / "config"
+        )
     ]
     sys.modules.setdefault(
         "yosai_intel_dashboard.src.infrastructure.config", config_pkg
@@ -350,4 +361,3 @@ def fake_unicode_processor():
     from .fake_unicode_processor import FakeUnicodeProcessor
 
     return FakeUnicodeProcessor()
-
