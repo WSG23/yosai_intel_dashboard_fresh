@@ -4,6 +4,7 @@ import types
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 
+
 def test_redis_cache_manager_fallback(monkeypatch, fake_dash):
     sys.modules.setdefault(
         "config.database_manager",
@@ -17,10 +18,7 @@ def test_redis_cache_manager_fallback(monkeypatch, fake_dash):
         def ping(self):
             raise ConnectionError("unreachable")
 
-    redis_mod = sys.modules.get("redis")
-    if redis_mod is None:
-        redis_mod = types.SimpleNamespace()
-        safe_import('redis', redis_mod)
+    redis_mod = sys.modules["redis"]
     redis_mod.Redis = FakeRedis
     cm = importlib.import_module("core.plugins.config.cache_manager")
     monkeypatch.setattr(cm, "redis", types.SimpleNamespace(Redis=FakeRedis))

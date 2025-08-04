@@ -12,11 +12,83 @@ settings during tests.
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Mapping, Protocol
-import os
 
-from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
-    ConfigurationMixin,
-)
+
+class ConfigurationMixin:
+    """Provide standard getters for configuration values.
+
+    The mixin mirrors the behaviour of the main project's configuration helper
+    but is duplicated here to avoid heavy dependencies during testing.  The
+    methods look for values across several possible attribute names and nested
+    objects, providing sensible defaults when a setting is missing.
+    """
+
+    @staticmethod
+    def _get_attr(obj: Any, names: tuple[str, ...]) -> Any | None:
+        """Retrieve an attribute or mapping key from ``obj``."""
+
+        if obj is None:
+            return None
+        if isinstance(obj, Mapping):
+            for name in names:
+                if name in obj:
+                    return obj[name]
+            return None
+        for name in names:
+            if hasattr(obj, name):
+                return getattr(obj, name)
+        return None
+
+    def get_ai_confidence_threshold(self, cfg: Any | None = None) -> float:
+        obj = self if cfg is None else cfg
+        perf = getattr(obj, "performance", None)
+        if perf is not None:
+            value = ConfigurationMixin._get_attr(
+                perf, ("ai_confidence_threshold", "ai_threshold")
+            )
+            if value is not None:
+                return float(value)
+        value = ConfigurationMixin._get_attr(
+            obj, ("ai_confidence_threshold", "ai_threshold")
+        )
+        if value is not None:
+            return float(value)
+        return 0.8
+
+    def get_max_upload_size_mb(self, cfg: Any | None = None) -> int:
+        obj = self if cfg is None else cfg
+        value = ConfigurationMixin._get_attr(
+            obj, ("max_upload_size_mb", "max_upload_mb", "max_size_mb")
+        )
+        if value is not None:
+            return int(value)
+        sec = getattr(obj, "security", None)
+        if sec is not None:
+            value = ConfigurationMixin._get_attr(
+                sec, ("max_upload_mb", "max_upload_size_mb", "max_size_mb")
+            )
+            if value is not None:
+                return int(value)
+        upload = getattr(obj, "upload", None)
+        if upload is not None:
+            value = ConfigurationMixin._get_attr(upload, ("max_file_size_mb",))
+            if value is not None:
+                return int(value)
+        return 50
+
+    def get_upload_chunk_size(self, cfg: Any | None = None) -> int:
+        obj = self if cfg is None else cfg
+        value = ConfigurationMixin._get_attr(obj, ("upload_chunk_size", "chunk_size"))
+        if value is not None:
+            return int(value)
+        uploads = getattr(obj, "uploads", None)
+        if uploads is not None:
+            value = ConfigurationMixin._get_attr(
+                uploads, ("DEFAULT_CHUNK_SIZE", "chunk_size", "upload_chunk_size")
+            )
+            if value is not None:
+                return int(value)
+        return 1024
 
 
 class ConfigProvider(Protocol):
@@ -54,16 +126,7 @@ class ConfigService(ConfigurationMixin, ConfigProvider):
     _settings: Mapping[str, Any]
 
     def __init__(self, settings: Mapping[str, Any] | None = None) -> None:
-        defaults = {
-            "metrics_interval": float(os.getenv("METRICS_INTERVAL", "1.0")),
-            "ping_interval": float(os.getenv("PING_INTERVAL", "30.0")),
-            "ping_timeout": float(os.getenv("PING_TIMEOUT", "10.0")),
-            "ai_confidence_threshold": float(
-                os.getenv("AI_CONFIDENCE_THRESHOLD", "0.8")
-            ),
-            "max_upload_size_mb": int(os.getenv("MAX_UPLOAD_SIZE_MB", "100")),
-            "upload_chunk_size": int(os.getenv("UPLOAD_CHUNK_SIZE", "50000")),
-        }
+        defaults = dict(get_settings())
         if settings:
             defaults.update(settings)
         object.__setattr__(self, "_settings", MappingProxyType(dict(defaults)))
@@ -94,4 +157,42 @@ class ConfigService(ConfigurationMixin, ConfigProvider):
         return int(self._settings["upload_chunk_size"])
 
 
-__all__ = ["ConfigService", "ConfigProvider"]
+def get_settings() -> Mapping[str, Any]:
+    """Return current configuration settings from ``ConfigManager``."""
+    try:
+        from yosai_intel_dashboard.src.infrastructure import config as infra_config
+
+        cfg = infra_config.get_config()
+        monitoring = infra_config.get_monitoring_config()
+        return {
+            "metrics_interval": float(
+                getattr(
+                    monitoring,
+                    "metrics_interval_seconds",
+                    getattr(monitoring, "metrics_interval", 1.0),
+                )
+            ),
+            "ping_interval": float(
+                getattr(monitoring, "health_check_interval", 30.0)
+            ),
+            "ping_timeout": float(
+                getattr(monitoring, "health_check_timeout", 10.0)
+            ),
+            "ai_confidence_threshold": cfg.get_ai_confidence_threshold(),
+            "max_upload_size_mb": cfg.get_max_upload_size_mb(),
+            "upload_chunk_size": cfg.get_upload_chunk_size(),
+        }
+    except Exception:
+        import os
+
+        return {
+            "metrics_interval": float(os.getenv("METRICS_INTERVAL", "1.0")),
+            "ping_interval": float(os.getenv("PING_INTERVAL", "30.0")),
+            "ping_timeout": float(os.getenv("PING_TIMEOUT", "10.0")),
+            "ai_confidence_threshold": float(os.getenv("AI_CONFIDENCE_THRESHOLD", "0.8")),
+            "max_upload_size_mb": int(os.getenv("MAX_UPLOAD_SIZE_MB", "100")),
+            "upload_chunk_size": int(os.getenv("UPLOAD_CHUNK_SIZE", "50000")),
+        }
+
+
+__all__ = ["ConfigService", "ConfigProvider", "ConfigurationMixin", "get_settings"]

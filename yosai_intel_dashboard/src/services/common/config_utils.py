@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
-    ConfigurationMixin,
-)
+from src.common.config import ConfigService, ConfigurationMixin
 
 
 def create_config_methods(cls: Any) -> Any:
@@ -16,7 +14,7 @@ def create_config_methods(cls: Any) -> Any:
 
 def common_init(self: Any, config: Any | None = None) -> None:
     """Initialize configuration defaults."""
-    self.config = config or {}
+    self.config = config or ConfigService()
     mixin = ConfigurationMixin()
     self.max_size_mb = mixin.get_max_upload_size_mb(self.config)
     self.ai_threshold = mixin.get_ai_confidence_threshold(self.config)

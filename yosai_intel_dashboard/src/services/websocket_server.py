@@ -14,11 +14,13 @@ from websockets import WebSocketServerProtocol, serve
 from src.common.base import BaseComponent
 from src.common.config import ConfigProvider, ConfigService
 from src.websocket import metrics as websocket_metrics
-from yosai_intel_dashboard.src.infrastructure.callbacks import (
-    CallbackType,
+from yosai_intel_dashboard.src.infrastructure.callbacks.dispatcher import (
     register_callback,
     unregister_callback,
     trigger_callback,
+)
+from yosai_intel_dashboard.src.infrastructure.callbacks.events import (
+    CallbackEvent as CallbackType,
 )
 
 from .websocket_pool import WebSocketConnectionPool

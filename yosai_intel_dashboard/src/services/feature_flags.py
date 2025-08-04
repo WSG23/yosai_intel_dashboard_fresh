@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import asyncio
-import logging
-import os
 import importlib.util
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Callable
+from typing import Any, Callable, Dict, List, Optional, Set
 
 
 # Dynamically load the redis store located beside this module.  If the
@@ -27,6 +28,7 @@ class InMemoryFeatureFlagStore:  # type: ignore
     def get_all(self) -> Dict[str, bool]:
         return dict(self._flags)
 
+
 try:  # pragma: no cover - optional dependency
     _store_path = Path(__file__).with_name("feature_flags") / "redis_store.py"
     _spec = importlib.util.spec_from_file_location("_ff_redis_store", _store_path)
@@ -36,11 +38,14 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - simplified fallback
     RedisFeatureFlagStore = InMemoryFeatureFlagStore
 
+from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
+    load_service_config,
+)
+
 from ..repository import (
     AsyncFileFeatureFlagCacheRepository,
     FeatureFlagCacheRepository,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +79,8 @@ class FeatureFlagManager:
         redis_url: str | None = None,
         cache_repo: FeatureFlagCacheRepository | None = None,
     ) -> None:
-        redis_url = redis_url or os.getenv(
-            "FEATURE_FLAG_REDIS_URL", "redis://localhost:6379/0"
-        )
+        cfg = load_service_config()
+        redis_url = redis_url or cfg.redis_url
         try:
             self._store = RedisFeatureFlagStore(redis_url=redis_url)
         except Exception:  # pragma: no cover - redis optional
@@ -89,7 +93,6 @@ class FeatureFlagManager:
             Path("feature_flags_cache.json")
         )
         self._load_cache()
-
 
     # ------------------------------------------------------------------
     def start(self) -> None:
@@ -106,7 +109,6 @@ class FeatureFlagManager:
 
     def set_flag(self, name: str, value: bool) -> None:
         self._store.set_flag(name, value)
-
 
     # ------------------------------------------------------------------
     def get_all(self) -> Dict[str, bool]:
@@ -156,9 +158,7 @@ class FeatureFlagManager:
             except Exception:
                 pass
             for name, val in self._flags.items():
-                self._definitions.setdefault(name, {"fallback": False})[
-                    "enabled"
-                ] = val
+                self._definitions.setdefault(name, {"fallback": False})["enabled"] = val
 
     def _load_cache(self) -> None:
         """Synchronous wrapper around :meth:`_load_cache_async`."""

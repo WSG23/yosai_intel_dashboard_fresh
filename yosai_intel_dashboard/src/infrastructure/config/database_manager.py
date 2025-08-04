@@ -108,8 +108,9 @@ class SQLiteConnection:
             self._connection.row_factory = sqlite3.Row  # Enable dict-like access
             logger.info(f"SQLite connection created: {self.db_path}")
         except sqlite3.Error as e:
-            logger.error(f"Failed to connect to SQLite: {e}")
-            raise DatabaseError(f"SQLite connection failed: {e}") from e
+            sanitized = safe_text(e)
+            logger.error("Failed to connect to SQLite: %s", sanitized)
+            raise DatabaseError(f"SQLite connection failed: {sanitized}") from e
 
     def execute_query(self, query: str, params: Optional[tuple] = None) -> DBRows:
         """Execute SQLite query"""
@@ -126,8 +127,9 @@ class SQLiteConnection:
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
         except sqlite3.Error as e:
-            logger.error(f"SQLite query error: {e}")
-            raise DatabaseError(f"Query failed: {e}") from e
+            sanitized = safe_text(e)
+            logger.error("SQLite query error: %s", sanitized)
+            raise DatabaseError(f"Query failed: {sanitized}") from e
 
     def execute_command(self, command: str, params: Optional[tuple] = None) -> None:
         """Execute SQLite command"""
@@ -143,8 +145,9 @@ class SQLiteConnection:
 
             self._connection.commit()
         except sqlite3.Error as e:
-            logger.error(f"SQLite command error: {e}")
-            raise DatabaseError(f"Command failed: {e}") from e
+            sanitized = safe_text(e)
+            logger.error("SQLite command error: %s", sanitized)
+            raise DatabaseError(f"Command failed: {sanitized}") from e
 
     def execute_batch(self, command: str, params_seq: Iterable[tuple]) -> None:
         """Execute a batch of SQLite commands"""
@@ -156,8 +159,9 @@ class SQLiteConnection:
             execute_batch(cursor, command, params_seq)
             self._connection.commit()
         except sqlite3.Error as e:
-            logger.error(f"SQLite batch error: {e}")
-            raise DatabaseError(f"Batch failed: {e}") from e
+            sanitized = safe_text(e)
+            logger.error("SQLite batch error: %s", sanitized)
+            raise DatabaseError(f"Batch failed: {sanitized}") from e
 
     def health_check(self) -> bool:
         """Check SQLite connection health"""

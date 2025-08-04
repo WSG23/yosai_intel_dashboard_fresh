@@ -4,6 +4,7 @@ This module exposes :func:`safe_import` which attempts to import a module by
 name and falls back to a registered stub when the module is missing.  Fallbacks
 may be registered via :func:`register_fallback` or provided inline using the
 ``stub_factory`` argument for backwards compatibility.
+
 """
 
 from __future__ import annotations
@@ -60,3 +61,4 @@ def safe_import(module_name: str, stub_factory: StubFactory | None = None) -> An
 
 
 __all__ = ["safe_import", "register_fallback"]
+

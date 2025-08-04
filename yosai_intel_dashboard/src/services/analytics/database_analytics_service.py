@@ -122,7 +122,11 @@ class DatabaseAnalyticsService:
     @cache_with_lock(_cache_manager, ttl=600)
     def get_analytics(self) -> Dict[str, Any]:
         if not self.database_manager:
-            return {"status": "error", "message": "Database not available"}
+            return {
+                "status": "error",
+                "message": "Database not available",
+                "error_code": "DB_NOT_AVAILABLE",
+            }
         try:
             connection = self.database_manager.get_connection()
             try:
@@ -139,7 +143,11 @@ class DatabaseAnalyticsService:
                 self.database_manager.release_connection(connection)
         except Exception as e:  # pragma: no cover - best effort
             logger.error("Database analytics error: %s", safe_text(e))
-            return {"status": "error", "message": safe_text(e)}
+            return {
+                "status": "error",
+                "message": safe_text(e),
+                "error_code": "DB_ANALYTICS_ERROR",
+            }
 
 
 __all__ = ["DatabaseAnalyticsService"]
