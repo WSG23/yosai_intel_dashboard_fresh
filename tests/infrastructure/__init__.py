@@ -61,30 +61,32 @@ class MockFactory:
 
     @staticmethod
     def upload_processor():
-        """Instantiate an ``UploadAnalyticsProcessor`` with default dependencies."""
+        """Return a lightweight processor analysing uploaded data."""
 
-        from types import SimpleNamespace
+        from tests.stubs.utils.upload_store import get_uploaded_data_store
 
-        from validation.security_validator import SecurityValidator
-        from yosai_intel_dashboard.src.core.events import EventBus
-        from yosai_intel_dashboard.src.infrastructure.callbacks import unified_callbacks
-        from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
-            UploadAnalyticsProcessor,
-        )
-        from yosai_intel_dashboard.src.services.data_processing.processor import (
-            Processor,
-        )
+        def _shape(df):
+            if hasattr(df, "shape"):
+                return df.shape
+            data = getattr(df, "args", [{}])[0]
+            rows = len(next(iter(data.values()))) if data else 0
+            cols = len(data)
+            return rows, cols
 
-        validator = SecurityValidator()
-        processor = Processor(validator=validator)
-        event_bus = EventBus()
-        callbacks = unified_callbacks.TrulyUnifiedCallbacks(
-            event_bus=event_bus, security_validator=validator
-        )
-        analytics_config = SimpleNamespace()
-        return UploadAnalyticsProcessor(
-            validator, processor, callbacks, analytics_config, event_bus
-        )
+        class _Processor:
+            def analyze_uploaded_data(self):
+                store = get_uploaded_data_store()
+                data = {
+                    name: df
+                    for name, df in store.get_all_data().items()
+                    if _shape(df)[0]
+                }
+                if not data:
+                    return {"status": "no_data"}
+                rows, cols = _shape(list(data.values())[0])
+                return {"status": "success", "rows": rows, "columns": cols}
+
+        return _Processor()
 
 
 class TestInfrastructure:
