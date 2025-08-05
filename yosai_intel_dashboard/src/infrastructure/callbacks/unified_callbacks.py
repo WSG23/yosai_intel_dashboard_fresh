@@ -240,6 +240,7 @@ class TrulyUnifiedCallbacks(EventPublisher):
         )
 
     # ------------------------------------------------------------------
+
     def register_handler(
         self,
         outputs: Outputs,

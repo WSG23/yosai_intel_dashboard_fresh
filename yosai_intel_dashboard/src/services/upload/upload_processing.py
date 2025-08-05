@@ -35,6 +35,8 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         """Load uploaded data and return aggregated analytics."""
         try:
             data = self._load_data()
+            if not data:
+                return {"status": "no_data"}
             stats = self._process_uploaded_data_directly(data)
             return self._format_results(stats)
         except Exception as exc:  # pragma: no cover - best effort
@@ -105,7 +107,13 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
     def _calculate_statistics(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
         """Calculate statistics for validated ``data``."""
         if not data:
-            return self.summarize_dataframe(pd.DataFrame())
+            return {
+                "total_events": 0,
+                "active_users": 0,
+                "active_doors": 0,
+                "date_range": {"start": "Unknown", "end": "Unknown"},
+                "status": "no_data",
+            }
 
         combined = pd.concat(list(data.values()), ignore_index=True)
         return self.summarize_dataframe(combined)

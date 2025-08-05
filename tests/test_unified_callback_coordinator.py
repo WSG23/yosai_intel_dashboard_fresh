@@ -11,7 +11,7 @@ def test_duplicate_callback_registration():
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("in", "value"),
         callback_id="dup",
@@ -22,7 +22,7 @@ def test_duplicate_callback_registration():
 
     with pytest.raises(ValueError):
 
-        @coord.register_callback(
+        @coord.register_handler(
             Output("out2", "children"),
             Input("in2", "value"),
             callback_id="dup",
@@ -36,7 +36,7 @@ def test_output_conflict_detection():
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("a", "value"),
         callback_id="c1",
@@ -47,7 +47,7 @@ def test_output_conflict_detection():
 
     with pytest.raises(ValueError):
 
-        @coord.register_callback(
+        @coord.register_handler(
             Output("out", "children"),
             Input("b", "value"),
             callback_id="c2",
@@ -61,7 +61,7 @@ def test_allow_duplicate_output():
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("a", "value"),
         callback_id="c1",
@@ -71,7 +71,7 @@ def test_allow_duplicate_output():
         return v
 
     # Should not raise when allow_duplicate=True
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("b", "value"),
         callback_id="c2",
@@ -86,7 +86,7 @@ def test_allow_duplicate_on_output_obj():
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("x", "value"),
         callback_id="c1",
@@ -95,7 +95,7 @@ def test_allow_duplicate_on_output_obj():
     def _cb(v):
         return v
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children", allow_duplicate=True),
         Input("y", "value"),
         callback_id="c2",
@@ -109,7 +109,7 @@ def test_callback_registration_to_app():
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("in", "value"),
         callback_id="reg",
@@ -126,7 +126,7 @@ def test_get_callback_conflicts():
     app = Dash(__name__)
     coord = TrulyUnifiedCallbacks(app)
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("a", "value"),
         callback_id="c1",
@@ -135,7 +135,7 @@ def test_get_callback_conflicts():
     def _c1(v):
         return v
 
-    @coord.register_callback(
+    @coord.register_handler(
         Output("out", "children"),
         Input("b", "value"),
         callback_id="c2",
@@ -162,7 +162,7 @@ def test_wrapper_event_registration():
     wrapper.trigger_event(CallbackEvent.BEFORE_REQUEST, 1)
     assert results == [1]
 
-    @wrapper.register_callback(
+    @wrapper.register_handler(
         Output("o", "children"),
         Input("i", "value"),
         callback_id="cb",

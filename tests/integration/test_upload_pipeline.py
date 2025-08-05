@@ -1,21 +1,38 @@
 from __future__ import annotations
 
-import importlib
 import sys
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
+from pathlib import Path
 
 sys.modules["pyarrow"] = SimpleNamespace(__version__="0")
 sys.modules.pop("pandas", None)
 sys.modules.pop("numpy", None)
+sys.modules[
+    "yosai_intel_dashboard.src.utils.hashing"
+] = SimpleNamespace(hash_dataframe=lambda df: "")
+analytics_dir = (
+    Path(__file__).resolve().parents[2] / "yosai_intel_dashboard/src/services/analytics"
+)
+analytics_pkg = ModuleType("yosai_intel_dashboard.src.services.analytics")
+analytics_pkg.__path__ = [str(analytics_dir)]
+sys.modules["yosai_intel_dashboard.src.services.analytics"] = analytics_pkg
 import pandas as pd
 import pytest
 
-from tests.fixtures import create_test_upload_processor
+from tests.infrastructure import uploaded_data
+from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+    UploadAnalyticsProcessor,
+)
 
+
+# Prepare a lightweight environment using shared test infrastructure
+infra = TestInfrastructure(
+    stub_packages=["pandas", "numpy", "yaml"]
+).setup_environment()  # noqa: F841
 
 
 @pytest.fixture
-def upload_processor():
+def upload_processor(valid_df):
     """Instantiate ``UploadAnalyticsProcessor`` for testing."""
     from validation.security_validator import SecurityValidator
     from yosai_intel_dashboard.src.core.events import EventBus
@@ -31,20 +48,26 @@ def upload_processor():
     processor = Processor(validator=vs)
     event_bus = EventBus()
     callbacks = TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=vs)
-    return UploadAnalyticsProcessor(
+    processor_instance = UploadAnalyticsProcessor(
         vs, processor, callbacks, dynamic_config.analytics, event_bus
+
     )
-
-
-
-@pytest.fixture
-def valid_df():
-    return pd.DataFrame({"Person ID": ["u1", "u2"], "Device name": ["d1", "d2"]})
+    processor_instance.load_uploaded_data = lambda: uploaded_data(
+        ("empty.csv", pd.DataFrame()),
+        ("valid.csv", valid_df),
+    )
+    return processor_instance
 
 
 @pytest.fixture
 def uploaded_data(valid_df):
-    return {"empty.csv": pd.DataFrame(), "valid.csv": valid_df}
+    from tests.stubs.utils.upload_store import get_uploaded_data_store
+
+    store = get_uploaded_data_store()
+    store.clear_all()
+    store.data["empty.csv"] = MockFactory.dataframe({})
+    store.data["valid.csv"] = valid_df
+    return store.get_all_data()
 
 
 def test_upload_pipeline_filters_empty_and_returns_stats(upload_processor):
