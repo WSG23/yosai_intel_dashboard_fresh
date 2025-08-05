@@ -13,7 +13,6 @@ PATCH_FILES = [
     Path("tools/step2_add_missing_methods.py"),
     Path("tools/step2_final_fix.py"),
     Path("tools/test_analytics_both_fixes.py"),
-    Path("tools/apply_callback_patch.py"),
 ]
 
 EXPECTED_UPLOAD_METHODS = [
