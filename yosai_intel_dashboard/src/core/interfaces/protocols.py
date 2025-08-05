@@ -4,9 +4,11 @@
 from abc import abstractmethod
 from typing import Any, Dict, Protocol
 
-from yosai_intel_dashboard.src.core.protocols import FileProcessorProtocol
-
-from yosai_intel_dashboard.src.core.protocols import ConfigurationServiceProtocol
+from yosai_intel_dashboard.src.core.protocols import (
+    ConfigurationServiceProtocol,
+    DatabaseProtocol,
+    FileProcessorProtocol,
+)
 
 
 class ConfigurationProviderProtocol(Protocol):
@@ -67,4 +69,5 @@ __all__ = [
     "ConfigProviderProtocol",
     "ConfigurationServiceProtocol",
     "FileProcessorProtocol",
+    "DatabaseProtocol",
 ]

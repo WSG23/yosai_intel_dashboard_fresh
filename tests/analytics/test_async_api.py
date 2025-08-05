@@ -35,7 +35,7 @@ def test_generate_report_json(monkeypatch):
         def generate_report(self, report_type, params):
             return {"report_type": report_type, "params": params}
 
-    import yosai_intel_dashboard.src.services as services.analytics.async_api as mod
+    import yosai_intel_dashboard.src.services.analytics.async_api as mod
 
     monkeypatch.setattr(mod, "get_analytics_service", lambda: DummySvc())
     client = TestClient(app)
@@ -55,7 +55,7 @@ def test_generate_report_file(monkeypatch):
         def generate_report(self, report_type, params):
             return {"report_type": report_type}
 
-    import yosai_intel_dashboard.src.services as services.analytics.async_api as mod
+    import yosai_intel_dashboard.src.services.analytics.async_api as mod
 
     monkeypatch.setattr(mod, "get_analytics_service", lambda: DummySvc())
     client = TestClient(app)
