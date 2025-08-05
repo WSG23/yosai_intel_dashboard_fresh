@@ -216,7 +216,7 @@ kubectl rollout status deployment/yosai-dashboard -n yosai-dev
 #### Manual rollback script
 
 ```bash
-scripts/rollback.sh [service] [namespace]
+./scripts/rollback.sh [service] [namespace]
 ```
 
 The script switches the service selector between blue and green deployments. It

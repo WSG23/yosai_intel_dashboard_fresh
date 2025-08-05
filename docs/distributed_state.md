@@ -47,6 +47,6 @@ Then point the service at this file:
 export FEATURE_FLAG_SOURCE=/path/to/feature_flags.json
 ```
 
-Run `scripts/rollback.sh` to flip the Kubernetes service selector back to
+Run `./scripts/rollback.sh` to flip the Kubernetes service selector back to
 the previous deployment.  The dashboard will then operate as a
 self‑contained monolith until the microservices are re‑enabled.
