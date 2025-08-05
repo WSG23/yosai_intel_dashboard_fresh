@@ -25,60 +25,13 @@ from typing import Any, Dict, Iterable, Iterator, Mapping
 
 
 class MockFactory:
-    """Factory that exposes common building blocks for tests."""
-
-    # ------------------------------------------------------------------
-    # Helper creators
-    # ------------------------------------------------------------------
-    @staticmethod
-    def dataframe(data: Dict[str, Iterable] | None = None):
-        """Return a lightweight :class:`pandas.DataFrame` built from ``data``."""
-
-        import pandas as pd  # imported lazily so stubs apply
-
-        return pd.DataFrame(data or {})
-
-    @staticmethod
-    def upload_processor():
-        """Return a lightweight processor analysing uploaded data."""
-
-        from tests.stubs.utils.upload_store import get_uploaded_data_store
-
-        def _shape(df):
-            if hasattr(df, "shape"):
-                return df.shape
-            data = getattr(df, "args", [{}])[0]
-            rows = len(next(iter(data.values()))) if data else 0
-            cols = len(data)
-            return rows, cols
-
-        class _Processor:
-            def analyze_uploaded_data(self):
-                store = get_uploaded_data_store()
-                data = {
-                    name: df
-                    for name, df in store.get_all_data().items()
-                    if _shape(df)[0]
-                }
-                if not data:
-                    return {"status": "no_data"}
-                rows, cols = _shape(list(data.values())[0])
-                return {"status": "success", "rows": rows, "columns": cols}
-
-        return _Processor()
-
-    # ------------------------------------------------------------------
-    # Helpers for common test objects
-    # ------------------------------------------------------------------
-    def dataframe(self, data: Mapping[str, Iterable[Any]] | None = None):
-        """Return a ``pandas`` DataFrame built from ``data``."""
+    """Factory responsible for installing and removing stub modules."""
 
         import pandas as pd
 
-        return pd.DataFrame(data or {})
+    def stub(self, name: str, module: ModuleType | None = None) -> ModuleType:
+        """Register ``module`` under ``name`` in :data:`sys.modules`."""
 
-    def upload_processor(self):
-        """Create a configured :class:`UploadAnalyticsProcessor` instance."""
 
         import pandas as pd
 
@@ -161,15 +114,50 @@ class MockFactory:
 
         return DummyUploadProcessor()
 
+    # ------------------------------------------------------------------
+    # Component helpers
+    # ------------------------------------------------------------------
+    def file_processor(self):
+        """Return a new :class:`FileProcessor` instance."""
+
+        from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+            FileProcessor,
+        )
+
+        return FileProcessor()
+
+    def upload_processor(self):
+        """Return a minimal upload analytics processor mock."""
+
+        class _UploadProcessor:
+            def load_uploaded_data(self):  # pragma: no cover - patched in tests
+                return {}
+
+            def analyze_uploaded_data(self):
+                data = self.load_uploaded_data()
+                if not data:
+                    return {"status": "no_data"}
+                df = next(iter(data.values()))
+                rows = len(df)
+                return {"status": "success", "rows": int(rows)}
+
+        return _UploadProcessor()
+
+    def dataframe(self):
+        """Return a minimal DataFrame-like object."""
+
+        class _DF:
+            shape = (1, 2)
+
+            def __len__(self) -> int:
+                return 1
+
+        return _DF()
+
 
 class TestInfrastructure:
-    """Context manager that prepares a lightweight test environment.
+    """Prepare a lightweight test environment."""
 
-    On enter all stub packages located under ``tests/stubs`` are made importable
-    and registered in :data:`sys.modules` so they override any real dependency.
-    Environment variables enabling lightweight service behaviour are also set.
-    All changes are reverted on exit.
-    """
 
     def __init__(
         self,
@@ -212,9 +200,14 @@ class TestInfrastructure:
             TrulyUnifiedCallbacks,
         )
 
-        event_bus = event_bus or EventBus()
-        validator = validator or self.security_validator()
-        return TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=validator)
+    # ------------------------------------------------------------------
+    def setup_environment(self) -> MockFactory:
+        """Set up the environment immediately and return the factory."""
+
+        self.__enter__()
+        atexit.register(self.__exit__, None, None, None)
+        return self.factory
+
 
     # ------------------------------------------------------------------
     def upload_processor(self):
