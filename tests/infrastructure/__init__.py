@@ -1,3 +1,11 @@
+"""Utilities to set up a lightweight testing environment.
+
+The module provides helpers for installing stub modules and configuring
+environment variables required by tests.  It also exposes
+``uploaded_data`` which builds a mapping of filenames to ``pandas``
+DataFrames for upload-related tests.
+"""
+
 from __future__ import annotations
 
 import importlib
@@ -7,6 +15,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
 from typing import Dict, Iterable, Iterator
+
+import pandas as pd
 
 
 class MockFactory:
@@ -106,6 +116,13 @@ class TestInfrastructure:
         sys.path[:] = self._old_sys_path
 
 
+
+def uploaded_data(*dfs: tuple[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Return a dictionary mapping filenames to DataFrames."""
+
+    return {name: df for name, df in dfs}
+
+
 mock_factory = MockFactory()
 
 
@@ -127,5 +144,6 @@ __all__ = [
     "MockFactory",
     "TestInfrastructure",
     "setup_test_environment",
+    "uploaded_data",
     "mock_factory",
 ]
