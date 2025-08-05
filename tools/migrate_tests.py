@@ -35,20 +35,14 @@ REMOVED_MODULES: Dict[str, str] = {
 
 
 def load_optional_deps() -> Set[str]:
-    """Return the set of optional dependencies defined for the tests."""
+    """Return the set of optional dependencies defined for the tests.
 
-    deps: Set[str] = set()
-    req = Path("tests/requirements-extra.txt")
-    if not req.exists():
-        return deps
-    for line in req.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        dep = re.split(r"[<>=]", line)[0].strip()
-        if dep:
-            deps.add(dep)
-    return deps
+    The project no longer tracks extra test requirements separately so the
+    default list is empty. Tests that rely on truly optional third‑party
+    packages should use ``pytest.importorskip`` directly.
+    """
+
+    return set()
 
 
 def imported_modules(tree: ast.AST) -> Set[str]:
@@ -61,7 +55,9 @@ def imported_modules(tree: ast.AST) -> Set[str]:
     return modules
 
 
-def need_importorskip(text: str, modules: Set[str], optional_deps: Set[str]) -> Set[str]:
+def need_importorskip(
+    text: str, modules: Set[str], optional_deps: Set[str]
+) -> Set[str]:
     needed: Set[str] = set()
     for dep in optional_deps:
         if any(m == dep or m.startswith(f"{dep}.") for m in modules):
@@ -70,7 +66,9 @@ def need_importorskip(text: str, modules: Set[str], optional_deps: Set[str]) -> 
     return needed
 
 
-def insert_importorskip(lines: List[str], deps: Set[str], last_import: int, has_pytest: bool) -> None:
+def insert_importorskip(
+    lines: List[str], deps: Set[str], last_import: int, has_pytest: bool
+) -> None:
     if not deps:
         return
     if not has_pytest:
@@ -145,7 +143,11 @@ def process_file(path: Path, dry_run: bool) -> None:
 
     lines = text.splitlines()
     last_import = max(
-        (node.lineno for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))),
+        (
+            node.lineno
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.Import, ast.ImportFrom))
+        ),
         default=0,
     )
     has_pytest = "import pytest" in text
@@ -169,7 +171,11 @@ def main(dry_run: bool) -> None:
 
 
 if __name__ == "__main__":  # pragma: no cover - utility script
-    parser = argparse.ArgumentParser(description="Migrate test imports and dependencies")
-    parser.add_argument("--dry-run", action="store_true", help="preview changes without writing")
+    parser = argparse.ArgumentParser(
+        description="Migrate test imports and dependencies"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="preview changes without writing"
+    )
     args = parser.parse_args()
     main(args.dry_run)

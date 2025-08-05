@@ -16,13 +16,7 @@ Or run the helper script:
 scripts/setup_tests.sh
 ```
 
-Some tests exercise features that rely on heavy optional packages. These extras are defined in `requirements-extra.txt` and are **not** required for the majority of the suite. Install them only when you need to run every test:
-
-```bash
-pip install -r tests/requirements-extra.txt
-```
-
-When the optional packages are missing, tests depending on them are automatically skipped.
+Some tests rely on optional third-party packages. When an optional dependency is missing, those tests are skipped automatically.
 
 ## Test Configuration
 
