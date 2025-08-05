@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import os
 
@@ -88,11 +87,14 @@ def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, calla
         allow_headers=["Authorization", "Content-Type"],
     )
 
-    try:
-        service.app.state.rbac_service = asyncio.run(create_rbac_service())
-    except Exception as exc:  # pragma: no cover - best effort
-        service.log.error("Failed to initialize RBAC service: %s", exc)
-        service.app.state.rbac_service = None
+    async def init_rbac_service() -> None:
+        try:
+            service.app.state.rbac_service = await create_rbac_service()
+        except Exception as exc:  # pragma: no cover - best effort
+            service.log.error("Failed to initialize RBAC service: %s", exc)
+            service.app.state.rbac_service = None
+
+    service.app.add_event_handler("startup", init_rbac_service)
 
     secret_key = os.getenv("SECRET_KEY")
     if not secret_key:
