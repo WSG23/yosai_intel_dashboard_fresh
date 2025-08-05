@@ -5,10 +5,14 @@ import sys
 import types
 from pathlib import Path
 
-from config import create_config_manager
-from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
+from yosai_intel_dashboard.src.core.plugins.manager import (
+    ThreadSafePluginManager as PluginManager,
+)
 from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata, PluginStatus
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 
 class DummyPlugin:

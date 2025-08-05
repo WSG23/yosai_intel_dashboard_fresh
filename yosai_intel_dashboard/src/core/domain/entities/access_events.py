@@ -12,9 +12,12 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from database.secure_exec import execute_command, execute_query
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.src.core.query_optimizer import monitor_query_performance
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_command,
+    execute_query,
+)
 from yosai_intel_dashboard.src.infrastructure.config.constants import (
     DataProcessingLimits,
 )

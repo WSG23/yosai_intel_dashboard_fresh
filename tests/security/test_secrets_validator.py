@@ -4,7 +4,10 @@ import pytest
 from flask import Flask
 
 from yosai_intel_dashboard.src.core.secret_manager import SecretsManager
-from security.secrets_validator import SecretsValidator, register_health_endpoint
+from yosai_intel_dashboard.src.infrastructure.security.secrets_validator import (
+    SecretsValidator,
+    register_health_endpoint,
+)
 
 
 class DummyManager(SecretsManager):

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-from monitoring.anomaly_detector import AnomalyDetector
 from yosai_intel_dashboard.src.core.security import SecurityAuditor, SecurityLevel
+from yosai_intel_dashboard.src.infrastructure.monitoring.anomaly_detector import (
+    AnomalyDetector,
+)
 
 
 class DummyAccessModel:

@@ -22,7 +22,7 @@ def setup_auth(monkeypatch):
         orig_jwt, "get_unverified_header", jwt_stub.get_unverified_header
     )
 
-    from config import reload_config
+    from yosai_intel_dashboard.src.infrastructure.config import reload_config
 
     reload_config()
     module = importlib.import_module("core.auth")

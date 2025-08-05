@@ -108,7 +108,7 @@ Use the new import paths:
 # Old (deprecated)
 from models.user import User
 from services.analytics import AnalyticsService
-from config.settings import Settings
+from yosai_intel_dashboard.src.infrastructure.config.settings import Settings
 
 # New (correct)
 from yosai_intel_dashboard.src.core.domain.entities.user import User

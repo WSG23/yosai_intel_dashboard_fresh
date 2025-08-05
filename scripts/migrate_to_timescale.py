@@ -29,8 +29,11 @@ from psycopg2.extensions import connection, cursor
 from psycopg2.extras import DictCursor, execute_batch
 from tqdm import tqdm
 
-from database.secure_exec import execute_command, execute_query
 from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_command,
+    execute_query,
+)
 
 CHUNK_SIZE = 10_000
 CHECKPOINT_TABLE = "migration_checkpoint"

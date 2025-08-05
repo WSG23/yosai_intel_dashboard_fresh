@@ -4,13 +4,13 @@ import os
 
 import pandas as pd
 
-from config import create_config_manager
 from tests.config import FakeConfiguration
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 fake_cfg = FakeConfiguration()
-from yosai_intel_dashboard.src.infrastructure.config.constants import MAX_DISPLAY_ROWS
 from yosai_intel_dashboard.src.file_processing import create_file_preview
+from yosai_intel_dashboard.src.infrastructure.config.constants import MAX_DISPLAY_ROWS
 
 
 def test_dynamic_config_default_display_rows():

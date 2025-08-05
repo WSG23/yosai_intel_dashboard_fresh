@@ -5,8 +5,12 @@ import re
 from collections import Counter
 from typing import Any, Dict, List, Optional
 
-from plugins.ai_classification.config import EntryClassificationConfig
-from plugins.ai_classification.database.csv_storage import CSVStorageRepository
+from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.config import (
+    EntryClassificationConfig,
+)
+from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.database.csv_storage import (
+    CSVStorageRepository,
+)
 
 logger = logging.getLogger(__name__)
 

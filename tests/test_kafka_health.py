@@ -1,7 +1,7 @@
 import sys
 import types
 
-import monitoring.kafka_health as kh
+from yosai_intel_dashboard.src.infrastructure.monitoring import kafka_health as kh
 
 
 class DummyBroker:

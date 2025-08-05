@@ -1,7 +1,7 @@
 import pytest
 
-from security import events
-from security.events import SecurityEvent
+from yosai_intel_dashboard.src.infrastructure.security import events
+from yosai_intel_dashboard.src.infrastructure.security.events import SecurityEvent
 
 
 def test_threat_detected_dispatch(monkeypatch):

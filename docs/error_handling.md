@@ -79,7 +79,7 @@ available for all critical exceptions.
 
 ## RetryStrategy Guidance
 
-Transient failures often benefit from configurable retries. The `RetryStrategy`
+Transient failures often benefit from yosai_intel_dashboard.src.infrastructure.configurable retries. The `RetryStrategy`
 mirrors the fields in `ConnectionRetryManager.RetryConfig` and can be tuned per
 scenario:
 

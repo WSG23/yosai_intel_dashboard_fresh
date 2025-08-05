@@ -8,7 +8,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
 try:  # pragma: no cover - optional security events
-    from security.events import SecurityEvent, emit_security_event
+    from yosai_intel_dashboard.src.infrastructure.security.events import (
+        SecurityEvent,
+        emit_security_event,
+    )
 except Exception:  # pragma: no cover
     from enum import Enum
 

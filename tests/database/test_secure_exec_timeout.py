@@ -1,6 +1,6 @@
 import pytest
 
-from database import secure_exec
+from yosai_intel_dashboard.src.database import secure_exec
 
 
 class DummyOptimizer:

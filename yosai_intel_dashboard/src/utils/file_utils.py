@@ -3,7 +3,9 @@ from __future__ import annotations
 """Helper utilities for working with files."""
 
 from yosai_intel_dashboard.src.core.unicode import safe_unicode_decode
-from security.unicode_security_validator import UnicodeSecurityValidator
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
+    UnicodeSecurityValidator,
+)
 
 _validator = UnicodeSecurityValidator()
 

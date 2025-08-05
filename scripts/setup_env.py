@@ -13,7 +13,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from config import ConfigManager
+from yosai_intel_dashboard.src.infrastructure.config import ConfigManager
 
 
 def create_minimal_env(example: str = ".env.example", target: str = ".env") -> None:

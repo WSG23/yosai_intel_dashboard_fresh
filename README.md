@@ -898,7 +898,7 @@ resolved from anywhere:
 ```python
 # Legacy paths
 from simple_di import ServiceContainer
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 # New paths
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
@@ -913,7 +913,7 @@ A short example without the container:
 
 ```python
 # Legacy path
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 # New path
 from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
@@ -1060,7 +1060,7 @@ the new unified configuration through it instead:
 ```python
 # Legacy paths
 from simple_di import ServiceContainer
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 # New paths
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
@@ -1143,7 +1143,7 @@ database:
 
 ```python
 # Legacy path
-from config.database_manager import DatabaseConnectionFactory, DatabaseSettings
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseConnectionFactory, DatabaseSettings
 # New path
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
     DatabaseConnectionFactory,

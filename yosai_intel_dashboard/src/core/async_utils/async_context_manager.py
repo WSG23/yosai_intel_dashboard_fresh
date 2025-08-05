@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Awaitable, Callable, TypeVar
 
-from monitoring.performance_profiler import PerformanceProfiler
+from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (
+    PerformanceProfiler,
+)
 
 T = TypeVar("T")
 

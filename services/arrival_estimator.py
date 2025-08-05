@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from database import transport_events
+from yosai_intel_dashboard.src.database import transport_events
 
 
 class ArrivalEstimator:

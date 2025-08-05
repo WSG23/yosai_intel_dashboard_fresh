@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
-from database.secure_exec import execute_secure_query as _exec_secure_query
+
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_secure_query as _exec_secure_query,
+)
 
 __all__ = ["execute_secure_query"]
 

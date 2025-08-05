@@ -26,11 +26,11 @@ from config.compliance_setup import (
     setup_data_retention_scheduler
 )
 from controllers.compliance_controller import register_compliance_routes
-from plugins.compliance_plugin.services.breach_notification_service import create_breach_notification_service
-from plugins.compliance_plugin.services.cross_border_transfer_service import create_cross_border_transfer_service
-from plugins.compliance_plugin.services.compliance_dashboard import create_compliance_dashboard
-from plugins.compliance_plugin.services.data_retention_service import create_data_retention_service
-from plugins.compliance_plugin.services.dpia_service import create_dpia_service
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.breach_notification_service import create_breach_notification_service
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.cross_border_transfer_service import create_cross_border_transfer_service
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.compliance_dashboard import create_compliance_dashboard
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.data_retention_service import create_data_retention_service
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.dpia_service import create_dpia_service
 
 def create_app(config_name: str = None) -> Flask:
     """

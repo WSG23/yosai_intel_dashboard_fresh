@@ -66,7 +66,9 @@ class SecretsValidator:
         """Validate quality of secrets for production environment.
 
         Returns a list of secret keys that failed validation."""
-        from security.secrets_validator import SecretsValidator as QualityValidator
+        from yosai_intel_dashboard.src.infrastructure.security.secrets_validator import (
+            SecretsValidator as QualityValidator,
+        )
 
         secrets = self.validate_all_secrets()
         quality = QualityValidator()

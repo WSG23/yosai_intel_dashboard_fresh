@@ -10,16 +10,18 @@ from typing import Any, Iterable, Optional
 
 try:  # optional import to avoid heavy dependency chain
     from core.performance import PerformanceThresholds as _PerfThresh
+
     _SLOW_DEFAULT = getattr(_PerfThresh, "SLOW_QUERY_SECONDS", 1.0)
 except Exception:  # pragma: no cover - default if core package unavailable
     _SLOW_DEFAULT = 1.0
 
-from database.performance_analyzer import DatabasePerformanceAnalyzer
-
-from database.types import DBRows
+from yosai_intel_dashboard.src.database.performance_analyzer import (
+    DatabasePerformanceAnalyzer,
+)
+from yosai_intel_dashboard.src.database.types import DBRows
 
 try:  # optional Prometheus integration
-    from database.metrics import query_execution_seconds
+    from yosai_intel_dashboard.src.database.metrics import query_execution_seconds
 except Exception:  # pragma: no cover - metrics are optional
     query_execution_seconds = None  # type: ignore
 
@@ -43,18 +45,17 @@ def _get_security_validator():
             rate_limit=0, window_seconds=1, redis_client=None
         )
     except Exception:  # pragma: no cover - lightweight fallback
+
         class _DummyValidator:
             def scan_query(self, _sql: str) -> None:  # noqa: D401 - simple stub
                 """No-op validator used when security module is unavailable."""
 
         return _DummyValidator()
 
+
 performance_analyzer = DatabasePerformanceAnalyzer()
 query_metrics = performance_analyzer.query_metrics
-SLOW_QUERY_THRESHOLD = float(
-    os.getenv("DB_SLOW_QUERY_THRESHOLD", _SLOW_DEFAULT)
-)
-
+SLOW_QUERY_THRESHOLD = float(os.getenv("DB_SLOW_QUERY_THRESHOLD", _SLOW_DEFAULT))
 
 
 def _infer_db_type(obj: Any) -> str:
@@ -73,7 +74,9 @@ def _get_optimizer(obj: Any):
     """Return a cached :class:`DatabaseQueryOptimizer` for ``obj``."""
     optimizer = getattr(obj, "_optimizer", None)
     if optimizer is None:
-        from database.query_optimizer import DatabaseQueryOptimizer
+        from yosai_intel_dashboard.src.database.query_optimizer import (
+            DatabaseQueryOptimizer,
+        )
 
         optimizer = DatabaseQueryOptimizer(_infer_db_type(obj))
         try:
@@ -100,9 +103,7 @@ def execute_query(
     *,
     timeout: Optional[int] = None,
 ):
-
     """Validate, optimize and execute a SELECT query on ``conn``."""
-
 
     if not isinstance(sql, str):
         raise TypeError("sql must be a string")
@@ -234,5 +235,4 @@ __all__ = [
     "execute_secure_query",
     "query_metrics",
     "performance_analyzer",
-
 ]

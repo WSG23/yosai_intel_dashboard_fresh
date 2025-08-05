@@ -4,8 +4,11 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
+    record_error,
+)
+
 from .exceptions import ErrorCategory, YosaiException
-from monitoring.error_budget import record_error
 
 
 @dataclass

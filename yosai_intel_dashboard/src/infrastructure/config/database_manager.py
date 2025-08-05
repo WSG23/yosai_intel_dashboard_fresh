@@ -16,11 +16,17 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional
 
-from database.query_optimizer import DatabaseQueryOptimizer
-from database.replicated_connection import ReplicatedDatabaseConnection
-from database.secure_exec import execute_batch, execute_command, execute_query
-from database.types import DatabaseConnection, DBRows
 from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
+from yosai_intel_dashboard.src.database.query_optimizer import DatabaseQueryOptimizer
+from yosai_intel_dashboard.src.database.replicated_connection import (
+    ReplicatedDatabaseConnection,
+)
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_batch,
+    execute_command,
+    execute_query,
+)
+from yosai_intel_dashboard.src.database.types import DatabaseConnection, DBRows
 from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
@@ -386,7 +392,9 @@ class ThreadSafeDatabaseManager(DatabaseManager):
 
     def _create_pool(self) -> DatabaseConnectionPool:
         if getattr(self.config, "use_intelligent_pool", False):
-            from database.intelligent_connection_pool import IntelligentConnectionPool
+            from yosai_intel_dashboard.src.database.intelligent_connection_pool import (
+                IntelligentConnectionPool,
+            )
 
             pool_cls = IntelligentConnectionPool
         else:
@@ -464,8 +472,12 @@ class EnhancedPostgreSQLManager(DatabaseManager):
         )
         super().__init__(config)
         self.optimizer = DatabaseQueryOptimizer()
-        from database.intelligent_connection_pool import IntelligentConnectionPool
-        from database.performance_analyzer import DatabasePerformanceAnalyzer
+        from yosai_intel_dashboard.src.database.intelligent_connection_pool import (
+            IntelligentConnectionPool,
+        )
+        from yosai_intel_dashboard.src.database.performance_analyzer import (
+            DatabasePerformanceAnalyzer,
+        )
 
         from .connection_retry import ConnectionRetryManager, RetryConfig
 

@@ -70,7 +70,9 @@ class SecurityPatternsAnalyzer:
         threats = list(detect_critical_door_risks(prepared))
         threats.extend(_detect_rapid_failures(prepared))
         try:  # pragma: no cover - import may fail in test environment
-            import security.events as se  # type: ignore
+            from yosai_intel_dashboard.src.infrastructure.security import (
+                events as se,  # type: ignore
+            )
 
             manager = se.security_unified_callbacks
         except Exception:  # pragma: no cover
@@ -130,16 +132,13 @@ def _detect_rapid_failures(df: pd.DataFrame) -> List[Threat]:
     if failures.empty:
         return []
 
-    summary = (
-        failures.groupby("person_id")["timestamp"].agg(["count", "min", "max"])
-    )
+    summary = failures.groupby("person_id")["timestamp"].agg(["count", "min", "max"])
     summary["window"] = (summary["max"] - summary["min"]).dt.total_seconds()
     mask = (summary["count"] >= 3) & (summary["window"] <= 60)
     return [
         Threat("rapid_denied_access", {"person_id": person})
         for person in summary[mask].index
     ]
-
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +163,9 @@ def setup_isolated_security_testing() -> Any:
         new_manager = TrulyUnifiedCallbacks()
     fallback_callbacks = new_manager
     try:  # pragma: no cover - import may fail if optional deps missing
-        import security.events as se  # type: ignore
+        from yosai_intel_dashboard.src.infrastructure.security import (
+            events as se,  # type: ignore
+        )
 
         original_manager = se.security_unified_callbacks
         se.security_unified_callbacks = new_manager

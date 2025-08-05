@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, List, Sequence
 
-from database.types import DBRows
+from yosai_intel_dashboard.src.database.types import DBRows
 
 # Importing create_database_connection at module level pulls in heavy
 # configuration dependencies which complicates testing.  To keep the module

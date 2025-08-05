@@ -10,8 +10,12 @@ from typing import Any, Iterable, Optional
 from fastavro import parse_schema, schemaless_reader
 
 from confluent_kafka import Consumer, Producer
-from monitoring.data_quality_monitor import get_data_quality_monitor
-from yosai_intel_dashboard.src.services.common.schema_registry import SchemaRegistryClient
+from yosai_intel_dashboard.src.infrastructure.monitoring.data_quality_monitor import (
+    get_data_quality_monitor,
+)
+from yosai_intel_dashboard.src.services.common.schema_registry import (
+    SchemaRegistryClient,
+)
 
 logger = logging.getLogger(__name__)
 

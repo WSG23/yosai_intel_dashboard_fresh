@@ -7,7 +7,9 @@ import pytest
 
 os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 
-from monitoring.model_performance_tracker import ModelPerformanceTracker
+from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_tracker import (
+    ModelPerformanceTracker,
+)
 
 
 def test_metric_collection():

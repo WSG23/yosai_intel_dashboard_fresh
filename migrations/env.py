@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import configparser
 import logging
 import os
 from logging.config import fileConfig
@@ -8,6 +7,8 @@ from typing import Iterable
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool, text
+
+import yosai_intel_dashboard.src.infrastructure.configparser
 
 config = context.config
 fileConfig(config.config_file_name)

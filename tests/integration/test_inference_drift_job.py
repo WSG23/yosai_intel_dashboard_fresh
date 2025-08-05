@@ -15,6 +15,7 @@ config_stub = types.ModuleType("config")
 config_stub.get_monitoring_config = lambda: {}
 sys.modules["yosai_intel_dashboard.src.infrastructure.config"] = config_stub
 
+
 # Alerting stubs
 @dataclass
 class AlertConfig:
@@ -29,6 +30,7 @@ class AlertDispatcher:
 
     def send_alert(self, message: str) -> None:  # pragma: no cover - replaced in tests
         pass
+
 
 uem = types.ModuleType("user_experience_metrics")
 uem.AlertConfig = AlertConfig
@@ -53,12 +55,14 @@ sys.modules["yosai_intel_dashboard.src.core.monitoring"] = core_monitoring
 sys.modules["yosai_intel_dashboard.src.core.monitoring.user_experience_metrics"] = uem
 sys.modules["yosai_intel_dashboard.src.core.performance"] = perf
 
+
 # Model metrics and registry stubs
 @dataclass
 class ModelMetrics:
     accuracy: float
     precision: float
     recall: float
+
 
 mpm = types.ModuleType("model_performance_monitor")
 mpm.ModelMetrics = ModelMetrics
@@ -68,15 +72,15 @@ infra_monitoring.model_performance_monitor = mpm
 infra_monitoring.__path__ = []
 mpm.__path__ = []
 
-sys.modules[
-    "yosai_intel_dashboard.src.infrastructure.monitoring"
-] = infra_monitoring
+sys.modules["yosai_intel_dashboard.src.infrastructure.monitoring"] = infra_monitoring
 sys.modules[
     "yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor"
 ] = mpm
 
+
 class ModelRegistry:  # pragma: no cover - simple stub
     pass
+
 
 ml_pkg = types.ModuleType("ml")
 ml_pkg.model_registry = types.ModuleType("model_registry")
@@ -90,7 +94,9 @@ sys.modules["yosai_intel_dashboard.models.ml"] = ml_pkg
 sys.modules["yosai_intel_dashboard.models.ml.model_registry"] = ml_pkg.model_registry
 
 # ---------------------------------------------------------------------------
-from monitoring.inference_drift_job import InferenceDriftJob
+from yosai_intel_dashboard.src.infrastructure.monitoring.inference_drift_job import (
+    InferenceDriftJob,
+)
 
 
 class StubRecord:

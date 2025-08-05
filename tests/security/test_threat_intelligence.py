@@ -1,6 +1,6 @@
 import pytest
 
-from security.threat_intelligence import (
+from yosai_intel_dashboard.src.infrastructure.security.threat_intelligence import (
     AutomatedResponseOrchestrator,
     ThreatIntelligenceSystem,
 )

@@ -12,8 +12,8 @@ import dash
 import dash_bootstrap_components as dbc
 import pytest
 from dash import dcc, html
-from src.common.config import ConfigService
 
+from src.common.config import ConfigService
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Stub heavy optional analytics dependencies
@@ -32,13 +32,13 @@ if "scipy" not in sys.modules:
 safe_import("scipy.stats", types.ModuleType("scipy.stats"))
 sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 
-from config import create_config_manager
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from yosai_intel_dashboard.src.core.events import EventBus
 from yosai_intel_dashboard.src.core.plugins.auto_config import setup_plugins
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
     TrulyUnifiedCallbacks,
 )
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     ServiceContainer,
 )
@@ -148,7 +148,9 @@ def test_plugin_upload_event_sse_ws(
         AnalyticsWebSocketServer,
     )
 
-    cfg = ConfigService({'metrics_interval':0.01,'ping_interval':0.01,'ping_timeout':0.01})
+    cfg = ConfigService(
+        {"metrics_interval": 0.01, "ping_interval": 0.01, "ping_timeout": 0.01}
+    )
     ws_server = AnalyticsWebSocketServer(
         event_bus=event_bus, host="127.0.0.1", port=8765, config=cfg
     )

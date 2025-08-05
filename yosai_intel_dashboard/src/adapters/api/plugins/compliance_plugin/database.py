@@ -10,8 +10,11 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from database.secure_exec import execute_command, execute_query
 from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_command,
+    execute_query,
+)
 
 logger = logging.getLogger(__name__)
 

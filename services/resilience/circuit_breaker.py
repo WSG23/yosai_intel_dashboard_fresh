@@ -10,12 +10,14 @@ single trial request (``half-open``) to determine if the underlying dependency
 has recovered.
 """
 
-from typing import Any, Awaitable, Callable, Optional
 import asyncio
 import time
+from typing import Any, Awaitable, Callable, Optional
 
 try:  # pragma: no cover - optional during tests
-    from monitoring.error_budget import record_error  # type: ignore
+    from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
+        record_error,  # type: ignore
+    )
 except Exception:  # pragma: no cover - if monitoring deps missing
 
     def record_error(_name: str) -> None:  # type: ignore

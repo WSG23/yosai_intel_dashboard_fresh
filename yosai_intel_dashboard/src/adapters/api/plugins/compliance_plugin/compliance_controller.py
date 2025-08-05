@@ -9,11 +9,11 @@ from datetime import datetime, timedelta, timezone
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
-from database.secure_exec import execute_query
 from shared.errors.types import ErrorCode
 from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
 from yosai_intel_dashboard.src.core.container import Container
 from yosai_intel_dashboard.src.core.rbac import require_role
+from yosai_intel_dashboard.src.database.secure_exec import execute_query
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
 from yosai_intel_dashboard.src.services.compliance.dsar_service import DSARService

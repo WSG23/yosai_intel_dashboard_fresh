@@ -2,19 +2,25 @@
 
 from __future__ import annotations
 
-from api.adapter import api_adapter
+from app import app
 from flask import jsonify, request
 from flask_apispec import doc, marshal_with, use_kwargs
 from marshmallow import Schema, fields
 
-from app import app
-from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
-from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
-from yosai_intel_dashboard.src.core.plugins.performance_manager import EnhancedThreadSafePluginManager
-from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
 from shared.errors.types import ErrorCode
-from yosai_intel_dashboard.src.core.security import validate_user_input
 from yosai_framework.errors import CODE_TO_STATUS
+from yosai_intel_dashboard.src.adapters.api.adapter import api_adapter
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+    cache_with_lock,
+)
+from yosai_intel_dashboard.src.core.plugins.performance_manager import (
+    EnhancedThreadSafePluginManager,
+)
+from yosai_intel_dashboard.src.core.security import validate_user_input
+from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 handler = ErrorHandler()

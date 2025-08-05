@@ -12,8 +12,11 @@ import psycopg2
 from prometheus_client import Gauge, start_http_server
 from psycopg2.extras import DictCursor, execute_values
 
-from database.secure_exec import execute_command, execute_query
 from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_command,
+    execute_query,
+)
 from yosai_intel_dashboard.src.services.common.secrets import get_secret
 
 LOG = logging.getLogger(__name__)

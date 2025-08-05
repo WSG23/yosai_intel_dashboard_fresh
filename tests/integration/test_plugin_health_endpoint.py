@@ -6,6 +6,7 @@ import sys
 import types
 
 from flask.json.provider import DefaultJSONProvider
+
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Minimal services stubs
@@ -27,19 +28,21 @@ data_proc_mod = types.ModuleType("services.data_processing")
 data_proc_mod.core = core_mod
 services_mod.data_processing = data_proc_mod
 
-safe_import('services', services_mod)
-safe_import('services.registry', registry_mod)
-safe_import('services.data_processing', data_proc_mod)
-safe_import('services.data_processing.core', core_mod)
-safe_import('core.protocols.plugin', protocols_mod)
+safe_import("services", services_mod)
+safe_import("services.registry", registry_mod)
+safe_import("services.data_processing", data_proc_mod)
+safe_import("services.data_processing.core", core_mod)
+safe_import("core.protocols.plugin", protocols_mod)
 
 import pytest
 from flask import Flask
 
-from config import create_config_manager
 from yosai_intel_dashboard.src.core.plugins.manager import PluginManager
 from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 
 class EnumJSONProvider(DefaultJSONProvider):

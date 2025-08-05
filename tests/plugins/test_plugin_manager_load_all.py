@@ -1,8 +1,12 @@
 import sys
 
-from config import create_config_manager
-from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.plugins.manager import (
+    ThreadSafePluginManager as PluginManager,
+)
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 
 class MyPlugin:

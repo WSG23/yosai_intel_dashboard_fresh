@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
 
-from config import ConfigManager
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
-from database.connection import create_database_connection
-from database.secure_exec import execute_command
+from yosai_intel_dashboard.src.database.connection import create_database_connection
+from yosai_intel_dashboard.src.database.secure_exec import execute_command
+from yosai_intel_dashboard.src.infrastructure.config import ConfigManager
 
 
 def validate_environment() -> ConfigManager:

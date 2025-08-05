@@ -8,13 +8,20 @@ from typing import Any, Dict
 
 from controllers.compliance_controller import register_compliance_routes
 
+from yosai_intel_dashboard.models.compliance import CREATE_COMPLIANCE_TABLES_SQL
 from yosai_intel_dashboard.src.core.audit_logger import create_audit_logger
 from yosai_intel_dashboard.src.core.container import Container
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
-from database.secure_exec import execute_command, execute_query
-from yosai_intel_dashboard.src.services.compliance.consent_service import create_consent_service
-from yosai_intel_dashboard.src.services.compliance.dsar_service import create_dsar_service
-from yosai_intel_dashboard.models.compliance import CREATE_COMPLIANCE_TABLES_SQL
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_command,
+    execute_query,
+)
+from yosai_intel_dashboard.src.services.compliance.consent_service import (
+    create_consent_service,
+)
+from yosai_intel_dashboard.src.services.compliance.dsar_service import (
+    create_dsar_service,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -168,8 +175,8 @@ def consent_required(consent_type: str, jurisdiction: str = "EU"):
             from flask import jsonify
             from flask_login import current_user
 
-            from yosai_intel_dashboard.src.core.container import Container
             from yosai_intel_dashboard.models.compliance import ConsentType
+            from yosai_intel_dashboard.src.core.container import Container
 
             try:
                 container = Container()
@@ -226,9 +233,9 @@ def create_compliance_enabled_app(config_name: str = None):
     """
     from flask import Flask
 
-    from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
     from yosai_intel_dashboard.src.core.container import Container
-    from database.connection import create_database_connection
+    from yosai_intel_dashboard.src.database.connection import create_database_connection
+    from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
     # Create Flask app
     app = Flask(__name__)

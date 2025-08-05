@@ -1,8 +1,9 @@
-import configparser
 import importlib
 from types import SimpleNamespace
 
 import alembic.context
+
+import yosai_intel_dashboard.src.infrastructure.configparser
 
 
 class DummyConnection:
