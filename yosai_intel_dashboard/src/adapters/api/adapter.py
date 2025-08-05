@@ -42,10 +42,8 @@ from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 from yosai_intel_dashboard.src.services.auth import require_service_token
 
 
-def create_api_app() -> "FastAPI":
-    """Create API app registered on a BaseService."""
-    validate_all_secrets()
-    service = BaseService("api", "")
+def _configure_app(service: BaseService) -> str:
+    """Initialize the FastAPI app, base service and middleware."""
     service.app = FastAPI(
         title="Yosai Dashboard API",
         version="1.0.0",
@@ -57,7 +55,6 @@ def create_api_app() -> "FastAPI":
     service.start()
     service.app.add_middleware(TimingMiddleware)
 
-    # Apply rate limiting
     import redis
 
     redis_client = redis.Redis.from_url(
@@ -65,10 +62,14 @@ def create_api_app() -> "FastAPI":
     )
     limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
     service.app.add_middleware(RateLimitMiddleware, limiter=limiter)
-    build_dir = os.path.abspath(
+
+    return os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, "build")
     )
 
+
+def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, callable]:
+    """Configure security middleware and services."""
     settings = get_security_config()
     service.app.add_middleware(SecurityHeadersMiddleware)
     service.app.add_middleware(
@@ -79,7 +80,6 @@ def create_api_app() -> "FastAPI":
         allow_headers=["Authorization", "Content-Type"],
     )
 
-    # Initialize RBAC service
     try:
         service.app.state.rbac_service = asyncio.run(create_rbac_service())
     except Exception as exc:  # pragma: no cover - best effort
@@ -99,14 +99,20 @@ def create_api_app() -> "FastAPI":
             "SECRET_KEY is not set; configure it via environment or Vault"
         )
     service.app.state.secret_key = secret_key
+    serializer = URLSafeTimedSerializer(secret_key)
 
-    # Helper dependency used for deprecated unversioned routes
     def add_deprecation_warning(response: Response) -> None:
         response.headers["Warning"] = (
             "299 - Deprecated API path; please use versioned '/v1' routes"
         )
 
-    # Third-party analytics demo endpoints (FastAPI router)
+    return serializer, add_deprecation_warning
+
+
+def _register_routes(
+    service: BaseService, build_dir: str, add_deprecation_warning: callable
+) -> None:
+    """Register routers and static file handlers."""
     service.app.add_event_handler("startup", init_cache_manager)
 
     api_v1 = APIRouter(prefix="/v1")
@@ -114,7 +120,6 @@ def create_api_app() -> "FastAPI":
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)
     api_v1.include_router(feature_flags_router)
-
     service.app.include_router(api_v1, dependencies=[Depends(require_service_token)])
 
     legacy_router = APIRouter()
@@ -122,20 +127,52 @@ def create_api_app() -> "FastAPI":
     legacy_router.include_router(monitoring_router)
     legacy_router.include_router(explanations_router)
     legacy_router.include_router(feature_flags_router)
-
     service.app.include_router(
         legacy_router,
         dependencies=[Depends(require_service_token), Depends(add_deprecation_warning)],
         deprecated=True,
     )
 
-    # Core upload and related endpoints implemented directly with FastAPI
+    @service.app.get("/", include_in_schema=False)
+    def root_index() -> FileResponse:
+        return FileResponse(os.path.join(build_dir, "index.html"))
+
+    @service.app.get("/{path:path}", include_in_schema=False)
+    def serve_static(path: str) -> FileResponse:
+        full_path = os.path.join(build_dir, path)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            return FileResponse(full_path)
+        return FileResponse(os.path.join(build_dir, "index.html"))
+
+    def custom_openapi() -> dict:
+        if service.app.openapi_schema:
+            return service.app.openapi_schema
+        schema = get_openapi(
+            title=service.app.title,
+            version="0.1.0",
+            routes=service.app.routes,
+        )
+        components = schema.setdefault("components", {})
+        security = components.setdefault("securitySchemes", {})
+        security["HTTPBearer"] = {"type": "http", "scheme": "bearer"}
+        for path in schema.get("paths", {}).values():
+            for method in path.values():
+                method.setdefault("security", [{"HTTPBearer": []}])
+        service.app.openapi_schema = schema
+        return schema
+
+    service.app.openapi = custom_openapi
+    Instrumentator().instrument(service.app).expose(service.app)
+
+
+def _register_upload_endpoints(
+    service: BaseService, serializer: URLSafeTimedSerializer
+) -> None:
+    """Register upload, settings and token refresh endpoints."""
     file_processor = container.get("file_processor")
     file_handler = (
         container.get("file_handler") if container.has("file_handler") else None
     )
-
-    serializer = URLSafeTimedSerializer(secret_key)
 
     @service.app.middleware("http")
     async def enforce_csrf(request: Request, call_next):
@@ -188,7 +225,6 @@ def create_api_app() -> "FastAPI":
         payload: UploadRequestSchema,
         files: list[UploadFile] = File([]),
     ) -> dict:
-
         contents: list[str] = []
         filenames: list[str] = []
         validator = getattr(file_processor, "validator", None)
@@ -231,7 +267,6 @@ def create_api_app() -> "FastAPI":
         status_data = file_processor.get_job_status(job_id)
         return {"status": status_data}
 
-    # Settings endpoints
     from api.settings_endpoint import SettingsSchema, _load_settings, _save_settings
 
     @service.app.get("/v1/settings", response_model=SettingsSchema)
@@ -249,7 +284,6 @@ def create_api_app() -> "FastAPI":
             raise HTTPException(status_code=500, detail=str(exc))
         return settings_data
 
-    # Token refresh endpoint
     from yosai_intel_dashboard.src.services.security import refresh_access_token
     from yosai_intel_dashboard.src.services.token_endpoint import (
         AccessTokenResponse,
@@ -265,39 +299,15 @@ def create_api_app() -> "FastAPI":
             raise HTTPException(status_code=401, detail="invalid refresh token")
         return {"access_token": new_token}
 
-    # Serve React static files
-    @service.app.get("/", include_in_schema=False)
-    def root_index() -> FileResponse:
-        return FileResponse(os.path.join(build_dir, "index.html"))
 
-    @service.app.get("/{path:path}", include_in_schema=False)
-    def serve_static(path: str) -> FileResponse:
-        full_path = os.path.join(build_dir, path)
-        if os.path.exists(full_path) and os.path.isfile(full_path):
-            return FileResponse(full_path)
-        return FileResponse(os.path.join(build_dir, "index.html"))
-
-    def custom_openapi() -> dict:
-        if service.app.openapi_schema:
-            return service.app.openapi_schema
-        schema = get_openapi(
-            title=service.app.title,
-            version="0.1.0",
-            routes=service.app.routes,
-        )
-        components = schema.setdefault("components", {})
-        security = components.setdefault("securitySchemes", {})
-        security["HTTPBearer"] = {"type": "http", "scheme": "bearer"}
-        for path in schema.get("paths", {}).values():
-            for method in path.values():
-                method.setdefault("security", [{"HTTPBearer": []}])
-        service.app.openapi_schema = schema
-        return schema
-
-    service.app.openapi = custom_openapi
-
-    Instrumentator().instrument(service.app).expose(service.app)
-
+def create_api_app() -> "FastAPI":
+    """Create API app registered on a BaseService."""
+    validate_all_secrets()
+    service = BaseService("api", "")
+    build_dir = _configure_app(service)
+    serializer, add_deprecation_warning = _setup_security(service)
+    _register_routes(service, build_dir, add_deprecation_warning)
+    _register_upload_endpoints(service, serializer)
     return service.app
 
 
