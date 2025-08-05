@@ -31,6 +31,8 @@ from yosai_intel_dashboard.src.services.upload.protocols import (
 )
 from yosai_intel_dashboard.src.services.upload.upload_queue_manager import UploadQueueManager
 from validation.security_validator import SecurityValidator, ValidationError
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
+from yosai_intel_dashboard.src.core.security import validate_user_input
 
 
 logger = logging.getLogger(__name__)
@@ -102,8 +104,9 @@ class UploadCore:
         for content, fname in zip(contents_list, filenames_list):
             try:
                 data = base64.b64decode(content.split(",", 1)[1])
-                self.validator.validate_file_upload(fname, data)
-            except ValidationError as exc:
+                sanitized_name = sanitize_filename(str(fname))
+                self.validator.validate_file_upload(sanitized_name, data)
+            except (ValidationError, ValueError) as exc:
                 alerts.append(self.processing.build_failure_alert(str(exc)))
             except Exception as exc:  # pragma: no cover - unexpected decoding issues
                 logger.error("Failed to validate %s: %s", fname, exc)
@@ -137,7 +140,7 @@ class UploadCore:
             contents_list = [contents_list]
         if not isinstance(filenames_list, list):
             filenames_list = [filenames_list]
-        filenames_list = [validate_user_input(str(f), "filename") for f in filenames_list]
+        filenames_list = [sanitize_filename(str(f)) for f in filenames_list]
         async_coro = self.processing.process_files(contents_list, filenames_list)
         if self.rabbitmq:
             payload = {"contents": contents_list, "filenames": filenames_list}

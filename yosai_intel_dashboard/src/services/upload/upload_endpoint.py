@@ -23,7 +23,7 @@ from yosai_intel_dashboard.src.utils.pydantic_decorators import (
     validate_input,
     validate_output,
 )
-from yosai_intel_dashboard.src.utils.sanitization import sanitize_text
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_text, sanitize_filename
 
 _service_cfg = ConfigurationLoader().get_service_config()
 redis_client = redis.Redis.from_url(_service_cfg.redis_url)
@@ -120,7 +120,14 @@ def create_upload_blueprint(
                 for file in request.files.values():
                     if not file.filename:
                         continue
-                    filename = sanitize_text(file.filename)
+                    try:
+                        filename = sanitize_filename(file.filename)
+                    except ValueError as exc:
+                        return api_error_response(
+                            exc,
+                            ErrorCategory.INVALID_INPUT,
+                            handler=err_handler,
+                        )
                     file_bytes = file.read()
                     try:
                         validator.validate_file_upload(filename, file_bytes)
@@ -136,7 +143,16 @@ def create_upload_blueprint(
                     filenames.append(filename)
             else:
                 contents = payload.contents or []
-                filenames = [sanitize_text(name) for name in (payload.filenames or [])]
+                filenames = []
+                for name in (payload.filenames or []):
+                    try:
+                        filenames.append(sanitize_filename(name))
+                    except ValueError as exc:
+                        return api_error_response(
+                            exc,
+                            ErrorCategory.INVALID_INPUT,
+                            handler=err_handler,
+                        )
 
             if not contents or not filenames:
                 return api_error_response(

@@ -135,3 +135,14 @@ def test_upload_rejects_unsupported_file(monkeypatch):
     data = {"file": (io.BytesIO(b"abc"), "bad.exe")}
     resp = client.post("/v1/upload", data=data)
     assert resp.status_code == 400
+
+
+def test_upload_rejects_path_traversal_filename(monkeypatch):
+    app = _create_validator_app(monkeypatch)
+    client = app.test_client()
+    content = "data:text/csv;base64,YSx6"
+    resp = client.post(
+        "/v1/upload",
+        json={"contents": [content], "filenames": ["../bad.csv"]},
+    )
+    assert resp.status_code == 400
