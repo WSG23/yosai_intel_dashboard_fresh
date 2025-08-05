@@ -25,6 +25,11 @@ from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
 )
 
 
+# Prepare a lightweight environment using shared test infrastructure
+infra = TestInfrastructure(
+    stub_packages=["pandas", "numpy", "yaml"]
+).setup_environment()  # noqa: F841
+
 
 @pytest.fixture
 def upload_processor(valid_df):
@@ -45,6 +50,7 @@ def upload_processor(valid_df):
     callbacks = TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=vs)
     processor_instance = UploadAnalyticsProcessor(
         vs, processor, callbacks, dynamic_config.analytics, event_bus
+
     )
     processor_instance.load_uploaded_data = lambda: uploaded_data(
         ("empty.csv", pd.DataFrame()),
@@ -53,10 +59,15 @@ def upload_processor(valid_df):
     return processor_instance
 
 
-
 @pytest.fixture
-def valid_df():
-    return pd.DataFrame({"Person ID": ["u1", "u2"], "Device name": ["d1", "d2"]})
+def uploaded_data(valid_df):
+    from tests.stubs.utils.upload_store import get_uploaded_data_store
+
+    store = get_uploaded_data_store()
+    store.clear_all()
+    store.data["empty.csv"] = MockFactory.dataframe({})
+    store.data["valid.csv"] = valid_df
+    return store.get_all_data()
 
 
 def test_upload_pipeline_filters_empty_and_returns_stats(upload_processor):
