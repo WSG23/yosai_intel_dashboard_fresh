@@ -4,12 +4,10 @@ Thank you for considering a contribution! Follow these steps to get the developm
 
 ## Setup
 
-Install the core and development dependencies along with the packages
-required for running the tests:
+Install the core and development dependencies:
 
 ```bash
 ./scripts/setup.sh
-pip install -r requirements-test.txt
 npm install
 pip install pre-commit
 pre-commit install
@@ -26,19 +24,18 @@ These additional packages provide linting, type checking, security scanning and 
 
 ## Installing Test Dependencies
 
-The unit test suite requires additional packages specified in
-`requirements-test.txt`. Install them prior to running the tests:
+The unit test suite relies on packages included in
+`requirements-dev.txt`. Install them prior to running the tests if you
+have not already run the setup script:
 
 ```bash
 ./scripts/install_test_deps.sh
 ```
 
-Alternatively you can run `pip install -r requirements-test.txt` directly.
-
 ## Running Tests
 
 After installing the dependencies (including those from
-`requirements-test.txt`) you can run the tests and code quality checks:
+`requirements-dev.txt`) you can run the tests and code quality checks:
 
 ```bash
 pytest

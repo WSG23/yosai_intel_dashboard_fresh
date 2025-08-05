@@ -183,13 +183,14 @@ with this Python release and newer.
    ```bash
    ./scripts/setup.sh
    ```
-   The script installs `requirements.txt`, `requirements-dev.txt`, and
-   `requirements-test.txt` from PyPI (or a local `packages/` directory if
-   present) and runs `npm install` to
-   fetch Node dependencies. The Python requirements now include the Kafka
-   clients `confluent-kafka` and `fastavro`. Ensure dependencies are installed
-   **before** running Pyright or using the Pylance extension. Missing packages
-   will otherwise appear as unresolved imports.
+   The script installs `requirements.txt` and `requirements-dev.txt` from
+   PyPI (or a local `packages/` directory if present) and runs `npm install` to
+   fetch Node dependencies. `requirements.txt` lists the core runtime
+   dependencies while `requirements-dev.txt` adds tooling and test libraries.
+   The Python requirements now include the Kafka clients `confluent-kafka` and
+   `fastavro`. Ensure dependencies are installed **before** running Pyright or
+   using the Pylance extension. Missing packages will otherwise appear as
+   unresolved imports.
 
 4. **Install Node dependencies (optional):**
    PostCSS and other build tools live in `package.json`. `./scripts/setup.sh`
@@ -479,7 +480,6 @@ following steps:
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
-   pip install -r requirements-test.txt
    # or simply run ./scripts/setup.sh
    ```
 5. If Dash packages behave unexpectedly, reinstall them with pinned versions:
@@ -571,10 +571,10 @@ schema in `schemas/access-event.avsc` with your schema registry (set
 
 Install dependencies before running the tests:
 ```bash
-# Option 1: use the helper script (installs test requirements as well)
+# Option 1: use the helper script (installs development requirements as well)
 ./scripts/setup.sh
 # Option 2: install packages manually
-pip install -r requirements.txt -r requirements-test.txt
+pip install -r requirements-dev.txt
 ```
 Use the provided environment template for tests:
 ```bash
@@ -584,10 +584,10 @@ Set `USE_MOCK_DB=1` to force the configuration factory to use a lightweight
 mock database instead of a real database connection. This is helpful when
 running tests or developing locally without a database server.
 For minimal CI environments you can run `./scripts/install_test_deps.sh` which
-only installs the Python dependencies required for the tests.
+installs only the Python dependencies required for the tests.
 ### Test Requirements
 
-The test suite relies on extra packages defined in `requirements-test.txt`. Installing them ensures that `pytest` can import all helper modules:
+The test suite relies on extra packages defined in `requirements-dev.txt`. Installing them ensures that `pytest` can import all helper modules:
 
 - `pytest` and `pytest-cov`
 - `PyYAML`
@@ -685,8 +685,7 @@ python security/reporting.py
 
 **Note:** The file upload and column mapping functionality relies on `pandas`.
 If `pandas` is missing these pages will be disabled. Ensure you run
-`pip install -r requirements.txt`, `pip install -r requirements-dev.txt` and
-`pip install -r requirements-test.txt` to
+`pip install -r requirements.txt` and `pip install -r requirements-dev.txt` to
 install all dependencies (or execute `./scripts/setup.sh`).
 `PerformanceMonitor` requires `psutil` for CPU and memory metrics, and the
 file processing utilities depend on `chardet` to detect text encoding.
@@ -1626,7 +1625,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
-   pip install -r requirements-test.txt
    ```
 2. Ensure all tests pass: `pytest`
 3. Format code with `black` and run `flake8`

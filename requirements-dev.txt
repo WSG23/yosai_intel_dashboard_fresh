@@ -1,3 +1,6 @@
+# Development and testing requirements
+-r requirements.txt
+
 black
 isort
 flake8
@@ -8,14 +11,21 @@ types-hvac
 types-psutil
 types-requests
 bandit
-pytest
-pytest-cov
 safety==3.6.0
-PyYAML==6.0.2
-psutil>=5.9.0
 pip-audit
-mlflow
-boto3
+mlflow>=2.0
 flask-apispec<0.12
 locust
--r requirements-test.txt
+pytest-asyncio>=0.23
+pytest-dotenv==0.5.2
+memory-profiler>=0.61.0
+selenium>=4.20.0
+pydantic==2.10.6
+dask[distributed]==2024.4.1
+tqdm>=4.0
+aiohttp>=3.8
+aiosmtplib>=2.0
+testcontainers[postgresql,redis]==3.7.1
+prometheus_client==0.22.1
+jsonschema>=4.21.1
+hypothesis>=6.99

@@ -4,7 +4,7 @@
 all helper modules can be imported. Use one of the commands below:
 
 ```bash
-pip install -r requirements-test.txt
+pip install -r requirements-dev.txt
 ```
 
 This installs mandatory dependencies such as `PyYAML`, `psutil` and `pandas`

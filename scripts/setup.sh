@@ -7,14 +7,10 @@ if [ -d "$ROOT_DIR/packages" ]; then
     # Install from local package directory when available
     pip install --no-index --find-links "$ROOT_DIR/packages" -r "$ROOT_DIR/requirements.txt"
     pip install --no-index --find-links "$ROOT_DIR/packages" -r "$ROOT_DIR/requirements-dev.txt"
-    # Install packages needed exclusively for running the tests
-    pip install --no-index --find-links "$ROOT_DIR/packages" -r "$ROOT_DIR/requirements-test.txt"
 else
     # Fallback to PyPI
     pip install -r "$ROOT_DIR/requirements.txt"
     pip install -r "$ROOT_DIR/requirements-dev.txt"
-    # Install packages needed exclusively for running the tests
-    pip install -r "$ROOT_DIR/requirements-test.txt"
 fi
 
 # Install Node dependencies for the CSS build step

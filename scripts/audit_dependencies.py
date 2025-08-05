@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import json
 import subprocess
 import sys
 
-REQ_FILES = ["requirements.txt", "requirements_ui.txt"]
+REQ_FILES = ["requirements.txt", "requirements-dev.txt"]
 
 cmd = ["safety", "check", "--full-report", "--json"]
 for req in REQ_FILES:

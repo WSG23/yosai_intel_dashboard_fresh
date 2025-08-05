@@ -2,9 +2,9 @@ FROM python:3.11-slim AS builder
 WORKDIR /app
 
 # Install dependencies
-COPY requirements.txt requirements.lock ./
+COPY requirements.txt ./
 RUN python -m venv /opt/venv \
-    && /opt/venv/bin/pip install --no-cache-dir -r requirements.lock
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # Copy source and setup scripts
 COPY yosai_intel_dashboard/ ./yosai_intel_dashboard/
