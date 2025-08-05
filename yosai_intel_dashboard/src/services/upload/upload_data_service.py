@@ -20,6 +20,7 @@ from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
 from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     ServiceContainer,
 )
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
 from yosai_intel_dashboard.src.utils.upload_store import (
     UploadedDataStore,
     get_uploaded_data_store,
@@ -54,15 +55,18 @@ class UploadDataService(UploadDataServiceProtocol):
 
     @override
     def load_dataframe(self, filename: str) -> pd.DataFrame:
-        return self.store.load_dataframe(filename)
+        safe_name = sanitize_filename(filename)
+        return self.store.load_dataframe(safe_name)
 
     @override
     def load_mapping(self, filename: str) -> Dict[str, Any]:
-        return self.store.load_mapping(filename)
+        safe_name = sanitize_filename(filename)
+        return self.store.load_mapping(safe_name)
 
     @override
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
-        self.store.save_mapping(filename, mapping)
+        safe_name = sanitize_filename(filename)
+        self.store.save_mapping(safe_name, mapping)
 
 
 def _resolve_service(

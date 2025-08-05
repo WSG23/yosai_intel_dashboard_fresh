@@ -9,6 +9,7 @@ from typing import Any, List, Optional
 import pandas as pd
 
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,12 @@ class UnifiedUploadController:
     ) -> Optional[pd.DataFrame]:
         """Return parsed DataFrame from uploaded *contents*."""
         if not contents or not filename:
+            return None
+
+        try:
+            filename = sanitize_filename(filename)
+        except ValueError:
+            logger.error("Invalid filename: %s", filename)
             return None
 
         if user is not None:
