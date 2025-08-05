@@ -10,14 +10,15 @@ from typing import Any, Dict, Tuple
 
 import aiohttp
 
-from monitoring.data_quality_monitor import get_data_quality_monitor
 from yosai_intel_dashboard.src.core.async_utils.async_circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
 )
 from yosai_intel_dashboard.src.error_handling.core import ErrorHandler
 from yosai_intel_dashboard.src.error_handling.exceptions import ErrorCategory
-
+from yosai_intel_dashboard.src.infrastructure.monitoring.data_quality_monitor import (
+    get_data_quality_monitor,
+)
 
 
 @dataclass

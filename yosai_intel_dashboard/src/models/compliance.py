@@ -1,6 +1,6 @@
 """Expose compliance models used across the application."""
 
-from plugins.compliance_plugin.models.compliance import (
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.models.compliance import (
     CREATE_COMPLIANCE_TABLES_SQL,
     ComplianceAuditLog,
     ConsentLog,

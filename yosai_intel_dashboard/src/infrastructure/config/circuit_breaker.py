@@ -4,7 +4,9 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional, TypeVar
 
-from monitoring.error_budget import record_error
+from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
+    record_error,
+)
 
 T = TypeVar("T")
 

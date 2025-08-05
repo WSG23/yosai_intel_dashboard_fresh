@@ -1,7 +1,7 @@
 import pytest
 
-import security.ml_threat_detection as mlt
-from security.events import SecurityEvent
+from yosai_intel_dashboard.src.infrastructure.security import ml_threat_detection as mlt
+from yosai_intel_dashboard.src.infrastructure.security.events import SecurityEvent
 
 
 @pytest.mark.asyncio

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from api.adapter import create_api_app
+from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app
 from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer
 from yosai_intel_dashboard.src.core.di.bootstrap import bootstrap_container
 from yosai_intel_dashboard.src.infrastructure.config import get_cache_config

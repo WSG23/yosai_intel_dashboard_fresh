@@ -3,7 +3,9 @@
 import re
 from typing import Any
 
-from plugins.ai_classification.config import JapaneseConfig
+from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.config import (
+    JapaneseConfig,
+)
 
 
 class JapaneseTextHandler:

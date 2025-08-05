@@ -3,8 +3,9 @@ import time
 import pandas as pd
 import pytest
 
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import UnicodeEncodingError
-from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor as UtilsProcessor  # Alias check
+from yosai_intel_dashboard.src.core.unicode import (
+    UnicodeProcessor as UtilsProcessor,  # Alias check
+)
 from yosai_intel_dashboard.src.core.unicode import (
     UnicodeSQLProcessor,
     clean_unicode_surrogates,
@@ -14,14 +15,19 @@ from yosai_intel_dashboard.src.core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from security.unicode_security_handler import (
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    UnicodeEncodingError,
+)
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_handler import (
     UnicodeSecurityHandler as UnicodeSecurityProcessor,
 )
-from security.unicode_security_validator import (
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
     UnicodeSecurityConfig,
     UnicodeSecurityValidator,
 )
-from security.validation_exceptions import ValidationError
+from yosai_intel_dashboard.src.infrastructure.security.validation_exceptions import (
+    ValidationError,
+)
 
 
 def test_unicode_text_processor_surrogate_removal():

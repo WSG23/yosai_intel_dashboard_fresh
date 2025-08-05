@@ -77,7 +77,7 @@ clean_df = sanitize_dataframe(df, progress=True)
 
 ### Unified Handler
 ```python
-from config.unicode_handler import UnicodeHandler
+from yosai_intel_dashboard.src.infrastructure.config.unicode_handler import UnicodeHandler
 
 handler = UnicodeHandler()
 safe_query = handler.encode_query(query)

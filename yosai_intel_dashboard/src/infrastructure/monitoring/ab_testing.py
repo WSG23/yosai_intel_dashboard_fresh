@@ -6,7 +6,7 @@ from typing import Callable, Dict, List, Optional
 
 from scipy import stats
 
-from monitoring import variant_hits
+from yosai_intel_dashboard.src.infrastructure.monitoring import variant_hits
 from yosai_intel_dashboard.src.utils.sanitization import sanitize_label
 
 

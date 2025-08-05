@@ -12,7 +12,7 @@ if pkg is not None and not getattr(pkg, "__path__", None):  # fix test stubs
     pkg.__path__ = [str(Path(__file__).resolve().parent)]
 
 try:
-    from monitoring.prometheus.data_quality import (
+    from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.data_quality import (
         avro_decoding_failures,
         compatibility_failures,
     )

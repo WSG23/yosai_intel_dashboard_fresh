@@ -8,8 +8,8 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from yosai_intel_dashboard.src.database.async_engine_factory import build_async_engine
+from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.infrastructure.config import get_database_config
-from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.services.timescale.models import AccessEvent, Base
 
 # ---------------------------------------------------------------------------

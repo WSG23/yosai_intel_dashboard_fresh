@@ -18,7 +18,9 @@ class _LocatorMeta(type):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            from yosai_intel_dashboard.src.core import unicode as _unicode  # type: ignore
+            from yosai_intel_dashboard.src.core import (
+                unicode as _unicode,  # type: ignore
+            )
 
             return lambda: _unicode
         raise AttributeError(name)
@@ -46,8 +48,12 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
     @classmethod
     def _load_ai_plugin(cls) -> Optional[Any]:
         try:
-            from plugins.ai_classification.config import get_ai_config
-            from plugins.ai_classification.plugin import AIClassificationPlugin
+            from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.config import (
+                get_ai_config,
+            )
+            from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.plugin import (
+                AIClassificationPlugin,
+            )
         except Exception as exc:  # pragma: no cover - optional
             logger.warning(f"AI classification plugin unavailable: {exc}")
             return None
@@ -61,7 +67,9 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
     @classmethod
     def _load_json_plugin(cls) -> Optional[Any]:
         try:
-            from yosai_intel_dashboard.src.core.json_serialization_plugin import quick_start
+            from yosai_intel_dashboard.src.core.json_serialization_plugin import (
+                quick_start,
+            )
         except Exception as exc:  # pragma: no cover - optional
             logger.warning(f"JSON serialization plugin unavailable: {exc}")
             return None

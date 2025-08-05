@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from database import secure_exec
+from yosai_intel_dashboard.src.database import secure_exec
 
 
 def _histogram_sum(hist):

@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Sequence
 
-from database.secure_exec import execute_query, execute_secure_query
-from database.types import DatabaseConnection
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_query,
+    execute_secure_query,
+)
+from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 
 class OptimizedQueryService:

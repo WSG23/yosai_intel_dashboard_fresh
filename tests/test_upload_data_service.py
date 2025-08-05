@@ -21,9 +21,28 @@ if "dash" not in sys.modules:
     safe_import('dash._callback', types.ModuleType("dash._callback"))
 if "chardet" not in sys.modules:
     safe_import('chardet', types.ModuleType("chardet"))
+if "yosai_intel_dashboard.src.mapping" not in sys.modules:
+    mapping_stub = types.ModuleType("mapping")
+    core_stub = types.ModuleType("mapping.core")
+    interfaces_stub = types.ModuleType("mapping.core.interfaces")
+    interfaces_stub.ProcessorInterface = object
+    interfaces_stub.StorageInterface = object
+    models_stub = types.ModuleType("mapping.core.models")
+    models_stub.MappingData = object
+    mapping_stub.core = core_stub
+    core_stub.interfaces = interfaces_stub
+    core_stub.models = models_stub
+    safe_import('yosai_intel_dashboard.src.mapping', mapping_stub)
+    safe_import('yosai_intel_dashboard.src.mapping.core', core_stub)
+    safe_import('yosai_intel_dashboard.src.mapping.core.interfaces', interfaces_stub)
+    safe_import('yosai_intel_dashboard.src.mapping.core.models', models_stub)
+hash_stub = types.ModuleType("hashing")
+hash_stub.hash_dataframe = lambda *args, **kwargs: ""
+safe_import('yosai_intel_dashboard.src.utils.hashing', hash_stub)
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 
 from yosai_intel_dashboard.src.services.upload_data_service import UploadDataService
 from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore
@@ -48,3 +67,10 @@ def test_methods_proxy_to_store():
     mock_store.get_filenames.assert_called_once()
     mock_store.clear_all.assert_called_once()
     mock_store.load_dataframe.assert_called_once_with("file.csv")
+
+
+def test_service_rejects_invalid_filename():
+    mock_store = MagicMock(spec=UploadedDataStore)
+    service = UploadDataService(mock_store)
+    with pytest.raises(ValueError):
+        service.load_dataframe("../evil.csv")

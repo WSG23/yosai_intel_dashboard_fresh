@@ -170,3 +170,4 @@ def test_role_required_and_mfa_required(monkeypatch):
         assert resp.location.endswith("/mfa")
         auth.session["mfa_verified"] = True
         assert protected_mfa() == "ok"
+

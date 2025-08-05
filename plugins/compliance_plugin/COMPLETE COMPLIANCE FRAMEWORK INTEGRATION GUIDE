@@ -46,31 +46,31 @@ CREATE TABLE audit_log (
 
 ### Consent Management
 ```python
-from plugins.compliance_plugin import consent
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin import consent
 consent.record(user_id, granted=True)
 ```
 
 ### Data Retention
 ```python
-from plugins.compliance_plugin import retention
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin import retention
 retention.schedule_cleanup(days=30)
 ```
 
 ### Right to Deletion
 ```python
-from plugins.compliance_plugin import erasure
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin import erasure
 erasure.delete_user(user_id)
 ```
 
 ### Data Portability
 ```python
-from plugins.compliance_plugin import portability
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin import portability
 archive = portability.export_user(user_id)
 ```
 
 ### Audit Logging
 ```python
-from plugins.compliance_plugin import audit
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin import audit
 audit.log(user_id, action="download", details={"size": 512})
 ```
 

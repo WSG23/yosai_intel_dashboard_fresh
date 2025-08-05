@@ -12,16 +12,18 @@ import logging
 import math
 import re
 import unicodedata
+import warnings
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable, Iterable, Optional, Union
-import warnings
 
 import pandas as pd  # type: ignore[import]
 
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import UnicodeEncodingError
-from security.unicode_security_validator import (
+from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+    UnicodeEncodingError,
+)
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
     UnicodeSecurityConfig,
     UnicodeSecurityValidator,
 )

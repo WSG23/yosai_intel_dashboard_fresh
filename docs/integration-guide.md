@@ -17,7 +17,7 @@ from flask_login import login_required
 from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 from yosai_intel_dashboard.src.core.error_handlers import register_error_handlers
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
-from database.connection import create_database_connection
+from yosai_intel_dashboard.src.database.connection import create_database_connection
 
 # Import all compliance components
 from yosai_intel_dashboard.src.infrastructure.config.compliance_setup import (
@@ -29,14 +29,14 @@ from yosai_intel_dashboard.src.infrastructure.config.compliance_setup import (
     setup_data_retention_scheduler
 )
 from controllers.compliance_controller import register_compliance_routes
-from plugins.compliance_plugin.services.breach_notification_service import (
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.breach_notification_service import (
     create_breach_notification_service,
     BreachCategory,
 )
-from plugins.compliance_plugin.services.cross_border_transfer_service import create_cross_border_transfer_service
-from plugins.compliance_plugin.services.compliance_dashboard import create_compliance_dashboard
-from plugins.compliance_plugin.services.data_retention_service import create_data_retention_service
-from plugins.compliance_plugin.services.dpia_service import create_dpia_service
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.cross_border_transfer_service import create_cross_border_transfer_service
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.compliance_dashboard import create_compliance_dashboard
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.data_retention_service import create_data_retention_service
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.dpia_service import create_dpia_service
 
 def create_app(config_name: str = None) -> Flask:
     """
@@ -227,7 +227,7 @@ app.wsgi_app = RequestIDMiddleware(
 ### Creating the audit logger instance
 
 ```python
-from plugins.compliance_plugin.services.audit_logger import create_audit_logger
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.audit_logger import create_audit_logger
 
 audit_logger = create_audit_logger(db)
 ```
@@ -275,7 +275,7 @@ CREATE TABLE IF NOT EXISTS compliance_audit_log (
 ### Retention settings
 
 ```python
-from plugins.compliance_plugin.config import ComplianceConfig
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.config import ComplianceConfig
 
 config = ComplianceConfig.from_dict({"audit_retention_days": 365})
 ```
@@ -331,7 +331,7 @@ def create_cross_border_transfer_table():
     """
     return schema_sql
 
-from plugins.compliance_plugin.services.cross_border_transfer_service import (
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.services.cross_border_transfer_service import (
     TransferMechanism,
 )
 
@@ -836,7 +836,7 @@ def update_compliance_metrics(n):
 # DPIA assessment workflow
 # -----------------------------------------------------------------------------
 
-from database.secure_exec import execute_command
+from yosai_intel_dashboard.src.database.secure_exec import execute_command
 
 def demo_dpia_workflow():
     """Example flow for creating and approving a DPIA"""

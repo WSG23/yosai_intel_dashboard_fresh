@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Dict, Iterable, List
 
 from intel_analysis_service.nlp import classify_sentiment, detect_threat
-from database import social_signals
+from yosai_intel_dashboard.src.database import social_signals
 
 
 def stream_twitter(

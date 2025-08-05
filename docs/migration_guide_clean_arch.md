@@ -38,11 +38,11 @@ Key migration outcome: a unified callback system using **TrulyUnifiedCallbacks**
 |------------|------------|-------|
 | `from models.user import User` | `from yosai_intel_dashboard.src.core.domain.entities.user import User` | Symlink available |
 | `from services.analytics import AnalyticsService` | `from yosai_intel_dashboard.src.services.analytics import AnalyticsService` | Symlink available |
-| `from config.settings import SETTINGS` | `from yosai_intel_dashboard.src.infrastructure.config.settings import SETTINGS` | Symlink available |
-| `from monitoring.metrics import record_metric` | `from yosai_intel_dashboard.src.infrastructure.monitoring.metrics import record_metric` | Symlink available |
-| `from security.auth import AuthManager` | `from yosai_intel_dashboard.src.infrastructure.security.auth import AuthManager` | Symlink available |
+| `from yosai_intel_dashboard.src.infrastructure.config.settings import SETTINGS` | `from yosai_intel_dashboard.src.infrastructure.config.settings import SETTINGS` | Symlink available |
+| `from yosai_intel_dashboard.src.infrastructure.monitoring.metrics import record_metric` | `from yosai_intel_dashboard.src.infrastructure.monitoring.metrics import record_metric` | Symlink available |
+| `from yosai_intel_dashboard.src.infrastructure.security.auth import AuthManager` | `from yosai_intel_dashboard.src.infrastructure.security.auth import AuthManager` | Symlink available |
 | `from validation.validators import validate` | `from yosai_intel_dashboard.src.infrastructure.validation.validators import validate` | Symlink available |
-| `from api.router import router` | `from yosai_intel_dashboard.src.adapters.api.router import router` | Symlink available |
+| `from yosai_intel_dashboard.src.adapters.api.router import router` | `from yosai_intel_dashboard.src.adapters.api.router import router` | Symlink available |
 | `from components.table import DataTable` | `from yosai_intel_dashboard.src.adapters.ui.components.table import DataTable` | Symlink available |
 | `from pages.dashboard import DashboardPage` | `from yosai_intel_dashboard.src.adapters.ui.pages.dashboard import DashboardPage` | Symlink available |
 | `from core.use_cases.process import ProcessUseCase` | `from yosai_intel_dashboard.src.core.use_cases.process import ProcessUseCase` | Symlink available |
@@ -78,7 +78,7 @@ Pro tip: keep business logic in `core`; UI and frameworks belong in adapters or 
 Before:
 ```python
 # services/reporting_service.py
-from config.settings import SETTINGS
+from yosai_intel_dashboard.src.infrastructure.config.settings import SETTINGS
 from models.report import Report
 ```
 After:

@@ -8,8 +8,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from plugins.common_callbacks import csv_pre_process_callback
-
+from yosai_intel_dashboard.src.adapters.api.plugins.common_callbacks import (
+    csv_pre_process_callback,
+)
 from yosai_intel_dashboard.src.core.plugins.base import BasePlugin
 
 from .api import ComplianceAPI

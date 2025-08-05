@@ -442,9 +442,11 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
 def initialize_validation_callbacks() -> None:
     """Set up request validation callbacks on import."""
     try:
-        from security.validation_middleware import ValidationMiddleware
         from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (  # noqa: E501
             TrulyUnifiedCallbacks,
+        )
+        from yosai_intel_dashboard.src.infrastructure.security.validation_middleware import (
+            ValidationMiddleware,
         )
     except Exception:
         # Optional components may be missing in minimal environments

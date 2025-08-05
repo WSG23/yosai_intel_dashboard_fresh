@@ -43,4 +43,4 @@ All notable changes to this project will be documented in this file.
 ### Migration Notes
 - Update imports: `from models.X` → `from yosai_intel_dashboard.src.core.domain.entities.X`
 - Update imports: `from services.X` → `from yosai_intel_dashboard.src.services.X`
-- Update imports: `from config.X` → `from yosai_intel_dashboard.src.infrastructure.config.X`
+- Update imports: `from yosai_intel_dashboard.src.infrastructure.config.X` → `from yosai_intel_dashboard.src.infrastructure.config.X`

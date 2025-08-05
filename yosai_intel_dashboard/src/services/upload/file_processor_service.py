@@ -6,6 +6,7 @@ import pandas as pd
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from yosai_intel_dashboard.src.services.upload.protocols import UploadDataServiceProtocol, UploadStorageProtocol
 from yosai_intel_dashboard.src.infrastructure.callbacks import CallbackType
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class FileProcessor:
         content: str,
         progress_cb: Callable[[int], None] | None,
     ) -> Dict[str, Any]:
+        filename = sanitize_filename(filename)
         if progress_cb:
             self.processor.callbacks.register_callback(
                 CallbackType.PROGRESS, progress_cb, component_id=filename
@@ -66,6 +68,7 @@ class FileProcessor:
         total = len(file_parts)
         processed = 0
         for name, parts in file_parts.items():
+            safe_name = sanitize_filename(name)
             content = self._combine_parts(parts)
 
             def _cb(pct: int) -> None:
@@ -74,9 +77,9 @@ class FileProcessor:
                     task_progress(overall)
 
             try:
-                results[name] = await self._process_one(name, content, _cb)
+                results[safe_name] = await self._process_one(safe_name, content, _cb)
             except Exception as exc:
-                results[name] = {"error": str(exc)}
+                results[safe_name] = {"error": str(exc)}
             processed += 1
             if task_progress:
                 pct = int(processed / total * 100)

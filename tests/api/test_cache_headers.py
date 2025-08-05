@@ -1,4 +1,4 @@
-from api.cache import cached_json_response
+from yosai_intel_dashboard.src.adapters.api.cache import cached_json_response
 
 
 def test_cached_json_response_sets_headers():

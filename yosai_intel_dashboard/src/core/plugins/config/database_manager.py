@@ -4,9 +4,11 @@ import logging
 import sqlite3
 from typing import Any, Dict, Optional
 
-from database.types import DBRows
-
-from yosai_intel_dashboard.src.infrastructure.config.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT
+from yosai_intel_dashboard.src.database.types import DBRows
+from yosai_intel_dashboard.src.infrastructure.config.constants import (
+    DEFAULT_DB_HOST,
+    DEFAULT_DB_PORT,
+)
 
 from .async_database_manager import AsyncPostgreSQLManager
 from .interfaces import ConnectionResult, IDatabaseManager

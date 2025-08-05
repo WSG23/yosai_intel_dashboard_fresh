@@ -5,11 +5,16 @@ import sys
 
 # make intel_analysis_service package available
 sys.path.append(
-    str(pathlib.Path(__file__).resolve().parents[2] / "yosai_intel_dashboard" / "src" / "services")
+    str(
+        pathlib.Path(__file__).resolve().parents[2]
+        / "yosai_intel_dashboard"
+        / "src"
+        / "services"
+    )
 )
 
-from database import social_signals
 from integrations.social import reddit, rss, schema, twitter
+from yosai_intel_dashboard.src.database import social_signals
 
 
 def setup_function() -> None:

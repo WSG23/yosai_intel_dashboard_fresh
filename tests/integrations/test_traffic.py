@@ -7,8 +7,8 @@ from integrations.traffic import (
     parse_here_traffic,
     parse_transit_feed,
 )
-from database import transport_events
 from services.arrival_estimator import ArrivalEstimator
+from yosai_intel_dashboard.src.database import transport_events
 
 
 def test_feed_parsing() -> None:

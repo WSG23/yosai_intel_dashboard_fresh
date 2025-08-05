@@ -241,7 +241,7 @@ Client side frame times and callback runtimes can be captured using
 shared `PerformanceMonitor` instance.
 
 ```python
-from monitoring.ui_monitor import get_ui_monitor
+from yosai_intel_dashboard.src.infrastructure.monitoring.ui_monitor import get_ui_monitor
 
 ui = get_ui_monitor()
 ui.record_frame_time(16.7)

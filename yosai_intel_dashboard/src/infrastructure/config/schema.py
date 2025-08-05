@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-from database.utils import parse_connection_string
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.database.utils import parse_connection_string
 
 from .app_config import UploadConfig
 from .base import Config as DataclassConfig

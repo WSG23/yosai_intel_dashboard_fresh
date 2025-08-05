@@ -11,7 +11,7 @@ from yosai_intel_dashboard.src.core.unicode import (
     sanitize_dataframe,
     sanitize_unicode_input,
 )
-from security.unicode_security_validator import (
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
     UnicodeSecurityValidator as UnicodeValidator,
 )
 

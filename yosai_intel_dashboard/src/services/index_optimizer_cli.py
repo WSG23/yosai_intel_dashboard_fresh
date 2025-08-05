@@ -6,7 +6,7 @@ import argparse
 import json
 from typing import Sequence
 
-from database.index_optimizer import IndexOptimizer
+from yosai_intel_dashboard.src.database.index_optimizer import IndexOptimizer
 
 
 def main(argv: Sequence[str] | None = None) -> None:

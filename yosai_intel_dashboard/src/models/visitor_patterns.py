@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import date
 from typing import Dict
 
-from database.events import list_events
+from yosai_intel_dashboard.src.database.events import list_events
 
 CATEGORY_EXPECTED = {
     "meetings": 50,

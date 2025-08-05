@@ -28,13 +28,13 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, ConfigDict
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
-from database.utils import parse_connection_string
 from shared.errors.types import ErrorCode, ErrorResponse
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter
+from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.infrastructure.config import (
     get_app_config,

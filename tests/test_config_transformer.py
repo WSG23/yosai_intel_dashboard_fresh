@@ -1,6 +1,6 @@
 import os
 
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
 
 def test_environment_overrides(monkeypatch):

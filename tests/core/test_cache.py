@@ -1,9 +1,6 @@
 from __future__ import annotations
-
 from flask import Flask
-
 from yosai_intel_dashboard.src.core import cache as cache_module
-
 
 def test_init_app_configures_cache(monkeypatch):
     app = Flask(__name__)
@@ -35,5 +32,6 @@ def test_init_app_fallback(monkeypatch):
 
     assert cache_module.cache.get("foo") == "bar"
     assert "cache" in app.extensions
+
 
     cache_module.cache = original_cache

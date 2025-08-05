@@ -93,8 +93,8 @@ class RBACService:
 # Helper factory ---------------------------------------------------------------
 async def create_rbac_service() -> RBACService:
     """Create and initialize :class:`RBACService` using app configuration."""
+    from yosai_intel_dashboard.src.database.utils import parse_connection_string
     from yosai_intel_dashboard.src.infrastructure.config import get_database_config
-    from database.utils import parse_connection_string
 
     db_cfg = get_database_config()
     dsn = db_cfg.get_connection_string()

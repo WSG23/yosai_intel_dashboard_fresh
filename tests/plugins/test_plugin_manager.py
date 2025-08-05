@@ -9,9 +9,11 @@ from typing import Any, Dict, Protocol
 
 import pytest
 
-from config import create_config_manager
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 
 def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:
@@ -61,9 +63,9 @@ def _install_protocol_stubs(monkeypatch: "pytest.MonkeyPatch") -> None:
     core_pkg = types.ModuleType("services.data_processing.core")
     core_pkg.__path__ = []
 
-    safe_import('services', services_pkg)
-    safe_import('services.data_processing', data_processing_pkg)
-    safe_import('services.data_processing.core', core_pkg)
+    safe_import("services", services_pkg)
+    safe_import("services.data_processing", data_processing_pkg)
+    safe_import("services.data_processing.core", core_pkg)
     monkeypatch.setitem(
         sys.modules,
         "core.protocols.plugin",
@@ -82,7 +84,9 @@ def test_thread_stops_after_atexit(monkeypatch):
 
     monkeypatch.setattr(atexit, "register", fake_register)
 
-    from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager as PluginManager
+    from yosai_intel_dashboard.src.core.plugins.manager import (
+        ThreadSafePluginManager as PluginManager,
+    )
 
     mgr = PluginManager(
         ServiceContainer(), create_config_manager(), health_check_interval=1

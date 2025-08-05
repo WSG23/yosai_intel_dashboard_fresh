@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, Path(__file__).resolve().parent.parent.as_posix())
-from api.spec import create_spec
+from yosai_intel_dashboard.src.adapters.api.spec import create_spec
 
 
 def main() -> None:

@@ -1,12 +1,18 @@
 import pandas as pd
 import pytest
 
-from yosai_intel_dashboard.src.core.exceptions import ValidationError
-from security.business_logic_validator import BusinessLogicValidator
-from security.unicode_security_validator import UnicodeSecurityConfig
-from security.xss_validator import XSSPrevention
 from validation.security_validator import SecurityValidator
 from validation.unicode_validator import UnicodeValidator
+from yosai_intel_dashboard.src.core.exceptions import ValidationError
+from yosai_intel_dashboard.src.infrastructure.security.business_logic_validator import (
+    BusinessLogicValidator,
+)
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
+    UnicodeSecurityConfig,
+)
+from yosai_intel_dashboard.src.infrastructure.security.xss_validator import (
+    XSSPrevention,
+)
 
 # ----------------------------------------------------------------------
 # SecurityValidator validate_input / XSSPrevention.sanitize_html_output

@@ -13,7 +13,10 @@ from flask_login import current_user
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
 from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
-from database.secure_exec import execute_command, execute_query
+from yosai_intel_dashboard.src.database.secure_exec import (
+    execute_command,
+    execute_query,
+)
 
 logger = logging.getLogger(__name__)
 

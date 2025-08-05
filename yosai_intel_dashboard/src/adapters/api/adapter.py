@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import os
 
@@ -21,24 +20,34 @@ from fastapi.responses import FileResponse
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from api.analytics_router import init_cache_manager
-from api.analytics_router import router as analytics_router
-from api.explanations import router as explanations_router
-from api.monitoring_router import router as monitoring_router
-from api.routes.feature_flags import router as feature_flags_router
 from middleware.performance import TimingMiddleware
 from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 from middleware.security_headers import SecurityHeadersMiddleware
-from monitoring.request_metrics import (
-    upload_file_bytes,
-    upload_files_total,
-)
 from yosai_framework.service import BaseService
+from yosai_intel_dashboard.src.adapters.api.analytics_router import (
+    init_cache_manager,
+)
+from yosai_intel_dashboard.src.adapters.api.analytics_router import (
+    router as analytics_router,
+)
+from yosai_intel_dashboard.src.adapters.api.explanations import (
+    router as explanations_router,
+)
+from yosai_intel_dashboard.src.adapters.api.monitoring_router import (
+    router as monitoring_router,
+)
+from yosai_intel_dashboard.src.adapters.api.routes.feature_flags import (
+    router as feature_flags_router,
+)
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
 from yosai_intel_dashboard.src.infrastructure.config import get_security_config
 from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
+from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import (
+    upload_file_bytes,
+    upload_files_total,
+)
 from yosai_intel_dashboard.src.services.auth import require_service_token
 
 
@@ -63,9 +72,7 @@ def _configure_app(service: BaseService) -> str:
     limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
     service.app.add_middleware(RateLimitMiddleware, limiter=limiter)
 
-    return os.path.abspath(
-        os.path.join(os.path.dirname(__file__), os.pardir, "build")
-    )
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "build"))
 
 
 def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, callable]:
@@ -80,11 +87,14 @@ def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, calla
         allow_headers=["Authorization", "Content-Type"],
     )
 
-    try:
-        service.app.state.rbac_service = asyncio.run(create_rbac_service())
-    except Exception as exc:  # pragma: no cover - best effort
-        service.log.error("Failed to initialize RBAC service: %s", exc)
-        service.app.state.rbac_service = None
+    async def init_rbac_service() -> None:
+        try:
+            service.app.state.rbac_service = await create_rbac_service()
+        except Exception as exc:  # pragma: no cover - best effort
+            service.log.error("Failed to initialize RBAC service: %s", exc)
+            service.app.state.rbac_service = None
+
+    service.app.add_event_handler("startup", init_rbac_service)
 
     secret_key = os.getenv("SECRET_KEY")
     if not secret_key:
@@ -267,7 +277,11 @@ def _register_upload_endpoints(
         status_data = file_processor.get_job_status(job_id)
         return {"status": status_data}
 
-    from api.settings_endpoint import SettingsSchema, _load_settings, _save_settings
+    from yosai_intel_dashboard.src.adapters.api.settings_endpoint import (
+        SettingsSchema,
+        _load_settings,
+        _save_settings,
+    )
 
     @service.app.get("/v1/settings", response_model=SettingsSchema)
     def get_settings() -> dict:

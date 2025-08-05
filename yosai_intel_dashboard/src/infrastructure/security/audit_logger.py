@@ -9,8 +9,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from core.integrations.siem_connectors import send_to_siem
-from monitoring.alerts import AlertManager
-from monitoring.anomaly_detector import AnomalyDetector
+from yosai_intel_dashboard.src.infrastructure.monitoring.alerts import AlertManager
+from yosai_intel_dashboard.src.infrastructure.monitoring.anomaly_detector import (
+    AnomalyDetector,
+)
 
 
 @dataclass(frozen=True)

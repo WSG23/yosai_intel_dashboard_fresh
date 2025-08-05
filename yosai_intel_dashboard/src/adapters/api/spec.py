@@ -110,7 +110,7 @@ if os.environ.get("SPEC_STUBS"):
 
 def create_flask_app() -> Flask:
     """Create a Flask app with all blueprints registered."""
-    from api.settings_endpoint import settings_bp
+    from yosai_intel_dashboard.src.adapters.api.settings_endpoint import settings_bp
     from yosai_intel_dashboard.src.core.container import container
     from yosai_intel_dashboard.src.services.device_endpoint import (
         create_device_blueprint,
@@ -127,10 +127,13 @@ def create_flask_app() -> Flask:
     )
 
     if not os.environ.get("SPEC_STUBS"):
-        from plugins.compliance_plugin.compliance_controller import compliance_bp
-
-        import api.plugin_performance as plugin_perf
-        import api.risk_scoring as risk
+        from yosai_intel_dashboard.src.adapters.api import (
+            plugin_performance as plugin_perf,
+        )
+        from yosai_intel_dashboard.src.adapters.api import risk_scoring as risk
+        from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.compliance_controller import (
+            compliance_bp,
+        )
     else:
         compliance_bp = Blueprint(
             "compliance", __name__, url_prefix="/v1/complia" "nce"

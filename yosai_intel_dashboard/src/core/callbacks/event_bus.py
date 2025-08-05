@@ -1,17 +1,14 @@
-from __future__ import annotations
-
 import asyncio
 import inspect
 import time
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Tuple
 
-
 Callback = Callable[..., Any]
 
 
 class EventBus:
-    """Simple publish/subscribe event bus."""
+    """Simple publish/subscribe event bus with async support."""
 
     def __init__(self) -> None:
         self._subscribers: Dict[Any, List[Tuple[int, Callback]]] = defaultdict(list)
@@ -27,6 +24,14 @@ class EventBus:
         subs.append((priority, func))
         subs.sort(key=lambda x: x[0])
 
+    async def subscribe_async(self, event: Any, func: Callback, *, priority: int = 50) -> None:
+        """Asynchronously subscribe *func* to *event*.
+
+        Provided for API symmetry; simply delegates to :meth:`subscribe`.
+        """
+
+        self.subscribe(event, func, priority=priority)
+
     def unsubscribe(self, event: Any, func: Callback) -> None:
         """Unsubscribe *func* from *event*."""
 
@@ -35,27 +40,24 @@ class EventBus:
         ]
 
     # ------------------------------------------------------------------
-    def emit(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
-        """Synchronously emit *event* to all subscribers."""
+    def publish(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
+        """Synchronously publish *event* to all subscribers."""
 
         results: List[Any] = []
         callbacks = list(self._subscribers.get(event, []))
         for _, callback in callbacks:
-            results.append(
-                self._invoke(event, callback, *args, **kwargs)
-            )
+            results.append(self._invoke(event, callback, *args, **kwargs))
         return results
 
-    async def emit_async(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
-        """Asynchronously emit *event* to all subscribers."""
+    async def publish_async(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
+        """Asynchronously publish *event* to all subscribers."""
 
         results: List[Any] = []
         for _, callback in self._subscribers.get(event, []):
-            results.append(
-                await self._invoke_async(event, callback, *args, **kwargs)
-            )
+            results.append(await self._invoke_async(event, callback, *args, **kwargs))
         return results
 
+    # ------------------------------------------------------------------
     def _update_metrics(self, event: Any, *, duration: float | None = None, error: bool = False) -> None:
         """Update metrics for a callback invocation."""
 
@@ -81,9 +83,7 @@ class EventBus:
             self._update_metrics(event, error=True)
             return None
 
-    async def _invoke_async(
-        self, event: Any, callback: Callback, *args: Any, **kwargs: Any
-    ) -> Any:
+    async def _invoke_async(self, event: Any, callback: Callback, *args: Any, **kwargs: Any) -> Any:
         """Invoke *callback* asynchronously and record metrics."""
 
         start = time.perf_counter()
@@ -98,6 +98,7 @@ class EventBus:
             self._update_metrics(event, error=True)
             return None
 
+    # ------------------------------------------------------------------
     def get_callbacks(self, event: Any) -> List[Callback]:
         """Return callbacks subscribed to *event*."""
 
@@ -121,7 +122,15 @@ class EventPublisher:
     def __init__(self, event_bus: EventBus | None = None) -> None:
         self.event_bus = event_bus or EventBus()
 
-    def emit_event(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
-        """Emit *event* on the configured :class:`EventBus`."""
+    def publish_event(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
+        """Publish *event* on the configured :class:`EventBus`."""
 
-        return self.event_bus.emit(event, *args, **kwargs)
+        return self.event_bus.publish(event, *args, **kwargs)
+
+    async def publish_event_async(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
+        """Asynchronously publish *event* on the configured :class:`EventBus`."""
+
+        return await self.event_bus.publish_async(event, *args, **kwargs)
+
+
+__all__ = ["EventBus", "EventPublisher"]

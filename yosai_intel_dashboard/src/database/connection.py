@@ -6,9 +6,9 @@ from typing import Any, Iterable, Optional, Protocol
 
 from opentelemetry import trace
 
-from database.metrics import queries_total, query_errors_total
-from database.types import DBRows
-from database.utils import parse_connection_string
+from yosai_intel_dashboard.src.database.metrics import queries_total, query_errors_total
+from yosai_intel_dashboard.src.database.types import DBRows
+from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
     DatabaseManager,
     MockConnection,

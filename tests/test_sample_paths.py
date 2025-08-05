@@ -1,6 +1,6 @@
 import os
 
-from config import get_config, reload_config
+from yosai_intel_dashboard.src.infrastructure.config import get_config, reload_config
 from yosai_intel_dashboard.src.services import AnalyticsService
 
 

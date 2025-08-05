@@ -193,16 +193,26 @@ with this Python release and newer.
    unresolved imports.
 
 4. **Install Node dependencies (optional):**
-   PostCSS and other build tools live in `package.json`. `./scripts/setup.sh`
-   already runs `npm install`, but you can execute it manually if desired.
-   ```bash
-   npm install
-   ```
+    PostCSS and other build tools live in `package.json`. `./scripts/setup.sh`
+    already runs `npm install`, but you can execute it manually if desired.
+    ```bash
+    npm install
+    ```
+
+### Dependency files
+
+The project uses two primary requirement files to manage Python dependencies:
+
+- `requirements.txt` – core runtime packages required to run the application and services.
+- `requirements-dev.txt` – extends the base requirements with development and test tools.
+
+Service-specific and test-only requirement files have been removed to avoid version drift. Add new dependencies to one of the files above as appropriate.
+
 5. **Set up environment:**
-   ```bash
-    cp .env.example .env
-    # Generate random development secrets
-    python scripts/generate_dev_secrets.py >> .env
+    ```bash
+     cp .env.example .env
+     # Generate random development secrets
+     python scripts/generate_dev_secrets.py >> .env
     # Edit .env with your configuration (e.g. set HOST and database info)
     # or store them in Vault
     vault kv put secret/data/yosai \
@@ -372,6 +382,25 @@ the container. If you override the default command in Docker Compose, run
 The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules.
 
 web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
+
+#### Supported container configurations
+
+The repository maintains a small set of Docker Compose files for common scenarios:
+
+- `docker-compose.yml` – core services for local development.
+- `docker-compose.dev.yml` – extends the core stack with Kafka and developer tooling via `docker-compose.kafka.yml`.
+- `docker-compose.kafka.yml` – standalone Kafka and Schema Registry cluster.
+- `docker-compose.unified.yml` – runs the full stack for demos and integration testing.
+- `docker-compose.prod.yml` – example production deployment.
+
+Dockerfiles are provided for the active services:
+
+- `Dockerfile` – base Python service image.
+- `Dockerfile.analytics` – analytics microservice.
+- `Dockerfile.event-processor` – Go event processor.
+- `Dockerfile.gateway` – Go API gateway.
+
+Legacy container definitions have been removed to avoid confusion.
 
 ### Go API Gateway
 
@@ -898,7 +927,7 @@ resolved from anywhere:
 ```python
 # Legacy paths
 from simple_di import ServiceContainer
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 # New paths
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
@@ -913,7 +942,7 @@ A short example without the container:
 
 ```python
 # Legacy path
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 # New path
 from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 
@@ -1060,7 +1089,7 @@ the new unified configuration through it instead:
 ```python
 # Legacy paths
 from simple_di import ServiceContainer
-from config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
 # New paths
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
@@ -1143,7 +1172,7 @@ database:
 
 ```python
 # Legacy path
-from config.database_manager import DatabaseConnectionFactory, DatabaseSettings
+from yosai_intel_dashboard.src.infrastructure.config.database_manager import DatabaseConnectionFactory, DatabaseSettings
 # New path
 from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
     DatabaseConnectionFactory,
@@ -1289,6 +1318,8 @@ mkcert -key-file localhost+1-key.pem -cert-file localhost+1.pem localhost 127.0.
 
 Both files must be present and match or the app will raise
 `KEY_VALUES_MISMATCH`. HTTPS is enabled automatically when these files exist.
+Generated certificates must not be committed to source control; generate them
+locally or manage them through a secure secrets manager.
 
 All secrets can be provided via the `SecretManager` which supports `env`,
 `aws`, and `vault` backends. Place these values in `.env` or mount them as

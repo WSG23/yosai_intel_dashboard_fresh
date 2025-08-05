@@ -7,9 +7,9 @@ import warnings
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
-from database.utils import parse_connection_string
 from optional_dependencies import import_optional
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
+from yosai_intel_dashboard.src.database.utils import parse_connection_string
 
 from .app_config import UploadConfig
 from .cache_config import CacheConfig
