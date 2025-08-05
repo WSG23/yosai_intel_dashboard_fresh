@@ -29,7 +29,7 @@ from dash.dependencies import Input, Output, State
 
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
 from .events import CallbackEvent
-from ..event_bus import EventBus, EventPublisher
+from ...core.callbacks.event_bus import EventBus, EventPublisher
 
 # ---------------------------------------------------------------------------
 # Type aliases
@@ -356,7 +356,7 @@ class TrulyUnifiedCallbacks(EventPublisher):
     ) -> List[Any]:
         """Trigger registered event callbacks for *event* synchronously."""
 
-        return self.event_bus.emit(event, *args, **kwargs)
+        return self.event_bus.publish(event, *args, **kwargs)
 
     async def trigger_event_async(
         self, event: CallbackEvent, *args: Any, **kwargs: Any
@@ -366,7 +366,7 @@ class TrulyUnifiedCallbacks(EventPublisher):
         Callbacks are executed concurrently using ``asyncio`` when possible.
         """
 
-        return await self.event_bus.emit_async(event, *args, **kwargs)
+        return await self.event_bus.publish_async(event, *args, **kwargs)
 
     def get_event_callbacks(self, event: CallbackEvent) -> List[CallbackHandler]:
         """Return registered callbacks for *event*.

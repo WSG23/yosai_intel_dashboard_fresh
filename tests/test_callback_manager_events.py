@@ -1,5 +1,5 @@
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
-from yosai_intel_dashboard.src.infrastructure.event_bus import EventBus
+from yosai_intel_dashboard.src.core.callbacks.event_bus import EventBus
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
 
 

@@ -1,7 +1,27 @@
-"""Unified callback utilities."""
+"""Unified callback utilities and event bus."""
 
-from yosai_intel_dashboard.src.core.truly_unified_callbacks import Operation, TrulyUnifiedCallbacks
+from .event_bus import EventBus, EventPublisher
 
-UnifiedCallbackManager = TrulyUnifiedCallbacks
+__all__ = [
+    "EventBus",
+    "EventPublisher",
+    "Operation",
+    "TrulyUnifiedCallbacks",
+    "UnifiedCallbackManager",
+]
 
-__all__ = ["Operation", "TrulyUnifiedCallbacks", "UnifiedCallbackManager"]
+
+def __getattr__(name: str):  # pragma: no cover - lazy loading
+    if name in {"Operation", "TrulyUnifiedCallbacks", "UnifiedCallbackManager"}:
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+            Operation,
+            TrulyUnifiedCallbacks,
+        )
+
+        globals().update(
+            Operation=Operation,
+            TrulyUnifiedCallbacks=TrulyUnifiedCallbacks,
+            UnifiedCallbackManager=TrulyUnifiedCallbacks,
+        )
+        return globals()[name]
+    raise AttributeError(name)
