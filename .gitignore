@@ -134,6 +134,9 @@ venv_dashboard/
 config.zip
 app.log
 
+# Code review reports
+code_review_report.md
+
 !load-tests/thresholds.json
 !load-tests/baseline.json
 archive/

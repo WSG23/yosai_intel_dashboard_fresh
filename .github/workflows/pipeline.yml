@@ -66,6 +66,23 @@ jobs:
             profiling_report.prof
             profiling_report.txt
 
+  code-review:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Run code review analysis
+        run: |
+          python scripts/find_duplicate_functions.py > code_review_report.md
+      - name: Upload code review report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-review-report
+          path: code_review_report.md
+
   security-scan:
     needs: build-test
     runs-on: ubuntu-latest
