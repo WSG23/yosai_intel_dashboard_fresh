@@ -373,6 +373,25 @@ The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so
 
 web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
 
+### Supported Container Configurations
+
+The repository maintains a curated set of Dockerfiles and Compose definitions:
+
+**Dockerfiles**
+
+- `Dockerfile` – dashboard service
+- `Dockerfile.analytics` – analytics microservice
+- `Dockerfile.event-processor` – Go event processor
+- `Dockerfile.gateway` – Go API gateway
+
+**Docker Compose files**
+
+- `docker-compose.yml` – core development stack (dashboard, analytics, gateway, event processor)
+- `docker-compose.dev.yml` – extends the core stack with TimescaleDB, Redis and a local Kafka cluster via `docker-compose.kafka.yml`
+- `docker-compose.kafka.yml` – three-node Kafka cluster with Schema Registry
+- `docker-compose.prod.yml` – production stack with Postgres, PgBouncer and Redis
+- `docker-compose.unified.yml` – full local stack with observability tools (Jaeger, Prometheus, Grafana and Loki)
+
 ### Go API Gateway
 
 The source code for the gateway lives under the `gateway/` directory.
