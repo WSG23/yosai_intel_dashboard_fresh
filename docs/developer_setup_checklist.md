@@ -39,3 +39,23 @@ isort --check .
 mypy --strict .
 ```
 These commands ensure consistent code style and pass the linting rules used in CI.
+
+## Verify Upload Functionality
+After starting the development servers you can manually confirm that the upload flow is ready:
+
+1. Confirm the React app responds on port 3000:
+   ```bash
+   curl -I http://localhost:3000
+   ```
+2. Confirm the Flask API is serving requests (default port **5001**):
+   ```bash
+   curl -I http://localhost:5001/v1/health
+   ```
+3. Verify CORS is enabled on the upload endpoint:
+   ```bash
+   curl -I -X OPTIONS http://localhost:5001/v1/upload \
+     -H "Origin: http://localhost:3000" \
+     -H "Access-Control-Request-Method: POST"
+   ```
+
+These checks replace the former `test_upload.sh` script. The full upload flow is covered by automated end-to-end tests in `cypress/e2e/upload.cy.ts`.
