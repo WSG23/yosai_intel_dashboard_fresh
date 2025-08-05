@@ -52,13 +52,18 @@ def register_upload_services(container: ServiceContainer) -> None:
 
 
 def register_all_services(container: ServiceContainer) -> None:
-    """Register all services with the container."""
+    """Register all services with the container.
+
+    Upload services are registered before analytics services so that
+    analytics components can resolve their upload dependencies.
+    """
 
     register_infrastructure_services(container)
     register_security_services(container)
     register_business_services(container)
-    register_analytics_services(container)
+    # Upload services must precede analytics to satisfy dependencies
     register_upload_services(container)
+    register_analytics_services(container)
 
 
 def register_all_application_services(container: ServiceContainer) -> None:
