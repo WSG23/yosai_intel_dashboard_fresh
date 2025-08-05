@@ -76,6 +76,10 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
             "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
             "memory_usage": int(df.memory_usage(deep=True).sum()),
             "null_counts": {col: int(df[col].isna().sum()) for col in df.columns},
+            "total_events": int(total_events),
+            "active_users": int(active_users),
+            "active_doors": int(active_doors),
+            "date_range": date_range,
         }
 
     # ------------------------------------------------------------------
@@ -97,13 +101,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
     def _calculate_statistics(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
         """Calculate statistics for validated ``data``."""
         if not data:
-            return {
-                "total_events": 0,
-                "active_users": 0,
-                "active_doors": 0,
-                "date_range": {"start": "Unknown", "end": "Unknown"},
-            }
-
+            return self.summarize_dataframe(pd.DataFrame())
 
         combined = pd.concat(list(data.values()), ignore_index=True)
         return self.summarize_dataframe(combined)
