@@ -29,7 +29,6 @@ resources:
     memory: 512Mi
 
 pythonPath: "/app:/app/yosai_intel_dashboard/src"
-modulePath: "yosai_intel_dashboard.src.services.main"
 enableLegacyImports: "true"
 probes:
   liveness: "/health/live"

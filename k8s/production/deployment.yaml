@@ -64,8 +64,6 @@ spec:
               value: "6379"
             - name: PYTHONPATH
               value: "/app:/app/yosai_intel_dashboard/src"
-            - name: MODULE_PATH
-              value: "yosai_intel_dashboard.src.services.main"
             - name: ENABLE_LEGACY_IMPORTS
               valueFrom:
                 configMapKeyRef:

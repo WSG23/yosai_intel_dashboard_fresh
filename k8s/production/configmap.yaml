@@ -5,5 +5,4 @@ metadata:
   namespace: yosai-prod
 data:
   PYTHONPATH: "/app:/app/yosai_intel_dashboard/src"
-  MODULE_PATH: "yosai_intel_dashboard.src.services.main"
   ENABLE_LEGACY_IMPORTS: "true"
