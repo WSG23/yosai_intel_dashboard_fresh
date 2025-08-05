@@ -88,6 +88,16 @@ if TYPE_CHECKING:  # pragma: no cover - for type hints only
 class TrulyUnifiedCallbacks(EventPublisher):
     """Unified system providing event, Dash and operation callbacks."""
 
+    # ------------------------------------------------------------------
+    # Quick reference for key methods
+    #   callback               -> Dash callback registration
+    #   unified_callback       -> alias for ``callback``
+    #   handle_register/
+    #   register_handler       -> low-level Dash registration
+    #   register_callback      -> event callback registration
+    #   trigger_event          -> triggers registered event callbacks
+    # ------------------------------------------------------------------
+
     def __init__(
         self,
         app: Dash | None = None,
@@ -113,12 +123,13 @@ class TrulyUnifiedCallbacks(EventPublisher):
     def callback(
         self, *args: Any, **kwargs: Any
     ) -> Callable[[CallbackHandler], CallbackHandler]:
-        """Unified callback decorator for Dash callbacks."""
+        """Dash callback registration decorator."""
         from ...core.plugins.callback_unifier import CallbackUnifier
 
         return CallbackUnifier(self)(*args, **kwargs)
 
     unified_callback = callback
+    unified_callback.__doc__ = "Alias for :meth:`callback`."
 
     # Dash callback registration ---------------------------------------
     def handle_register(
@@ -132,7 +143,7 @@ class TrulyUnifiedCallbacks(EventPublisher):
         allow_duplicate: bool = False,
         **kwargs: Any,
     ) -> Callable[[CallbackHandler], CallbackHandler]:
-        """Register a Dash callback and track conflicts.
+        """Low-level Dash callback registration and conflict tracking.
 
         Thread-safe via an internal ``RLock``.
         """
@@ -202,6 +213,34 @@ class TrulyUnifiedCallbacks(EventPublisher):
         return decorator
 
     # ------------------------------------------------------------------
+    def register_callback(
+        self,
+        outputs: Outputs,
+        inputs: Inputs = None,
+        states: States = None,
+        *,
+        callback_id: str,
+        component_name: str,
+        allow_duplicate: bool = False,
+        **kwargs: Any,
+    ) -> Callable[[CallbackHandler], CallbackHandler]:
+        """Alias for :meth:`handle_register` (low-level Dash registration).
+
+        Thread-safe via :meth:`handle_register`'s internal ``RLock``.
+        """
+
+        return self.handle_register(
+            outputs=outputs,
+            inputs=inputs,
+            states=states,
+            callback_id=callback_id,
+            component_name=component_name,
+            allow_duplicate=allow_duplicate,
+            **kwargs,
+        )
+
+    # ------------------------------------------------------------------
+
     def register_handler(
         self,
         outputs: Outputs,
@@ -213,7 +252,7 @@ class TrulyUnifiedCallbacks(EventPublisher):
         allow_duplicate: bool = False,
         **kwargs: Any,
     ) -> Callable[[CallbackHandler], CallbackHandler]:
-        """Alias for :meth:`handle_register`.
+        """Alias for :meth:`handle_register` (low-level Dash registration).
 
         Thread-safe via :meth:`handle_register`'s internal ``RLock``.
         """
@@ -315,7 +354,7 @@ class TrulyUnifiedCallbacks(EventPublisher):
     def trigger_event(
         self, event: CallbackEvent, *args: Any, **kwargs: Any
     ) -> List[Any]:
-        """Synchronously trigger callbacks registered for *event*."""
+        """Trigger registered event callbacks for *event* synchronously."""
 
         return self.event_bus.emit(event, *args, **kwargs)
 
@@ -532,6 +571,7 @@ class TrulyUnifiedCallbacks(EventPublisher):
 
     # Compatibility wrappers -------------------------------------------
     register_callback = register_event  # noqa: F811
+    register_callback.__doc__ = "Event callback registration."
     unregister_callback = unregister_event
     trigger = trigger_event
     trigger_async = trigger_event_async
