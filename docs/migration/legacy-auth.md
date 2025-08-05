@@ -1,10 +1,11 @@
 # Legacy Auth Migration
 
-The legacy authentication system relied on a collection of Flask blueprints and custom session handlers. This implementation has been superseded by the unified authentication service located in `services/auth_service.py`.
+The legacy authentication system relied on a collection of Flask blueprints and custom session handlers. This implementation has been fully removed in favor of the unified authentication service located in `services/auth_service.py`.
 
-## Legacy Usage
+## Legacy Usage (removed)
 
 ```python
+# previous API (removed)
 from legacy_auth import login_user
 
 token = login_user("alice", "p@ssw0rd")
@@ -27,7 +28,7 @@ token = auth.login("alice", "p@ssw0rd")
 
 ## Migration Steps
 
-1. Remove any imports of `legacy_auth` modules.
+1. Remove any remaining imports of `legacy_auth` modules, as the package no longer exists.
 2. Update your login flows to call methods on `AuthService`.
 3. Ensure tokens are issued via the new service and update configuration files accordingly.
 
