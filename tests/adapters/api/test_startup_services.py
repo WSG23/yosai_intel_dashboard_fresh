@@ -26,7 +26,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-def _create_app(monkeypatch):
+def _create_app(monkeypatch, flags):
     import pydantic as pydantic_real
 
     monkeypatch.setitem(sys.modules, "pydantic", pydantic_real)
@@ -79,15 +79,22 @@ def _create_app(monkeypatch):
 
     from fastapi import APIRouter
 
+    async def init_cache_manager():
+        flags["cache"] = True
+
     analytics_stub = types.ModuleType("api.analytics_router")
     analytics_stub.router = APIRouter()
-    analytics_stub.init_cache_manager = lambda: None
+    analytics_stub.init_cache_manager = init_cache_manager
+
     monitoring_stub = types.ModuleType("api.monitoring_router")
     monitoring_stub.router = APIRouter()
+
     explanations_stub = types.ModuleType("api.explanations")
     explanations_stub.router = APIRouter()
+
     feature_stub = types.ModuleType("api.routes.feature_flags")
     feature_stub.router = APIRouter()
+
     for name, mod in {
         "api.analytics_router": analytics_stub,
         "api.monitoring_router": monitoring_stub,
@@ -96,7 +103,7 @@ def _create_app(monkeypatch):
     }.items():
         monkeypatch.setitem(sys.modules, name, mod)
 
-    upload_upload_stub = types.ModuleType(
+    upload_stub = types.ModuleType(
         "yosai_intel_dashboard.src.services.upload.upload_endpoint"
     )
     from pydantic import BaseModel
@@ -111,13 +118,13 @@ def _create_app(monkeypatch):
     class StatusSchema(BaseModel):
         status: str
 
-    upload_upload_stub.UploadRequestSchema = UploadRequestSchema
-    upload_upload_stub.UploadResponseSchema = UploadResponseSchema
-    upload_upload_stub.StatusSchema = StatusSchema
+    upload_stub.UploadRequestSchema = UploadRequestSchema
+    upload_stub.UploadResponseSchema = UploadResponseSchema
+    upload_stub.StatusSchema = StatusSchema
     monkeypatch.setitem(
         sys.modules,
         "yosai_intel_dashboard.src.services.upload.upload_endpoint",
-        upload_upload_stub,
+        upload_stub,
     )
 
     settings_stub = types.ModuleType("api.settings_endpoint")
@@ -136,17 +143,19 @@ def _create_app(monkeypatch):
         types.SimpleNamespace(validate_all_secrets=lambda: None),
     )
 
-    async def _rbac_stub():
-        return None
+    async def fake_create_rbac_service():
+        flags["rbac"] = True
+        return object()
 
     monkeypatch.setitem(
         sys.modules,
         "yosai_intel_dashboard.src.core.rbac",
-        types.SimpleNamespace(create_rbac_service=_rbac_stub),
+        types.SimpleNamespace(create_rbac_service=fake_create_rbac_service),
     )
+
     security_mod = types.ModuleType("yosai_intel_dashboard.src.services.security")
     security_mod.verify_service_jwt = lambda token: True
-    security_mod.require_token = lambda f: f
+    security_mod.require_service_token = lambda f: f
     security_mod.require_permission = lambda *a, **k: (lambda f: f)
     security_mod.__path__ = []
     monkeypatch.setitem(
@@ -157,6 +166,7 @@ def _create_app(monkeypatch):
         "yosai_intel_dashboard.src.services.security.jwt_service",
         types.ModuleType("jwt_service"),
     )
+
     config_mod = types.ModuleType("yosai_intel_dashboard.src.infrastructure.config")
     config_mod.get_security_config = lambda: types.SimpleNamespace(cors_origins=["*"])
     config_mod.get_cache_config = lambda: types.SimpleNamespace(ttl=0)
@@ -184,14 +194,6 @@ def _create_app(monkeypatch):
         def __init__(self, *a, **k):
             pass
 
-        def hit(self, user, ip, tier="default"):
-            return {
-                "allowed": True,
-                "limit": 100,
-                "remaining": 100,
-                "retry_after": None,
-            }
-
     class RateLimitMiddleware(BaseHTTPMiddleware):
         def __init__(self, app, limiter, **_):
             super().__init__(app)
@@ -202,17 +204,6 @@ def _create_app(monkeypatch):
     rate_limit_stub.RedisRateLimiter = DummyLimiter
     rate_limit_stub.RateLimitMiddleware = RateLimitMiddleware
     monkeypatch.setitem(sys.modules, "middleware.rate_limit", rate_limit_stub)
-
-    perf_stub = types.ModuleType("monitoring.performance_profiler")
-    from contextlib import contextmanager
-
-    class DummyProfiler:
-        @contextmanager
-        def profile_endpoint(self, endpoint):
-            yield
-
-    perf_stub.PerformanceProfiler = DummyProfiler
-    monkeypatch.setitem(sys.modules, "monitoring.performance_profiler", perf_stub)
 
     prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")
     from fastapi import Response
@@ -232,29 +223,21 @@ def _create_app(monkeypatch):
     prom_stub.Instrumentator = lambda: DummyInstr()
     monkeypatch.setitem(sys.modules, "prometheus_fastapi_instrumentator", prom_stub)
 
-    # redis module is provided via tests.config stub
-
     adapter = importlib.import_module("api.adapter")
     return adapter.create_api_app()
 
 
 @pytest.mark.unit
-def test_metrics_endpoint_records_upload(monkeypatch):
+def test_startup_initializes_services(monkeypatch):
+    flags = {"rbac": False, "cache": False}
     monkeypatch.setenv(
         "SECRET_KEY",
         os.environ.get("SECRET_KEY", os.urandom(16).hex()),
     )
-    app = _create_app(monkeypatch)
-    client = TestClient(app)
+    app = _create_app(monkeypatch, flags)
+    assert flags == {"rbac": False, "cache": False}
 
-    csrf = client.get("/v1/csrf-token").json()["csrf_token"]
-    files = {"files": ("t.txt", b"hello", "text/plain")}
-    resp = client.post(
-        "/v1/upload",
-        files=files,
-        headers={"X-CSRFToken": csrf},
-    )
-    assert resp.status_code == 202
-
-    metrics = client.get("/metrics").text
-    assert "api_upload_files_total" in metrics
+    with TestClient(app):
+        assert flags["rbac"] is True
+        assert flags["cache"] is True
+        assert app.state.rbac_service is not None
