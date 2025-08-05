@@ -37,15 +37,15 @@ With these variables set, a log line looks similar to the following:
 2. Point Filebeat or your log shipper to `localhost:5044`. Logs are JSON encoded
    and include `service`, `service_version` and `environment` fields as well as
    trace identifiers when available.
-3. If using the provided `docker-compose.dev.yml`, logs can also be viewed in
-   Kibana once an Elasticsearch instance is connected.
+3. If using the provided `docker-compose.unified.yml`, logs can also be viewed
+   via Loki in Grafana.
 
 ## Viewing Traces
 
-1. Launch the Jaeger all-in-one image or a Zipkin server (both included in
-   `docker-compose.dev.yml`):
+1. Launch the Jaeger all-in-one image (included in
+   `docker-compose.unified.yml`):
    ```bash
-   docker-compose -f docker-compose.dev.yml up jaeger # or zipkin
+   docker-compose -f docker-compose.unified.yml up jaeger
    ```
 2. Open the Jaeger UI at [http://localhost:16686](http://localhost:16686) or the
    Zipkin UI at [http://localhost:9411](http://localhost:9411) and select the

@@ -24,7 +24,7 @@ services:
   analytics-service:
     build:
       context: .
-      dockerfile: Dockerfile.analytics
+      dockerfile: Dockerfile
     command: ["python", "-m", "uvicorn", "yosai_intel_dashboard.src.services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
     volumes:
       - .:/app
@@ -53,14 +53,9 @@ services:
 
   event-processor:
     build:
-      context: .
-      dockerfile: Dockerfile.event-processor
-    volumes:
-      - .:/app
+      context: yosai_intel_dashboard/src/services/event_processing
+      dockerfile: Dockerfile
     environment:
-      <<: *env
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      BROKERS: kafka1:29092,kafka2:29093,kafka3:29094
+    ports:
+      - "2112:2112"
