@@ -1,4 +1,9 @@
-"""Comprehensive service registration for the DI container."""
+"""Comprehensive service registration for the DI container.
+
+Service keys:
+- ``database_connection`` – Database connection created via
+  :class:`DatabaseConnectionFactory.create`.
+"""
 
 from __future__ import annotations
 
@@ -11,7 +16,6 @@ from yosai_intel_dashboard.src.core.interfaces.protocols import (
     StorageProtocol,
 )
 from yosai_intel_dashboard.src.core.protocols import EventBusProtocol
-
 from yosai_intel_dashboard.src.infrastructure.di.service_container import (
     ServiceContainer,
 )
@@ -73,12 +77,13 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigLoader,
         ConfigManager,
         ConfigTransformer,
-        ConfigValidator,
         ConfigurationLoader,
+        ConfigValidator,
         create_config_manager,
     )
     from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
     from yosai_intel_dashboard.src.core.logging import LoggingService
+    from yosai_intel_dashboard.src.database.types import DatabaseConnection
     from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
         DatabaseConnectionFactory,
         DatabaseSettings,
@@ -127,6 +132,12 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         "database_connection_factory",
         DatabaseConnectionFactory,
         factory=lambda c: DatabaseConnectionFactory(DatabaseSettings()),
+    )
+    container.register_singleton(
+        "database_connection",
+        DatabaseConnectionFactory,
+        protocol=DatabaseConnection,
+        factory=lambda c: c.get("database_connection_factory").create(),
     )
 
     from yosai_intel_dashboard.src.core.events import EventBus
@@ -187,7 +198,6 @@ def register_analytics_services(container: ServiceContainer) -> None:
     from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
         TrulyUnifiedCallbacks,
     )
-
     from yosai_intel_dashboard.src.mapping.factories.service_factory import (
         create_mapping_service,
     )
@@ -297,8 +307,7 @@ def register_analytics_services(container: ServiceContainer) -> None:
     )
 
     def _create_analytics_service(c):
-        factory = c.get("database_connection_factory")
-        db_conn = factory.create() if factory else None
+        db_conn = c.get("database_connection")
         return AnalyticsService(
             database=db_conn,
             data_processor=c.get("data_processing_service", DataProcessorProtocol),
