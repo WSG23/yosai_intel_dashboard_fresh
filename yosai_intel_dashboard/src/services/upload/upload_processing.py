@@ -4,7 +4,11 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from .protocols import UploadAnalyticsProtocol
+from .protocols import UploadAnalyticsProtocol, UploadSecurityProtocol
+from ..protocols.processor import ProcessorProtocol
+from ...infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
+from ...infrastructure.config.constants import AnalyticsConstants
+from ...core.protocols import EventBusProtocol
 from yosai_intel_dashboard.src.utils.upload_store import get_uploaded_data_store
 
 class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
@@ -78,6 +82,10 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
             "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
             "memory_usage": int(df.memory_usage(deep=True).sum()),
             "null_counts": {col: int(df[col].isna().sum()) for col in df.columns},
+            "total_events": int(total_events),
+            "active_users": int(active_users),
+            "active_doors": int(active_doors),
+            "date_range": date_range,
         }
 
     # ------------------------------------------------------------------
@@ -107,7 +115,6 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
                 "status": "no_data",
             }
 
-
         combined = pd.concat(list(data.values()), ignore_index=True)
         return self.summarize_dataframe(combined)
 
@@ -135,7 +142,6 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         """Retrieve all uploaded data from the shared store."""
         store = get_uploaded_data_store()
         return store.get_all_data()
-
 
 # Expose commonly used methods at module level for convenience
 get_analytics_from_uploaded_data = (
