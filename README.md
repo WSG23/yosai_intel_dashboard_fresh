@@ -364,14 +364,9 @@ docker-compose \
   -f docker-compose.dev.yml up --build
 ```
 
-`python start_api.py` loads variables from `.env` before launching the server.
-Ensure the file exists or pass the required values via `--env-file` when running
-the container. If you override the default command in Docker Compose, run
-`python start_api.py` so the variables are loaded correctly.
+`python start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python start_api.py` so the variables are loaded correctly.
 
-The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules.
-
-web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
+The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules. This brings up the web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
 
 ### Supported Container Configurations
 
