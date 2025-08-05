@@ -1,51 +1,71 @@
+"""Utilities for constructing common objects used in tests.
+
+This module provides two small helpers:
+
+``TestInfrastructure``
+    Prepares a minimal environment so tests can run without optional
+    dependencies.  It adds ``tests/stubs`` to ``sys.path`` and ensures that
+    light‑weight stand‑ins for heavy packages such as :mod:`pyarrow`,
+    :mod:`pandas` and :mod:`numpy` are present in :data:`sys.modules`.
+
+``MockFactory``
+    Convenience factory that wires together frequently used objects like
+    :class:`SecurityValidator` or :class:`UploadAnalyticsProcessor`.
+"""
+
 from __future__ import annotations
 
+import atexit
 import importlib
-import os
 import sys
-from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Dict, Iterable, Iterator, Mapping
 
 
+
 class MockFactory:
-    """Factory responsible for installing and removing stub modules.
+    """Factory that exposes common building blocks for tests."""
 
-    The factory keeps track of all modules it injects into ``sys.modules`` so
-    the original modules can be restored once tests complete.
-    """
+    # ------------------------------------------------------------------
+    # Helper creators
+    # ------------------------------------------------------------------
+    @staticmethod
+    def dataframe(data: Dict[str, Iterable] | None = None):
+        """Return a lightweight :class:`pandas.DataFrame` built from ``data``."""
 
-    def __init__(self) -> None:
-        self._originals: Dict[str, ModuleType | None] = {}
-        self._installed: set[str] = set()
+        import pandas as pd  # imported lazily so stubs apply
 
-    def stub(self, name: str, module: ModuleType | None = None) -> ModuleType:
-        """Register ``module`` under ``name`` in ``sys.modules``.
+        return pd.DataFrame(data or {})
 
-        If no module is provided a new empty :class:`ModuleType` is created.
-        The previous module (if any) is stored so it can be restored later.
-        """
+    @staticmethod
+    def upload_processor():
+        """Return a lightweight processor analysing uploaded data."""
 
-        if name not in self._originals:
-            self._originals[name] = sys.modules.get(name)
-        if module is None:
-            module = ModuleType(name.rsplit(".", 1)[-1])
-        sys.modules[name] = module
-        self._installed.add(name)
-        return module
+        from tests.stubs.utils.upload_store import get_uploaded_data_store
 
-    def restore(self) -> None:
-        """Restore all modules that were previously stubbed."""
+        def _shape(df):
+            if hasattr(df, "shape"):
+                return df.shape
+            data = getattr(df, "args", [{}])[0]
+            rows = len(next(iter(data.values()))) if data else 0
+            cols = len(data)
+            return rows, cols
 
-        for name in list(self._installed):
-            original = self._originals.get(name)
-            if original is None:
-                sys.modules.pop(name, None)
-            else:
-                sys.modules[name] = original
-        self._installed.clear()
-        self._originals.clear()
+        class _Processor:
+            def analyze_uploaded_data(self):
+                store = get_uploaded_data_store()
+                data = {
+                    name: df
+                    for name, df in store.get_all_data().items()
+                    if _shape(df)[0]
+                }
+                if not data:
+                    return {"status": "no_data"}
+                rows, cols = _shape(list(data.values())[0])
+                return {"status": "success", "rows": rows, "columns": cols}
+
+        return _Processor()
 
     # ------------------------------------------------------------------
     # Helpers for common test objects
@@ -145,19 +165,19 @@ class MockFactory:
 class TestInfrastructure:
     """Context manager that prepares a lightweight test environment.
 
-    On enter all stub packages located under ``tests/stubs`` are made
-    importable and registered in :data:`sys.modules` so they override any real
-    dependency.  Environment variables enabling lightweight service behaviour
-    are also set.  All changes are reverted on exit.
+    On enter all stub packages located under ``tests/stubs`` are made importable
+    and registered in :data:`sys.modules` so they override any real dependency.
+    Environment variables enabling lightweight service behaviour are also set.
+    All changes are reverted on exit.
     """
 
     def __init__(
         self,
-        factory: MockFactory,
+        factory: MockFactory | None = None,
         *,
         stub_packages: Iterable[str] | None = None,
     ) -> None:
-        self.factory = factory
+        self.factory = factory or MockFactory()
         self.stub_packages = list(stub_packages or [])
         self._stubs_path = Path(__file__).resolve().parents[1] / "stubs"
         self._old_sys_path: list[str] = []
@@ -175,51 +195,69 @@ class TestInfrastructure:
                 names.append(entry.stem)
         return names
 
-    def __enter__(self) -> MockFactory:
-        self._old_sys_path = list(sys.path)
-        stubs_str = str(self._stubs_path)
-        if stubs_str not in sys.path:
-            sys.path.insert(0, stubs_str)
 
-        for name in self._discover_stubs():
-            try:
-                module = importlib.import_module(f"tests.stubs.{name}")
-            except Exception:
-                module = ModuleType(name)
-            self.factory.stub(name, module)
+    # ------------------------------------------------------------------
+    def processor(self, validator=None):
+        from yosai_intel_dashboard.src.services.data_processing.processor import (
+            Processor,
+        )
 
-        os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
-        return self.factory
+        validator = validator or self.security_validator()
+        return Processor(validator=validator)
 
-    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - cleanup
-        self.factory.restore()
-        os.environ.pop("LIGHTWEIGHT_SERVICES", None)
-        stubs_str = str(self._stubs_path)
-        if stubs_str in sys.path:
-            sys.path.remove(stubs_str)
-        sys.path[:] = self._old_sys_path
+    # ------------------------------------------------------------------
+    def callback_manager(self, event_bus=None, validator=None):
+        from yosai_intel_dashboard.src.core.events import EventBus
+        from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+            TrulyUnifiedCallbacks,
+        )
+
+        event_bus = event_bus or EventBus()
+        validator = validator or self.security_validator()
+        return TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=validator)
+
+    # ------------------------------------------------------------------
+    def upload_processor(self):
+        from yosai_intel_dashboard.src.core.events import EventBus
+        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+            dynamic_config,
+        )
+        from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+            UploadAnalyticsProcessor,
+        )
+
+        validator = self.security_validator()
+        processor = self.processor(validator)
+        event_bus = EventBus()
+        callbacks = self.callback_manager(event_bus, validator)
+        return UploadAnalyticsProcessor(
+            validator, processor, callbacks, dynamic_config.analytics, event_bus
+        )
+
+    # ------------------------------------------------------------------
+    # Convenience helpers
+    # ------------------------------------------------------------------
+    def setup_environment(self) -> MockFactory:
+        """Enter the context immediately and register cleanup at exit."""
+
+        factory = self.__enter__()
+        atexit.register(self.__exit__, None, None, None)
+        return factory
 
 
-mock_factory = MockFactory()
+        builder = DataFrameBuilder()
+        for name, values in columns.items():
+            builder.add_column(name, values)
+        return builder.build()
 
 
-@contextmanager
-def setup_test_environment() -> Iterator[MockFactory]:
-    """Prepare a lightweight environment for tests.
+# ----------------------------------------------------------------------
+def uploaded_data(valid_df):
+    """Return a typical uploaded data mapping used in tests."""
 
-    The context manager installs stub packages and yields the global
-    :class:`MockFactory` so tests can register additional stubs if required.
-    All changes are reverted when the context exits.
-    """
+    import pandas as pd
 
-    infra = TestInfrastructure(mock_factory)
-    with infra:
-        yield mock_factory
+    return {"empty.csv": pd.DataFrame(), "valid.csv": valid_df}
 
 
-__all__ = [
-    "MockFactory",
-    "TestInfrastructure",
-    "setup_test_environment",
-    "mock_factory",
-]
+__all__ = ["TestInfrastructure", "MockFactory", "uploaded_data"]

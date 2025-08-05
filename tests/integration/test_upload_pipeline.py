@@ -1,50 +1,36 @@
 from __future__ import annotations
 
-import importlib
-import sys
-from types import SimpleNamespace
-
-sys.modules["pyarrow"] = SimpleNamespace(__version__="0")
-sys.modules.pop("pandas", None)
-sys.modules.pop("numpy", None)
-import pandas as pd
 import pytest
 
-from tests.fixtures import create_test_upload_processor
+from tests.infrastructure import MockFactory, TestInfrastructure
 
-
-
-@pytest.fixture
-def upload_processor():
-    """Instantiate ``UploadAnalyticsProcessor`` for testing."""
-    from validation.security_validator import SecurityValidator
-    from yosai_intel_dashboard.src.core.events import EventBus
-    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-        TrulyUnifiedCallbacks,
-    )
-    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-        dynamic_config,
-    )
-    from yosai_intel_dashboard.src.services.data_processing.processor import Processor
-
-    vs = SecurityValidator()
-    processor = Processor(validator=vs)
-    event_bus = EventBus()
-    callbacks = TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=vs)
-    return UploadAnalyticsProcessor(
-        vs, processor, callbacks, dynamic_config.analytics, event_bus
-    )
-
+# Prepare a lightweight environment using shared test infrastructure
+infra = TestInfrastructure(
+    stub_packages=["pandas", "numpy", "yaml"]
+).setup_environment()  # noqa: F841
 
 
 @pytest.fixture
 def valid_df():
-    return pd.DataFrame({"Person ID": ["u1", "u2"], "Device name": ["d1", "d2"]})
+    return MockFactory.dataframe(
+        {"Person ID": ["u1", "u2"], "Device name": ["d1", "d2"]}
+    )
 
 
 @pytest.fixture
 def uploaded_data(valid_df):
-    return {"empty.csv": pd.DataFrame(), "valid.csv": valid_df}
+    from tests.stubs.utils.upload_store import get_uploaded_data_store
+
+    store = get_uploaded_data_store()
+    store.clear_all()
+    store.data["empty.csv"] = MockFactory.dataframe({})
+    store.data["valid.csv"] = valid_df
+    return store.get_all_data()
+
+
+@pytest.fixture
+def upload_processor(uploaded_data):
+    return MockFactory.upload_processor()
 
 
 def test_upload_pipeline_filters_empty_and_returns_stats(upload_processor):
