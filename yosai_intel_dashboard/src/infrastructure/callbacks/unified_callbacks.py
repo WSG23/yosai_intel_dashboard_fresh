@@ -202,33 +202,6 @@ class TrulyUnifiedCallbacks(EventPublisher):
         return decorator
 
     # ------------------------------------------------------------------
-    def register_callback(
-        self,
-        outputs: Outputs,
-        inputs: Inputs = None,
-        states: States = None,
-        *,
-        callback_id: str,
-        component_name: str,
-        allow_duplicate: bool = False,
-        **kwargs: Any,
-    ) -> Callable[[CallbackHandler], CallbackHandler]:
-        """Alias for :meth:`handle_register`.
-
-        Thread-safe via :meth:`handle_register`'s internal ``RLock``.
-        """
-
-        return self.handle_register(
-            outputs=outputs,
-            inputs=inputs,
-            states=states,
-            callback_id=callback_id,
-            component_name=component_name,
-            allow_duplicate=allow_duplicate,
-            **kwargs,
-        )
-
-    # ------------------------------------------------------------------
     def register_handler(
         self,
         outputs: Outputs,
