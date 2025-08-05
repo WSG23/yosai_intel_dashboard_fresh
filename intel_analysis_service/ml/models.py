@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Dict, Iterable
+from dataclasses import dataclass, field
+from typing import Dict, Iterable, Protocol
 
+import logging
 import pandas as pd
+
+
+class DriftDetector(Protocol):
+    """Protocol describing drift detection behaviour."""
+
+    def detect(self, values: Iterable[float], thresholds: Iterable[float]) -> bool:
+        """Return ``True`` if drift is detected for ``values`` against ``thresholds``."""
+
 
 
 @dataclass
@@ -23,6 +32,9 @@ class AnomalyDetector:
     thresholds: Dict[int, float] | None = None
     global_mean: float | None = None
     global_std: float | None = None
+    model_version: str = "1.0"
+    logger: logging.Logger = field(default_factory=lambda: logging.getLogger(__name__))
+    drift_detector: DriftDetector | None = None
 
     def fit(self, df: pd.DataFrame, value_col: str = "value", timestamp_col: str = "timestamp") -> "AnomalyDetector":
         if value_col not in df or timestamp_col not in df:
@@ -65,12 +77,22 @@ class AnomalyDetector:
 
         values = df[value_col]
         anomalies = values > thresholds
-        return pd.DataFrame({
+        result = pd.DataFrame({
             timestamp_col: ts,
             value_col: values,
             "threshold": thresholds,
             "is_anomaly": anomalies,
         })
+        self.logger.info(
+            "model=%s predictions=%s thresholds=%s",
+            self.model_version,
+            result[value_col].tolist(),
+            result["threshold"].tolist(),
+        )
+        if self.drift_detector:
+            drift = self.drift_detector.detect(result[value_col], result["threshold"])
+            result["drift_detected"] = drift
+        return result
 
 
 @dataclass
@@ -80,6 +102,9 @@ class RiskScorer:
     weights: Dict[str, float]
     quantile: float = 0.95
     thresholds: Dict[int, float] | None = None
+    model_version: str = "1.0"
+    logger: logging.Logger = field(default_factory=lambda: logging.getLogger(__name__))
+    drift_detector: DriftDetector | None = None
 
     def fit(self, df: pd.DataFrame, timestamp_col: str = "timestamp") -> "RiskScorer":
         if timestamp_col not in df:
@@ -108,9 +133,19 @@ class RiskScorer:
         default_threshold = pd.Series(self.thresholds.values()).mean()
         thresholds = season.map(self.thresholds).fillna(default_threshold)
         risk = scores > thresholds
-        return pd.DataFrame({
+        result = pd.DataFrame({
             timestamp_col: ts,
             "score": scores,
             "threshold": thresholds,
             "is_risky": risk,
         })
+        self.logger.info(
+            "model=%s predictions=%s thresholds=%s",
+            self.model_version,
+            result["score"].tolist(),
+            result["threshold"].tolist(),
+        )
+        if self.drift_detector:
+            drift = self.drift_detector.detect(result["score"], result["threshold"])
+            result["drift_detected"] = drift
+        return result

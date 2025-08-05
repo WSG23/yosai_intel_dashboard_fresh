@@ -1,4 +1,33 @@
-import pandas as pd
+import importlib
+import sys
+import types
+
+# Load real numpy if a stub is present.
+np = importlib.import_module("numpy")
+if not hasattr(np, "__version__"):
+    sys.modules.pop("numpy", None)
+    np = importlib.import_module("numpy")  # type: ignore
+
+# Ensure pandas can import by providing minimal stubs for optional deps
+sys.modules.setdefault("pyarrow", types.SimpleNamespace(__version__="0.0"))
+try:
+    import six
+    sys.modules["six.moves.winreg"] = None
+except Exception:
+    sys.modules.setdefault("six", types.SimpleNamespace(moves=types.SimpleNamespace(winreg=None)))
+
+# Avoid dateutil attempting to use Windows timezone support
+win_stub = types.ModuleType("dateutil.tz.win")
+win_stub.tzwin = object
+win_stub.tzwinlocal = object
+sys.modules.setdefault("dateutil.tz.win", win_stub)
+sys.modules.setdefault("six.moves._thread", types.SimpleNamespace(allocate_lock=lambda: object()))
+
+# Load real pandas if the lightweight stub is active.
+pd = importlib.import_module("pandas")
+if not hasattr(pd, "date_range"):
+    sys.modules.pop("pandas", None)
+    pd = importlib.import_module("pandas")  # type: ignore
 
 from intel_analysis_service.ml import (
     AnomalyDetector,
