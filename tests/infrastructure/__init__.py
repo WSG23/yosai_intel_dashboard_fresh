@@ -18,6 +18,8 @@ from typing import Any, Dict, Iterable, Iterator, Mapping
 
 import pandas as pd
 
+import pytest
+
 
 
 class MockFactory:
@@ -161,7 +163,8 @@ class TestInfrastructure:
         *,
         stub_packages: Iterable[str] | None = None,
     ) -> None:
-        self.factory = factory or MockFactory()
+        self.factory = factory or mock_factory
+
         self.stub_packages = list(stub_packages or [])
         self._stubs_path = Path(__file__).resolve().parents[1] / "stubs"
         self._old_sys_path: list[str] = []
@@ -233,6 +236,10 @@ class TestInfrastructure:
             sys.path.remove(stubs_str)
         sys.path[:] = self._old_sys_path
 
+    def setup_environment(self) -> None:
+        """Activate the test environment without using a context manager."""
+        self.__enter__()
+
 
 
 def uploaded_data(*dfs: tuple[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
@@ -243,6 +250,17 @@ def uploaded_data(*dfs: tuple[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
 
 mock_factory = MockFactory()
 
+
+@pytest.fixture(scope="session")
+def test_env() -> TestInfrastructure:
+    infra = TestInfrastructure()
+    infra.setup_environment()
+    return infra
+
+
+@contextmanager
+def setup_test_environment() -> Iterator[MockFactory]:
+    """Prepare a lightweight environment for tests.
 
 
 # ----------------------------------------------------------------------
@@ -260,5 +278,6 @@ __all__ = [
     "setup_test_environment",
     "uploaded_data",
     "mock_factory",
+    "test_env",
 ]
 
