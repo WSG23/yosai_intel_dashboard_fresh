@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
+"""Unified entry point for starting the Yosai Intel Dashboard API.
+
+This script validates required environment variables, warms the cache based on
+usage statistics and configured warm keys, then starts the FastAPI server.
+"""
+
+import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -11,21 +19,34 @@ logger = logging.getLogger(__name__)
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# Import Flask app directly from adapter
 from api.adapter import create_api_app
+from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer
 from yosai_intel_dashboard.src.core.di.bootstrap import bootstrap_container
-
-# Import Dash app factory from the package
-from yosai_intel_dashboard.src.core.app_factory import create_app
+from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 
 
 def main() -> None:
-    """Start the API development server."""
+    """Warm the cache and start the API server."""
     validate_required_env()
     container = bootstrap_container()
+
+    cache_cfg = get_cache_config()
+    cache_manager = container.get("cache_manager")
+
+    def _load(key: str) -> None:
+        return None
+
+    usage_path = getattr(cache_cfg, "usage_stats_path", os.getenv("CACHE_USAGE_FILE"))
+    if usage_path and hasattr(cache_manager, "get"):
+        warmer = IntelligentCacheWarmer(cache_manager, _load)
+        asyncio.run(warmer.warm_from_file(usage_path))
+
+    warm_keys = getattr(cache_cfg, "warm_keys", [])
+    if warm_keys and hasattr(cache_manager, "warm"):
+        asyncio.run(cache_manager.warm(warm_keys, _load))
+
     app = create_api_app()
-    # Expose the DI container on the FastAPI state for access by services
     app.state.container = container
 
     logger.info("\n🚀 Starting Yosai Intel Dashboard API...")

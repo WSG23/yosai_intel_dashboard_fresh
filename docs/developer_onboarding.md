@@ -65,6 +65,7 @@ This guide walks new contributors through setting up a local development environ
    ```
    
 9. **Start the application:**
+   Use the unified entry point which warms caches before launching the server.
    ```bash
    python start_api.py
    ```
