@@ -102,6 +102,13 @@ lightweight stubs for optional dependencies. It reads `TEST_SECRET_KEY` and
 defaults when they are absent. Importing it manually is rarely necessary, but it
 can be handy when running individual files.
 
+`tests/infrastructure.TestInfrastructure.setup_environment()` performs a similar
+bootstrapping step for integration tests. It appends the `tests/stubs`
+directory to `sys.path` and injects stub modules such as `pyarrow`, `pandas` and
+`numpy` into `sys.modules` when they are missing. New stubs can be provided by
+dropping a module or package into `tests/stubs` or by calling
+`tests.infrastructure.mock_factory.stub("name")` inside a test.
+
 Without one of these steps you may encounter `ModuleNotFoundError` during test
 collection.
 
