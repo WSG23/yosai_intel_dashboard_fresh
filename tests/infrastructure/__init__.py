@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import importlib
 import os
 import sys
@@ -47,23 +48,61 @@ class MockFactory:
         self._installed.clear()
         self._originals.clear()
 
+    # ------------------------------------------------------------------
+    # Helper creators
+    # ------------------------------------------------------------------
+    @staticmethod
+    def dataframe(data: Dict[str, Iterable] | None = None):
+        """Return a lightweight :class:`pandas.DataFrame` built from ``data``."""
+
+        import pandas as pd  # imported lazily so stubs apply
+
+        return pd.DataFrame(data or {})
+
+    @staticmethod
+    def upload_processor():
+        """Instantiate an ``UploadAnalyticsProcessor`` with default dependencies."""
+
+        from types import SimpleNamespace
+
+        from validation.security_validator import SecurityValidator
+        from yosai_intel_dashboard.src.core.events import EventBus
+        from yosai_intel_dashboard.src.infrastructure.callbacks import unified_callbacks
+        from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+            UploadAnalyticsProcessor,
+        )
+        from yosai_intel_dashboard.src.services.data_processing.processor import (
+            Processor,
+        )
+
+        validator = SecurityValidator()
+        processor = Processor(validator=validator)
+        event_bus = EventBus()
+        callbacks = unified_callbacks.TrulyUnifiedCallbacks(
+            event_bus=event_bus, security_validator=validator
+        )
+        analytics_config = SimpleNamespace()
+        return UploadAnalyticsProcessor(
+            validator, processor, callbacks, analytics_config, event_bus
+        )
+
 
 class TestInfrastructure:
     """Context manager that prepares a lightweight test environment.
 
-    On enter all stub packages located under ``tests/stubs`` are made
-    importable and registered in :data:`sys.modules` so they override any real
-    dependency.  Environment variables enabling lightweight service behaviour
-    are also set.  All changes are reverted on exit.
+    On enter all stub packages located under ``tests/stubs`` are made importable
+    and registered in :data:`sys.modules` so they override any real dependency.
+    Environment variables enabling lightweight service behaviour are also set.
+    All changes are reverted on exit.
     """
 
     def __init__(
         self,
-        factory: MockFactory,
+        factory: MockFactory | None = None,
         *,
         stub_packages: Iterable[str] | None = None,
     ) -> None:
-        self.factory = factory
+        self.factory = factory or MockFactory()
         self.stub_packages = list(stub_packages or [])
         self._stubs_path = Path(__file__).resolve().parents[1] / "stubs"
         self._old_sys_path: list[str] = []
@@ -104,6 +143,16 @@ class TestInfrastructure:
         if stubs_str in sys.path:
             sys.path.remove(stubs_str)
         sys.path[:] = self._old_sys_path
+
+    # ------------------------------------------------------------------
+    # Convenience helpers
+    # ------------------------------------------------------------------
+    def setup_environment(self) -> MockFactory:
+        """Enter the context immediately and register cleanup at exit."""
+
+        factory = self.__enter__()
+        atexit.register(self.__exit__, None, None, None)
+        return factory
 
 
 mock_factory = MockFactory()

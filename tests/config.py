@@ -280,6 +280,17 @@ def register_dependency_stubs() -> None:
     register_fallback("pydantic", pydantic_stub)
     sys.modules.setdefault("pydantic", pydantic_stub)
 
+    # Minimal stubs for optional security integrations
+    core_integrations_stub = _simple_module("core.integrations")
+    core_integrations_stub.__path__ = []
+    register_fallback("core.integrations", core_integrations_stub)
+    sys.modules.setdefault("core.integrations", core_integrations_stub)
+    siem_stub = _simple_module(
+        "core.integrations.siem_connectors", send_to_siem=lambda *a, **k: None
+    )
+    register_fallback("core.integrations.siem_connectors", siem_stub)
+    sys.modules.setdefault("core.integrations.siem_connectors", siem_stub)
+
     # As a final fallback, provide a meta-path finder that returns empty
     # modules for any remaining missing imports.  Each stubbed module
     # lazily creates placeholders for arbitrary attributes so ``from pkg
@@ -391,7 +402,7 @@ set_test_environment()
 add_project_root_to_sys_path()
 register_dependency_stubs()
 
-from .fake_configuration import FakeConfiguration  # noqa: E402
+from .fake_configuration import FakeConfiguration  # noqa: E402,F401
 
 
 # ---------------------------------------------------------------------------
