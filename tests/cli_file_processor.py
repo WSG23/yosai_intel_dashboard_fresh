@@ -16,10 +16,16 @@ from typing import Any, Dict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from config import create_config_manager
-from yosai_intel_dashboard.src.services.upload.service_registration import register_upload_services
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from yosai_intel_dashboard.src.services.file_processor_service import FileProcessorService
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
+from yosai_intel_dashboard.src.services.file_processor_service import (
+    FileProcessorService,
+)
+from yosai_intel_dashboard.src.services.upload.service_registration import (
+    register_upload_services,
+)
 
 
 def setup_logging(verbose: bool = False) -> None:

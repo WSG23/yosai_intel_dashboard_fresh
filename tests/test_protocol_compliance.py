@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, List, Protocol, assert_type, runtime_checkable
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Protocol,
+    assert_type,
+    runtime_checkable,
+)
 
 import pandas as pd
 import pytest
@@ -13,8 +22,12 @@ from yosai_intel_dashboard.src.core.protocols import (
     SecurityServiceProtocol,
     StorageProtocol,
 )
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
+from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+    AnalyticsService,
+)
 
 
 @runtime_checkable
@@ -171,14 +184,18 @@ def env_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
 
 class TestProtocolCompliance:
     def test_configuration_service_compliance(self):
-        from config import create_config_manager
+        from yosai_intel_dashboard.src.infrastructure.config import (
+            create_config_manager,
+        )
 
         cfg = create_config_manager()
         assert isinstance(cfg, ConfigurationProtocol)
         assert_type(cfg, ConfigurationProtocol)
 
     def test_analytics_service_compliance(self):
-        from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
+        from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+            AnalyticsService,
+        )
 
         class ConcreteAnalyticsService(AnalyticsService):
             def analyze_access_patterns(self, days: int) -> Dict[str, Any]:

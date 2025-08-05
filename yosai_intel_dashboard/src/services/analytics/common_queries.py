@@ -9,7 +9,7 @@ from typing import Any, Dict, Protocol
 
 import asyncpg
 
-from database.metrics import queries_total, query_errors_total
+from yosai_intel_dashboard.src.database.metrics import queries_total, query_errors_total
 
 
 # a lightweight protocol so both Pool and Connection can be used

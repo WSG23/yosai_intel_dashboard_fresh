@@ -6,8 +6,8 @@ import logging
 import re
 from typing import Any, Dict, Iterable, List, Sequence
 
-from database.secure_exec import execute_query
 from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.database.secure_exec import execute_query
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,9 @@ class QueryOptimizer:
 
     def __init__(self, connection: Any | None = None) -> None:
         if connection is None:
-            from database.connection import create_database_connection
+            from yosai_intel_dashboard.src.database.connection import (
+                create_database_connection,
+            )
 
             connection = create_database_connection()
         self.connection = connection

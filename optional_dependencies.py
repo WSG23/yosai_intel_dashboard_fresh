@@ -19,7 +19,9 @@ import logging
 import types
 from typing import Any, Callable, Dict
 
-from monitoring.missing_dependencies import missing_dependencies
+from yosai_intel_dashboard.src.infrastructure.monitoring.missing_dependencies import (
+    missing_dependencies,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +128,9 @@ register_fallback(
 
 
 # boto3 ---------------------------------------------------------------------
-register_fallback("boto3", lambda: _simple_module("boto3", client=lambda *a, **k: object()))
+register_fallback(
+    "boto3", lambda: _simple_module("boto3", client=lambda *a, **k: object())
+)
 
 
 # mlflow --------------------------------------------------------------------

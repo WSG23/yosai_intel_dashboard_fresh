@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from database import transport_events
+from yosai_intel_dashboard.src.database import transport_events
 
 
 def parse_transit_feed(payload: Dict) -> List[transport_events.TrafficEvent]:

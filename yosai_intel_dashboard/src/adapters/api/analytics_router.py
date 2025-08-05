@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
-from api.cache import cached_json_response
 from shared.errors.types import ErrorCode
+from yosai_intel_dashboard.src.adapters.api.cache import cached_json_response
 from yosai_intel_dashboard.src.core.cache_manager import (
     CacheConfig,
     InMemoryCacheManager,

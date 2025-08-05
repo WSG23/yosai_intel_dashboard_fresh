@@ -20,11 +20,13 @@ class ModelVersionMetric(Base):
     value = Column(Float)
 
 
-sys.modules[
-    "yosai_intel_dashboard.src.services.timescale.models"
-] = types.SimpleNamespace(Base=Base, ModelVersionMetric=ModelVersionMetric)
+sys.modules["yosai_intel_dashboard.src.services.timescale.models"] = (
+    types.SimpleNamespace(Base=Base, ModelVersionMetric=ModelVersionMetric)
+)
 
-from monitoring.model_performance_tracker import ModelPerformanceTracker
+from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_tracker import (
+    ModelPerformanceTracker,
+)
 
 
 def _make_tracker(rollback=None, canary=None):

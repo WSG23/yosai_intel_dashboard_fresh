@@ -16,10 +16,14 @@ class EnumJSONProvider(DefaultJSONProvider):
 
 import sys
 
-from config import create_config_manager
 from yosai_intel_dashboard.src.core.plugins.auto_config import PluginAutoConfiguration
-from yosai_intel_dashboard.src.core.plugins.unified_registry import UnifiedPluginRegistry
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.core.plugins.unified_registry import (
+    UnifiedPluginRegistry,
+)
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 pytestmark = pytest.mark.usefixtures("fake_dash")
 from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata

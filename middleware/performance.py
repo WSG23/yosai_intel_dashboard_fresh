@@ -4,8 +4,12 @@ from typing import Awaitable, Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from monitoring.performance_profiler import PerformanceProfiler
-from monitoring.request_metrics import request_duration
+from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (
+    PerformanceProfiler,
+)
+from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import (
+    request_duration,
+)
 
 
 class TimingMiddleware(BaseHTTPMiddleware):

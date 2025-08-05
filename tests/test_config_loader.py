@@ -3,8 +3,10 @@ import os
 
 import pytest
 
-from config import create_config_manager
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import DynamicConfigManager
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+    DynamicConfigManager,
+)
 
 
 def test_yaml_and_env_loading(monkeypatch, tmp_path):

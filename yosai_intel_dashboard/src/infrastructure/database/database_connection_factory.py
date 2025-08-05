@@ -8,7 +8,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
-from database.types import DatabaseConnection
+from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 from ..config.connection_pool import DatabaseConnectionPool
 from ..config.connection_retry import ConnectionRetryManager, RetryConfig
@@ -123,7 +123,6 @@ class PostgreSQLConnection:
         try:
             import psycopg2
             from psycopg2 import sql
-
             from psycopg2.extras import RealDictCursor
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise DatabaseError(

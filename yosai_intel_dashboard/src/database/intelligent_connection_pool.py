@@ -8,15 +8,12 @@ import time
 from contextlib import asynccontextmanager, contextmanager
 from typing import Any, Callable, Dict, List, Tuple
 
-from monitoring.error_budget import record_error
-
+from yosai_intel_dashboard.src.database.types import DatabaseConnection
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
     ConnectionValidationFailed,
 )
-
-from database.types import DatabaseConnection
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
-    ConnectionValidationFailed,
+from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
+    record_error,
 )
 from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.connection_pool import (
     db_pool_active_connections,
@@ -29,7 +26,10 @@ class CircuitBreaker:
     """Simple circuit breaker implementation."""
 
     def __init__(
-        self, failure_threshold: int = 5, recovery_timeout: int = 30, name: str = "connection_pool"
+        self,
+        failure_threshold: int = 5,
+        recovery_timeout: int = 30,
+        name: str = "connection_pool",
     ) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -124,12 +124,13 @@ class IntelligentConnectionPool:
             elif not conn.health_check():
                 raise ConnectionValidationFailed("initial connection validation failed")
         except Exception as exc:  # pragma: no cover - defensive
-            raise ConnectionValidationFailed("initial connection validation failed") from exc
+            raise ConnectionValidationFailed(
+                "initial connection validation failed"
+            ) from exc
 
     def _update_metrics(self) -> None:
         db_pool_current_size.set(self._max_size)
         db_pool_active_connections.set(self._active - len(self._pool))
-
 
     # ------------------------------------------------------------------
     def _maybe_expand(self) -> None:

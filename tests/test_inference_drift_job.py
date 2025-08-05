@@ -1,4 +1,6 @@
-from monitoring.inference_drift_job import InferenceDriftJob
+from yosai_intel_dashboard.src.infrastructure.monitoring.inference_drift_job import (
+    InferenceDriftJob,
+)
 
 
 class DummyRecord:

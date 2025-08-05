@@ -5,7 +5,9 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Query
 
-from monitoring.request_metrics import model_monitoring_requests_total
+from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import (
+    model_monitoring_requests_total,
+)
 from yosai_intel_dashboard.src.services.timescale.manager import TimescaleDBManager
 
 # Expose routes without a version so the adapter can mount them under /v1 and

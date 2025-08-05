@@ -7,10 +7,9 @@ import time
 from contextlib import asynccontextmanager, contextmanager
 from typing import Callable, List, Tuple
 
+from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
-from database.types import DatabaseConnection
 from .database_exceptions import ConnectionValidationFailed, PoolExhaustedError
-
 
 logger = logging.getLogger(__name__)
 
@@ -87,13 +86,14 @@ class DatabaseConnectionPool:
             elif not conn.health_check():
                 raise ConnectionValidationFailed("initial connection validation failed")
         except Exception as exc:  # pragma: no cover - defensive
-            raise ConnectionValidationFailed("initial connection validation failed") from exc
+            raise ConnectionValidationFailed(
+                "initial connection validation failed"
+            ) from exc
 
     def _update_metrics(self) -> None:
         """Update Prometheus gauges to reflect pool state."""
         db_pool_current_size.set(self._max_size)
         db_pool_active_connections.set(self._active - len(self._pool))
-
 
     def _maybe_expand(self) -> None:
         """Increase ``_max_size`` if current usage exceeds the threshold.
@@ -174,7 +174,6 @@ class DatabaseConnectionPool:
                 # connections while respecting the overall timeout.
                 self._condition.wait(timeout=min(0.05, remaining))
 
-
     def release_connection(self, conn: DatabaseConnection) -> None:
         """Return a connection to the pool and notify waiting threads."""
         with self._condition:
@@ -233,7 +232,6 @@ class DatabaseConnectionPool:
 
             self._update_metrics()
 
-
     def health_check(self) -> bool:
         """Check the health of all idle connections."""
         with self._condition:
@@ -274,4 +272,3 @@ class DatabaseConnectionPool:
             yield conn
         finally:
             await asyncio.to_thread(self.release_connection, conn)
-

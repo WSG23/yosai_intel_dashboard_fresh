@@ -1,6 +1,7 @@
 import sys
 from datetime import datetime
 from types import ModuleType, SimpleNamespace
+
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # minimal config stub to avoid heavy imports
@@ -16,8 +17,8 @@ cfg_mod.DatabaseSettings = DatabaseSettings
 cfg_mod.dynamic_config = SimpleNamespace(
     performance=SimpleNamespace(memory_usage_threshold_mb=1024)
 )
-safe_import('config', cfg_mod)
-safe_import('config.dynamic_config', cfg_mod)
+safe_import("config", cfg_mod)
+safe_import("config.dynamic_config", cfg_mod)
 
 # minimal performance monitor stub
 perf_mod = ModuleType("core.performance")
@@ -31,13 +32,13 @@ perf_mod.MetricType = MetricType
 perf_mod.get_performance_monitor = lambda: SimpleNamespace(
     record_metric=lambda *a, **k: None, aggregated_metrics={}
 )
-safe_import('core.performance', perf_mod)
+safe_import("core.performance", perf_mod)
 
 # extend prometheus metrics stub
 prom_mod = ModuleType("monitoring.prometheus.model_metrics")
 prom_mod.update_model_metrics = lambda *a, **k: None
 prom_mod.start_model_metrics_server = lambda *a, **k: None
-safe_import('monitoring.prometheus.model_metrics', prom_mod)
+safe_import("monitoring.prometheus.model_metrics", prom_mod)
 
 # stub services.resilience.metrics to avoid heavy deps
 metrics_mod = ModuleType("services.resilience.metrics")
@@ -46,11 +47,13 @@ metrics_mod.circuit_breaker_state = SimpleNamespace(
 )
 resilience_pkg = ModuleType("services.resilience")
 resilience_pkg.metrics = metrics_mod
-safe_import('services', ModuleType("services"))
-safe_import('services.resilience', resilience_pkg)
-safe_import('services.resilience.metrics', metrics_mod)
+safe_import("services", ModuleType("services"))
+safe_import("services.resilience", resilience_pkg)
+safe_import("services.resilience.metrics", metrics_mod)
 
-import monitoring.model_performance_monitor as mpm
+from yosai_intel_dashboard.src.infrastructure.monitoring import (
+    model_performance_monitor as mpm,
+)
 
 
 class DummyMonitor:

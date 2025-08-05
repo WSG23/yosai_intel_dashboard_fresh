@@ -11,8 +11,12 @@ from yosai_intel_dashboard.src.core.unicode import (
     safe_format_number,
     sanitize_dataframe,
 )
-from security.unicode_security_validator import UnicodeSecurityValidator
-from security.validation_exceptions import ValidationError
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
+    UnicodeSecurityValidator,
+)
+from yosai_intel_dashboard.src.infrastructure.security.validation_exceptions import (
+    ValidationError,
+)
 
 
 def test_safe_encode_text_surrogates():

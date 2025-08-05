@@ -1,7 +1,9 @@
 import pytest
 
-import security.events as security_callback_controller
-from security.events import SecurityEvent
+from yosai_intel_dashboard.src.infrastructure.security import (
+    events as security_callback_controller,
+)
+from yosai_intel_dashboard.src.infrastructure.security.events import SecurityEvent
 
 
 @pytest.fixture
@@ -23,7 +25,9 @@ def validator_module():
 
     import importlib
 
-    import security.unicode_surrogate_validator as mod
+    from yosai_intel_dashboard.src.infrastructure.security import (
+        unicode_surrogate_validator as mod,
+    )
 
     importlib.reload(mod)
     # Provide SecurityEvent for the lazy import pattern used in the module

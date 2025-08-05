@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from database.events import add_events
+from yosai_intel_dashboard.src.database.events import add_events
 
 from .internal_calendar import fetch_events as fetch_internal_calendar
 from .public_api import fetch_events as fetch_public_api

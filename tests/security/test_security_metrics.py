@@ -12,8 +12,12 @@ class DummyValidator:
 val_mod.SecurityValidator = DummyValidator
 val_mod.redis_client = None
 
-from security.reporting import _get_auditor, generate_report, report_to_html
 from yosai_intel_dashboard.src.core.security import SecurityLevel
+from yosai_intel_dashboard.src.infrastructure.security.reporting import (
+    _get_auditor,
+    generate_report,
+    report_to_html,
+)
 
 
 def test_report_structure_and_remediation():
@@ -52,4 +56,3 @@ def test_report_structure_and_remediation():
                 ):
                     event_ok = True
     assert violation_ok and event_ok
-

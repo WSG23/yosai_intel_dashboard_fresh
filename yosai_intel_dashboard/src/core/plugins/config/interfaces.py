@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from database.types import DBRows
+from yosai_intel_dashboard.src.database.types import DBRows
 
 
 @dataclass

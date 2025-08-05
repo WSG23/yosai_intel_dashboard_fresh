@@ -199,7 +199,7 @@ from yosai_intel_dashboard.src.core.domain.entities.base import BaseDataModel
 
 class PersonModel(BaseDataModel):
     def get_data(self, filters=None):
-        # Must implement: how to get person data from database
+        # Must implement: how to get person data from yosai_intel_dashboard.src.database
         query = "SELECT * FROM people"
         if filters and 'department' in filters:
             query += f" WHERE department = '{filters['department']}'"

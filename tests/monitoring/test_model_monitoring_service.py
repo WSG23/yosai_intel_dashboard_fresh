@@ -1,8 +1,9 @@
-from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 # tests need minimal stubs for heavy dependencies
 import sys
 import types
 from dataclasses import dataclass
+
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Stub out heavy dependencies before importing the service
 safe_import('yosai_intel_dashboard.src.infrastructure.config', types.SimpleNamespace()
@@ -31,7 +32,9 @@ sys.modules[
     "yosai_intel_dashboard.models.ml.model_registry"
 ] = types.SimpleNamespace(ModelRegistry=object)
 
-import monitoring.model_monitoring_service as mms
+from yosai_intel_dashboard.src.infrastructure.monitoring import (
+    model_monitoring_service as mms,
+)
 
 
 class DummyRec:

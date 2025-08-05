@@ -81,5 +81,5 @@ This document outlines a high-level architecture for a next-generation security 
 7. Performance benchmarks
 8. Analyst feedback interface
 
-This document serves as an initial blueprint. Implementation will require iterative development, rigorous testing, and continual feedback from security analysts.
+This document serves as an initial blueprint. Implementation will require iterative development, rigorous testing, and continual feedback from yosai_intel_dashboard.src.infrastructure.security analysts.
 

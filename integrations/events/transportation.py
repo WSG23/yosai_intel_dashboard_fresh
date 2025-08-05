@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from database.events import EventRecord
+from yosai_intel_dashboard.src.database.events import EventRecord
 
 
 def fetch_events() -> list[EventRecord]:

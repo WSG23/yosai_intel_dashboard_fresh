@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
-from monitoring.performance_profiler import PerformanceProfiler
 from yosai_intel_dashboard.src.database.async_engine_factory import get_asyncpg_driver
 from yosai_intel_dashboard.src.infrastructure.config.constants import (
     DEFAULT_DB_HOST,
     DEFAULT_DB_PORT,
+)
+from yosai_intel_dashboard.src.infrastructure.monitoring.performance_profiler import (
+    PerformanceProfiler,
 )
 
 logger = logging.getLogger(__name__)

@@ -6,7 +6,7 @@ import argparse
 import logging
 from typing import List
 
-from database.migrations import MigrationManager
+from yosai_intel_dashboard.src.database.migrations import MigrationManager
 
 LOG = logging.getLogger(__name__)
 

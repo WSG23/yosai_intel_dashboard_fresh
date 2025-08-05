@@ -4,9 +4,15 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from plugins.ai_classification.config import ColumnMappingConfig
-from plugins.ai_classification.database.ai_models import ColumnClassifier
-from plugins.ai_classification.database.csv_storage import CSVStorageRepository
+from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.config import (
+    ColumnMappingConfig,
+)
+from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.database.ai_models import (
+    ColumnClassifier,
+)
+from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.database.csv_storage import (
+    CSVStorageRepository,
+)
 
 logger = logging.getLogger(__name__)
 

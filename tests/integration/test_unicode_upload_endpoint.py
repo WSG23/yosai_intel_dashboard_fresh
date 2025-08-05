@@ -1,7 +1,9 @@
 import pandas as pd
 
 from yosai_intel_dashboard.src.core.unicode import safe_unicode_encode
-from security.unicode_security_handler import UnicodeSecurityHandler
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_handler import (
+    UnicodeSecurityHandler,
+)
 
 
 def test_upload_dataframe_sanitization():

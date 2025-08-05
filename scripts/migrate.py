@@ -13,7 +13,7 @@ from typing import List
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from database.migrations import MigrationManager
+from yosai_intel_dashboard.src.database.migrations import MigrationManager
 
 LOG = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ from typing import Callable
 
 from flask import jsonify, request
 
-from security.unicode_security_validator import (
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
     UnicodeSecurityValidator as SecurityValidator,
 )
 

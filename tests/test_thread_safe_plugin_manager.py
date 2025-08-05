@@ -3,10 +3,12 @@ from __future__ import annotations
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from config import create_config_manager
 from yosai_intel_dashboard.src.core.plugins.manager import ThreadSafePluginManager
 from yosai_intel_dashboard.src.core.protocols.plugin import PluginMetadata
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
+from yosai_intel_dashboard.src.infrastructure.config import create_config_manager
+from yosai_intel_dashboard.src.infrastructure.di.service_container import (
+    ServiceContainer,
+)
 
 
 class ConcurrencyPlugin:

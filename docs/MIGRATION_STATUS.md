@@ -16,7 +16,7 @@
 
 | Old Import | New Import |
 |------------|------------|
-| `from config import X` | `from yosai_intel_dashboard.src.infrastructure.config import X` |
+| `from yosai_intel_dashboard.src.infrastructure.config import X` | `from yosai_intel_dashboard.src.infrastructure.config import X` |
 | `from models import X` | `from yosai_intel_dashboard.src.core.domain.entities import X` |
 | `from services import X` | `from yosai_intel_dashboard.src.services import X` |
 | `from models.ml import X` | `from yosai_intel_dashboard.src.models.ml import X` |

@@ -2,7 +2,9 @@ import functools
 import warnings
 from typing import Callable
 
-from monitoring.prometheus.deprecation import record_deprecated_call
+from yosai_intel_dashboard.src.infrastructure.monitoring.prometheus.deprecation import (
+    record_deprecated_call,
+)
 
 from .performance import MetricType, get_performance_monitor
 

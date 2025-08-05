@@ -78,7 +78,10 @@ def register_all_application_services(container: ServiceContainer) -> None:
 
 
 def register_core_infrastructure(container: ServiceContainer) -> None:
-    from config import (
+    from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
+    from yosai_intel_dashboard.src.core.logging import LoggingService
+    from yosai_intel_dashboard.src.database.types import DatabaseConnection
+    from yosai_intel_dashboard.src.infrastructure.config import (
         ConfigLoader,
         ConfigManager,
         ConfigTransformer,
@@ -86,9 +89,6 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         ConfigValidator,
         create_config_manager,
     )
-    from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
-    from yosai_intel_dashboard.src.core.logging import LoggingService
-    from yosai_intel_dashboard.src.database.types import DatabaseConnection
     from yosai_intel_dashboard.src.infrastructure.config.database_manager import (
         DatabaseConnectionFactory,
         DatabaseSettings,
@@ -348,9 +348,11 @@ def register_analytics_services(container: ServiceContainer) -> None:
 
 
 def register_security_services(container: ServiceContainer) -> None:
-    from config.configuration_loader import ConfigurationLoader
     from validation.security_validator import SecurityValidator
     from yosai_intel_dashboard.src.infrastructure.cache import redis_client
+    from yosai_intel_dashboard.src.infrastructure.config.configuration_loader import (
+        ConfigurationLoader,
+    )
 
     def _create_validator(_: ServiceContainer) -> SecurityValidator:
         cfg = ConfigurationLoader.get_service_config("security")

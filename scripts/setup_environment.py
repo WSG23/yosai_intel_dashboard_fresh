@@ -10,7 +10,7 @@ from typing import Dict
 
 from dotenv import load_dotenv
 
-from config import ConfigManager
+from yosai_intel_dashboard.src.infrastructure.config import ConfigManager
 
 
 def _parse_env(path: Path) -> Dict[str, str]:

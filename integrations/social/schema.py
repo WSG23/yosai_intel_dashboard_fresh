@@ -4,7 +4,7 @@ from typing import List
 
 import strawberry
 
-from database import social_signals
+from yosai_intel_dashboard.src.database import social_signals
 
 
 @strawberry.type
