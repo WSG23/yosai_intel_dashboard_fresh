@@ -136,8 +136,6 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         store = get_uploaded_data_store()
         return store.get_all_data()
 
-        return {}
-
 
 # Expose commonly used methods at module level for convenience
 get_analytics_from_uploaded_data = (

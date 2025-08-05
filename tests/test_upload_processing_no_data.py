@@ -10,8 +10,8 @@ pd_stub = types.SimpleNamespace(DataFrame=object)
 sys.modules["pandas"] = pd_stub
 
 # Stub utils.upload_store
-tils_pkg = types.ModuleType("yosai_intel_dashboard.src.utils")
-tils_pkg.__path__ = []
+utils_pkg = types.ModuleType("yosai_intel_dashboard.src.utils")
+utils_pkg.__path__ = []
 upload_store_mod = types.ModuleType("upload_store")
 
 
@@ -22,7 +22,7 @@ def _store():
     return Store()
 
 upload_store_mod.get_uploaded_data_store = _store
-sys.modules["yosai_intel_dashboard.src.utils"] = tils_pkg
+sys.modules["yosai_intel_dashboard.src.utils"] = utils_pkg
 sys.modules["yosai_intel_dashboard.src.utils.upload_store"] = upload_store_mod
 
 # Prepare package hierarchy to support relative imports without executing __init__
@@ -53,3 +53,4 @@ def test_get_analytics_from_uploaded_data_no_data(monkeypatch):
     proc = UploadAnalyticsProcessor(object(), object(), object(), object(), object())
     monkeypatch.setattr(proc, "load_uploaded_data", lambda: {})
     assert proc.get_analytics_from_uploaded_data() == {"status": "no_data"}
+
