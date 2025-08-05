@@ -19,3 +19,13 @@ python tools/migrate_pickle_mappings.py --remove-pickle /path/to/learned_mapping
 ```
 
 The JSON output is written next to the pickle using the `.json` extension. Once migrated, configure your deployment to rely only on the JSON file.
+
+## Verifying TimescaleDB migrations
+
+Use the `scripts/verify_timescale_migration.py` helper to confirm that a database migration completed successfully:
+
+```bash
+python scripts/verify_timescale_migration.py
+```
+
+The script checks hypertables, migrated event counts, and basic query performance. It exits with a non-zero status if the migration is incomplete.

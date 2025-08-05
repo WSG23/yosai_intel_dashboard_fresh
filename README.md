@@ -476,6 +476,10 @@ make format
 # regenerate deprecation documentation
 make deprecation-docs
 
+# regenerate API documentation
+python scripts/generate_api_docs.py
+python scripts/generate_docs_portal.py
+
 # tear everything down and clean caches
 make clean
 ```
