@@ -193,16 +193,26 @@ with this Python release and newer.
    unresolved imports.
 
 4. **Install Node dependencies (optional):**
-   PostCSS and other build tools live in `package.json`. `./scripts/setup.sh`
-   already runs `npm install`, but you can execute it manually if desired.
-   ```bash
-   npm install
-   ```
+    PostCSS and other build tools live in `package.json`. `./scripts/setup.sh`
+    already runs `npm install`, but you can execute it manually if desired.
+    ```bash
+    npm install
+    ```
+
+### Dependency files
+
+The project uses two primary requirement files to manage Python dependencies:
+
+- `requirements.txt` – core runtime packages required to run the application and services.
+- `requirements-dev.txt` – extends the base requirements with development and test tools.
+
+Service-specific and test-only requirement files have been removed to avoid version drift. Add new dependencies to one of the files above as appropriate.
+
 5. **Set up environment:**
-   ```bash
-    cp .env.example .env
-    # Generate random development secrets
-    python scripts/generate_dev_secrets.py >> .env
+    ```bash
+     cp .env.example .env
+     # Generate random development secrets
+     python scripts/generate_dev_secrets.py >> .env
     # Edit .env with your configuration (e.g. set HOST and database info)
     # or store them in Vault
     vault kv put secret/data/yosai \
