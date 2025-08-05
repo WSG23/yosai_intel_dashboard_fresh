@@ -32,6 +32,6 @@ ID `save-column-mappings` writes the selected mappings using
 - `dash-bootstrap-components`
 - `pandas`
 
-These packages are listed in `requirements-ui.txt` and `requirements.txt`.
-Ensure they are installed before enabling the component.
+These packages are included in the core `requirements.txt` file.
+Ensure it is installed before enabling the component.
 

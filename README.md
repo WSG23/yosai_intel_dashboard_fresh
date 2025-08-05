@@ -207,6 +207,7 @@ The project uses two primary requirement files to manage Python dependencies:
 - `requirements-dev.txt` – extends the base requirements with development and test tools.
 
 Service-specific and test-only requirement files have been removed to avoid version drift. Add new dependencies to one of the files above as appropriate.
+See [docs/requirements.md](docs/requirements.md) for details on installing them.
 
 5. **Set up environment:**
     ```bash
