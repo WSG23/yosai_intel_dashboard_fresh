@@ -11,7 +11,6 @@ ROOT = Path(__file__).resolve().parent.parent
 COMPOSE_DEV_FILES = [
     "docker-compose.yml",
     "docker-compose.kafka.yml",
-    "docker-compose.dev.yml",
 ]
 COMPOSE_PROD_FILE = "docker-compose.prod.yml"
 COMPOSE_ALL_FILE = "docker-compose.unified.yml"

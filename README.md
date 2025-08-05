@@ -370,13 +370,12 @@ To spin up the microservices stack run:
 ```bash
 docker-compose \
   -f docker-compose.yml \
-  -f docker-compose.kafka.yml \
-  -f docker-compose.dev.yml up --build
+  -f docker-compose.kafka.yml up --build
 ```
 
 `python start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python start_api.py` so the variables are loaded correctly.
 
-The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules. This brings up the web UI on `http://localhost:8080`, pgAdmin on `http://localhost:5050`, and the API gateway on `http://localhost:8081`.
+The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules. This brings up the web UI on `http://localhost:8080` and the API gateway on `http://localhost:8081`.
 
 ### Supported Container Configurations
 
@@ -384,15 +383,13 @@ The repository maintains a curated set of Dockerfiles and Compose definitions:
 
 **Dockerfiles**
 
-- `Dockerfile` – dashboard service
-- `Dockerfile.analytics` – analytics microservice
-- `Dockerfile.event-processor` – Go event processor
+- `Dockerfile` – base Python service image used by the dashboard and analytics service
 - `Dockerfile.gateway` – Go API gateway
+- `yosai_intel_dashboard/src/services/event_processing/Dockerfile` – Go event processor
 
 **Docker Compose files**
 
 - `docker-compose.yml` – core development stack (dashboard, analytics, gateway, event processor)
-- `docker-compose.dev.yml` – extends the core stack with TimescaleDB, Redis and a local Kafka cluster via `docker-compose.kafka.yml`
 - `docker-compose.kafka.yml` – three-node Kafka cluster with Schema Registry
 - `docker-compose.prod.yml` – production stack with Postgres, PgBouncer and Redis
 - `docker-compose.unified.yml` – full local stack with observability tools (Jaeger, Prometheus, Grafana and Loki)
@@ -402,7 +399,6 @@ The repository maintains a curated set of Dockerfiles and Compose definitions:
 The repository maintains a small set of Docker Compose files for common scenarios:
 
 - `docker-compose.yml` – core services for local development.
-- `docker-compose.dev.yml` – extends the core stack with Kafka and developer tooling via `docker-compose.kafka.yml`.
 - `docker-compose.kafka.yml` – standalone Kafka and Schema Registry cluster.
 - `docker-compose.unified.yml` – runs the full stack for demos and integration testing.
 - `docker-compose.prod.yml` – example production deployment.
@@ -410,8 +406,7 @@ The repository maintains a small set of Docker Compose files for common scenario
 Dockerfiles are provided for the active services:
 
 - `Dockerfile` – base Python service image.
-- `Dockerfile.analytics` – analytics microservice.
-- `Dockerfile.event-processor` – Go event processor.
+- `yosai_intel_dashboard/src/services/event_processing/Dockerfile` – Go event processor.
 - `Dockerfile.gateway` – Go API gateway.
 
 Legacy container definitions have been removed to avoid confusion.
@@ -1594,7 +1589,6 @@ Set the connection strings via the environment variables `SOURCE_DSN` and
 `TimescaleDBManager` also retrieves its host, port, database, user and password
 fields from the same Vault path.
 
-The default `docker-compose.dev.yml` exposes TimescaleDB on port `5433`.
 
 ### CI/CD Verification
 
