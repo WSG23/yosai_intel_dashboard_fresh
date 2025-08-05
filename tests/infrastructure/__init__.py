@@ -81,11 +81,21 @@ class TestInfrastructure:
                 names.append(entry.stem)
         return names
 
-    def __enter__(self) -> MockFactory:
+    REQUIRED_STUBS = ("pyarrow", "pandas", "numpy")
+
+    def setup_environment(self) -> MockFactory:
+        """Install stub packages and tweak runtime settings for tests.
+
+        The method appends ``tests/stubs`` to :data:`sys.path` and ensures
+        placeholder modules for heavy optional dependencies are present in
+        :data:`sys.modules`.  It returns the global :class:`MockFactory` so
+        additional stubs may be registered by tests when required.
+        """
+
         self._old_sys_path = list(sys.path)
         stubs_str = str(self._stubs_path)
         if stubs_str not in sys.path:
-            sys.path.insert(0, stubs_str)
+            sys.path.append(stubs_str)
 
         for name in self._discover_stubs():
             try:
@@ -94,8 +104,15 @@ class TestInfrastructure:
                 module = ModuleType(name)
             self.factory.stub(name, module)
 
+        for name in self.REQUIRED_STUBS:
+            if name not in sys.modules:
+                self.factory.stub(name)
+
         os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
         return self.factory
+
+    def __enter__(self) -> MockFactory:
+        return self.setup_environment()
 
     def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - cleanup
         self.factory.restore()
