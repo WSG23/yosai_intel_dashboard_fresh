@@ -111,6 +111,11 @@ def register_core_infrastructure(container: ServiceContainer) -> None:
         protocol=ConfigProviderProtocol,
     )
     container.register_singleton(
+        "config",
+        dynamic_config,
+        protocol=ConfigProviderProtocol,
+    )
+    container.register_singleton(
         "configuration_service",
         DynamicConfigurationService,
         protocol=ConfigurationServiceProtocol,

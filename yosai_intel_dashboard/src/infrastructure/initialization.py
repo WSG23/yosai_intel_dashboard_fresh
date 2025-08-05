@@ -42,6 +42,7 @@ class ApplicationInitializer:
         assert self._container is not None
         required = [
             "config",
+            "dynamic_config",
             "callback_manager",
             "security_validator",
             "processor",
