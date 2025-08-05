@@ -31,6 +31,8 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
         """Load uploaded data and return aggregated analytics."""
         try:
             data = self._load_data()
+            if not data:
+                return {"status": "no_data"}
             stats = self._process_uploaded_data_directly(data)
             return self._format_results(stats)
         except Exception as exc:  # pragma: no cover - best effort
@@ -102,6 +104,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
                 "active_users": 0,
                 "active_doors": 0,
                 "date_range": {"start": "Unknown", "end": "Unknown"},
+                "status": "no_data",
             }
 
 
