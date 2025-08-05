@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 import pandas as pd
-import pytest
 import sys
+from types import ModuleType, SimpleNamespace
 from pathlib import Path
-import tests.infrastructure as infra_mod
 
-from tests.infrastructure import MockFactory, TestInfrastructure
+sys.modules[
+    "yosai_intel_dashboard.src.utils.hashing"
+] = SimpleNamespace(hash_dataframe=lambda df: "")
+analytics_dir = Path(__file__).resolve().parents[1] / "yosai_intel_dashboard/src/services/analytics"
+analytics_pkg = ModuleType("yosai_intel_dashboard.src.services.analytics")
+analytics_pkg.__path__ = [str(analytics_dir)]
+sys.modules["yosai_intel_dashboard.src.services.analytics"] = analytics_pkg
+
+from tests.infrastructure import uploaded_data
+from tests.utils.builders import DataFrameBuilder
+from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
+    UploadAnalyticsProcessor,
+)
+from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 
 
 @pytest.fixture(scope="module")
@@ -25,12 +38,13 @@ def test_load_data_helper(factory: MockFactory, monkeypatch):
     assert ua._load_data() == {"f.csv": df}
 
 
-def test_validate_data_filters_empty(factory: MockFactory):
-    df = factory.dataframe({"A": [1]})
-    ua = factory.upload_processor()
-    data = {"empty.csv": pd.DataFrame(), "f.csv": df}
+def test_validate_data_filters_empty():
+    valid_df = DataFrameBuilder().add_column("A", [1]).build()
+    ua = _make_processor()
+    data = uploaded_data(("empty.csv", pd.DataFrame()), ("valid.csv", valid_df))
+
     cleaned = ua._validate_data(data)
-    assert list(cleaned.keys()) == ["f.csv"]
+    assert list(cleaned.keys()) == ["valid.csv"]
 
 
 def test_calculate_statistics(factory: MockFactory):

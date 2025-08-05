@@ -1,16 +1,10 @@
-"""Utilities for constructing common objects used in tests.
+"""Utilities to set up a lightweight testing environment.
 
-This module provides two small helpers:
+The module provides helpers for installing stub modules and configuring
+environment variables required by tests.  It also exposes
+``uploaded_data`` which builds a mapping of filenames to ``pandas``
+DataFrames for upload-related tests.
 
-``TestInfrastructure``
-    Prepares a minimal environment so tests can run without optional
-    dependencies.  It adds ``tests/stubs`` to ``sys.path`` and ensures that
-    light‑weight stand‑ins for heavy packages such as :mod:`pyarrow`,
-    :mod:`pandas` and :mod:`numpy` are present in :data:`sys.modules`.
-
-``MockFactory``
-    Convenience factory that wires together frequently used objects like
-    :class:`SecurityValidator` or :class:`UploadAnalyticsProcessor`.
 """
 
 from __future__ import annotations
@@ -21,6 +15,8 @@ import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Dict, Iterable, Iterator, Mapping
+
+import pandas as pd
 
 
 
@@ -239,10 +235,14 @@ class TestInfrastructure:
 
 
 
-        builder = DataFrameBuilder()
-        for name, values in columns.items():
-            builder.add_column(name, values)
-        return builder.build()
+def uploaded_data(*dfs: tuple[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+    """Return a dictionary mapping filenames to DataFrames."""
+
+    return {name: df for name, df in dfs}
+
+
+mock_factory = MockFactory()
+
 
 
 # ----------------------------------------------------------------------
@@ -254,4 +254,11 @@ def uploaded_data(valid_df):
     return {"empty.csv": pd.DataFrame(), "valid.csv": valid_df}
 
 
-__all__ = ["TestInfrastructure", "MockFactory", "uploaded_data"]
+__all__ = [
+    "MockFactory",
+    "TestInfrastructure",
+    "setup_test_environment",
+    "uploaded_data",
+    "mock_factory",
+]
+
