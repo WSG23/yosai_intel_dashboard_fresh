@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
   their relocated implementations.
 - Added deprecation warnings for `publish`, `register_all_services`,
   `sanitize_data_frame`, and `safe_unicode_encode` to guide migration.
+- Consolidated migration progress notes into `docs/MIGRATION_STATUS.md` and removed temporary step-tracking files.
 
 ### Fixed
 - Navigation bar icons failed to load when `app.get_asset_url` returned

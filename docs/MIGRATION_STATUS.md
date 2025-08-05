@@ -26,5 +26,24 @@
 - Will be removed in next major version
 - All new code should use new import paths
 
+### Symlink Mapping
+- api → yosai_intel_dashboard/src/adapters/api
+- components → yosai_intel_dashboard/src/adapters/ui/components
+- config → yosai_intel_dashboard/src/infrastructure/config
+- core → yosai_intel_dashboard/src/core
+- models → yosai_intel_dashboard/src/core/domain/entities
+- monitoring → yosai_intel_dashboard/src/infrastructure/monitoring
+- pages → yosai_intel_dashboard/src/adapters/ui/pages
+- security → yosai_intel_dashboard/src/infrastructure/security
+- services → yosai_intel_dashboard/src/services
+- validation → yosai_intel_dashboard/src/infrastructure/validation
+
+### Remaining Technical Debt
+- Root-level entry scripts (`api.py`, `security.py`, `monitoring.py`) remain separate from the migrated directories.
+- Some tests still rely on wrapper modules that re-export classes from their new locations.
+- Symlink behavior on Windows is unverified and may require additional CI adjustments.
+- Legacy analytics imports (`analytics.core.utils.results_display`, `analytics.feature_extraction`) reference modules that no longer exist and have been commented out in `tests/test_analysis_extract_utils.py` and `yosai_intel_dashboard/src/models/ml/security_models.py`.
+- Around 198 tests raise import errors due to missing optional dependencies (e.g., `shap`, `lime`, `torch`) or outdated pre-migration paths. These are not migration issues but need cleanup.
+
 ## For Developers
 See [Migration Guide](migration_guide_clean_arch.md) for detailed information.
