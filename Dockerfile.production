@@ -34,8 +34,5 @@ EXPOSE 8050
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD curl -f http://localhost:8050/ || exit 1
 
-COPY start.sh ./start.sh
-RUN chmod +x start.sh
-
-# Run application via start.sh so `.env` variables are loaded
-CMD ["./start.sh"]
+# Run application via the unified startup script
+CMD ["python", "start_api.py"]
