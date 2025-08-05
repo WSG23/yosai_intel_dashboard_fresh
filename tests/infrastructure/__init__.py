@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import importlib
 import os
 import sys
@@ -10,22 +11,14 @@ from typing import Dict, Iterable, Iterator
 
 
 class MockFactory:
-    """Factory responsible for installing and removing stub modules.
-
-    The factory keeps track of all modules it injects into ``sys.modules`` so
-    the original modules can be restored once tests complete.
-    """
+    """Factory responsible for installing and removing stub modules."""
 
     def __init__(self) -> None:
         self._originals: Dict[str, ModuleType | None] = {}
         self._installed: set[str] = set()
 
     def stub(self, name: str, module: ModuleType | None = None) -> ModuleType:
-        """Register ``module`` under ``name`` in ``sys.modules``.
-
-        If no module is provided a new empty :class:`ModuleType` is created.
-        The previous module (if any) is stored so it can be restored later.
-        """
+        """Register ``module`` under ``name`` in :data:`sys.modules`."""
 
         if name not in self._originals:
             self._originals[name] = sys.modules.get(name)
@@ -47,23 +40,57 @@ class MockFactory:
         self._installed.clear()
         self._originals.clear()
 
+    # ------------------------------------------------------------------
+    # Component helpers
+    # ------------------------------------------------------------------
+    def file_processor(self):
+        """Return a new :class:`FileProcessor` instance."""
+
+        from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+            FileProcessor,
+        )
+
+        return FileProcessor()
+
+    def upload_processor(self):
+        """Return a minimal upload analytics processor mock."""
+
+        class _UploadProcessor:
+            def load_uploaded_data(self):  # pragma: no cover - patched in tests
+                return {}
+
+            def analyze_uploaded_data(self):
+                data = self.load_uploaded_data()
+                if not data:
+                    return {"status": "no_data"}
+                df = next(iter(data.values()))
+                rows = len(df)
+                return {"status": "success", "rows": int(rows)}
+
+        return _UploadProcessor()
+
+    def dataframe(self):
+        """Return a minimal DataFrame-like object."""
+
+        class _DF:
+            shape = (1, 2)
+
+            def __len__(self) -> int:
+                return 1
+
+        return _DF()
+
 
 class TestInfrastructure:
-    """Context manager that prepares a lightweight test environment.
-
-    On enter all stub packages located under ``tests/stubs`` are made
-    importable and registered in :data:`sys.modules` so they override any real
-    dependency.  Environment variables enabling lightweight service behaviour
-    are also set.  All changes are reverted on exit.
-    """
+    """Prepare a lightweight test environment."""
 
     def __init__(
         self,
-        factory: MockFactory,
+        factory: MockFactory | None = None,
         *,
         stub_packages: Iterable[str] | None = None,
     ) -> None:
-        self.factory = factory
+        self.factory = factory or MockFactory()
         self.stub_packages = list(stub_packages or [])
         self._stubs_path = Path(__file__).resolve().parents[1] / "stubs"
         self._old_sys_path: list[str] = []
@@ -104,6 +131,14 @@ class TestInfrastructure:
         if stubs_str in sys.path:
             sys.path.remove(stubs_str)
         sys.path[:] = self._old_sys_path
+
+    # ------------------------------------------------------------------
+    def setup_environment(self) -> MockFactory:
+        """Set up the environment immediately and return the factory."""
+
+        self.__enter__()
+        atexit.register(self.__exit__, None, None, None)
+        return self.factory
 
 
 mock_factory = MockFactory()
