@@ -16,7 +16,7 @@ See the [CHANGELOG](../CHANGELOG.md) for a list of changes.
 
 This repository uses [Dependabot](https://docs.github.com/en/code-security/dependabot)
 to automatically propose updates for packages listed in
-`requirements.txt` and `requirements_ui.txt`. Dependabot runs weekly and
+`requirements.txt` and `requirements-dev.txt`. Dependabot runs weekly and
 opens pull requests with updated pins.
 
 If Dependabot is disabled or you need to update dependencies manually,

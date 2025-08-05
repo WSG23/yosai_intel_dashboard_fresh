@@ -26,9 +26,9 @@ This guide walks new contributors through setting up a local development environ
    ```bash
    ./scripts/setup.sh
    ```
-   This installs `requirements.txt`, `requirements-dev.txt` and
-   `requirements-test.txt`. The development requirements include additional
-   packages such as **PyYAML** that are necessary when running the test suite.
+   This installs `requirements.txt` and `requirements-dev.txt`. The
+   development requirements include additional packages such as **PyYAML**
+   that are necessary when running the test suite.
 
 4. **Install Node dependencies:**
    ```bash
