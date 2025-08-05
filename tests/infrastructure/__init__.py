@@ -8,6 +8,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Dict, Iterable, Iterator
 
+import pytest
+
 
 class MockFactory:
     """Factory responsible for installing and removing stub modules.
@@ -59,11 +61,11 @@ class TestInfrastructure:
 
     def __init__(
         self,
-        factory: MockFactory,
+        factory: MockFactory | None = None,
         *,
         stub_packages: Iterable[str] | None = None,
     ) -> None:
-        self.factory = factory
+        self.factory = factory or mock_factory
         self.stub_packages = list(stub_packages or [])
         self._stubs_path = Path(__file__).resolve().parents[1] / "stubs"
         self._old_sys_path: list[str] = []
@@ -105,8 +107,19 @@ class TestInfrastructure:
             sys.path.remove(stubs_str)
         sys.path[:] = self._old_sys_path
 
+    def setup_environment(self) -> None:
+        """Activate the test environment without using a context manager."""
+        self.__enter__()
+
 
 mock_factory = MockFactory()
+
+
+@pytest.fixture(scope="session")
+def test_env() -> TestInfrastructure:
+    infra = TestInfrastructure()
+    infra.setup_environment()
+    return infra
 
 
 @contextmanager
@@ -128,4 +141,5 @@ __all__ = [
     "TestInfrastructure",
     "setup_test_environment",
     "mock_factory",
+    "test_env",
 ]
