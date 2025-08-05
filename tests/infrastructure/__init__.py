@@ -15,6 +15,7 @@ This module provides two small helpers:
 
 from __future__ import annotations
 
+import atexit
 import importlib
 import sys
 from pathlib import Path
@@ -52,10 +53,79 @@ class MockFactory:
     """Factory that exposes common building blocks for tests."""
 
     # ------------------------------------------------------------------
-    def security_validator(self):
-        from validation.security_validator import SecurityValidator
+    # Helper creators
+    # ------------------------------------------------------------------
+    @staticmethod
+    def dataframe(data: Dict[str, Iterable] | None = None):
+        """Return a lightweight :class:`pandas.DataFrame` built from ``data``."""
 
-        return SecurityValidator()
+        import pandas as pd  # imported lazily so stubs apply
+
+        return pd.DataFrame(data or {})
+
+    @staticmethod
+    def upload_processor():
+        """Return a lightweight processor analysing uploaded data."""
+
+        from tests.stubs.utils.upload_store import get_uploaded_data_store
+
+        def _shape(df):
+            if hasattr(df, "shape"):
+                return df.shape
+            data = getattr(df, "args", [{}])[0]
+            rows = len(next(iter(data.values()))) if data else 0
+            cols = len(data)
+            return rows, cols
+
+        class _Processor:
+            def analyze_uploaded_data(self):
+                store = get_uploaded_data_store()
+                data = {
+                    name: df
+                    for name, df in store.get_all_data().items()
+                    if _shape(df)[0]
+                }
+                if not data:
+                    return {"status": "no_data"}
+                rows, cols = _shape(list(data.values())[0])
+                return {"status": "success", "rows": rows, "columns": cols}
+
+        return _Processor()
+
+
+class TestInfrastructure:
+    """Context manager that prepares a lightweight test environment.
+
+    On enter all stub packages located under ``tests/stubs`` are made importable
+    and registered in :data:`sys.modules` so they override any real dependency.
+    Environment variables enabling lightweight service behaviour are also set.
+    All changes are reverted on exit.
+    """
+
+    def __init__(
+        self,
+        factory: MockFactory | None = None,
+        *,
+        stub_packages: Iterable[str] | None = None,
+    ) -> None:
+        self.factory = factory or MockFactory()
+        self.stub_packages = list(stub_packages or [])
+        self._stubs_path = Path(__file__).resolve().parents[1] / "stubs"
+        self._old_sys_path: list[str] = []
+
+    def _discover_stubs(self) -> Iterable[str]:
+        if self.stub_packages:
+            return self.stub_packages
+        if not self._stubs_path.exists():
+            return []
+        names = []
+        for entry in self._stubs_path.iterdir():
+            if entry.name == "__pycache__":
+                continue
+            if entry.is_dir() or entry.suffix == ".py":
+                names.append(entry.stem)
+        return names
+
 
     # ------------------------------------------------------------------
     def processor(self, validator=None):
@@ -96,8 +166,15 @@ class MockFactory:
         )
 
     # ------------------------------------------------------------------
-    def dataframe(self, columns: Dict[str, Any]):
-        from tests.utils.builders import DataFrameBuilder
+    # Convenience helpers
+    # ------------------------------------------------------------------
+    def setup_environment(self) -> MockFactory:
+        """Enter the context immediately and register cleanup at exit."""
+
+        factory = self.__enter__()
+        atexit.register(self.__exit__, None, None, None)
+        return factory
+
 
         builder = DataFrameBuilder()
         for name, values in columns.items():
