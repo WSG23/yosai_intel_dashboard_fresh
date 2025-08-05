@@ -23,5 +23,5 @@ ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app /app
 
-CMD ["python", "-m", "yosai_intel_dashboard.src.services.main"]
+CMD ["python", "start_api.py"]
 

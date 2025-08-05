@@ -27,8 +27,6 @@ spec:
           env:
             - name: PYTHONPATH
               value: "/app:/app/yosai_intel_dashboard/src"
-            - name: MODULE_PATH
-              value: "yosai_intel_dashboard.src.services.main"
             - name: ENABLE_LEGACY_IMPORTS
               value: "true"
           readinessProbe:

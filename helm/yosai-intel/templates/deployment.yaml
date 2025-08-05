@@ -33,8 +33,6 @@ spec:
           env:
             - name: PYTHONPATH
               value: {{ .Values.pythonPath | quote }}
-            - name: MODULE_PATH
-              value: {{ .Values.modulePath | quote }}
             - name: ENABLE_LEGACY_IMPORTS
               value: {{ .Values.enableLegacyImports | quote }}
           livenessProbe:
