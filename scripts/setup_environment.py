@@ -81,7 +81,7 @@ def main() -> int:
     if validate_configuration():
         print("Next steps:")
         print(" 1. Review the .env file and ensure secrets are correct.")
-        print(" 2. Start the application with `python start_api.py`.")
+        print(" 2. Start the application with `python start_api.py` (unified startup).")
         return 0
 
     print("Please resolve configuration errors before starting the application.")

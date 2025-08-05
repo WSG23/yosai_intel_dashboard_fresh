@@ -328,7 +328,7 @@ actions and role assignment.
    build when needed.
 
 7. **Run the application (development only):**
-   The app now loads variables from `.env` automatically.
+   The unified startup script warms the cache and loads variables from `.env` automatically.
    ```bash
    python start_api.py  # use only for local development
    ```

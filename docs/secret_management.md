@@ -214,7 +214,7 @@ export AUTH0_CLIENT_SECRET=vault:secret/data/yosai#AUTH0_CLIENT_SECRET
 export AUTH0_DOMAIN=vault:secret/data/yosai#AUTH0_DOMAIN
 export AUTH0_AUDIENCE=vault:secret/data/yosai#AUTH0_AUDIENCE
 
-python start_api.py
+python start_api.py  # unified startup script
 ```
 
 ## Incident Handling
