@@ -1,102 +1,27 @@
 from __future__ import annotations
 
-import importlib.util
-import sys
-import types
 from datetime import datetime
+import pytest
+import sys
 from pathlib import Path
+import tests.infrastructure as infra_mod
 
-# Minimal pandas stub with just enough for our tests
-
-
-class DataFrame:
-    def __init__(self, data):
-        self._data = data
-        self.columns = list(data.keys())
-
-    @property
-    def empty(self):
-        return len(self) == 0
-
-    def dropna(self, how="any", axis=0):
-        if axis == 0:
-            rows = list(zip(*[self._data[c] for c in self.columns]))
-            new_rows = [r for r in rows if not all(v is None for v in r)]
-            new_data = {c: [r[i] for r in new_rows] for i, c in enumerate(self.columns)}
-        else:
-            new_data = {
-                c: vals
-                for c, vals in self._data.items()
-                if not all(v is None for v in vals)
-            }
-        return DataFrame(new_data)
-
-    def rename(self, columns):
-        new_data = {columns.get(c, c): vals for c, vals in self._data.items()}
-        return DataFrame(new_data)
-
-    def __getitem__(self, item):
-        if isinstance(item, list):
-            return DataFrame({c: self._data[c] for c in item})
-        return self._data[item]
-
-    def __setitem__(self, key, value):
-        self._data[key] = value
-        if key not in self.columns:
-            self.columns.append(key)
-
-    def __len__(self):
-        return len(next(iter(self._data.values()))) if self._data else 0
+from tests.infrastructure import MockFactory, TestInfrastructure
 
 
-def to_datetime(values, errors="coerce"):
-    def parse(v):
-        try:
-            return datetime.fromisoformat(v)
-        except Exception:
-            return None
-
-    if isinstance(values, list):
-        return [parse(v) for v in values]
-    return parse(values)
+@pytest.fixture(scope="module")
+def factory() -> MockFactory:
+    with TestInfrastructure(MockFactory(), stub_packages=[]) as f:
+        stubs_path = Path(infra_mod.__file__).resolve().parents[1] / "stubs"
+        if str(stubs_path) in sys.path:
+            sys.path.remove(str(stubs_path))
+        yield f
 
 
-pd_stub = types.SimpleNamespace(DataFrame=DataFrame, to_datetime=to_datetime)
-sys.modules["pandas"] = pd_stub
-
-spec = importlib.util.spec_from_file_location(
-    "upload_processing",
-    Path(__file__).resolve().parents[1]
-    / "yosai_intel_dashboard/src/services/upload/upload_processing.py",
-)
-upload_processing = importlib.util.module_from_spec(spec)
-assert spec.loader is not None
-spec.loader.exec_module(upload_processing)
-UploadAnalyticsProcessor = upload_processing.UploadAnalyticsProcessor
-
-
-def _make_processor():
-    from validation.security_validator import SecurityValidator
-    from yosai_intel_dashboard.src.core.events import EventBus
-    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-        TrulyUnifiedCallbacks,
-    )
-    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-        dynamic_config,
-    )
-    from yosai_intel_dashboard.src.services.data_processing.processor import Processor
-
-    vs = SecurityValidator()
-    processor = Processor(validator=vs)
-    event_bus = EventBus()
-    callbacks = TrulyUnifiedCallbacks(event_bus=event_bus, security_validator=vs)
-    return UploadAnalyticsProcessor(
-        vs, processor, callbacks, dynamic_config.analytics, event_bus
-    )
-
-
-def test_clean_uploaded_dataframe_maps_columns_and_parses_timestamp():
-    df = DataFrame(
+def test_clean_uploaded_dataframe_maps_columns_and_parses_timestamp(
+    factory: MockFactory,
+) -> None:
+    df = factory.dataframe(
         {
             "Timestamp": ["2024-01-01 00:00:00"],
             "Person ID": ["u1"],
@@ -105,9 +30,9 @@ def test_clean_uploaded_dataframe_maps_columns_and_parses_timestamp():
             "Access result": ["Granted"],
         }
     )
-    ua = _make_processor()
+    ua = factory.upload_processor()
     cleaned = ua.clean_uploaded_dataframe(df)
-    assert cleaned.columns == [
+    assert cleaned.columns.tolist() == [
         "timestamp",
         "person_id",
         "token_id",
@@ -117,8 +42,10 @@ def test_clean_uploaded_dataframe_maps_columns_and_parses_timestamp():
     assert isinstance(cleaned["timestamp"][0], datetime)
 
 
-def test_clean_uploaded_dataframe_drops_empty_rows_and_columns():
-    df = DataFrame(
+def test_clean_uploaded_dataframe_drops_empty_rows_and_columns(
+    factory: MockFactory,
+) -> None:
+    df = factory.dataframe(
         {
             "Timestamp": ["2024-01-01 00:00:00", None],
             "Person ID": ["u1", None],
@@ -128,9 +55,9 @@ def test_clean_uploaded_dataframe_drops_empty_rows_and_columns():
             "EmptyCol": [None, None],
         }
     )
-    ua = _make_processor()
+    ua = factory.upload_processor()
     cleaned = ua.clean_uploaded_dataframe(df)
-    assert cleaned.columns == [
+    assert cleaned.columns.tolist() == [
         "timestamp",
         "person_id",
         "token_id",
@@ -138,3 +65,5 @@ def test_clean_uploaded_dataframe_drops_empty_rows_and_columns():
         "access_result",
     ]
     assert len(cleaned) == 1
+
+

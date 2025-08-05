@@ -20,33 +20,8 @@ import importlib
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, Iterator, Mapping
 
-
-class TestInfrastructure:
-    """Prepare the Python environment for tests."""
-
-    def __init__(self) -> None:
-        self._stubs_path = Path(__file__).resolve().parents[1] / "stubs"
-
-    # ------------------------------------------------------------------
-    def setup_environment(self) -> None:
-        """Register stub modules and make ``tests/stubs`` importable."""
-
-        stubs = str(self._stubs_path)
-        if stubs not in sys.path:
-            sys.path.insert(0, stubs)
-
-        for name in ("pyarrow", "pandas", "numpy"):
-            if name in sys.modules:
-                continue
-            try:
-                importlib.import_module(name)
-            except Exception:  # pragma: no cover - best effort
-                try:
-                    sys.modules[name] = importlib.import_module(f"tests.stubs.{name}")
-                except Exception:  # pragma: no cover - defensive
-                    sys.modules[name] = ModuleType(name)
 
 
 class MockFactory:
@@ -91,6 +66,100 @@ class MockFactory:
                 return {"status": "success", "rows": rows, "columns": cols}
 
         return _Processor()
+
+    # ------------------------------------------------------------------
+    # Helpers for common test objects
+    # ------------------------------------------------------------------
+    def dataframe(self, data: Mapping[str, Iterable[Any]] | None = None):
+        """Return a ``pandas`` DataFrame built from ``data``."""
+
+        import pandas as pd
+
+        return pd.DataFrame(data or {})
+
+    def upload_processor(self):
+        """Create a configured :class:`UploadAnalyticsProcessor` instance."""
+
+        import pandas as pd
+
+        class DummyUploadProcessor:
+            """Lightweight stand-in for :class:`UploadAnalyticsProcessor`."""
+
+            def load_uploaded_data(self):
+                return {}
+
+            def _load_data(self):
+                return self.load_uploaded_data()
+
+            def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+                if df.empty:
+                    return df.copy()
+                cleaned = df.dropna(how="all", axis=0).dropna(how="all", axis=1).copy()
+                cleaned.columns = [c.strip().lower().replace(" ", "_") for c in cleaned.columns]
+                cleaned = cleaned.rename(columns={"device_name": "door_id", "event_time": "timestamp"})
+                if "timestamp" in cleaned.columns:
+                    cleaned["timestamp"] = pd.to_datetime(cleaned["timestamp"], errors="coerce")
+                cleaned = cleaned.dropna(how="all", axis=0)
+                return cleaned
+
+            def _validate_data(self, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+                cleaned: Dict[str, pd.DataFrame] = {}
+                for name, df in data.items():
+                    dfc = self.clean_uploaded_dataframe(df)
+                    if not dfc.empty:
+                        cleaned[name] = dfc
+                return cleaned
+
+            def _calculate_statistics(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
+                if not data:
+                    return {
+                        "rows": 0,
+                        "columns": 0,
+                        "column_names": [],
+                        "dtypes": {},
+                        "memory_usage": 0,
+                        "null_counts": {},
+                        "total_events": 0,
+                        "active_users": 0,
+                        "active_doors": 0,
+                        "date_range": {"start": "Unknown", "end": "Unknown"},
+                    }
+
+                combined = pd.concat(list(data.values()), ignore_index=True)
+                summary = {
+                    "rows": int(combined.shape[0]),
+                    "columns": int(combined.shape[1]),
+                    "dtypes": {col: str(dtype) for col, dtype in combined.dtypes.items()},
+                    "memory_usage": int(combined.memory_usage(deep=True).sum()),
+                    "null_counts": {col: int(combined[col].isna().sum()) for col in combined.columns},
+                }
+                active_users = combined["person_id"].nunique() if "person_id" in combined.columns else 0
+                active_doors = combined["door_id"].nunique() if "door_id" in combined.columns else 0
+                date_range = {"start": "Unknown", "end": "Unknown"}
+                if "timestamp" in combined.columns:
+                    ts = pd.to_datetime(combined["timestamp"], errors="coerce").dropna()
+                    if not ts.empty:
+                        date_range = {"start": str(ts.min().date()), "end": str(ts.max().date())}
+                summary.update(
+                    {
+                        "column_names": list(combined.columns),
+                        "total_events": int(combined.shape[0]),
+                        "active_users": int(active_users),
+                        "active_doors": int(active_doors),
+                        "date_range": date_range,
+                    }
+                )
+                return summary
+
+            def _format_results(self, stats: Dict[str, Any]) -> Dict[str, Any]:
+                result = dict(stats)
+                result["status"] = result.get("status", "success")
+                return result
+
+            def _process_uploaded_data_directly(self, data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
+                return self._calculate_statistics(self._validate_data(data))
+
+        return DummyUploadProcessor()
 
 
 class TestInfrastructure:
