@@ -183,6 +183,21 @@ class TestInfrastructure:
                 names.append(entry.stem)
         return names
 
+    REQUIRED_STUBS = ("pyarrow", "pandas", "numpy")
+
+    def setup_environment(self) -> MockFactory:
+        """Install stub packages and tweak runtime settings for tests.
+
+        The method appends ``tests/stubs`` to :data:`sys.path` and ensures
+        placeholder modules for heavy optional dependencies are present in
+        :data:`sys.modules`.  It returns the global :class:`MockFactory` so
+        additional stubs may be registered by tests when required.
+        """
+
+        self._old_sys_path = list(sys.path)
+        stubs_str = str(self._stubs_path)
+        if stubs_str not in sys.path:
+            sys.path.append(stubs_str)
 
     # ------------------------------------------------------------------
     def processor(self, validator=None):
@@ -204,38 +219,24 @@ class TestInfrastructure:
     def setup_environment(self) -> MockFactory:
         """Set up the environment immediately and return the factory."""
 
-        self.__enter__()
-        atexit.register(self.__exit__, None, None, None)
+        for name in self.REQUIRED_STUBS:
+            if name not in sys.modules:
+                self.factory.stub(name)
+
+        os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
         return self.factory
 
+    def __enter__(self) -> MockFactory:
+        return self.setup_environment()
 
-    # ------------------------------------------------------------------
-    def upload_processor(self):
-        from yosai_intel_dashboard.src.core.events import EventBus
-        from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-            dynamic_config,
-        )
-        from yosai_intel_dashboard.src.services.analytics.upload_analytics import (
-            UploadAnalyticsProcessor,
-        )
+    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - cleanup
+        self.factory.restore()
+        os.environ.pop("LIGHTWEIGHT_SERVICES", None)
+        stubs_str = str(self._stubs_path)
+        if stubs_str in sys.path:
+            sys.path.remove(stubs_str)
+        sys.path[:] = self._old_sys_path
 
-        validator = self.security_validator()
-        processor = self.processor(validator)
-        event_bus = EventBus()
-        callbacks = self.callback_manager(event_bus, validator)
-        return UploadAnalyticsProcessor(
-            validator, processor, callbacks, dynamic_config.analytics, event_bus
-        )
-
-    # ------------------------------------------------------------------
-    # Convenience helpers
-    # ------------------------------------------------------------------
-    def setup_environment(self) -> MockFactory:
-        """Enter the context immediately and register cleanup at exit."""
-
-        factory = self.__enter__()
-        atexit.register(self.__exit__, None, None, None)
-        return factory
 
 
         builder = DataFrameBuilder()
