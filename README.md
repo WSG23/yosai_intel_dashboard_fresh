@@ -1289,6 +1289,8 @@ mkcert -key-file localhost+1-key.pem -cert-file localhost+1.pem localhost 127.0.
 
 Both files must be present and match or the app will raise
 `KEY_VALUES_MISMATCH`. HTTPS is enabled automatically when these files exist.
+Generated certificates must not be committed to source control; generate them
+locally or manage them through a secure secrets manager.
 
 All secrets can be provided via the `SecretManager` which supports `env`,
 `aws`, and `vault` backends. Place these values in `.env` or mount them as

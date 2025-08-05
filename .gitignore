@@ -108,6 +108,7 @@ temp_*
 .env.staging
 *.key
 localhost+1-key.pem
+localhost+1.pem
 # Secrets should not be version controlled
 secrets/
 # Training data
