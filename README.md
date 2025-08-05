@@ -363,10 +363,10 @@ docker-compose \
   -f docker-compose.dev.yml up --build
 ```
 
-`start.sh` reads variables from `.env` before launching the server. Ensure the
-file exists or pass the required values via `--env-file` when running the
-container. If you override the default command in Docker Compose, invoke
-`./start.sh` so the variables are loaded correctly.
+`python start_api.py` loads variables from `.env` before launching the server.
+Ensure the file exists or pass the required values via `--env-file` when running
+the container. If you override the default command in Docker Compose, run
+`python start_api.py` so the variables are loaded correctly.
 
 The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules.
 
@@ -512,10 +512,9 @@ Using Docker Compose to start the microservices stack:
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
-The container entrypoint runs `start.sh`, which sources the `.env` file before
-launching Gunicorn. Make sure the file exists or supply one via Docker's
-`--env-file` option.
-When deploying manually or via Kubernetes, execute `start.sh` to ensure
+The container entrypoint runs `python start_api.py`, which loads the `.env` file before
+starting the server. Make sure the file exists or supply one via Docker's
+`--env-file` option. When deploying manually or via Kubernetes, run `python start_api.py` to ensure
 environment variables from `.env` are available to the app. The script also
 adds `yosai_intel_dashboard/src` to `PYTHONPATH` so the application can locate
 modules in the clean architecture layout.
