@@ -1327,13 +1327,14 @@ HashiCorp Vault or AWS Secrets Manager. Configuration files can reference
 Install `mkcert` then run:
 
 ```bash
-mkcert -key-file localhost+1-key.pem -cert-file localhost+1.pem localhost 127.0.0.1
+mkcert -key-file localhost-key.pem -cert-file localhost.pem localhost 127.0.0.1
 ```
 
-Both files must be present and match or the app will raise
-`KEY_VALUES_MISMATCH`. HTTPS is enabled automatically when these files exist.
-Generated certificates must not be committed to source control; generate them
-locally or manage them through a secure secrets manager.
+Set ``SSL_CERT_PATH`` and ``SSL_KEY_PATH`` to point to these files. Both files
+must be present and match or the app will raise ``KEY_VALUES_MISMATCH``.
+HTTPS is enabled automatically when these files exist. Generated certificates
+must not be committed to source control; generate them locally or manage them
+through a secure secrets manager.
 
 All secrets can be provided via the `SecretManager` which supports `env`,
 `aws`, and `vault` backends. Place these values in `.env` or mount them as

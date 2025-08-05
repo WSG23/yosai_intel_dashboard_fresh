@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
@@ -19,13 +21,16 @@ def ensure_ssl_certificates(
 ) -> None:
     """Ensure SSL certificate files exist.
 
-    By default this reads ``SSL_CERT_PATH`` and ``SSL_KEY_PATH`` environment
-    variables, falling back to the local development certificates.
+    Paths are read from ``SSL_CERT_PATH`` and ``SSL_KEY_PATH`` environment
+    variables unless provided directly. This avoids bundling certificates in
+    source control; generate them locally or load them from a secrets manager.
     """
-    cert_file = cert_file or os.getenv("SSL_CERT_PATH", "localhost+1.pem")
-    key_file = key_file or os.getenv("SSL_KEY_PATH", "localhost+1-key.pem")
+    cert_file = cert_file or os.getenv("SSL_CERT_PATH")
+    key_file = key_file or os.getenv("SSL_KEY_PATH")
 
-    if not (Path(cert_file).exists() and Path(key_file).exists()):
+    if not (
+        cert_file and key_file and Path(cert_file).exists() and Path(key_file).exists()
+    ):
         raise FileNotFoundError(
             f"SSL certificates not found: {cert_file}, {key_file}. "
             "Generate them using mkcert or update paths."
@@ -70,7 +75,9 @@ def provision_admin_account(
     execute_command(
         conn,
         """
-        INSERT INTO people (person_id, name, department, clearance_level, access_groups, is_visitor)
+        INSERT INTO people (
+            person_id, name, department, clearance_level, access_groups, is_visitor
+        )
         VALUES (%s, 'Administrator', 'IT', 10, 'admin', false)
         ON CONFLICT (person_id) DO NOTHING
         """,
