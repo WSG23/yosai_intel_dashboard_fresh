@@ -1,3 +1,24 @@
+# Git history
 .git
-tests/
+
+# Python artifacts
+__pycache__/
 *.pyc
+venv/
+
+# Environment files
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Large or generated data
+large_data/
+
+# Local development directories
+notebooks/
+cypress/
+
+# Tests
+tests/
