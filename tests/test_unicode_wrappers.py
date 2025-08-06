@@ -9,11 +9,13 @@ from yosai_intel_dashboard.src.core.unicode import (
 from yosai_intel_dashboard.src.core.unicode import (
     UnicodeSQLProcessor,
     clean_unicode_surrogates,
-    clean_unicode_text,
     contains_surrogates,
-    safe_encode_text,
     sanitize_dataframe,
     sanitize_unicode_input,
+)
+from yosai_intel_dashboard.src.core.base_utils import (
+    clean_unicode_text,
+    safe_encode_text,
 )
 from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
     UnicodeEncodingError,

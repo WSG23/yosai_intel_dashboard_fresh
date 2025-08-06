@@ -2,9 +2,9 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.core.unicode import (
     UnicodeProcessor,
-    safe_encode_text,
     sanitize_dataframe,
 )
+from yosai_intel_dashboard.src.core.base_utils import safe_encode_text
 
 
 def test_clean_dataframe_removes_surrogates():

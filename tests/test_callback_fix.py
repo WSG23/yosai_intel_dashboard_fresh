@@ -36,7 +36,8 @@ except Exception:  # pragma: no cover
     _callback_registry = _StubRegistry()
 
 try:  # pragma: no cover
-    from yosai_intel_dashboard.src.core.unicode import safe_decode_bytes, safe_encode_text
+    from yosai_intel_dashboard.src.core.unicode import safe_decode_bytes
+    from yosai_intel_dashboard.src.core.base_utils import safe_encode_text
 except Exception:  # pragma: no cover
     def safe_encode_text(text: str) -> str:  # type: ignore[misc]
         return text.encode("utf-8", errors="ignore").decode("utf-8")

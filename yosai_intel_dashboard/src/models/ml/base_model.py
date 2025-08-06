@@ -14,7 +14,8 @@ from typing import Any, Dict, Optional
 import joblib
 from packaging.version import Version
 
-from yosai_intel_dashboard.src.core.unicode import clean_unicode_text, contains_surrogates
+from yosai_intel_dashboard.src.core.base_utils import clean_unicode_text
+from yosai_intel_dashboard.src.core.unicode import contains_surrogates
 from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,

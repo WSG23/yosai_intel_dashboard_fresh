@@ -4,7 +4,7 @@ Text utilities for safe text handling
 
 from typing import Any, Union
 
-from yosai_intel_dashboard.src.core.unicode import clean_surrogate_chars
+from yosai_intel_dashboard.src.core.base_utils import clean_surrogate_chars
 
 
 def safe_text(text: Union[str, Any]) -> str:
