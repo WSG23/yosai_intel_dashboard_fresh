@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Sequence
 
+from infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.database.secure_exec import (
     execute_query,
     execute_secure_query,
@@ -43,8 +44,22 @@ class OptimizedQueryService:
         try:
             rows = execute_secure_query(self.db, query, params)
         except Exception:  # Fallback for databases without ANY()
+            builder = SecureQueryBuilder(
+                allowed_tables={"people"}, allowed_columns={"person_id"}
+            )
+            table = builder.table("people")
+            column = builder.column("person_id")
             placeholders = ", ".join("%s" for _ in user_ids)
-            query = "SELECT * FROM people WHERE person_id IN (%s)" % placeholders
+            raw_sql = (
+                "SELECT * FROM "
+                + table
+                + " WHERE "
+                + column
+                + " IN ("
+                + placeholders
+                + ")"
+            )
+            query, _ = builder.build(raw_sql)
             params = tuple(user_ids)
             rows = execute_secure_query(self.db, query, params)
 

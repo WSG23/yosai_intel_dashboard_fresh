@@ -28,14 +28,17 @@ class DatabaseSettings:
     )
 
 
-
 @dataclass
 class SecuritySettings:
     """Security related configuration."""
 
-    secret_key: str = field(
-        default_factory=lambda: os.getenv("SECRET_KEY", "change-me")
-    )
+    def _load_secret_key() -> str:
+        key = os.getenv("SECRET_KEY", "")
+        if not key or key == "change-me":
+            raise RuntimeError("SECRET_KEY environment variable must be set")
+        return key
+
+    secret_key: str = field(default_factory=_load_secret_key)
     jwt_algorithm: str = field(
         default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256")
     )
@@ -50,7 +53,6 @@ class SecuritySettings:
     max_upload_mb: int = field(
         default_factory=lambda: int(os.getenv("MAX_UPLOAD_MB", "50"))
     )
-
 
 
 @dataclass
@@ -91,7 +93,6 @@ class AppSettings:
     name: str = field(
         default_factory=lambda: os.getenv("APP_NAME", "Yōsai Intel Dashboard")
     )
-
 
 
 class ConfigManager:

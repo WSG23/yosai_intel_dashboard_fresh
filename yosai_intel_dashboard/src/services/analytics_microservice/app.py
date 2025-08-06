@@ -209,9 +209,6 @@ async def _startup() -> None:
     # Ensure the JWT secret can be retrieved on startup
     _jwt_secret()
 
-    if app_cfg.secret_key == "change-me":
-        raise RuntimeError("invalid JWT secret")
-
     cfg = get_database_config()
     dsn = cfg.get_connection_string()
     parse_connection_string(dsn)

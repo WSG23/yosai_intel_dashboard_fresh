@@ -5,7 +5,7 @@ DURATION ?= 60
 
 CLI ?= python3 -m tools.ops_cli
 
-.PHONY: load-test load-tests validate build test deploy format lint clean \
+.PHONY: load-test load-tests validate build test deploy format lint security clean \
 build-all test-all deploy-all logs deprecation-docs \
 proto-python proto-go proto-all docs
 
@@ -43,7 +43,10 @@ format:
 	$(CLI) format
 
 lint:
-	$(CLI) lint
+        $(CLI) lint
+
+security:
+        $(CLI) security
 
 generate-config-proto:
 	protoc --python_out=config/generated --pyi_out=config/generated protobuf/config/schema/config.proto
