@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders facility layout canvas 1`] = `
+<div>
+  <div
+    aria-label="3D facility layout not supported"
+    role="img"
+    style=""
+  >
+    WebGL not supported
+  </div>
+</div>
+`;

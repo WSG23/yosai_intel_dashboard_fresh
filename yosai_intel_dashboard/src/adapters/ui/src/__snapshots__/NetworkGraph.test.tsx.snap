@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders accessible network graph 1`] = `
+<div>
+  <div
+    style="width: 100%;"
+  >
+    <svg
+      aria-label="Relationship graph showing security entity connections"
+      height="300"
+      role="img"
+      width="100%"
+    >
+      <title>
+        Relationship graph showing security entity connections
+      </title>
+    </svg>
+  </div>
+</div>
+`;
