@@ -20,14 +20,6 @@ from typing import Any, Callable, Iterable, Optional, Union
 
 import pandas as pd  # type: ignore[import]
 
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
-    UnicodeEncodingError,
-)
-from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
-    UnicodeSecurityConfig,
-    UnicodeSecurityValidator,
-)
-
 from .base_utils import (
     clean_surrogate_chars,
     clean_unicode_text,
@@ -42,10 +34,23 @@ from .security_patterns import (
 
 logger = logging.getLogger(__name__)
 
-# Global Unicode security validator used across this module
-_unicode_validator = UnicodeSecurityValidator(
-    config=UnicodeSecurityConfig(strict_mode=True, remove_surrogates=True)
-)
+# Lazy Unicode security validator used across this module
+_unicode_validator = None
+
+
+def _get_unicode_validator():
+    """Return a shared :class:`UnicodeSecurityValidator` instance."""
+    global _unicode_validator
+    if _unicode_validator is None:
+        from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
+            UnicodeSecurityConfig,
+            UnicodeSecurityValidator,
+        )
+
+        _unicode_validator = UnicodeSecurityValidator(
+            config=UnicodeSecurityConfig(strict_mode=True, remove_surrogates=True)
+        )
+    return _unicode_validator
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +174,7 @@ class UnicodeProcessor:
     def sanitize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         """Return ``df`` sanitized using the enterprise validator."""
 
-        return _unicode_validator.validate_dataframe(df)
+        return _get_unicode_validator().validate_dataframe(df)
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -242,6 +247,10 @@ class UnicodeSQLProcessor:
 
     @staticmethod
     def encode_query(query: Any) -> str:
+        from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
+            UnicodeEncodingError,
+        )
+
         original = str(query)
         if contains_surrogates(original):
             raise UnicodeEncodingError("surrogate characters detected", original)
@@ -289,6 +298,7 @@ try:  # optional Cython speedup
 except Exception:  # pragma: no cover - extension not built
     pass
 
+
 def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
     """Decode bytes safely, removing unsafe Unicode characters."""
 
@@ -305,6 +315,7 @@ def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
     """Safely decode byte data to text."""
 
     return UnicodeProcessor.safe_decode_text(data, encoding)
+
 
 def safe_encode(value: Any) -> str:
     """Alias for :func:`UnicodeProcessor.safe_encode`."""
@@ -353,6 +364,7 @@ def safe_unicode_encode(value: Any) -> str:
     )
     return safe_encode(value)
 
+
 def clean_unicode_surrogates(text: str, replacement: str = "") -> str:
     """Alias for :func:`clean_surrogate_chars`."""
 
@@ -393,14 +405,14 @@ def sanitize_unicode_input(text: Union[str, Any]) -> str:
 
     try:
         cleaned = _strip_pairs(text)
-        sanitized = _unicode_validator.validate_and_sanitize(cleaned)
+        sanitized = _get_unicode_validator().validate_and_sanitize(cleaned)
         sanitized = unicodedata.normalize("NFKC", sanitized)
         return _drop_dangerous_prefix(sanitized)
     except UnicodeError as exc:  # pragma: no cover - best effort
         logger.warning(f"Unicode sanitization failed: {exc}")
         cleaned = clean_surrogate_chars(text)
         try:
-            cleaned = _unicode_validator.validate_and_sanitize(cleaned)
+            cleaned = _get_unicode_validator().validate_and_sanitize(cleaned)
             cleaned = unicodedata.normalize("NFKC", cleaned)
             return _drop_dangerous_prefix(cleaned)
         except Exception as inner:  # pragma: no cover - extreme defensive
@@ -439,7 +451,7 @@ def safe_format_number(value: Union[int, float]) -> Optional[str]:
 def contains_surrogates(text: str) -> bool:
     """Return ``True`` if ``text`` contains any unpaired surrogate code points."""
 
-    return _unicode_validator._contains_surrogates(str(text))
+    return _get_unicode_validator()._contains_surrogates(str(text))
 
 
 def has_malicious_patterns(text: str) -> bool:
@@ -472,7 +484,7 @@ def secure_unicode_sanitization(value: Any, *, check_malicious: bool = True) -> 
         patterns are detected.
     """
 
-    validator = _unicode_validator
+    validator = _get_unicode_validator()
     if not check_malicious:
         validator = UnicodeSecurityValidator(
             UnicodeSecurityConfig(strict_mode=False, remove_surrogates=True)
@@ -663,19 +675,19 @@ def normalize_unicode_safely(text: Any, form: str = "NFKC") -> str:
 def detect_surrogate_pairs(text: Any) -> bool:
     """Return ``True`` if ``text`` contains any UTF-16 surrogate pair."""
 
-    return _unicode_validator._contains_surrogates(str(text))
+    return _get_unicode_validator()._contains_surrogates(str(text))
 
 
 def sanitize_for_utf8(value: Any) -> str:
     """Return ``value`` cleaned and safe for UTF-8."""
 
     try:
-        return _unicode_validator.validate_and_sanitize(value)
+        return _get_unicode_validator().validate_and_sanitize(value)
     except SecurityError:
         raise
     except Exception as exc:  # pragma: no cover - best effort
         logger.error(f"Unicode sanitization failed: {exc}")
-        return _unicode_validator.validate_and_sanitize(str(value))
+        return _get_unicode_validator().validate_and_sanitize(str(value))
 
 
 __all__ = [

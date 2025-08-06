@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 """Unified entry point for starting the Yosai Intel Dashboard API.
 
 This script validates required environment variables, warms the cache based on
@@ -12,22 +14,29 @@ import os
 import sys
 from pathlib import Path
 
-from yosai_intel_dashboard.src.core.env_validation import validate_required_env
-
 logger = logging.getLogger(__name__)
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app
-from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer
-from yosai_intel_dashboard.src.core.di.bootstrap import bootstrap_container
-from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
-from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
-
 
 def main() -> None:
     """Warm the cache and start the API server."""
+    try:
+        import uvicorn
+
+        from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app
+        from yosai_intel_dashboard.src.core.cache_warmer import IntelligentCacheWarmer
+        from yosai_intel_dashboard.src.core.di.bootstrap import bootstrap_container
+        from yosai_intel_dashboard.src.core.env_validation import validate_required_env
+        from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
+        from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
+    except ImportError as exc:
+        logger.error(
+            "Failed to import dependencies (possible circular import): %s", exc
+        )
+        return
+
     validate_required_env()
     container = bootstrap_container()
 
@@ -52,8 +61,6 @@ def main() -> None:
     logger.info("\n🚀 Starting Yosai Intel Dashboard API...")
     logger.info(f"   Available at: http://localhost:{API_PORT}")
     logger.info(f"   Health check: http://localhost:{API_PORT}/health")
-
-    import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=API_PORT)
 
