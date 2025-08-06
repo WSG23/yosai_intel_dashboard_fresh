@@ -11,7 +11,7 @@ set.
 import os
 
 from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
-from yosai_intel_dashboard.src.core.unicode import safe_encode_text
+from yosai_intel_dashboard.src.core.base_utils import safe_encode_text
 from unicode_toolkit import decode_upload_content
 from validation.security_validator import SecurityValidator
 

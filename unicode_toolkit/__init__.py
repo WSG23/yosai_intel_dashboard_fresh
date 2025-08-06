@@ -6,10 +6,12 @@ from yosai_intel_dashboard.src.core.unicode import (
     UnicodeProcessor,
     UnicodeSQLProcessor,
     clean_unicode_surrogates,
-    clean_unicode_text,
-    safe_encode_text,
     sanitize_dataframe,
     sanitize_unicode_input,
+)
+from yosai_intel_dashboard.src.core.base_utils import (
+    clean_unicode_text,
+    safe_encode_text,
 )
 from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
     UnicodeSecurityValidator as UnicodeValidator,

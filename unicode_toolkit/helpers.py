@@ -9,7 +9,7 @@ from yosai_intel_dashboard.src.core.unicode import (
     UnicodeSQLProcessor,
 )
 from yosai_intel_dashboard.src.core.unicode import clean_unicode_surrogates as _clean_unicode_surrogates
-from yosai_intel_dashboard.src.core.unicode import safe_encode_text as _safe_encode_text
+from yosai_intel_dashboard.src.core.base_utils import safe_encode_text as _safe_encode_text
 from yosai_intel_dashboard.src.core.unicode import (
     sanitize_dataframe,
 )

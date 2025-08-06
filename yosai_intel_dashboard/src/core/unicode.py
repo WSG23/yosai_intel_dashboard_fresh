@@ -28,6 +28,11 @@ from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validato
     UnicodeSecurityValidator,
 )
 
+from .base_utils import (
+    clean_surrogate_chars,
+    clean_unicode_text,
+    safe_encode_text,
+)
 from .exceptions import SecurityError
 from .security_patterns import (
     PATH_TRAVERSAL_PATTERNS,
@@ -342,17 +347,6 @@ try:  # optional Cython speedup
 except Exception:  # pragma: no cover - extension not built
     pass
 
-
-# ---------------------------------------------------------------------------
-# Preferred public API
-
-
-def clean_unicode_text(text: str) -> str:
-    """Clean ``text`` of surrogates, controls and dangerous prefixes."""
-
-    return _unicode_validator.validate_and_sanitize(text)
-
-
 def safe_decode_bytes(data: bytes, encoding: str = "utf-8") -> str:
     """Decode bytes safely, removing unsafe Unicode characters."""
 
@@ -369,13 +363,6 @@ def safe_decode_text(data: bytes, encoding: str = "utf-8") -> str:
     """Safely decode byte data to text."""
 
     return UnicodeProcessor.safe_decode_text(data, encoding)
-
-
-def safe_encode_text(text: Any) -> str:
-    """Return ``text`` encoded safely as Unicode text."""
-
-    return UnicodeProcessor.safe_encode_text(text)
-
 
 def safe_encode(value: Any) -> str:
     """Alias for :func:`UnicodeProcessor.safe_encode`."""
@@ -423,13 +410,6 @@ def safe_unicode_encode(value: Any) -> str:
         stacklevel=2,
     )
     return safe_encode(value)
-
-
-def clean_surrogate_chars(text: str, replacement: str = "") -> str:
-    """Return ``text`` with surrogate code points removed or replaced."""
-
-    return UnicodeProcessor.clean_surrogate_chars(text, replacement)
-
 
 def clean_unicode_surrogates(text: str, replacement: str = "") -> str:
     """Alias for :func:`clean_surrogate_chars`."""

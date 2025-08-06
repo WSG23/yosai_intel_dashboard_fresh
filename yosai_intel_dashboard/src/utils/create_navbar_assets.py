@@ -15,7 +15,7 @@ try:
 except ImportError:
     PIL_AVAILABLE = False
 
-from yosai_intel_dashboard.src.core.unicode import safe_encode_text
+from yosai_intel_dashboard.src.core.base_utils import safe_encode_text
 
 logger = logging.getLogger(__name__)
 

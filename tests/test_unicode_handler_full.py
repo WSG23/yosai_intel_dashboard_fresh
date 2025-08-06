@@ -9,10 +9,12 @@ from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import
 from yosai_intel_dashboard.src.core.unicode import (
     ChunkedUnicodeProcessor,
     UnicodeProcessor,
-    clean_unicode_text,
     safe_decode_bytes,
-    safe_encode_text,
     sanitize_dataframe,
+)
+from yosai_intel_dashboard.src.core.base_utils import (
+    clean_unicode_text,
+    safe_encode_text,
 )
 
 

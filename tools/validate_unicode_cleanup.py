@@ -13,10 +13,10 @@ from yosai_intel_dashboard.src.core.unicode import UnicodeProcessor
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from yosai_intel_dashboard.src.core.unicode import (
+from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
+from yosai_intel_dashboard.src.core.base_utils import (
     clean_unicode_text,
     safe_encode_text,
-    sanitize_dataframe,
 )
 
 

@@ -7,10 +7,10 @@ import pytest
 from yosai_intel_dashboard.src.core.unicode import (
     contains_surrogates,
     safe_decode_bytes,
-    safe_encode_text,
     safe_format_number,
     sanitize_dataframe,
 )
+from yosai_intel_dashboard.src.core.base_utils import safe_encode_text
 from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
     UnicodeSecurityValidator,
 )
