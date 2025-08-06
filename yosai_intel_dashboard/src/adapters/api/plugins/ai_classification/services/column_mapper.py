@@ -1,6 +1,7 @@
 """AI powered column mapping service"""
 
-import logging
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -14,10 +15,10 @@ from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.database.c
     CSVStorageRepository,
 )
 
-logger = logging.getLogger(__name__)
+from .base import RepositoryConfigService
 
 
-class ColumnMappingService:
+class ColumnMappingService(RepositoryConfigService):
     """Suggest mappings from CSV headers to standard fields."""
 
     STANDARD_FIELDS = {
@@ -63,9 +64,7 @@ class ColumnMappingService:
     def __init__(
         self, repository: CSVStorageRepository, config: ColumnMappingConfig
     ) -> None:
-        self.repository = repository
-        self.config = config
-        self.logger = logger
+        super().__init__(repository, config)
         self.classifier: Optional[ColumnClassifier] = None
         if self.config.learning_enabled:
             self.classifier = ColumnClassifier(

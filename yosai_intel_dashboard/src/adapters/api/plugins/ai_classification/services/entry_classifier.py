@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+
 import re
 from collections import Counter
 from typing import Any, Dict, List, Optional
@@ -14,10 +15,10 @@ from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.database.c
     CSVStorageRepository,
 )
 
-logger = logging.getLogger(__name__)
+from .base import RepositoryConfigService
 
 
-class EntryClassificationService:
+class EntryClassificationService(RepositoryConfigService):
     """Device mapping for floor, entry/exit, elevator, stairwell, fire escape, and security level"""
 
     # Security level keywords (device name -> security adjustment)
@@ -77,9 +78,7 @@ class EntryClassificationService:
     def __init__(
         self, repository: CSVStorageRepository, config: EntryClassificationConfig
     ) -> None:
-        self.repository = repository
-        self.config = config
-        self.logger = logger
+        super().__init__(repository, config)
 
     def classify_entries(self, data: List[Dict], session_id: str) -> List[Dict]:
         """Main entry point - now does device mapping instead of simple entry classification"""

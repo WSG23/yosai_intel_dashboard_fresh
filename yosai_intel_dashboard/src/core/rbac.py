@@ -9,6 +9,8 @@ import os
 import threading
 from functools import wraps
 from typing import Callable, List, Optional
+import importlib.util
+from pathlib import Path
 
 import asyncpg
 import redis.asyncio as redis
@@ -18,11 +20,17 @@ logger = logging.getLogger(__name__)
 
 
 def _verify_behavioral_biometrics(req) -> bool:
-    from yosai_intel_dashboard.src.services.security.behavioral_biometrics import (
-        verify_behavioral_biometrics as _verify,
-    )
+    """Load and invoke the behavioral biometrics verifier lazily."""
 
-    return _verify(req)
+    mod_path = (
+        Path(__file__).resolve().parent.parent
+        / "services/security/behavioral_biometrics/__init__.py"
+    )
+    spec = importlib.util.spec_from_file_location("behavioral_biometrics", mod_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)  # type: ignore[assignment]
+    return module.verify_behavioral_biometrics(req)  # type: ignore[attr-defined]
 
 
 class RBACService:
