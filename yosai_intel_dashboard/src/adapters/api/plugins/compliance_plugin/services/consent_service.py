@@ -12,6 +12,7 @@ from flask import request
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.models.compliance import (
     ConsentLog,
     ConsentType,
@@ -21,7 +22,7 @@ from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
 from yosai_intel_dashboard.src.core.interfaces.protocols import DatabaseProtocol
 from yosai_intel_dashboard.src.database.secure_exec import (
     execute_command,
-    execute_query,
+    execute_secure_query,
 )
 
 logger = logging.getLogger(__name__)
@@ -228,7 +229,7 @@ class ConsentService:
                 ORDER BY granted_timestamp DESC
             """
 
-            df = execute_query(self.db, query_sql, (user_id,))
+            df = execute_secure_query(self.db, query_sql, (user_id,))
             return df.to_dict("records") if not df.empty else []
 
         except Exception as e:
@@ -243,18 +244,41 @@ class ConsentService:
             if not user_ids:
                 return {}
 
+            builder = SecureQueryBuilder(
+                allowed_tables={"consent_log"},
+                allowed_columns={
+                    "user_id",
+                    "consent_type",
+                    "jurisdiction",
+                    "is_active",
+                },
+            )
+            table = builder.table("consent_log")
+            user_col = builder.column("user_id")
+            consent_col = builder.column("consent_type")
+            juris_col = builder.column("jurisdiction")
+            active_col = builder.column("is_active")
             placeholders = ",".join(["%s"] * len(user_ids))
-            query_sql = f"""
-                SELECT DISTINCT user_id
-                FROM consent_log 
-                WHERE user_id IN ({placeholders})
-                  AND consent_type = %s 
-                  AND jurisdiction = %s 
-                  AND is_active = TRUE
-            """
-
-            params = user_ids + [consent_type.value, jurisdiction]
-            df = execute_query(self.db, query_sql, tuple(params))
+            raw_sql = (
+                "SELECT DISTINCT "
+                + user_col
+                + " FROM "
+                + table
+                + " WHERE "
+                + user_col
+                + " IN ("
+                + placeholders
+                + ") AND "
+                + consent_col
+                + " = %s AND "
+                + juris_col
+                + " = %s AND "
+                + active_col
+                + " = TRUE"
+            )
+            query_sql, _ = builder.build(raw_sql)
+            params = tuple(user_ids) + (consent_type.value, jurisdiction)
+            df = execute_secure_query(self.db, query_sql, params)
 
             consented_users = set(df["user_id"].tolist()) if not df.empty else set()
 
@@ -279,7 +303,7 @@ class ConsentService:
                 LIMIT 1
             """
 
-            df = execute_query(
+            df = execute_secure_query(
                 self.db, query_sql, (user_id, consent_type.value, jurisdiction)
             )
             return df.iloc[0].to_dict() if not df.empty else None

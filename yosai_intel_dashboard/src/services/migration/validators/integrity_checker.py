@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import asyncpg
-from asyncpg.utils import _quote_ident
+
+from infrastructure.security.query_builder import SecureQueryBuilder
 
 
 class IntegrityChecker:
@@ -10,8 +11,9 @@ class IntegrityChecker:
     async def rowcount_equal(
         self, source: asyncpg.Pool, target: asyncpg.Pool, table: str
     ) -> bool:
-        safe_table = _quote_ident(table)
-        query = f"SELECT COUNT(*) FROM {safe_table}"
+        builder = SecureQueryBuilder(allowed_tables={table})
+        tbl = builder.table(table)
+        query, _ = builder.build("SELECT COUNT(*) FROM %s", tbl)
         src = await source.fetchval(query)
         tgt = await target.fetchval(query)
         return src == tgt

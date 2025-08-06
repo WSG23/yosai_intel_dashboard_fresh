@@ -123,6 +123,12 @@ def lint():
 
 
 @cli.command()
+def security():
+    """Run security static analysis."""
+    run(["bandit", "-r", str(ROOT / "yosai_intel_dashboard" / "src")])
+
+
+@cli.command()
 def clean():
     """Remove temporary files and stop containers."""
     run(["docker", "compose", *compose_args(COMPOSE_DEV_FILES), "down", "-v"])
