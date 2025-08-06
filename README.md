@@ -400,6 +400,7 @@ The repository maintains a curated set of Dockerfiles and Compose definitions:
 **Docker Compose files**
 
 - `docker-compose.yml` – core development stack (dashboard, analytics, gateway, event processor)
+- `docker-compose.dev.yml` – development overrides with debugging and live reload
 - `docker-compose.kafka.yml` – three-node Kafka cluster with Schema Registry
 - `docker-compose.prod.yml` – production stack with Postgres, PgBouncer and Redis
 - `docker-compose.unified.yml` – full local stack with observability tools (Jaeger, Prometheus, Grafana and Loki)
@@ -409,9 +410,16 @@ The repository maintains a curated set of Dockerfiles and Compose definitions:
 The repository maintains a small set of Docker Compose files for common scenarios:
 
 - `docker-compose.yml` – core services for local development.
+- `docker-compose.dev.yml` – adds debugging ports and mounts for rapid iteration.
 - `docker-compose.kafka.yml` – standalone Kafka and Schema Registry cluster.
 - `docker-compose.unified.yml` – runs the full stack for demos and integration testing.
 - `docker-compose.prod.yml` – example production deployment.
+
+Launch the development stack with debugging enabled:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
 
 Dockerfiles are provided for the active services:
 
