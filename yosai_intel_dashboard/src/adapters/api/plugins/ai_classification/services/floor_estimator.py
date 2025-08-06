@@ -1,6 +1,7 @@
 """Enhanced floor estimator with comprehensive pattern detection"""
 
-import logging
+from __future__ import annotations
+
 import re
 from collections import Counter
 from typing import Any, Dict, List, Set
@@ -12,18 +13,16 @@ from yosai_intel_dashboard.src.adapters.api.plugins.ai_classification.database.c
     CSVStorageRepository,
 )
 
-logger = logging.getLogger(__name__)
+from .base import RepositoryConfigService
 
 
-class FloorEstimationService:
+class FloorEstimationService(RepositoryConfigService):
     """Enhanced floor estimation with multiple detection methods"""
 
     def __init__(
         self, repository: CSVStorageRepository, config: FloorEstimationConfig
     ) -> None:
-        self.repository = repository
-        self.config = config
-        self.logger = logger
+        super().__init__(repository, config)
 
         # Comprehensive floor detection patterns
         self.floor_patterns = [
