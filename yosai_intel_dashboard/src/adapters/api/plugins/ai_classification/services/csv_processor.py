@@ -1,5 +1,7 @@
 """Enhanced CSV processing service with optional Polars optimization"""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -7,7 +9,9 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from yosai_intel_dashboard.src.services.data_processing.file_processor import FileProcessor
+from yosai_intel_dashboard.src.services.data_processing.file_processor import (
+    FileProcessor,
+)
 
 # Optional Polars import with pandas fallback
 try:
@@ -20,22 +24,22 @@ except ImportError:  # pragma: no cover - optional dependency
 
 logger = logging.getLogger(__name__)
 
+from .base import BaseCSVProcessor
 
-class CSVProcessorService:
+
+class CSVProcessorService(BaseCSVProcessor):
     """Process CSV data with optional Polars acceleration"""
 
     def __init__(self, repository, japanese_handler, config) -> None:
-        self.repository = repository
-        self.japanese_handler = japanese_handler
-        self.config = config
+        super().__init__(repository, japanese_handler, config)
 
         # Determine backend based on config and availability
         self.use_polars = POLARS_AVAILABLE and getattr(config, "use_polars", True)
 
         if self.use_polars:
-            logger.info("Using Polars for CSV processing")
+            self.logger.info("Using Polars for CSV processing")
         else:
-            logger.info("Using Pandas for CSV processing")
+            self.logger.info("Using Pandas for CSV processing")
 
     def process_csv_data(
         self,
@@ -50,7 +54,7 @@ class CSVProcessorService:
                 return self._process_with_polars(csv_data, filename, session_id)
             return self._process_with_pandas(csv_data, filename, session_id)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.error("CSV processing failed for %s: %s", filename, exc)
+            self.logger.error("CSV processing failed for %s: %s", filename, exc)
             return {
                 "success": False,
                 "error": f"Failed to process CSV: {exc}",
@@ -79,7 +83,7 @@ class CSVProcessorService:
             )
             df_pandas = df_polars.to_pandas()
         except Exception as exc:  # pragma: no cover - fallback
-            logger.warning("Polars failed, falling back to pandas: %s", exc)
+            self.logger.warning("Polars failed, falling back to pandas: %s", exc)
             return self._process_with_pandas(csv_data, filename, session_id)
 
         result = self._analyze_dataframe(df_pandas, filename, session_id)
@@ -176,7 +180,7 @@ class CSVProcessorService:
                     },
                 )
             except Exception as exc:  # pragma: no cover - repository errors
-                logger.warning("Failed to store processing result: %s", exc)
+                self.logger.warning("Failed to store processing result: %s", exc)
 
         return {
             "success": True,
@@ -218,14 +222,12 @@ class CSVProcessorService:
         }
 
 
-class PandasOnlyCSVProcessor:
+class PandasOnlyCSVProcessor(BaseCSVProcessor):
     """Fallback CSV processor using only Pandas"""
 
     def __init__(self, repository, japanese_handler, config) -> None:
-        self.repository = repository
-        self.japanese_handler = japanese_handler
-        self.config = config
-        logger.info("Using Pandas-only CSV processor")
+        super().__init__(repository, japanese_handler, config)
+        self.logger.info("Using Pandas-only CSV processor")
 
     def process_csv_data(
         self, csv_data: bytes, filename: str, session_id: str
