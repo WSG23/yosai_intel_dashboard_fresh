@@ -1,0 +1,7 @@
+services:
+  dashboard:
+    build:
+      dockerfile: Dockerfile.fixed
+  api:
+    build:
+      dockerfile: Dockerfile.fixed

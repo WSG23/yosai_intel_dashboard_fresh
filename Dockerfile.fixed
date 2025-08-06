@@ -1,0 +1,53 @@
+FROM python:3.11-slim AS builder
+WORKDIR /app
+
+# Install system packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential curl git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt ./
+
+# Create a filtered requirements file that removes conflicting packages
+RUN python -m venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    grep -v -E '^(apache-flink|feast|opentelemetry-exporter-jaeger|opentelemetry-exporter-zipkin)' requirements.txt > requirements.filtered && \
+    # Try to install, allowing pip to resolve conflicts
+    pip install --no-cache-dir -r requirements.filtered || \
+    # If that fails, install essential packages only
+    (echo "Flask==2.3.3" > requirements.essential.txt && \
+     echo "dash==2.14.1" >> requirements.essential.txt && \
+     echo "pandas==2.1.4" >> requirements.essential.txt && \
+     echo "plotly==5.15.0" >> requirements.essential.txt && \
+     echo "gunicorn==23.0.0" >> requirements.essential.txt && \
+     echo "python-dotenv==1.0.0" >> requirements.essential.txt && \
+     echo "redis>=6.2.0" >> requirements.essential.txt && \
+     echo "asyncpg>=0.30.0" >> requirements.essential.txt && \
+     echo "requests==2.32.4" >> requirements.essential.txt && \
+     echo "dash-bootstrap-components" >> requirements.essential.txt && \
+     pip install --no-cache-dir -r requirements.essential.txt)
+
+FROM python:3.11-slim
+WORKDIR /app
+ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
+
+# Install runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy application code
+COPY . .
+
+# Ensure entrypoint is executable
+RUN chmod +x docker-entrypoint.sh
+
+EXPOSE 8050 8000
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["wsgi.py"]
