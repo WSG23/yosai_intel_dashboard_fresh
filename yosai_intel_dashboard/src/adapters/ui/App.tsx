@@ -1,22 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './styles/upload.css';
 import { Upload } from './components/upload';
-import { Shield } from 'lucide-react';
+import Navigation from './components/Navigation';
+import { Shield, Menu, Sun, Moon } from 'lucide-react';
+import useDarkMode from './hooks/useDarkMode';
 
 function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { isDark, toggle } = useDarkMode();
+
   return (
-    <div className="App">
-      <nav className="bg-gray-900 mb-4">
-        <div className="container mx-auto px-4">
-          <span className="flex items-center text-white text-xl font-semibold">
-            <Shield className="w-6 h-6 mr-2" />
-            Yōsai Intel Dashboard
-          </span>
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <header className="bg-white dark:bg-gray-800 shadow-sm mb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <button
+                className="mr-2 md:hidden"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Toggle menu"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              <span className="flex items-center text-xl font-semibold">
+                <Shield className="w-6 h-6 mr-2 text-blue-600" />
+                Yōsai Intel Dashboard
+              </span>
+            </div>
+            <nav className="hidden md:block">
+              <Navigation />
+            </nav>
+            <button
+              className="ml-4 p-2 rounded-md text-gray-600 dark:text-gray-300"
+              onClick={toggle}
+              aria-label="Toggle dark mode"
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
-      </nav>
-      <div className="container mx-auto px-4">
+        {menuOpen && (
+          <div className="md:hidden px-4 pb-4">
+            <Navigation orientation="vertical" />
+          </div>
+        )}
+      </header>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Upload />
-      </div>
+      </main>
     </div>
   );
 }
