@@ -12,6 +12,15 @@ An AI-powered modular security intelligence dashboard for physical access contro
 2. Use the navigation menu to access analytics, real-time monitoring, uploads, and settings.
 3. For tips on working with alerts and customizing your view, see the [User Guide](docs/user_guide.md).
 
+## Interactive Visualizations
+
+The dashboard now includes interactive security maps and relationship graphs powered by **Three.js** and **D3.js**. Both components are responsive and include keyboard navigation and ARIA labels for accessibility.
+
+- `FacilityLayout` renders a 3D facility map using Three.js. Use the arrow keys to rotate the layout.
+- `NetworkGraph` displays security entity relationships with D3. Nodes are focusable and can be toggled with Enter or Space.
+
+To embed these visualizations, import them from `yosai_intel_dashboard/src/adapters/ui/pages/visualizations` and include them in your page or route.
+
 ## Migration Status
 
 The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
