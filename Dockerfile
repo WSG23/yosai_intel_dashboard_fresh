@@ -26,9 +26,5 @@ COPY --from=builder /app /app
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
-
-# Entrypoint
-RUN chmod +x docker-entrypoint.sh
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["start_api.py"]
