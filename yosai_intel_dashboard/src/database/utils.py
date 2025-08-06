@@ -3,6 +3,7 @@
 Provides simple parsing and validation for PostgreSQL and SQLite
 connection URLs used throughout the project.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -39,12 +40,13 @@ class ParsedConnection:
             return f"sqlite:///{path}"
 
         if dialect.startswith("postgres"):
-            auth = ""
+            auth_parts = []
             if self.user:
-                auth += self.user
+                auth_parts.append(self.user)
                 if self.password:
-                    auth += f":{self.password}"
-                auth += "@"
+                    auth_parts.append(f":{self.password}")
+                auth_parts.append("@")
+            auth = "".join(auth_parts)
             host = self.host or ""
             port = f":{self.port}" if self.port else ""
             db = self.database or ""
