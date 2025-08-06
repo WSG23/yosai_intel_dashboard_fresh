@@ -90,5 +90,34 @@ class UnicodeHandler:
     def check_for_attacks(self, text: Any) -> bool:
         return UnicodeSecurityValidator.check_for_attacks(text)
 
+    # ------------------------------------------------------------------
+    # Backwards-compatible static helpers
+    @staticmethod
+    def sanitize(text: Any) -> Any:
+        """Sanitize text using a temporary handler instance."""
+        return UnicodeHandler().clean_text(text)
+
+    @staticmethod
+    def validate_utf8(data: bytes) -> bool:
+        """Return ``True`` if ``data`` can be decoded as UTF-8."""
+        try:
+            data.decode("utf-8")
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def repair_text(text: str) -> tuple[str, list[str]]:
+        """Return sanitized text and a list of detected issues."""
+        cleaned = UnicodeHandler.sanitize(text)
+        issues: list[str] = []
+        if "\ufeff" in text:
+            issues.append("bom_removed")
+        if any(ch in {"\u200b", "\u200c", "\u200d"} for ch in text):
+            issues.append("zero_width_removed")
+        if any(0xD800 <= ord(ch) <= 0xDFFF for ch in text):
+            issues.append("surrogates_removed")
+        return cleaned, issues
+
 
 __all__ = ["UnicodeHandler"]
