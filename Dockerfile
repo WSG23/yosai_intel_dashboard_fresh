@@ -22,13 +22,11 @@ ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /app /app
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
 
-# Copy application source
-COPY . .
-
-# Create uploads directory and legacy symlinks
-RUN mkdir -p /app/uploads \
-    && python scripts/create_symlinks.py
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 # Entrypoint
 RUN chmod +x docker-entrypoint.sh
