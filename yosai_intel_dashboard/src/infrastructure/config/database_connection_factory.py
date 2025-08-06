@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from yosai_intel_dashboard.src.utils.text_utils import safe_text
+from yosai_intel_dashboard.src.database.retry_strategy import (  # noqa: F401
+    RetryStrategy,
+)
 
 from .connection_pool import DatabaseConnectionPool
 from .connection_retry import ConnectionRetryManager, RetryConfig
@@ -21,7 +23,9 @@ class _RetryLogger:
     def __init__(self, max_attempts: int) -> None:
         self.max_attempts = max_attempts
 
-    def on_retry(self, attempt: int, delay: float) -> None:  # pragma: no cover - simple logging
+    def on_retry(
+        self, attempt: int, delay: float
+    ) -> None:  # pragma: no cover - simple logging
         logger.warning(
             "Database connection attempt %d/%d failed; retrying in %.2fs",
             attempt,
@@ -33,9 +37,7 @@ class _RetryLogger:
         logger.info("Database connection established")
 
     def on_failure(self) -> None:  # pragma: no cover - simple logging
-        logger.error(
-            "Database connection failed after %d attempts", self.max_attempts
-        )
+        logger.error("Database connection failed after %d attempts", self.max_attempts)
 
 
 class DatabaseConnectionFactory:
@@ -53,8 +55,13 @@ class DatabaseConnectionFactory:
         )
 
     def _create_connection_with_retry(self):
+        # Local import to avoid circular dependency
+        from yosai_intel_dashboard.src.utils.text_utils import safe_text
+
         try:
-            return self._retry.run_with_retry(self._manager._create_connection)  # type: ignore[attr-defined]
+            return self._retry.run_with_retry(
+                self._manager._create_connection  # type: ignore[attr-defined]
+            )
         except ConnectionRetryExhausted as exc:  # pragma: no cover - defensive
             logger.error(
                 "Exhausted retries creating database connection: %s", safe_text(exc)
@@ -97,5 +104,4 @@ class DatabaseConnectionFactory:
         return self._create_connection_with_retry()
 
 
-__all__ = ["DatabaseConnectionFactory"]
-
+__all__ = ["DatabaseConnectionFactory", "RetryStrategy"]
