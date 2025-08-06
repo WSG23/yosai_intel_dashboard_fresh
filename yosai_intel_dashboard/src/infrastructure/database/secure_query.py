@@ -21,10 +21,10 @@ def _validate_identifier(name: str, allowed: Set[str]) -> str:
     return name
 
 
-The SecureQueryBuilder implementation has moved to
-``infrastructure.security.query_builder``. Importing from this module is
-deprecated and will be removed in a future release.
-"""
+# The SecureQueryBuilder implementation has moved to
+# ``infrastructure.security.query_builder``. Importing from this module is
+# deprecated and will be removed in a future release.
+
 
 def log_sanitized_query(
     logger: logging.Logger, sql: str, params: Sequence[Any] | None
@@ -100,7 +100,8 @@ class SecureQueryBuilder:
                 col_q = self.column(col)
                 clauses.append(f"{col_q} = ${i}")
                 params.append(value)
-            sql += " WHERE " + " AND ".join(clauses)
+            where_clause = " AND ".join(clauses)
+            sql = f"{sql} WHERE {where_clause}"
         return self.build(
             sql, tuple(params) if params else None, timeout=timeout, logger=logger
         )
@@ -133,7 +134,6 @@ class SecureQueryBuilder:
             log_sanitized_query(logger, sql, params)
         self.default_timeout = timeout or self.default_timeout
         return sql, params
-
 
 
 __all__ = ["SecureQueryBuilder", "log_sanitized_query"]

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """Fail if pip-audit reports any critical vulnerabilities."""
+
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
@@ -19,18 +22,17 @@ def main(path: str = "audit-report.json") -> int:
         print(data)
         return 1
 
-    critical = []
-    for entry in results:
-        for vuln in entry.get("vulns", []):
-            if vuln.get("severity", "").lower() == "critical":
-                ident = vuln.get("id")
-                pkg = entry.get("name")
-                version = entry.get("version")
-                critical.append(f"{pkg} {version}: {ident}")
-
-    if critical:
+    critical_items = (
+        f"{entry.get('name')} {entry.get('version')}: {vuln.get('id')}"
+        for entry in results
+        for vuln in entry.get("vulns", [])
+        if vuln.get("severity", "").lower() == "critical"
+    )
+    first = next(critical_items, None)
+    if first:
         print("Critical vulnerabilities detected:")
-        for item in critical:
+        print(f"- {first}")
+        for item in critical_items:
             print(f"- {item}")
         return 1
 

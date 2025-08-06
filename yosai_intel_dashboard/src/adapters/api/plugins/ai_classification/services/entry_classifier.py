@@ -1,5 +1,7 @@
 """Device mapping and classification service - replaces entry classifier"""
 
+from __future__ import annotations
+
 import logging
 import re
 from collections import Counter
@@ -106,13 +108,13 @@ class EntryClassificationService:
 
     def _extract_unique_devices(self, data: List[Dict]) -> List[str]:
         """Extract unique device names from data"""
-        devices = set()
         device_columns = ["door_id", "device_id", "location", "area", "device", "door"]
-
-        for row in data:
-            for col in device_columns:
-                if col in row and row[col]:
-                    devices.add(str(row[col]))
+        devices = {
+            str(row[col])
+            for row in data
+            for col in device_columns
+            if col in row and row[col]
+        }
         return list(devices)
 
     def _analyze_device(self, device_name: str) -> Dict[str, Any]:
@@ -135,18 +137,19 @@ class EntryClassificationService:
     def _detect_floor(self, device_name: str) -> Optional[int]:
         """Enhanced floor detection with zero-padding support"""
         for pattern in self.FLOOR_PATTERNS:
-            matches = re.finditer(pattern, device_name, re.IGNORECASE)
-            for match in matches:
-                try:
-                    floor_num = int(match.group(1))
-                    # Handle zero-padded numbers like F03 -> floor 3
-                    if "f0" in device_name.lower() and floor_num < 10:
-                        return floor_num
-                    # Standard range check
-                    if 1 <= floor_num <= 50:
-                        return floor_num
-                except (ValueError, IndexError):
-                    continue
+            match = re.search(pattern, device_name, re.IGNORECASE)
+            if not match:
+                continue
+            try:
+                floor_num = int(match.group(1))
+                # Handle zero-padded numbers like F03 -> floor 3
+                if "f0" in device_name.lower() and floor_num < 10:
+                    return floor_num
+                # Standard range check
+                if 1 <= floor_num <= 50:
+                    return floor_num
+            except (ValueError, IndexError):
+                continue
         return None
 
     def _detect_entry(self, device_name: str) -> bool:
