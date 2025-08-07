@@ -35,7 +35,7 @@ def main() -> None:
         logger.error(
             "Failed to import dependencies (possible circular import): %s", exc
         )
-        return
+        raise SystemExit(1)
 
     validate_required_env()
     container = bootstrap_container()
