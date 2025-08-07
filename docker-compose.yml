@@ -2,7 +2,7 @@ services:
   dashboard:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dashboard/Dockerfile
     command: ["python", "-m", "yosai_intel_dashboard.src.app"]
     ports:
       - "8050:8050"
@@ -24,7 +24,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: api/Dockerfile
     command: ["python", "start_api.py"]
     ports:
       - "8000:8000"
