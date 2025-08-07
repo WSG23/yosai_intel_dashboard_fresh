@@ -22,9 +22,10 @@ ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
-COPY --from=builder /app /app
+COPY --from=builder /app/yosai_intel_dashboard /app/yosai_intel_dashboard
 COPY docker-entrypoint.sh ./
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh \
+    && rm -rf /app/yosai_intel_dashboard/tests
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["start_api.py"]
