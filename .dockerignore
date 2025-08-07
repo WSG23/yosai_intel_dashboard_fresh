@@ -22,3 +22,14 @@ cypress/
 
 # Tests
 tests/
+
+# IDE and generated directories
+.idea/
+.vscode/
+node_modules/
+coverage/
+htmlcov/
+.pytest_cache/
+docs/
+examples/
+unit_tests/
