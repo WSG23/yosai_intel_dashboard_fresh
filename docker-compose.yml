@@ -1,7 +1,7 @@
 services:
   dashboard:
     build:
-      context: .
+      context: ./dashboard
       dockerfile: Dockerfile
     command: ["python", "-m", "yosai_intel_dashboard.src.app"]
     ports:
@@ -23,7 +23,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./api
       dockerfile: Dockerfile
     command: ["python", "start_api.py"]
     ports:
