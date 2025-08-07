@@ -29,3 +29,4 @@ testcontainers[postgresql,redis]==3.7.1
 prometheus_client==0.22.1
 jsonschema>=4.21.1
 hypothesis>=6.99
+uvicorn==0.30.1
