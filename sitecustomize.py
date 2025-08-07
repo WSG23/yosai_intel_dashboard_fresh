@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import gc
 import importlib
 import importlib.machinery
 import importlib.util
+import logging
 import os
 import pathlib
 import sys
@@ -40,18 +43,29 @@ if "services.resilience" not in sys.modules:
     # environments where the full application dependencies are missing.
     cb_path = ROOT / "services" / "resilience" / "circuit_breaker.py"
     if cb_path.exists():
-        module = importlib.import_module("services.resilience.circuit_breaker")
-        sys.modules["services.resilience.circuit_breaker"] = module
-        resilience_pkg.circuit_breaker = module
-        resilience_pkg.CircuitBreaker = module.CircuitBreaker
-        resilience_pkg.CircuitBreakerOpen = module.CircuitBreakerOpen
+        try:
+            module = importlib.import_module("services.resilience.circuit_breaker")
+        except OSError as exc:
+            logging.warning("Skipping services.resilience.circuit_breaker: %s", exc)
+        else:
+            sys.modules["services.resilience.circuit_breaker"] = module
+            resilience_pkg.circuit_breaker = module
+            resilience_pkg.CircuitBreaker = module.CircuitBreaker
+            resilience_pkg.CircuitBreakerOpen = module.CircuitBreakerOpen
 
     sys.modules["services.resilience"] = resilience_pkg
 
 if "services.resilience.metrics" not in sys.modules:
     metrics_path = ROOT / "services" / "resilience" / "metrics.py"
     if metrics_path.exists():
-        metrics_mod = importlib.import_module("services.resilience.metrics")
+        try:
+            metrics_mod = importlib.import_module("services.resilience.metrics")
+        except OSError as exc:
+            logging.warning("Skipping services.resilience.metrics: %s", exc)
+            metrics_mod = importlib.util.module_from_spec(
+                importlib.machinery.ModuleSpec("services.resilience.metrics", None)
+            )
+            metrics_mod.circuit_breaker_state = lambda *a, **k: None
     else:  # pragma: no cover - fallback when metrics not provided
         metrics_mod = importlib.util.module_from_spec(
             importlib.machinery.ModuleSpec("services.resilience.metrics", None)
