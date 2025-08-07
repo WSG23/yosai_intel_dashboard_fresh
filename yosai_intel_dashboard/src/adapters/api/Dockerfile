@@ -10,7 +10,6 @@ RUN apt-get update \
 
 # Install Python dependencies
 COPY ../requirements.txt ./
-
 RUN python -m venv /opt/venv \
     && . /opt/venv/bin/activate \
     && grep -v '^apache-flink' requirements.txt > requirements.filtered \
@@ -25,8 +24,9 @@ ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /app/yosai_intel_dashboard /app/yosai_intel_dashboard
 COPY ../docker-entrypoint.sh ./
+COPY ../start_api.py ./
 RUN chmod +x docker-entrypoint.sh \
     && rm -rf /app/yosai_intel_dashboard/tests
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["python", "-m", "yosai_intel_dashboard.src.app"]
+CMD ["start_api.py"]
