@@ -70,9 +70,16 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
         module = importlib.import_module(module_name)
         return getattr(module, attr) if attr else module
     except Exception as exc:  # pragma: no cover - defensive
-        logger.warning("Optional dependency '%s' unavailable: %s", name, exc)
-        missing_dependencies.labels(dependency=name).inc()
         value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
+        if value is not None:
+            logger.info(
+                "Optional dependency '%s' unavailable, using fallback: %s",
+                name,
+                exc,
+            )
+        else:
+            logger.warning("Optional dependency '%s' unavailable: %s", name, exc)
+        missing_dependencies.labels(dependency=name).inc()
         if callable(value):
             return value()
         return value
