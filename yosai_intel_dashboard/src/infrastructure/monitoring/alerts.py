@@ -51,6 +51,11 @@ class AlertManager:
         self.thresholds = thresholds or _load_thresholds()
 
     # ------------------------------------------------------------------
+    def notify(self, message: str) -> None:
+        """Public wrapper around :meth:`_notify` for external callers."""
+        self._notify(message)
+
+    # ------------------------------------------------------------------
     def _notify(self, message: str) -> None:
         events = get_active_events()
         if events:

@@ -29,7 +29,7 @@ def test_security_audit_logger_appends_and_alerts(tmp_path, monkeypatch):
     notifications = []
 
     class DummyAlertManager:
-        def _notify(self, message):
+        def notify(self, message):
             notifications.append(message)
 
     class DummyDetector:
