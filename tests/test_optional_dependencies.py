@@ -51,3 +51,20 @@ def test_import_optional_returns_stub_when_missing(monkeypatch, caplog):
     module = optional_dependencies.import_optional(name)
     assert module.Fernet is optional_dependencies._DummyFernet
     assert not caplog.records
+
+
+@pytest.mark.parametrize("bad_name", [object(), "totally_missing_module"])
+def test_import_optional_invalid_or_missing_logs_warning(monkeypatch, caplog, bad_name):
+    monkeypatch.setattr(
+        sys,
+        "meta_path",
+        [m for m in sys.meta_path if m.__class__.__name__ != "_MissingModuleFinder"],
+        raising=False,
+    )
+    if isinstance(bad_name, str):
+        monkeypatch.delitem(sys.modules, bad_name, raising=False)
+    caplog.set_level(logging.WARNING, logger=optional_dependencies.__name__)
+    result = optional_dependencies.import_optional(bad_name)
+    assert result is None
+    assert len(caplog.records) == 1
+    assert "Optional dependency" in caplog.records[0].getMessage()
