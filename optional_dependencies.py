@@ -65,28 +65,27 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
     """
 
     try:
-        # Attempt to import the full dotted path first.  This handles
-        # submodules such as ``cryptography.fernet`` which are not exposed as
-        # attributes on their parent package.
+        # Attempt to import the full dotted path first.  This handles real
+        # modules like ``cryptography.fernet`` correctly without relying on
+        # package attributes.
         return importlib.import_module(name)
-    except Exception as exc:  # pragma: no cover - defensive
-        last_exc = exc
+    except Exception as exc:
+        module_name = name
+        attr = None
+        if "." in name:
+            module_name, attr = name.rsplit(".", 1)
+            try:
+                module = importlib.import_module(module_name)
+                return getattr(module, attr) if attr else module
+            except Exception as exc_attr:  # pragma: no cover - defensive
+                exc = exc_attr
+        logger.warning("Optional dependency '%s' unavailable: %s", name, exc)
+        missing_dependencies.labels(dependency=name).inc()
+        value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
+        if callable(value):
+            return value()
+        return value
 
-    module_name = name
-    if "." in name:
-        module_name, attr = name.rsplit(".", 1)
-        try:
-            module = importlib.import_module(module_name)
-            return getattr(module, attr)
-        except Exception as exc:  # pragma: no cover - defensive
-            last_exc = exc
-
-    logger.warning("Optional dependency '%s' unavailable: %s", name, last_exc)
-    missing_dependencies.labels(dependency=name).inc()
-    value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
-    if callable(value):
-        return value()
-    return value
 
 
 def is_available(name: str) -> bool:
