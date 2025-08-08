@@ -14,6 +14,8 @@ Example
 ...     shap.TreeExplainer(...)
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
 import types
@@ -24,6 +26,10 @@ from yosai_intel_dashboard.src.infrastructure.monitoring.missing_dependencies im
 )
 
 logger = logging.getLogger(__name__)
+
+# Some optional packages are truly optional and should not produce
+# noisy warnings when absent.
+_NO_WARN_DEPS = {"cryptography", "cryptography.fernet"}
 
 
 # ---------------------------------------------------------------------------
@@ -62,20 +68,23 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
         Optional explicit fallback overriding any registered stub.
     """
 
-    module_name = name
-    attr = None
-    if "." in name:
-        module_name, attr = name.rsplit(".", 1)
     try:
         module = importlib.import_module(module_name)
         return getattr(module, attr) if attr else module
     except Exception as exc:  # pragma: no cover - defensive
-        logger.warning("Optional dependency '%s' unavailable: %s", name, exc)
+        log = (
+            logger.info
+            if name in _NO_WARN_DEPS or module_name in _NO_WARN_DEPS
+            else logger.warning
+        )
+        log("Optional dependency '%s' unavailable: %s", name, exc)
+
         missing_dependencies.labels(dependency=name).inc()
         value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
         if callable(value):
             return value()
         return value
+
 
 
 def is_available(name: str) -> bool:
