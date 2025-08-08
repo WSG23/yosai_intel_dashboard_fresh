@@ -3,30 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
-import types
 from pathlib import Path
-
-# Stub heavy dependencies before importing the audit logger
-dummy_module = types.ModuleType("monitoring.anomaly_detector")
-
-
-class _StubAnomalyDetector:
-    def score(self, user_id, source_ip):
-        return 0.0, False
-
-
-dummy_module.AnomalyDetector = _StubAnomalyDetector
-sys.modules.setdefault("monitoring.anomaly_detector", dummy_module)
-
-siem_module = types.ModuleType("core.integrations.siem_connectors")
-
-
-def _noop_send(event, system):
-    pass
-
-
-siem_module.send_to_siem = _noop_send
-sys.modules.setdefault("core.integrations.siem_connectors", siem_module)
 
 module_path = (
     Path(__file__).resolve().parents[2]
