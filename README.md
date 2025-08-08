@@ -653,7 +653,7 @@ The test suite relies on extra packages defined in `requirements-dev.txt`. Insta
 - `pandas`
 - `psutil`
 - `hvac`
-- `cryptography`
+- (optional) `cryptography` — enables encrypted configuration support
 - `selenium`
 - `requests`
 
