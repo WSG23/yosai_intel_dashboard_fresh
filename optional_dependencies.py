@@ -62,14 +62,21 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
         Optional explicit fallback overriding any registered stub.
     """
 
-    module_name = name
-    attr = None
-    if "." in name:
-        module_name, attr = name.rsplit(".", 1)
     try:
-        module = importlib.import_module(module_name)
-        return getattr(module, attr) if attr else module
-    except Exception as exc:  # pragma: no cover - defensive
+        # Attempt to import the full dotted path first.  This handles real
+        # modules like ``cryptography.fernet`` correctly without relying on
+        # package attributes.
+        return importlib.import_module(name)
+    except Exception as exc:
+        module_name = name
+        attr = None
+        if "." in name:
+            module_name, attr = name.rsplit(".", 1)
+            try:
+                module = importlib.import_module(module_name)
+                return getattr(module, attr) if attr else module
+            except Exception as exc_attr:  # pragma: no cover - defensive
+                exc = exc_attr
         logger.warning("Optional dependency '%s' unavailable: %s", name, exc)
         missing_dependencies.labels(dependency=name).inc()
         value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
