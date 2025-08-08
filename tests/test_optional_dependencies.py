@@ -52,7 +52,6 @@ def test_import_optional_returns_stub_when_missing(monkeypatch, caplog):
     assert module.Fernet is optional_dependencies._DummyFernet
     assert not caplog.records
 
-
 def test_import_optional_logs_missing_package(monkeypatch, caplog):
     name = "cryptography.fernet"
     monkeypatch.delitem(sys.modules, "cryptography", raising=False)
@@ -85,3 +84,4 @@ def test_import_optional_logs_internal_error(monkeypatch, caplog):
         and record.getMessage() == f"Error importing optional dependency '{name}': boom"
         for record in caplog.records
     )
+
