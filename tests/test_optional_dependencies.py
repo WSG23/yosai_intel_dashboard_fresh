@@ -29,3 +29,25 @@ def test_import_optional_submodule_without_warning(name, caplog):
             sys.modules.pop(name, None)
         if orig_fallback is not None:
             optional_dependencies._fallbacks[name] = orig_fallback
+
+
+def test_import_optional_returns_stub_when_missing(monkeypatch, caplog):
+    name = "cryptography.fernet"
+    monkeypatch.delitem(sys.modules, "cryptography", raising=False)
+    monkeypatch.delitem(sys.modules, name, raising=False)
+    monkeypatch.setitem(
+        optional_dependencies._fallbacks,
+        name,
+        lambda: optional_dependencies._simple_module(
+            name, Fernet=optional_dependencies._DummyFernet
+        ),
+    )
+
+    def fake_import(module_name, package=None):
+        raise ModuleNotFoundError(module_name)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import)
+    caplog.set_level(logging.WARNING, logger=optional_dependencies.__name__)
+    module = optional_dependencies.import_optional(name)
+    assert module.Fernet is optional_dependencies._DummyFernet
+    assert not caplog.records
