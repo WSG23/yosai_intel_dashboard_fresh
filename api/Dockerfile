@@ -24,6 +24,7 @@ ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 COPY --from=builder /opt/venv /opt/venv
 COPY docker-entrypoint.sh ./
 COPY start_api.py ./
+COPY ../core /app/core
 RUN chmod +x docker-entrypoint.sh
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
