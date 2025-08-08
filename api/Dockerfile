@@ -25,7 +25,10 @@ COPY --from=builder /opt/venv /opt/venv
 COPY ../yosai_intel_dashboard /app/yosai_intel_dashboard
 COPY ../core /app/core
 COPY docker-entrypoint.sh ./
+COPY ../core /app/core
 COPY start_api.py ./
+COPY ../yosai_intel_dashboard /app/yosai_intel_dashboard
+COPY ../core /app/core
 RUN chmod +x docker-entrypoint.sh
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
