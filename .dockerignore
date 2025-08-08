@@ -11,10 +11,10 @@ dist/
 build/
 
 # Python artifacts
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+pycache/
+.pyc
+.pyo
+.pyd
 venv/
 .mypy_cache/
 
