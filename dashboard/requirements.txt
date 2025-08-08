@@ -39,7 +39,7 @@ SQLAlchemy==2.0.41
 click==8.1.8
 pytest-cov==6.2.1
 hvac==2.3.0
-cryptography==45.0.5
+cryptography>=41
 kafka-python==2.2.15
 hyperloglog==0.0.14
 pulsar-client==3.8.0
