@@ -8,6 +8,7 @@ import logging
 import os
 import pathlib
 import sys
+import types
 
 # Ensure repository root is on path
 ROOT = pathlib.Path(__file__).resolve().parent
@@ -79,3 +80,8 @@ if "hvac" not in sys.modules:
     )
     hvac_mod.Client = object  # minimal stub for tests
     sys.modules["hvac"] = hvac_mod
+
+if "core" not in sys.modules:
+    core_pkg = types.ModuleType("core")
+    core_pkg.__path__ = [str(ROOT / "yosai_intel_dashboard" / "src" / "core")]
+    sys.modules["core"] = core_pkg

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,8 @@ from yosai_intel_dashboard.src.infrastructure.monitoring.anomaly_detector import
     AnomalyDetector,
 )
 
+
+logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class AuditEvent:
@@ -45,9 +48,16 @@ class SecurityAuditLogger:
     # ------------------------------------------------------------------
     def _write_event(self, event: AuditEvent) -> None:
         """Append *event* to log file and forward to SIEM/monitoring."""
-        self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        with self.log_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(asdict(event)) + "\n")
+        try:
+            self.log_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.log_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(asdict(event)) + "\n")
+        except (OSError, IOError) as exc:
+            logger.exception("Failed to write audit event")
+            self.alert_manager._notify(
+                f"Security audit log write failed: {exc}"
+            )  # pragma: no cover - alert side effect
+            return
 
         send_to_siem(asdict(event), self.siem_system)
 
@@ -57,7 +67,7 @@ class SecurityAuditLogger:
         if is_anomaly:
             # Real-time alert on anomalous event
             message = f"Anomalous security event detected: {event.details}"
-            self.alert_manager._notify(message)  # pragma: no cover - alert side effect
+            self.alert_manager.notify(message)  # pragma: no cover - alert side effect
 
     # ------------------------------------------------------------------
     def _create_event(self, event_type: str, details: Dict[str, Any]) -> AuditEvent:

@@ -68,11 +68,13 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
         Optional explicit fallback overriding any registered stub.
     """
 
-    module_name, _, attr = name.rpartition(".")
-    if not module_name:
-        module_name, attr = name, ""
-
+    module_name = name
+    attr = ""
     try:
+        module_name, _, attr = name.rpartition(".")
+        if not module_name:
+            module_name, attr = name, ""
+
         module = importlib.import_module(module_name)
         return getattr(module, attr) if attr else module
     except Exception as exc:  # pragma: no cover - defensive
