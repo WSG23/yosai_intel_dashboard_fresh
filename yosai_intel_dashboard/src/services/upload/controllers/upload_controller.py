@@ -9,6 +9,7 @@ from typing import Any, List, Optional
 import pandas as pd
 
 from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.src.core.unicode import safe_encode_text
 from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
 
 logger = logging.getLogger(__name__)
@@ -40,12 +41,13 @@ class UnifiedUploadController:
 
         try:
             _type, content_string = contents.split(",", 1)
-            decoded = base64.b64decode(content_string)
+            decoded_bytes = base64.b64decode(content_string)
+            decoded_text = safe_encode_text(decoded_bytes)
             if filename.lower().endswith(".json"):
-                data = json.loads(decoded.decode("utf-8"))
+                data = json.loads(decoded_text)
                 df = pd.DataFrame(data)
             else:
-                df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+                df = pd.read_csv(io.StringIO(decoded_text))
         except Exception as exc:  # pragma: no cover - parsing errors
             logger.error("Failed to parse uploaded file: %s", exc)
             return None

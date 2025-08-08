@@ -13,10 +13,22 @@ from yosai_intel_dashboard.src.services.upload.controllers.upload_controller imp
 )
 
 
-def register_callbacks(app, container) -> None:
-    """Register upload callbacks using the provided Dash *app*."""
+def register_callbacks(
+    app,
+    *,
+    upload_controller: UnifiedUploadController | None = None,
+) -> None:
+    """Register upload callbacks using the provided Dash *app*.
+
+    Parameters
+    ----------
+    app:
+        Dash application instance.
+    upload_controller:
+        Optional controller dependency injected for testing.
+    """
     callbacks = TrulyUnifiedCallbacks(app)
-    controller = UnifiedUploadController()
+    controller = upload_controller or UnifiedUploadController()
 
     @callbacks.callback(
         [Output("to-column-map-btn", "disabled"), Output("uploaded-df-store", "data")],

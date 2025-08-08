@@ -8,8 +8,10 @@ mypy_path = ["."]
 [tool.black]
 line-length = 88
 target-version = ["py38", "py39", "py310", "py311"]
-include = '(\.pyi?|\.ipynb)$'
-exclude = '/(\.direnv|\.eggs|\.git|\.hg|\.ipynb_checkpoints|\.mypy_cache|\.nox|\.pytest_cache|\.ruff_cache|\.tox|\.svn|\.venv|\.vscode|__pypackages__|_build|buck-out|build|dist|venv)/'
+include = "\.pyi?$"
+extend-exclude = """
+/(\.direnv|\.eggs|\.git|\.hg|\.ipynb_checkpoints|\.mypy_cache|\.nox|\.pytest_cache|\.ruff_cache|\.tox|\.svn|\.venv|\.vscode|pypackages|_build|buck-out|build|dist|venv|config/generated)/
+"""
 
 [tool.poetry.scripts]
 yosai-review = "file_processing.user_review:review"
@@ -19,8 +21,3 @@ diagnose-upload-config = "tools.diagnose_upload_config:main"
 profile = "black"
 line_length = 88
 skip_gitignore = true
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
-exclude = ".git,__pycache__,build,dist,.venv,.eggs,venv,.mypy_cache,.pytest_cache,config/generated"
