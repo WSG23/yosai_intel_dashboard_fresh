@@ -52,19 +52,36 @@ def test_import_optional_returns_stub_when_missing(monkeypatch, caplog):
     assert module.Fernet is optional_dependencies._DummyFernet
     assert not caplog.records
 
+def test_import_optional_logs_missing_package(monkeypatch, caplog):
+    name = "cryptography.fernet"
+    monkeypatch.delitem(sys.modules, "cryptography", raising=False)
+    monkeypatch.delitem(sys.modules, name, raising=False)
 
-@pytest.mark.parametrize("bad_name", [object(), "totally_missing_module"])
-def test_import_optional_invalid_or_missing_logs_warning(monkeypatch, caplog, bad_name):
-    monkeypatch.setattr(
-        sys,
-        "meta_path",
-        [m for m in sys.meta_path if m.__class__.__name__ != "_MissingModuleFinder"],
-        raising=False,
+    def fake_import(module_name, package=None):
+        raise ModuleNotFoundError(module_name)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import)
+    caplog.set_level(logging.INFO, logger=optional_dependencies.__name__)
+    optional_dependencies.import_optional(name)
+    assert any(
+        record.levelno == logging.INFO
+        and record.getMessage() == f"Optional dependency '{name}' is not installed"
+        for record in caplog.records
     )
-    if isinstance(bad_name, str):
-        monkeypatch.delitem(sys.modules, bad_name, raising=False)
-    caplog.set_level(logging.WARNING, logger=optional_dependencies.__name__)
-    result = optional_dependencies.import_optional(bad_name)
-    assert result is None
-    assert len(caplog.records) == 1
-    assert "Optional dependency" in caplog.records[0].getMessage()
+
+
+def test_import_optional_logs_internal_error(monkeypatch, caplog):
+    name = "cryptography.fernet"
+
+    def fake_import(module_name, package=None):
+        raise NameError("boom")
+
+    monkeypatch.setattr(importlib, "import_module", fake_import)
+    caplog.set_level(logging.ERROR, logger=optional_dependencies.__name__)
+    optional_dependencies.import_optional(name)
+    assert any(
+        record.levelno == logging.ERROR
+        and record.getMessage() == f"Error importing optional dependency '{name}': boom"
+        for record in caplog.records
+    )
+
