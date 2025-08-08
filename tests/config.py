@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib
 import importlib.abc
 import importlib.machinery
+import importlib.util
 import os
 import sys
 import types
@@ -378,15 +379,17 @@ def register_dependency_stubs() -> None:
     sys.modules.setdefault("pydantic", pydantic_stub)
 
     # Minimal stubs for optional security integrations
-    core_integrations_stub = _simple_module("core.integrations")
-    core_integrations_stub.__path__ = []
-    register_fallback("core.integrations", core_integrations_stub)
-    sys.modules.setdefault("core.integrations", core_integrations_stub)
-    siem_stub = _simple_module(
-        "core.integrations.siem_connectors", send_to_siem=lambda *a, **k: None
-    )
-    register_fallback("core.integrations.siem_connectors", siem_stub)
-    sys.modules.setdefault("core.integrations.siem_connectors", siem_stub)
+    # Only register when the real package is unavailable
+    if importlib.util.find_spec("yosai_intel_dashboard.src.core.integrations") is None:
+        core_integrations_stub = _simple_module("core.integrations")
+        core_integrations_stub.__path__ = []
+        register_fallback("core.integrations", core_integrations_stub)
+        sys.modules.setdefault("core.integrations", core_integrations_stub)
+        siem_stub = _simple_module(
+            "core.integrations.siem_connectors", send_to_siem=lambda *a, **k: None
+        )
+        register_fallback("core.integrations.siem_connectors", siem_stub)
+        sys.modules.setdefault("core.integrations.siem_connectors", siem_stub)
 
     # As a final fallback, provide a meta-path finder that returns empty
     # modules for any remaining missing imports.  Each stubbed module

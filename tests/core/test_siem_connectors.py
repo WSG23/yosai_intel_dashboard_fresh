@@ -16,3 +16,4 @@ def test_send_to_siem_logs_event(caplog):
         if r.name == "yosai_intel_dashboard.src.core.integrations.siem_connectors"
     ]
     assert any("Sending event to elk" in m for m in messages)
+

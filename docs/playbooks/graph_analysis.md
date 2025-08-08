@@ -9,7 +9,8 @@ investigating security incidents.
    `risk_propagation` from `analytics.graph_analysis.algorithms` to spot
    influential devices and users.
 3. **Export to Threat Feeds** – Use the STIX/TAXII exporter in
-   `core.integrations` to share findings with external tools or SIEM systems.
+   `yosai_intel_dashboard.src.core.integrations` to share findings with
+   external tools or SIEM systems.
 4. **Automate Monitoring** – Incorporate the Kafka streaming helper
    to update graphs in real time and trigger alerts when suspicious patterns
    emerge.

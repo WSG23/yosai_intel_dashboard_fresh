@@ -65,7 +65,7 @@ def test_alert_enrichment(monkeypatch):
     )
 
     manager = AlertManager(thresholds=AlertThresholds())
-    manager._notify("security incident")
+    manager.notify("security incident")
     assert dummy.messages
     msg = dummy.messages[0]
     assert "security incident" in msg
