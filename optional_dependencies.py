@@ -14,6 +14,8 @@ Example
 ...     shap.TreeExplainer(...)
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
 import types
@@ -66,10 +68,6 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
         Optional explicit fallback overriding any registered stub.
     """
 
-    module_name = name
-    attr = None
-    if "." in name:
-        module_name, attr = name.rsplit(".", 1)
     try:
         module = importlib.import_module(module_name)
         return getattr(module, attr) if attr else module
@@ -80,11 +78,13 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
             else logger.warning
         )
         log("Optional dependency '%s' unavailable: %s", name, exc)
+
         missing_dependencies.labels(dependency=name).inc()
         value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
         if callable(value):
             return value()
         return value
+
 
 
 def is_available(name: str) -> bool:
