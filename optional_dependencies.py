@@ -75,19 +75,21 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
     try:
         module = importlib.import_module(module_name)
         return getattr(module, attr) if attr else module
-    except Exception as exc:  # pragma: no cover - defensive
+    except ModuleNotFoundError:
         log = (
             logger.info
             if name in _NO_WARN_DEPS or module_name in _NO_WARN_DEPS
             else logger.warning
         )
-        log("Optional dependency '%s' unavailable: %s", name, exc)
+        log("Optional dependency '%s' is not installed", name)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Error importing optional dependency '%s': %s", name, exc)
 
-        missing_dependencies.labels(dependency=name).inc()
-        value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
-        if callable(value):
-            return value()
-        return value
+    missing_dependencies.labels(dependency=name).inc()
+    value = _fallbacks.get(name) or _fallbacks.get(module_name) or fallback
+    if callable(value):
+        return value()
+    return value
 
 
 def is_available(name: str) -> bool:
