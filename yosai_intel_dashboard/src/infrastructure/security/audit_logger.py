@@ -57,7 +57,7 @@ class SecurityAuditLogger:
         if is_anomaly:
             # Real-time alert on anomalous event
             message = f"Anomalous security event detected: {event.details}"
-            self.alert_manager._notify(message)  # pragma: no cover - alert side effect
+            self.alert_manager.notify(message)  # pragma: no cover - alert side effect
 
     # ------------------------------------------------------------------
     def _create_event(self, event_type: str, details: Dict[str, Any]) -> AuditEvent:
