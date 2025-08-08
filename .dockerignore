@@ -7,14 +7,20 @@ coverage/
 .pytest_cache/
 docs/
 examples/
+dist/
+build/
 
 # Python artifacts
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 venv/
+.mypy_cache/
 
 # Environment files
-.env.local
+.env
+.env.*
 
 # Logs
 logs/
@@ -27,9 +33,11 @@ large_data/
 notebooks/
 cypress/
 
-# Tests
+# Tests and coverage
 tests/
 unit_tests/
+htmlcov/
+.coverage
 
 # Additional directories
-htmlcov/
+scripts/
