@@ -1,5 +1,12 @@
-# Git history
-.git
+# Exclude bulky directories
+.git/
+.idea/
+.vscode/
+node_modules/
+coverage/
+.pytest_cache/
+docs/
+examples/
 
 # Python artifacts
 __pycache__/
@@ -22,14 +29,7 @@ cypress/
 
 # Tests
 tests/
-
-# IDE and generated directories
-.idea/
-.vscode/
-node_modules/
-coverage/
-htmlcov/
-.pytest_cache/
-docs/
-examples/
 unit_tests/
+
+# Additional directories
+htmlcov/

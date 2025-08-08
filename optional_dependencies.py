@@ -14,6 +14,8 @@ Example
 ...     shap.TreeExplainer(...)
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
 import types
@@ -83,6 +85,7 @@ def import_optional(name: str, fallback: Any | None = None) -> Any | None:
         if callable(value):
             return value()
         return value
+
 
 
 def is_available(name: str) -> bool:
