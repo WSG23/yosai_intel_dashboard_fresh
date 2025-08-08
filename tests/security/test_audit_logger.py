@@ -56,3 +56,40 @@ def test_security_audit_logger_appends_and_alerts(tmp_path, monkeypatch):
     assert record["type"] == "auth"
     assert events[0][0]["type"] == "auth"
     assert notifications, "Expected alert notification for anomaly"
+
+
+def test_security_audit_logger_handles_write_failure(tmp_path, monkeypatch):
+    events = []
+
+    def mock_send(event, system):
+        events.append((event, system))
+
+    monkeypatch.setattr(audit_module, "send_to_siem", mock_send)
+
+    notifications = []
+
+    class DummyAlertManager:
+        def _notify(self, message):
+            notifications.append(message)
+
+    class DummyDetector:
+        def score(self, user_id, source_ip):
+            return 0.0, False
+
+    log_file = tmp_path / "audit.log"
+    logger = SecurityAuditLogger(
+        log_path=log_file,
+        alert_manager=DummyAlertManager(),
+        anomaly_detector=DummyDetector(),
+    )
+
+    def fail_open(*args, **kwargs):
+        raise OSError("read-only file system")
+
+    monkeypatch.setattr(Path, "open", fail_open)
+
+    logger.log_auth_event(user_id="u1", action="login", success=True)
+
+    assert notifications, "Expected alert notification for write failure"
+    assert not events, "SIEM should not receive event on write failure"
+    assert not log_file.exists(), "Log file should not be created"
