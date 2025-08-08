@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from core.integrations.siem_connectors import send_to_siem
+from yosai_intel_dashboard.src.core.integrations.siem_connectors import send_to_siem
 from yosai_intel_dashboard.src.infrastructure.monitoring.alerts import AlertManager
 from yosai_intel_dashboard.src.infrastructure.monitoring.anomaly_detector import (
     AnomalyDetector,
