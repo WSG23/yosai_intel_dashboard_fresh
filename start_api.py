@@ -31,6 +31,14 @@ def main() -> None:
         from yosai_intel_dashboard.src.core.env_validation import validate_required_env
         from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
         from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
+    except ModuleNotFoundError as exc:
+        missing_pkg = getattr(exc, "name", None) or str(exc)
+        logger.error(
+            "Missing required dependency '%s'. "
+            "Install it with 'pip install -r requirements.txt' and try again.",
+            missing_pkg,
+        )
+        raise SystemExit(1)
     except ImportError as exc:
         logger.error(
             "Failed to import dependencies (possible circular import): %s", exc
