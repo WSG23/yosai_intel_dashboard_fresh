@@ -1700,6 +1700,32 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
 9. The original MVP demo modules have also been deleted and are no longer
     part of the codebase.
 
+## Development
+
+### Install
+```bash
+python -m pip install -r requirements-dev.txt
+npm ci
+```
+
+### Lint
+```bash
+black . --check
+isort . --check-only
+flake8 .
+npm run lint
+```
+
+### Test
+```bash
+pytest -q
+```
+
+### Docker
+```bash
+docker compose up --build
+```
+
 ## <span aria-hidden="true">📦</span> Versioning
 
 This project adheres to [Semantic Versioning](https://semver.org). See

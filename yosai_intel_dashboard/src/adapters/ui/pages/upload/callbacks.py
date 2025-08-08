@@ -18,13 +18,13 @@ def register_callbacks(
     *,
     upload_controller: UnifiedUploadController | None = None,
 ) -> None:
-    """Register upload callbacks using the provided Dash *app*.
+    """Register upload callbacks using the provided Dash app.
 
     Parameters
     ----------
-    app:
+    app : Dash
         Dash application instance.
-    upload_controller:
+    upload_controller : UnifiedUploadController, optional
         Optional controller dependency injected for testing.
     """
     callbacks = TrulyUnifiedCallbacks(app)
