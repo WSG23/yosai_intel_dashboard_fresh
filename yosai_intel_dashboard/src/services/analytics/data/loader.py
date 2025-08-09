@@ -37,7 +37,15 @@ class DataLoader:
         return self.controller.clean_uploaded_dataframe(df)
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
-        return self.controller.summarize_dataframe(df)
+        summary = self.controller.summarize_dataframe(df)
+        date_range = summary.get("date_range")
+        if isinstance(date_range, dict):
+            for key in ("start", "end"):
+                value = date_range.get(key)
+                if value and value != "Unknown":
+                    ts = pd.to_datetime(value, utc=True)
+                    date_range[key] = ts.isoformat()
+        return summary
 
     def analyze_with_chunking(
         self, df: pd.DataFrame, analysis_types: List[str]
