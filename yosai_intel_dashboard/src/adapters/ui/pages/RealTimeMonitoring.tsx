@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import useSWR from 'swr';
 import { FixedSizeList as List } from 'react-window';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Button } from '../components/ui/button';
@@ -7,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Activity, Users, AlertCircle } from 'lucide-react';
 import { useWebSocket } from '../hooks';
 import { useEventStream } from '../hooks/useEventStream';
-import useResponsiveChart from '../hooks/useResponsiveChart';
 import { ChunkGroup } from '../components/layout';
+import { Link } from 'react-router-dom';
 
 interface AccessEvent {
   eventId: string;
@@ -26,24 +27,48 @@ interface Metrics {
   anomaliesDetected: number;
 }
 
+interface MetricsResponse {
+  totalEvents: number;
+  activeUsers: number;
+  anomaliesDetected: number;
+}
+
+interface Thresholds {
+  eventsPerSecond: number;
+  activeUsers: number;
+  anomaliesDetected: number;
+}
+
 const MetricCard: React.FC<{
   title: string;
   value: string;
   icon: React.ElementType;
   trend?: 'up' | 'down' | 'good' | 'warning' | 'alert' | 'stable';
 }> = ({ title, value, icon: Icon, trend }) => {
+  const cardClass =
+    trend === 'alert'
+      ? 'bg-red-600 text-white'
+      : trend === 'warning'
+        ? 'bg-yellow-400 text-black'
+        : '';
   const trendColor =
     trend === 'up'
-      ? 'text-green-600'
+      ? 'text-green-700'
       : trend === 'down'
-        ? 'text-red-600'
+        ? 'text-red-700'
         : trend === 'alert'
-          ? 'text-red-600'
+          ? 'text-white'
           : trend === 'warning'
-            ? 'text-yellow-600'
+            ? 'text-black'
             : 'text-gray-600';
+  const cardStyle =
+    trend === 'alert'
+      ? 'bg-red-700 text-white'
+      : trend === 'warning'
+        ? 'bg-yellow-400 text-black'
+        : '';
   return (
-    <Card className="text-center p-4">
+    <Card className={`text-center p-4 ${cardStyle}`}>
       <CardHeader>
         <Icon className="mx-auto mb-2" size={20} />
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -62,7 +87,7 @@ const EventRow: React.FC<{ event: AccessEvent; showDetails: boolean }> = ({
   <div className="flex items-center justify-between py-2 border-b text-sm">
     <span className="font-medium">{event.personName}</span>
     {showDetails && <span className="text-gray-500">{event.doorName}</span>}
-    <span className={event.decision === 'GRANTED' ? 'text-green-600' : 'text-red-600'}>
+    <span className={event.decision === 'GRANTED' ? 'text-green-700' : 'bg-red-700 text-white p-1 rounded'}>
       {event.decision}
     </span>
     {showDetails && (
@@ -70,10 +95,25 @@ const EventRow: React.FC<{ event: AccessEvent; showDetails: boolean }> = ({
         {new Date(event.timestamp).toLocaleTimeString()}
       </span>
     )}
+    <Link
+      to={`/logs/${event.eventId}`}
+      aria-label={`View logs for event ${event.eventId}`}
+      className="text-blue-600 underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    >
+      View logs
+    </Link>
   </div>
 );
 
-export const RealTimeMonitoring: React.FC = () => {
+const defaultThresholds: Thresholds = {
+  eventsPerSecond: 100,
+  activeUsers: 1000,
+  anomaliesDetected: 0,
+};
+
+export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
+  thresholds = defaultThresholds,
+}) => {
   const [events, setEvents] = useState<AccessEvent[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({
     eventsPerSecond: 0,
@@ -87,6 +127,8 @@ export const RealTimeMonitoring: React.FC = () => {
 
   const activeData = isConnected ? wsData : sseData;
 
+  const { isMobile } = useResponsiveChart();
+
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<AccessEvent[]>([]);
   const [pending, setPending] = useState(0);
@@ -95,7 +137,74 @@ export const RealTimeMonitoring: React.FC = () => {
       ? (cb) => (window as any).requestIdleCallback(cb)
       : (cb) => setTimeout(cb, 0);
 
+  const metricsPrev = useRef<{ totalEvents: number; timestamp: number }>();
 
+  const metricsFetcher = (url: string) => {
+    const controller = new AbortController();
+    const promise = fetch(url, { signal: controller.signal }).then((res) =>
+      res.json(),
+    );
+    (promise as any).cancel = () => controller.abort();
+    return promise;
+  };
+
+  const { data: polledMetrics } = useSWR<MetricsResponse>(
+    '/metrics',
+    metricsFetcher,
+    { refreshInterval: 5000 },
+  );
+
+  useEffect(() => {
+    if (polledMetrics) {
+      const now = Date.now();
+      if (metricsPrev.current) {
+        const deltaEvents = polledMetrics.totalEvents - metricsPrev.current.totalEvents;
+        const deltaTime = (now - metricsPrev.current.timestamp) / 1000;
+        const eventsPerSecond = deltaTime > 0 ? deltaEvents / deltaTime : 0;
+        setMetrics((prev) => ({
+          ...prev,
+          eventsPerSecond,
+          activeUsers: polledMetrics.activeUsers,
+          anomaliesDetected: polledMetrics.anomaliesDetected,
+        }));
+      } else {
+        setMetrics((prev) => ({
+          ...prev,
+          activeUsers: polledMetrics.activeUsers,
+          anomaliesDetected: polledMetrics.anomaliesDetected,
+        }));
+      }
+      metricsPrev.current = { totalEvents: polledMetrics.totalEvents, timestamp: now };
+    }
+  }, [polledMetrics]);
+
+  const [showDetails, setShowDetails] = useState(false);
+  const [listVisible, setListVisible] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries;
+      if (entry.isIntersecting) {
+        setListVisible(true);
+        observer.disconnect();
+      }
+    });
+    if (listRef.current) {
+      observer.observe(listRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  const { isMobile } = useResponsiveChart();
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const [listVisible, setListVisible] = useState(true);
+  const [showDetails, setShowDetails] = useState(!isMobile)
+  const filterOptions = ['ALL', 'GRANTED', 'DENIED'] as const;
+  const [filter, setFilter] = useState<(typeof filterOptions)[number]>('ALL');
+  const filterRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  
   useEffect(() => {
     if (activeData) {
       const event = JSON.parse(activeData) as AccessEvent;
@@ -114,7 +223,6 @@ export const RealTimeMonitoring: React.FC = () => {
     setMetrics((prev) => ({
       ...prev,
       averageLatency: prev.averageLatency * 0.9 + event.processingTime * 0.1,
-      eventsPerSecond: prev.eventsPerSecond + 1,
     }));
   };
 
@@ -140,6 +248,34 @@ export const RealTimeMonitoring: React.FC = () => {
 
   const replay = () => processBuffered();
 
+  useEffect(() => {
+    if (!listRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => setListVisible(entry.isIntersecting));
+    });
+    observer.observe(listRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleFilterKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const next = (index + 1) % filterOptions.length;
+      filterRefs.current[next]?.focus();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prev = (index - 1 + filterOptions.length) % filterOptions.length;
+      filterRefs.current[prev]?.focus();
+    }
+  };
+
+  const filteredEvents = events.filter(
+    (e) => filter === 'ALL' || e.decision === filter,
+  );
+
   return (
     <div className="p-6 space-y-6">
       <ChunkGroup className="grid grid-cols-1 md:grid-cols-4 gap-4" limit={9}>
@@ -147,7 +283,11 @@ export const RealTimeMonitoring: React.FC = () => {
           title="Events/Second"
           value={metrics.eventsPerSecond.toFixed(1)}
           icon={Activity}
-          trend={metrics.eventsPerSecond > 100 ? 'up' : 'stable'}
+          trend={
+            metrics.eventsPerSecond > thresholds.eventsPerSecond
+              ? 'alert'
+              : 'stable'
+          }
         />
         <MetricCard
           title="Avg Latency"
@@ -159,12 +299,19 @@ export const RealTimeMonitoring: React.FC = () => {
           title="Active Users"
           value={metrics.activeUsers.toString()}
           icon={Users}
+          trend={
+            metrics.activeUsers > thresholds.activeUsers ? 'alert' : 'stable'
+          }
         />
         <MetricCard
           title="Anomalies"
           value={metrics.anomaliesDetected.toString()}
           icon={AlertCircle}
-          trend={metrics.anomaliesDetected > 0 ? 'alert' : 'good'}
+          trend={
+            metrics.anomaliesDetected > thresholds.anomaliesDetected
+              ? 'alert'
+              : 'good'
+          }
         />
       </ChunkGroup>
 
@@ -173,9 +320,11 @@ export const RealTimeMonitoring: React.FC = () => {
           <ChunkGroup className="flex items-center justify-between">
             <ChunkGroup className="flex items-center space-x-2">
               <CardTitle>Live Access Events</CardTitle>
-              {!paused && <Badge className="bg-green-500 text-white">Live</Badge>}
+              {!paused && (
+                <Badge className="bg-green-700 text-white">Live</Badge>
+              )}
               {paused && (
-                <Badge className="bg-yellow-500 text-white">
+                <Badge className="bg-red-700 text-white" aria-live="polite">
                   Paused{pending ? ` (${pending})` : ''}
                 </Badge>
               )}
@@ -204,19 +353,49 @@ export const RealTimeMonitoring: React.FC = () => {
           </ChunkGroup>
         </CardHeader>
         <CardContent ref={listRef} onTouchStart={() => setShowDetails(true)}>
+          <div
+            role="group"
+            aria-label="Filter events by decision"
+            className="flex space-x-2 mb-4"
+          >
+            {filterOptions.map((opt, idx) => (
+              <Button
+                key={opt}
+                ref={(el) => (filterRefs.current[idx] = el)}
+                tabIndex={0}
+                aria-label={`Filter events: ${opt.toLowerCase()}`}
+                aria-pressed={filter === opt}
+                onKeyDown={(e) => handleFilterKeyDown(e, idx)}
+                onClick={() => setFilter(opt)}
+                className={
+                  filter === opt
+                    ? 'bg-blue-700 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }
+              >
+                {opt}
+              </Button>
+            ))}
+          </div>
           {listVisible && (
             <List
+              ref={listRef}
               height={384}
-              itemCount={events.length}
+              itemCount={filteredEvents.length}
               itemSize={48}
               width="100%"
             >
               {({ index, style }) => (
-                <div style={style} key={events[index].eventId}>
-                  <EventRow event={events[index]} showDetails={showDetails} />
+                <div style={style} key={filteredEvents[index].eventId}>
+                  <EventRow
+                    event={filteredEvents[index]}
+                    showDetails={showDetails}
+                  />
                 </div>
               )}
             </List>
+          ) : (
+            <div ref={listRef} style={{ height: 384 }} />
           )}
         </CardContent>
       </Card>
