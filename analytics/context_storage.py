@@ -78,3 +78,20 @@ class TimescaleContextStore:
                 "INSERT INTO environmental_context (ts, payload) VALUES (NOW(), %s)",
                 [Json(data)],
             )
+
+    def close(self) -> None:
+        """Close the underlying database connection if it exists."""
+
+        if self._conn is not None:
+            try:
+                self._conn.close()  # type: ignore[call-arg]
+            finally:
+                self._conn = None
+
+    # Support usage as a context manager to guarantee cleanup
+    def __enter__(self) -> "TimescaleContextStore":  # pragma: no cover - simple
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:  # pragma: no cover - simple
+        self.close()
+        return False
