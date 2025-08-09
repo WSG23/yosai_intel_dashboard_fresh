@@ -95,6 +95,24 @@ export const RealTimeMonitoring: React.FC = () => {
       ? (window as any).requestIdleCallback
       : (fn: Function) => setTimeout(fn, 0);
 
+  const [showDetails, setShowDetails] = useState(false);
+  const [listVisible, setListVisible] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries;
+      if (entry.isIntersecting) {
+        setListVisible(true);
+        observer.disconnect();
+      }
+    });
+    if (listRef.current) {
+      observer.observe(listRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
 
   useEffect(() => {
     if (activeData) {
@@ -203,9 +221,15 @@ export const RealTimeMonitoring: React.FC = () => {
             </ChunkGroup>
           </ChunkGroup>
         </CardHeader>
-        <CardContent ref={listRef} onTouchStart={() => setShowDetails(true)}>
-          {listVisible && (
+        <CardContent
+          onTouchStart={() => setShowDetails(true)}
+          onTouchEnd={() => setShowDetails(false)}
+          onMouseEnter={() => setShowDetails(true)}
+          onMouseLeave={() => setShowDetails(false)}
+        >
+          {listVisible ? (
             <List
+              ref={listRef}
               height={384}
               itemCount={events.length}
               itemSize={48}
@@ -217,6 +241,8 @@ export const RealTimeMonitoring: React.FC = () => {
                 </div>
               )}
             </List>
+          ) : (
+            <div ref={listRef} style={{ height: 384 }} />
           )}
         </CardContent>
       </Card>
