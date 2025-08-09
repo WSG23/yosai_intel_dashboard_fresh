@@ -4,7 +4,7 @@ import { Upload as UploadIcon } from "lucide-react";
 import { FilePreview } from "./FilePreview";
 import { ColumnMappingModal } from "./ColumnMappingModal";
 import { DeviceMappingModal } from "./DeviceMappingModal";
-import { UploadedFile, ProcessingStatus as Status } from "./types";
+import { UploadedFile, ProcessingStatus as Status, FileData } from "./types";
 import { api } from "../../api/client";
 
 
