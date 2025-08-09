@@ -120,6 +120,15 @@ required:
 pytest --cov --cov-fail-under=80
 ```
 
+### Network Isolation
+
+The test suite uses [`pytest-socket`](https://pypi.org/project/pytest-socket/)
+to prevent outbound network calls. By default all network access is blocked
+during tests. Local connections to `localhost` or `127.0.0.1` are permitted for
+services that bind to the loopback interface. External hosts must not be
+contacted; if a test requires network access it should mock the interaction
+instead of performing a real request.
+
 ### Memory Profiling
 
 The test suite integrates [`memory_profiler`](https://pypi.org/project/memory-profiler/)
