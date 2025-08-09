@@ -72,7 +72,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
 
 
   if (!data) {
-    return <div>Waiting for analytics...</div>;
+    return <div aria-live="polite">Waiting for analytics...</div>;
   }
 
   const topUsersRaw = Array.isArray(data.top_users) ? data.top_users : [];
@@ -135,7 +135,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
           )}
         </ChunkGroup>
       </ChunkGroup>
-      <ChunkGroup className="mb-4 space-y-1">
+      <ChunkGroup className="mb-4 space-y-1" role="status" aria-live="polite">
         <div>Total Events: {data.total_events ?? 0}</div>
         <div>
           Active Users:{' '}
