@@ -98,7 +98,7 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
         )}
       </div>
       {status !== 'idle' && (
-        <div className="mt-4">
+        <div className="mt-4" role="status" aria-live="polite">
           {status === 'exporting' && (
             <div className="flex items-center space-x-2">
               <progress
