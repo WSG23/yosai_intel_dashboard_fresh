@@ -74,6 +74,8 @@ from yosai_intel_dashboard.src.services.protocols import UploadDataServiceProtoc
 from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
 from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.models.ml import ModelRegistry
+from pydantic import ValidationError
+from .schemas import AnalyticsQueryV1, AnalyticsSummaryV1
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -272,7 +274,16 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
 
     def get_analytics_by_source(self, source: str) -> Dict[str, Any]:
         """Get analytics from the specified source."""
-        return self.router.get_analytics(source)
+        try:
+            query = AnalyticsQueryV1.model_validate({"source": source})
+        except ValidationError:
+            sanitized = source.strip().lower()
+            logger.error("Invalid analytics source: %s", sanitized)
+            raise ValueError(f"Invalid analytics source: {sanitized}")
+
+        result = self.router.get_analytics(query.source)
+        summary = AnalyticsSummaryV1.model_validate(result)
+        return summary.model_dump()
 
     def _process_uploaded_data_directly(
         self, uploaded_data: Dict[str, Any]
