@@ -1,5 +1,4 @@
 import React from 'react';
-import { Download } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ChunkGroup } from '../components/layout';
 import ExportForm from '../components/Export/ExportForm';
