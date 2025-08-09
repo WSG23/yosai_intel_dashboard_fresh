@@ -142,14 +142,10 @@ def _create_app(monkeypatch, origins):
         filenames: list[str] | None = None
 
     class UploadResponseSchema(BaseModel):
-        job_id: str
-
-    class StatusSchema(BaseModel):
-        status: str
+        results: list[str]
 
     upload_upload_stub.UploadRequestSchema = UploadRequestSchema
     upload_upload_stub.UploadResponseSchema = UploadResponseSchema
-    upload_upload_stub.StatusSchema = StatusSchema
     for name, mod in {
         "yosai_intel_dashboard.src.services.upload_endpoint": upload_stub,
         "yosai_intel_dashboard.src.services.upload.upload_endpoint": upload_upload_stub,
