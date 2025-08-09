@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import useSWR from 'swr';
 import { FixedSizeList as List } from 'react-window';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Button } from '../components/ui/button';
@@ -7,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Activity, Users, AlertCircle } from 'lucide-react';
 import { useWebSocket } from '../hooks';
 import { useEventStream } from '../hooks/useEventStream';
-import useResponsiveChart from '../hooks/useResponsiveChart';
 import { ChunkGroup } from '../components/layout';
 
 interface AccessEvent {
@@ -26,24 +26,42 @@ interface Metrics {
   anomaliesDetected: number;
 }
 
+interface MetricsResponse {
+  totalEvents: number;
+  activeUsers: number;
+  anomaliesDetected: number;
+}
+
+interface Thresholds {
+  eventsPerSecond: number;
+  activeUsers: number;
+  anomaliesDetected: number;
+}
+
 const MetricCard: React.FC<{
   title: string;
   value: string;
   icon: React.ElementType;
   trend?: 'up' | 'down' | 'good' | 'warning' | 'alert' | 'stable';
 }> = ({ title, value, icon: Icon, trend }) => {
+  const cardClass =
+    trend === 'alert'
+      ? 'bg-red-600 text-white'
+      : trend === 'warning'
+        ? 'bg-yellow-400 text-black'
+        : '';
   const trendColor =
     trend === 'up'
       ? 'text-green-600'
       : trend === 'down'
         ? 'text-red-600'
         : trend === 'alert'
-          ? 'text-red-600'
+          ? 'text-white'
           : trend === 'warning'
-            ? 'text-yellow-600'
+            ? 'text-black'
             : 'text-gray-600';
   return (
-    <Card className="text-center p-4">
+    <Card className={`text-center p-4 ${cardClass}`}>
       <CardHeader>
         <Icon className="mx-auto mb-2" size={20} />
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -73,7 +91,15 @@ const EventRow: React.FC<{ event: AccessEvent; showDetails: boolean }> = ({
   </div>
 );
 
-export const RealTimeMonitoring: React.FC = () => {
+const defaultThresholds: Thresholds = {
+  eventsPerSecond: 100,
+  activeUsers: 1000,
+  anomaliesDetected: 0,
+};
+
+export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
+  thresholds = defaultThresholds,
+}) => {
   const [events, setEvents] = useState<AccessEvent[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({
     eventsPerSecond: 0,
@@ -96,6 +122,68 @@ export const RealTimeMonitoring: React.FC = () => {
     (typeof window !== 'undefined' && (window as any).requestIdleCallback)
       ? (window as any).requestIdleCallback
       : (fn: Function) => setTimeout(fn, 0);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listVisible] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
+
+  const metricsPrev = useRef<{ totalEvents: number; timestamp: number }>();
+
+  const metricsFetcher = (url: string) => {
+    const controller = new AbortController();
+    const promise = fetch(url, { signal: controller.signal }).then((res) =>
+      res.json(),
+    );
+    (promise as any).cancel = () => controller.abort();
+    return promise;
+  };
+
+  const { data: polledMetrics } = useSWR<MetricsResponse>(
+    '/metrics',
+    metricsFetcher,
+    { refreshInterval: 5000 },
+  );
+
+  useEffect(() => {
+    if (polledMetrics) {
+      const now = Date.now();
+      if (metricsPrev.current) {
+        const deltaEvents = polledMetrics.totalEvents - metricsPrev.current.totalEvents;
+        const deltaTime = (now - metricsPrev.current.timestamp) / 1000;
+        const eventsPerSecond = deltaTime > 0 ? deltaEvents / deltaTime : 0;
+        setMetrics((prev) => ({
+          ...prev,
+          eventsPerSecond,
+          activeUsers: polledMetrics.activeUsers,
+          anomaliesDetected: polledMetrics.anomaliesDetected,
+        }));
+      } else {
+        setMetrics((prev) => ({
+          ...prev,
+          activeUsers: polledMetrics.activeUsers,
+          anomaliesDetected: polledMetrics.anomaliesDetected,
+        }));
+      }
+      metricsPrev.current = { totalEvents: polledMetrics.totalEvents, timestamp: now };
+    }
+  }, [polledMetrics]);
+
+  const [showDetails, setShowDetails] = useState(false);
+  const [listVisible, setListVisible] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries;
+      if (entry.isIntersecting) {
+        setListVisible(true);
+        observer.disconnect();
+      }
+    });
+    if (listRef.current) {
+      observer.observe(listRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
 
   const listRef = useRef<HTMLDivElement>(null);
   const [listVisible, setListVisible] = useState(false);
@@ -130,7 +218,6 @@ export const RealTimeMonitoring: React.FC = () => {
     setMetrics((prev) => ({
       ...prev,
       averageLatency: prev.averageLatency * 0.9 + event.processingTime * 0.1,
-      eventsPerSecond: prev.eventsPerSecond + 1,
     }));
   };
 
@@ -163,7 +250,11 @@ export const RealTimeMonitoring: React.FC = () => {
           title="Events/Second"
           value={metrics.eventsPerSecond.toFixed(1)}
           icon={Activity}
-          trend={metrics.eventsPerSecond > 100 ? 'up' : 'stable'}
+          trend={
+            metrics.eventsPerSecond > thresholds.eventsPerSecond
+              ? 'alert'
+              : 'stable'
+          }
         />
         <MetricCard
           title="Avg Latency"
@@ -175,12 +266,19 @@ export const RealTimeMonitoring: React.FC = () => {
           title="Active Users"
           value={metrics.activeUsers.toString()}
           icon={Users}
+          trend={
+            metrics.activeUsers > thresholds.activeUsers ? 'alert' : 'stable'
+          }
         />
         <MetricCard
           title="Anomalies"
           value={metrics.anomaliesDetected.toString()}
           icon={AlertCircle}
-          trend={metrics.anomaliesDetected > 0 ? 'alert' : 'good'}
+          trend={
+            metrics.anomaliesDetected > thresholds.anomaliesDetected
+              ? 'alert'
+              : 'good'
+          }
         />
       </ChunkGroup>
 
@@ -219,8 +317,13 @@ export const RealTimeMonitoring: React.FC = () => {
             </ChunkGroup>
           </ChunkGroup>
         </CardHeader>
-        <CardContent ref={listRef} onTouchStart={() => setShowDetails(true)}>
-          {listVisible && (
+        <CardContent
+          onTouchStart={() => setShowDetails(true)}
+          onTouchEnd={() => setShowDetails(false)}
+          onMouseEnter={() => setShowDetails(true)}
+          onMouseLeave={() => setShowDetails(false)}
+        >
+          {listVisible ? (
             <List
               height={isMobile ? 240 : 384}
               itemCount={events.length}
@@ -233,6 +336,8 @@ export const RealTimeMonitoring: React.FC = () => {
                 </div>
               )}
             </List>
+          ) : (
+            <div ref={listRef} style={{ height: 384 }} />
           )}
         </CardContent>
       </Card>
