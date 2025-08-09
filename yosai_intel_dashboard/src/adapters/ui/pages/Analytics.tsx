@@ -143,9 +143,9 @@ const Analytics: React.FC = () => {
           >
             <section className="patterns-section">
               <h2>Top Security Patterns</h2>
-              <ChunkGroup className="patterns-list" limit={9} role="list">
-                {analyticsData.patterns.map((pattern, index) => (
-                  <div key={index} className="pattern-item" role="listitem">
+              <ChunkGroup className="patterns-list" limit={9}>
+                {analyticsData.patterns.map((pattern) => (
+                  <div key={pattern.pattern} className="pattern-item">
                     <div className="pattern-info">
                       <span className="pattern-name">{pattern.pattern}</span>
                       <span className="pattern-count">
@@ -168,9 +168,9 @@ const Analytics: React.FC = () => {
 
             <section className="devices-section">
               <h2>Device Distribution</h2>
-              <ChunkGroup className="device-grid" limit={9} role="list">
-                {analyticsData.device_distribution.map((device, index) => (
-                  <div key={index} className="device-card" role="listitem">
+              <ChunkGroup className="device-grid" limit={9}>
+                {analyticsData.device_distribution.map((device) => (
+                  <div key={device.device} className="device-card">
                     <span className="device-name">{device.device}</span>
                     <span className="device-count">{device.count}</span>
                   </div>
