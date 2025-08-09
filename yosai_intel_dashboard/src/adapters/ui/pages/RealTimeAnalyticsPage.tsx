@@ -70,6 +70,13 @@ const RealTimeAnalyticsPage: React.FC = () => {
 
   const replay = () => processBuffered();
 
+  const isMobile = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 640px)').matches,
+    [],
+  );
+
 
   if (!data) {
     return <div>Waiting for analytics...</div>;
