@@ -101,7 +101,15 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
         <div className="mt-4">
           {status === 'exporting' && (
             <div className="flex items-center space-x-2">
-              <progress value={progress} max="100" className="flex-1" />
+              <progress
+                value={progress}
+                max="100"
+                className="flex-1"
+                role="progressbar"
+                aria-valuenow={progress}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              />
               <span>{progress}%</span>
             </div>
           )}
