@@ -1,43 +1,21 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { useAnalyticsStore } from '../state/store';
-import { BarChart3, Filter, Download, AlertCircle } from 'lucide-react';
+import { Download, AlertCircle } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
 import ProgressiveSection from '../components/ProgressiveSection';
 const RiskDashboard = React.lazy(
   () => import('../components/security/RiskDashboard'),
 );
-import { api } from '../api/client';
 import {
   HoverPreview,
   ClickExpand,
 } from '../components/interaction/ContextDisclosure';
 import './Analytics.css';
-
-interface AnalyticsData {
-  total_records: number;
-  unique_devices: number;
-  date_range: {
-    start: string;
-    end: string;
-  };
-  patterns: Array<{
-    pattern: string;
-    count: number;
-    percentage: number;
-  }>;
-  device_distribution: Array<{
-    device: string;
-    count: number;
-  }>;
-}
+import useAnalyticsData from '../hooks/useAnalyticsData';
 
 const Analytics: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { analyticsCache, setAnalytics } = useAnalyticsStore();
   const [sourceType, setSourceType] = useState('all');
-  const analyticsData = analyticsCache[sourceType] || null;
+  const { data: analyticsData, loading, error, refresh } = useAnalyticsData(sourceType);
   const [alertsEnabled, setAlertsEnabled] = useState(false);
 
   const riskData = {
@@ -48,31 +26,6 @@ const Analytics: React.FC = () => {
       { name: 'Phishing', value: 65, benchmark: 50 },
       { name: 'Vulnerabilities', value: 55, benchmark: 45 },
     ],
-  };
-
-  useEffect(() => {
-    if (analyticsData) {
-      setLoading(false);
-      return;
-    }
-    fetchAnalytics();
-  }, [sourceType]);
-
-  const fetchAnalytics = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await api.get<AnalyticsData>(`/analytics/${sourceType}`);
-      setAnalytics(sourceType, data);
-    } catch (err) {
-      console.error('Analytics fetch error:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to fetch analytics',
-      );
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleExport = () => {
@@ -112,7 +65,7 @@ const Analytics: React.FC = () => {
         <div className="error-message">
           <AlertCircle size={24} />
           <span>{error}</span>
-          <button onClick={fetchAnalytics} className="retry-button">
+          <button onClick={refresh} className="retry-button">
             Retry
           </button>
         </div>
