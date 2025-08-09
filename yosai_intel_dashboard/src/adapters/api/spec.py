@@ -146,7 +146,7 @@ def create_flask_app() -> Flask:
         container.get("error_handler") if container.has("error_handler") else None
     )
     upload_bp = create_upload_blueprint(
-        container.get("file_processor"),
+        storage_dir="/tmp/uploads",
         file_handler=(
             container.get("file_handler") if container.has("file_handler") else None
         ),

@@ -1,148 +1,86 @@
-import asyncio
-import importlib
 import io
+import base64
+import importlib
 import sys
 import types
-
-import pandas as pd
-from flask import Flask
 from pathlib import Path
-import types
+
+from flask import Flask
+
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
-from tests.fixtures import MockProcessor
-
-safe_import('yosai_intel_dashboard', types.ModuleType("yosai_intel_dashboard"))
-sys.modules["yosai_intel_dashboard"].__path__ = [str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")]
-
 from yosai_intel_dashboard.src.error_handling import ErrorHandler
-from yosai_intel_dashboard.src.infrastructure.di.service_container import ServiceContainer
-from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 
 
-class DummyStore:
-    def get_all_data(self):
-        return {}
+# Ensure package can be imported without installing as distribution
+safe_import("yosai_intel_dashboard", types.ModuleType("yosai_intel_dashboard"))
+sys.modules["yosai_intel_dashboard"].__path__ = [
+    str(Path(__file__).resolve().parents[1] / "yosai_intel_dashboard")
+]
 
 
-class DummyUploadService:
-    def __init__(self):
-        self.store = DummyStore()
-        self.called_args = None
-
-    async def process_uploaded_files(self, contents, filenames):
-        self.called_args = (contents, filenames)
-        return {
-            "upload_results": [],
-            "file_preview_components": [],
-            "file_info_dict": {},
-        }
-
-
-def _create_app(monkeypatch):
-    # Provide minimal stubs to avoid heavy imports during module load
-    fake_reg = types.ModuleType("services.upload.service_registration")
-    fake_reg.register_upload_services = lambda c: c.register_singleton(
-        "uploader", object()
+def _create_app(tmp_path, handler: object | None = None):
+    upload_ep = importlib.import_module(
+        "yosai_intel_dashboard.src.services.upload_endpoint"
     )
-    safe_import('services.upload.service_registration', fake_reg)
-
-    service = DummyUploadService()
-    upload_ep = importlib.import_module("yosai_intel_dashboard.src.services.upload_endpoint")
     app = Flask(__name__)
-    bp = upload_ep.create_upload_blueprint(service, handler=ErrorHandler())
-    app.register_blueprint(bp)
-    return app, service
-
-
-def test_upload_files_uses_asyncio_run(monkeypatch):
-    app, service = _create_app(monkeypatch)
-
-    used = {}
-    orig_run = asyncio.run
-
-    def fake_run(coro):
-        used["called"] = True
-        return orig_run(coro)
-
-    monkeypatch.setattr(asyncio, "run", fake_run)
-
-    df = DataFrameBuilder().add_column("a", [1]).build()
-    content = UploadFileBuilder().with_dataframe(df).as_base64()
-    client = app.test_client()
-    resp = client.post(
-        "/v1/upload",
-        json={"contents": [content], "filenames": ["test.csv"]},
+    bp = upload_ep.create_upload_blueprint(
+        storage_dir=tmp_path, file_handler=handler, handler=ErrorHandler()
     )
-    assert resp.status_code == 200
-    assert used.get("called") is True
-    assert service.called_args == ([content], ["test.csv"])
-
-
-class FailingUploadService:
-    def __init__(self):
-        self.store = DummyStore()
-
-    async def process_uploaded_files(self, contents, filenames):
-        raise RuntimeError("boom")
-
-
-def test_upload_returns_error_on_exception(monkeypatch):
-    fake_reg = types.ModuleType("services.upload.service_registration")
-    fake_reg.register_upload_services = lambda c: None
-    safe_import('services.upload.service_registration', fake_reg)
-
-    service = FailingUploadService()
-    upload_ep = importlib.import_module("yosai_intel_dashboard.src.services.upload_endpoint")
-
-    app = Flask(__name__)
-    bp = upload_ep.create_upload_blueprint(service, handler=ErrorHandler())
-    app.register_blueprint(bp)
-
-    client = app.test_client()
-    resp = client.post(
-        "/v1/upload",
-        json={"contents": ["data:text/csv;base64,YSx6"], "filenames": ["t.csv"]},
-    )
-    assert resp.status_code == 500
-    body = resp.get_json()
-    assert body == {"code": "internal", "message": "boom"}
-
-
-def _create_validator_app(monkeypatch):
-    fake_reg = types.ModuleType("services.upload.service_registration")
-    fake_reg.register_upload_services = lambda c: None
-    safe_import('services.upload.service_registration', fake_reg)
-
-    upload_ep = importlib.import_module("yosai_intel_dashboard.src.services.upload_endpoint")
-
-    app = Flask(__name__)
-    bp = upload_ep.create_upload_blueprint(MockProcessor(), handler=ErrorHandler())
     app.register_blueprint(bp)
     return app
 
 
-def test_upload_rejects_oversized_file(monkeypatch):
-    app = _create_validator_app(monkeypatch)
+def test_upload_saves_file(tmp_path):
+    app = _create_app(tmp_path)
+    content_bytes = b"a\n1\n"
+    b64 = base64.b64encode(content_bytes).decode()
+    data_url = f"data:text/csv;base64,{b64}"
+    client = app.test_client()
+    resp = client.post(
+        "/v1/upload", json={"contents": [data_url], "filenames": ["test.csv"]}
+    )
+    assert resp.status_code == 200
+    assert (tmp_path / "test.csv").exists()
+    body = resp.get_json()
+    assert body["results"][0]["filename"] == "test.csv"
+
+
+class TinyHandler:
+    class Validator:
+        def validate_file_upload(self, filename, data):
+            class Res:
+                def __init__(self):
+                    self.valid = len(data) <= 0
+                    self.issues = ["file_too_large"] if data else []
+
+            return Res()
+
+    def __init__(self):
+        self.validator = self.Validator()
+
+
+def test_upload_rejects_oversized_file(tmp_path):
+    app = _create_app(tmp_path, TinyHandler())
     client = app.test_client()
     data = {"file": (io.BytesIO(b"123456"), "big.csv")}
     resp = client.post("/v1/upload", data=data)
     assert resp.status_code == 400
 
 
-def test_upload_rejects_unsupported_file(monkeypatch):
-    app = _create_validator_app(monkeypatch)
+def test_upload_rejects_unsupported_file(tmp_path):
+    app = _create_app(tmp_path)
     client = app.test_client()
     data = {"file": (io.BytesIO(b"abc"), "bad.exe")}
     resp = client.post("/v1/upload", data=data)
     assert resp.status_code == 400
 
 
-def test_upload_rejects_path_traversal_filename(monkeypatch):
-    app = _create_validator_app(monkeypatch)
+def test_upload_rejects_path_traversal_filename(tmp_path):
+    app = _create_app(tmp_path)
     client = app.test_client()
     content = "data:text/csv;base64,YSx6"
     resp = client.post(
-        "/v1/upload",
-        json={"contents": [content], "filenames": ["../bad.csv"]},
+        "/v1/upload", json={"contents": [content], "filenames": ["../bad.csv"]}
     )
     assert resp.status_code == 400
+

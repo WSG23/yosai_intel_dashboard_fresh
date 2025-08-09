@@ -113,14 +113,10 @@ def _create_app(monkeypatch, flags):
         filenames: list[str] | None = None
 
     class UploadResponseSchema(BaseModel):
-        job_id: str
-
-    class StatusSchema(BaseModel):
-        status: str
+        results: list[str]
 
     upload_stub.UploadRequestSchema = UploadRequestSchema
     upload_stub.UploadResponseSchema = UploadResponseSchema
-    upload_stub.StatusSchema = StatusSchema
     monkeypatch.setitem(
         sys.modules,
         "yosai_intel_dashboard.src.services.upload.upload_endpoint",
