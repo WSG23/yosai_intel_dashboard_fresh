@@ -66,11 +66,21 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
         />
       </div>
       <div className="flex items-center space-x-2">
-        <button type="submit" className="btn btn-primary" disabled={status === 'exporting'}>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={status === 'exporting'}
+          aria-label="Export data"
+        >
           Export
         </button>
         {status === 'exporting' && (
-          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onCancel}
+            aria-label="Cancel export"
+          >
             Cancel
           </button>
         )}
