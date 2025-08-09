@@ -34,16 +34,22 @@ const MetricCard: React.FC<{
 }> = ({ title, value, icon: Icon, trend }) => {
   const trendColor =
     trend === 'up'
-      ? 'text-green-600'
+      ? 'text-green-700'
       : trend === 'down'
-        ? 'text-red-600'
+        ? 'text-red-700'
         : trend === 'alert'
-          ? 'text-red-600'
+          ? 'text-white'
           : trend === 'warning'
-            ? 'text-yellow-600'
+            ? 'text-black'
             : 'text-gray-600';
+  const cardStyle =
+    trend === 'alert'
+      ? 'bg-red-700 text-white'
+      : trend === 'warning'
+        ? 'bg-yellow-400 text-black'
+        : '';
   return (
-    <Card className="text-center p-4">
+    <Card className={`text-center p-4 ${cardStyle}`}>
       <CardHeader>
         <Icon className="mx-auto mb-2" size={20} />
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -62,7 +68,7 @@ const EventRow: React.FC<{ event: AccessEvent; showDetails: boolean }> = ({
   <div className="flex items-center justify-between py-2 border-b text-sm">
     <span className="font-medium">{event.personName}</span>
     {showDetails && <span className="text-gray-500">{event.doorName}</span>}
-    <span className={event.decision === 'GRANTED' ? 'text-green-600' : 'text-red-600'}>
+    <span className={event.decision === 'GRANTED' ? 'text-green-700' : 'bg-red-700 text-white p-1 rounded'}>
       {event.decision}
     </span>
     {showDetails && (
@@ -95,7 +101,16 @@ export const RealTimeMonitoring: React.FC = () => {
       ? (window as any).requestIdleCallback
       : (fn: Function) => setTimeout(fn, 0);
 
+  const { isMobile } = useResponsiveChart();
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const [listVisible, setListVisible] = useState(true);
+  const [showDetails, setShowDetails] = useState(!isMobile);
 
+  const filterOptions = ['ALL', 'GRANTED', 'DENIED'] as const;
+  const [filter, setFilter] = useState<(typeof filterOptions)[number]>('ALL');
+  const filterRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  
   useEffect(() => {
     if (activeData) {
       const event = JSON.parse(activeData) as AccessEvent;
@@ -140,6 +155,34 @@ export const RealTimeMonitoring: React.FC = () => {
 
   const replay = () => processBuffered();
 
+  useEffect(() => {
+    if (!listRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => setListVisible(entry.isIntersecting));
+    });
+    observer.observe(listRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleFilterKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const next = (index + 1) % filterOptions.length;
+      filterRefs.current[next]?.focus();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prev = (index - 1 + filterOptions.length) % filterOptions.length;
+      filterRefs.current[prev]?.focus();
+    }
+  };
+
+  const filteredEvents = events.filter(
+    (e) => filter === 'ALL' || e.decision === filter,
+  );
+
   return (
     <div className="p-6 space-y-6">
       <ChunkGroup className="grid grid-cols-1 md:grid-cols-4 gap-4" limit={9}>
@@ -173,9 +216,11 @@ export const RealTimeMonitoring: React.FC = () => {
           <ChunkGroup className="flex items-center justify-between">
             <ChunkGroup className="flex items-center space-x-2">
               <CardTitle>Live Access Events</CardTitle>
-              {!paused && <Badge className="bg-green-500 text-white">Live</Badge>}
+              {!paused && (
+                <Badge className="bg-green-700 text-white">Live</Badge>
+              )}
               {paused && (
-                <Badge className="bg-yellow-500 text-white">
+                <Badge className="bg-red-700 text-white" aria-live="polite">
                   Paused{pending ? ` (${pending})` : ''}
                 </Badge>
               )}
@@ -204,16 +249,43 @@ export const RealTimeMonitoring: React.FC = () => {
           </ChunkGroup>
         </CardHeader>
         <CardContent ref={listRef} onTouchStart={() => setShowDetails(true)}>
+          <div
+            role="group"
+            aria-label="Filter events by decision"
+            className="flex space-x-2 mb-4"
+          >
+            {filterOptions.map((opt, idx) => (
+              <Button
+                key={opt}
+                ref={(el) => (filterRefs.current[idx] = el)}
+                tabIndex={0}
+                aria-label={`Filter events: ${opt.toLowerCase()}`}
+                aria-pressed={filter === opt}
+                onKeyDown={(e) => handleFilterKeyDown(e, idx)}
+                onClick={() => setFilter(opt)}
+                className={
+                  filter === opt
+                    ? 'bg-blue-700 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }
+              >
+                {opt}
+              </Button>
+            ))}
+          </div>
           {listVisible && (
             <List
               height={384}
-              itemCount={events.length}
+              itemCount={filteredEvents.length}
               itemSize={48}
               width="100%"
             >
               {({ index, style }) => (
-                <div style={style} key={events[index].eventId}>
-                  <EventRow event={events[index]} showDetails={showDetails} />
+                <div style={style} key={filteredEvents[index].eventId}>
+                  <EventRow
+                    event={filteredEvents[index]}
+                    showDetails={showDetails}
+                  />
                 </div>
               )}
             </List>
