@@ -23,12 +23,14 @@ import { Badge } from '../components/ui/badge';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
 import { AccessibleVisualization } from '../components/accessibility';
 import { ChunkGroup } from '../components/layout';
+import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
 
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 const RealTimeAnalyticsPage: React.FC = () => {
   const { data: liveData } = useRealTimeAnalytics();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [data, setData] = useState<Record<string, any> | null>(null);
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<Record<string, any>[]>([]);
@@ -163,7 +165,11 @@ const RealTimeAnalyticsPage: React.FC = () => {
                 <XAxis dataKey="user_id" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="count" fill="#8884d8" />
+                <Bar
+                  dataKey="count"
+                  fill="#8884d8"
+                  isAnimationActive={!prefersReducedMotion}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -186,7 +192,11 @@ const RealTimeAnalyticsPage: React.FC = () => {
                 <XAxis dataKey="door_id" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="count" fill="#82ca9d" />
+                <Bar
+                  dataKey="count"
+                  fill="#82ca9d"
+                  isAnimationActive={!prefersReducedMotion}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -205,7 +215,13 @@ const RealTimeAnalyticsPage: React.FC = () => {
           <div className="mb-4" style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <PieChart>
-                <Pie data={patterns} dataKey="count" nameKey="pattern" label>
+              <Pie
+                data={patterns}
+                dataKey="count"
+                nameKey="pattern"
+                label
+                isAnimationActive={!prefersReducedMotion}
+              >
 
                   {patterns.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
