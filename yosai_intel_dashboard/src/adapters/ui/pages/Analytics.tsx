@@ -79,6 +79,7 @@ const Analytics: React.FC = () => {
         <h1>Security Analytics</h1>
         <ChunkGroup className="header-actions">
           <select
+            aria-label="Select data source"
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             className="source-select"
@@ -88,7 +89,11 @@ const Analytics: React.FC = () => {
             <option value="endpoint">Endpoint</option>
             <option value="network">Network</option>
           </select>
-          <button onClick={handleExport} className="export-button">
+          <button
+            aria-label="Export analytics as CSV"
+            onClick={handleExport}
+            className="export-button"
+          >
             <Download size={20} />
             Export CSV
           </button>
@@ -138,9 +143,9 @@ const Analytics: React.FC = () => {
           >
             <section className="patterns-section">
               <h2>Top Security Patterns</h2>
-              <ChunkGroup className="patterns-list" limit={9}>
+              <ChunkGroup className="patterns-list" limit={9} role="list">
                 {analyticsData.patterns.map((pattern, index) => (
-                  <div key={index} className="pattern-item">
+                  <div key={index} className="pattern-item" role="listitem">
                     <div className="pattern-info">
                       <span className="pattern-name">{pattern.pattern}</span>
                       <span className="pattern-count">
@@ -163,9 +168,9 @@ const Analytics: React.FC = () => {
 
             <section className="devices-section">
               <h2>Device Distribution</h2>
-              <ChunkGroup className="device-grid" limit={9}>
+              <ChunkGroup className="device-grid" limit={9} role="list">
                 {analyticsData.device_distribution.map((device, index) => (
-                  <div key={index} className="device-card">
+                  <div key={index} className="device-card" role="listitem">
                     <span className="device-name">{device.device}</span>
                     <span className="device-count">{device.count}</span>
                   </div>
