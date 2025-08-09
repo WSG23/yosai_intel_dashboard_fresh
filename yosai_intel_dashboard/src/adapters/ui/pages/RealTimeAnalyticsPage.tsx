@@ -21,6 +21,7 @@ import {
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
+import type { RealTimeAnalyticsEvent } from '../hooks/useRealTimeAnalyticsData';
 import { AccessibleVisualization } from '../components/accessibility';
 import { ChunkGroup } from '../components/layout';
 
@@ -29,9 +30,9 @@ const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 const RealTimeAnalyticsPage: React.FC = () => {
   const { data: liveData } = useRealTimeAnalytics();
-  const [data, setData] = useState<Record<string, any> | null>(null);
+  const [data, setData] = useState<RealTimeAnalyticsEvent | null>(null);
   const [paused, setPaused] = useState(false);
-  const bufferRef = useRef<Record<string, any>[]>([]);
+  const bufferRef = useRef<RealTimeAnalyticsEvent[]>([]);
   const [pending, setPending] = useState(0);
   const scheduler =
     (typeof window !== 'undefined' && (window as any).requestIdleCallback)
