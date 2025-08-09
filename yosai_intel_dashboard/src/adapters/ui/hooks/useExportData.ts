@@ -1,98 +1,73 @@
-import { useState, useRef, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-export interface ExportOptions {
-  fileType: string;
-  columns: string[];
-  timezone: string;
-  locale: string;
-}
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
 
-type ExportStatus = 'idle' | 'exporting' | 'completed' | 'error';
+const useExportData = () => {
+  const [exporting, setExporting] = useState(false);
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+  const exportData = useCallback(
+    async (format: 'csv' | 'excel' | 'json', dataSource?: string) => {
+      setExporting(true);
+      const worker = new Worker(
+        new URL('../utils/exportWorker.ts', import.meta.url),
+        { type: 'module' }
+      );
 
-export const useExportData = () => {
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<ExportStatus>('idle');
-  const controllerRef = useRef<AbortController | null>(null);
+      try {
+        const params = new URLSearchParams({ format });
+        if (dataSource) params.append('data_source', dataSource);
 
-  const startExport = useCallback(async (options: ExportOptions) => {
-    setStatus('exporting');
-    setProgress(0);
-    const controller = new AbortController();
-    controllerRef.current = controller;
+        const response = await fetch(
+          `${API_BASE_URL}/analytics/export?${params.toString()}`,
+          { credentials: 'include' }
+        );
 
-    try {
-      const response = await fetch(`${API_URL}/api/v1/export`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(options),
-        signal: controller.signal,
-      });
+        const contentType =
+          response.headers.get('Content-Type') || 'application/octet-stream';
+        const disposition = response.headers.get('Content-Disposition') || '';
+        let filename = `export.${format}`;
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
 
-      if (!response.ok) {
-        throw new Error('Export failed');
-      }
+        worker.onmessage = (ev: MessageEvent<{ blob: Blob }>) => {
+          const { blob } = ev.data;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          worker.terminate();
+          setExporting(false);
+        };
 
-      const contentLength = response.headers.get('content-length');
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Readable stream not supported');
-      }
-      const chunks: Uint8Array[] = [];
-      let received = 0;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          chunks.push(value);
-          received += value.length;
-          if (total) {
-            setProgress(Math.round((received / total) * 100));
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('Streaming not supported');
+        }
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            worker.postMessage({ chunk: value });
           }
         }
+        worker.postMessage({ done: true, mimeType: contentType });
+      } catch (err) {
+        worker.terminate();
+        setExporting(false);
+        throw err;
       }
+    },
+    []
+  );
 
-      // Create a blob from the chunks and trigger download
-      const blob = new Blob(chunks, { type: 'application/octet-stream' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const ext = options.fileType || 'dat';
-      link.download = `export.${ext}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
-      setProgress(100);
-      setStatus('completed');
-    } catch (err) {
-      if ((err as any)?.name === 'AbortError') {
-        setStatus('idle');
-      } else {
-        console.error(err);
-        setStatus('error');
-      }
-    } finally {
-      controllerRef.current = null;
-    }
-  }, []);
-
-  const cancelExport = useCallback(() => {
-    controllerRef.current?.abort();
-  }, []);
-
-  return {
-    startExport,
-    progress,
-    status,
-    cancelExport,
-  };
+  return { exportData, exporting } as const;
 };
 
 export default useExportData;
