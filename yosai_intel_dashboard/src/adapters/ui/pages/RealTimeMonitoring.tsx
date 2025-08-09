@@ -87,6 +87,8 @@ export const RealTimeMonitoring: React.FC = () => {
 
   const activeData = isConnected ? wsData : sseData;
 
+  const { isMobile } = useResponsiveChart();
+
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<AccessEvent[]>([]);
   const [pending, setPending] = useState(0);
@@ -94,6 +96,20 @@ export const RealTimeMonitoring: React.FC = () => {
     (typeof window !== 'undefined' && (window as any).requestIdleCallback)
       ? (window as any).requestIdleCallback
       : (fn: Function) => setTimeout(fn, 0);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listVisible, setListVisible] = useState(false);
+  const [showDetails, setShowDetails] = useState(!isMobile);
+
+  useEffect(() => {
+    if (listRef.current) {
+      setListVisible(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    setShowDetails(!isMobile);
+  }, [isMobile]);
 
 
   useEffect(() => {
@@ -206,9 +222,9 @@ export const RealTimeMonitoring: React.FC = () => {
         <CardContent ref={listRef} onTouchStart={() => setShowDetails(true)}>
           {listVisible && (
             <List
-              height={384}
+              height={isMobile ? 240 : 384}
               itemCount={events.length}
-              itemSize={48}
+              itemSize={isMobile ? 64 : 48}
               width="100%"
             >
               {({ index, style }) => (
