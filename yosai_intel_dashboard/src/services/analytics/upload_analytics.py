@@ -13,6 +13,7 @@ from yosai_intel_dashboard.src.services.chunked_analysis import analyze_with_chu
 from yosai_intel_dashboard.src.services.upload.protocols import UploadAnalyticsProtocol
 from yosai_intel_dashboard.src.utils.upload_store import get_uploaded_data_store
 from validation.data_validator import DataValidator, DataValidatorProtocol
+from .unicode import normalize_text
 
 
 def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:
@@ -79,7 +80,10 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
             return df.copy()
 
         cleaned = df.dropna(how="all", axis=0).dropna(how="all", axis=1).copy()
-        cleaned.columns = [c.strip().lower().replace(" ", "_") for c in cleaned.columns]
+        cleaned.columns = [
+            normalize_text(c).strip().lower().replace(" ", "_")
+            for c in cleaned.columns
+        ]
         cleaned = cleaned.rename(
             columns={"device_name": "door_id", "event_time": "timestamp"}
         )
@@ -88,6 +92,7 @@ class UploadAnalyticsProcessor(UploadAnalyticsProtocol):
                 cleaned["timestamp"], errors="coerce"
             )
         cleaned = cleaned.dropna(how="all", axis=0)
+        cleaned.columns = [normalize_text(c) for c in cleaned.columns]
         return cleaned
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
