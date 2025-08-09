@@ -28,8 +28,11 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block mb-1">File Type</label>
+        <label htmlFor="export-file-type" className="block mb-1">
+          File Type
+        </label>
         <select
+          id="export-file-type"
           value={fileType}
           onChange={(e) => setFileType(e.target.value)}
           className="border p-1 rounded"
@@ -39,8 +42,11 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
         </select>
       </div>
       <div>
-        <label className="block mb-1">Columns (comma separated)</label>
+        <label htmlFor="export-columns" className="block mb-1">
+          Columns (comma separated)
+        </label>
         <input
+          id="export-columns"
           type="text"
           value={columns}
           onChange={(e) => setColumns(e.target.value)}
@@ -48,8 +54,11 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
         />
       </div>
       <div>
-        <label className="block mb-1">Timezone</label>
+        <label htmlFor="export-timezone" className="block mb-1">
+          Timezone
+        </label>
         <input
+          id="export-timezone"
           type="text"
           value={timezone}
           onChange={(e) => setTimezone(e.target.value)}
@@ -57,8 +66,11 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
         />
       </div>
       <div>
-        <label className="block mb-1">Locale</label>
+        <label htmlFor="export-locale" className="block mb-1">
+          Locale
+        </label>
         <input
+          id="export-locale"
           type="text"
           value={locale}
           onChange={(e) => setLocale(e.target.value)}
