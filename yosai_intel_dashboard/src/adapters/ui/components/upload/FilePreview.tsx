@@ -20,7 +20,14 @@ export const FilePreview: React.FC<Props> = ({ file, onRemove }) => {
       <div className="flex-1">
         <div className="flex justify-between">
           <span className="font-medium text-sm">{file.file.name}</span>
-          <button onClick={onRemove} className="text-red-500 text-xs">Remove</button>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-red-500 text-xs"
+            aria-label={`Remove ${file.file.name}`}
+          >
+            Remove
+          </button>
         </div>
         <ProgressBar progress={file.progress} className="mt-2" />
         {file.error && <p className="text-xs text-red-500 mt-1">{file.error}</p>}
