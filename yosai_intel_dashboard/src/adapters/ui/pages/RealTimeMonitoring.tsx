@@ -127,6 +127,8 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
 
   const activeData = isConnected ? wsData : sseData;
 
+  const { isMobile } = useResponsiveChart();
+
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<AccessEvent[]>([]);
   const [pending, setPending] = useState(0);
@@ -200,8 +202,7 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
   const { isMobile } = useResponsiveChart();
   const listRef = useRef<HTMLDivElement | null>(null);
   const [listVisible, setListVisible] = useState(true);
-  const [showDetails, setShowDetails] = useState(!isMobile);
-
+  const [showDetails, setShowDetails] = useState(!isMobile)
   const filterOptions = ['ALL', 'GRANTED', 'DENIED'] as const;
   const [filter, setFilter] = useState<(typeof filterOptions)[number]>('ALL');
   const filterRefs = useRef<Array<HTMLButtonElement | null>>([]);
