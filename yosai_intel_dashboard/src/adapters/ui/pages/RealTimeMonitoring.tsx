@@ -9,6 +9,7 @@ import { useWebSocket } from '../hooks';
 import { useEventStream } from '../hooks/useEventStream';
 import useResponsiveChart from '../hooks/useResponsiveChart';
 import { ChunkGroup } from '../components/layout';
+import { Link } from 'react-router-dom';
 
 interface AccessEvent {
   eventId: string;
@@ -70,6 +71,13 @@ const EventRow: React.FC<{ event: AccessEvent; showDetails: boolean }> = ({
         {new Date(event.timestamp).toLocaleTimeString()}
       </span>
     )}
+    <Link
+      to={`/logs/${event.eventId}`}
+      aria-label={`View logs for event ${event.eventId}`}
+      className="text-blue-600 underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    >
+      View logs
+    </Link>
   </div>
 );
 
