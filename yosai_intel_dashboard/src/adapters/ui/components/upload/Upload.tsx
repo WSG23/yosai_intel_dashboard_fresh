@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useDropzone } from "react-dropzone";
 import { Upload as UploadIcon } from "lucide-react";
 import { FilePreview } from "./FilePreview";
 import { ColumnMappingModal } from "./ColumnMappingModal";
@@ -6,23 +7,34 @@ import { DeviceMappingModal } from "./DeviceMappingModal";
 import { UploadedFile, FileData } from "./types";
 import useUpload from "../../hooks/useUpload";
 
-
 const Upload: React.FC = () => {
-  const {
-    files,
-    uploading,
-    getRootProps,
-    getInputProps,
-    isDragActive,
-    removeFile,
-    uploadAllFiles,
-  } = useUpload();
 
   const [showColumnMapping, setShowColumnMapping] = useState(false);
   const [showDeviceMapping, setShowDeviceMapping] = useState(false);
   const [currentFile, setCurrentFile] = useState<UploadedFile | null>(null);
   const [fileData, setFileData] = useState<FileData | null>(null);
   const [devices, setDevices] = useState<string[]>([]);
+
+  const {
+    files,
+    onDrop,
+    removeFile,
+    uploadAllFiles,
+    uploading,
+    cancelUpload,
+  } = useUpload();
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "text/csv": [".csv"],
+      "application/vnd.ms-excel": [".xls"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
+    },
+    multiple: true,
+  });
 
   const handleColumnMappingConfirm = (mappings: Record<string, string>) => {
     console.log("Column mappings confirmed:", mappings);
@@ -84,6 +96,7 @@ const Upload: React.FC = () => {
                   key={file.id}
                   file={file}
                   onRemove={() => removeFile(file.id)}
+                  onCancel={() => cancelUpload(file.id)}
                 />
               ))}
             </div>
