@@ -29,6 +29,7 @@ export const FilePreview: React.FC<Props> = ({ file, onRemove, onCancel }) => {
             )}
             <button onClick={onRemove} className="text-red-500 text-xs">Remove</button>
           </div>
+
         </div>
         <ProgressBar progress={file.progress} className="mt-2" />
         {file.error && <p className="text-xs text-red-500 mt-1">{file.error}</p>}

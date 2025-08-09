@@ -8,6 +8,7 @@ import { UploadedFile, FileData } from "./types";
 import useUpload from "../../hooks/useUpload";
 
 const Upload: React.FC = () => {
+
   const [showColumnMapping, setShowColumnMapping] = useState(false);
   const [showDeviceMapping, setShowDeviceMapping] = useState(false);
   const [currentFile, setCurrentFile] = useState<UploadedFile | null>(null);
