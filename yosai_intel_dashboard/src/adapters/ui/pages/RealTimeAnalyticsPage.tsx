@@ -33,10 +33,10 @@ const RealTimeAnalyticsPage: React.FC = () => {
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<Record<string, any>[]>([]);
   const [pending, setPending] = useState(0);
-  const scheduler =
-    (typeof window !== 'undefined' && (window as any).requestIdleCallback)
-      ? (window as any).requestIdleCallback
-      : (fn: Function) => setTimeout(fn, 0);
+  const scheduler: (cb: () => void) => void =
+    typeof window !== 'undefined' && (window as any).requestIdleCallback
+      ? (cb) => (window as any).requestIdleCallback(cb)
+      : (cb) => setTimeout(cb, 0);
 
   useEffect(() => {
     if (liveData) {
