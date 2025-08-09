@@ -121,6 +121,8 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
 
   const activeData = isConnected ? wsData : sseData;
 
+  const { isMobile } = useResponsiveChart();
+
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<AccessEvent[]>([]);
   const [pending, setPending] = useState(0);
@@ -190,6 +192,20 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
     }
     return () => observer.disconnect();
   }, []);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listVisible, setListVisible] = useState(false);
+  const [showDetails, setShowDetails] = useState(!isMobile);
+
+  useEffect(() => {
+    if (listRef.current) {
+      setListVisible(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    setShowDetails(!isMobile);
+  }, [isMobile]);
 
 
   useEffect(() => {
@@ -317,10 +333,9 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
         >
           {listVisible ? (
             <List
-              ref={listRef}
-              height={384}
+              height={isMobile ? 240 : 384}
               itemCount={events.length}
-              itemSize={48}
+              itemSize={isMobile ? 64 : 48}
               width="100%"
             >
               {({ index, style }) => (
