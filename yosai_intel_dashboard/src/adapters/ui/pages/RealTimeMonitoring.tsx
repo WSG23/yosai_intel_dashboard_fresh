@@ -132,13 +132,10 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<AccessEvent[]>([]);
   const [pending, setPending] = useState(0);
-  const scheduler =
-    (typeof window !== 'undefined' && (window as any).requestIdleCallback)
-      ? (window as any).requestIdleCallback
-      : (fn: Function) => setTimeout(fn, 0);
-  const listRef = useRef<HTMLDivElement>(null);
-  const [listVisible] = useState(true);
-  const [showDetails, setShowDetails] = useState(false);
+  const scheduler: (cb: () => void) => void =
+    typeof window !== 'undefined' && (window as any).requestIdleCallback
+      ? (cb) => (window as any).requestIdleCallback(cb)
+      : (cb) => setTimeout(cb, 0);
 
   const metricsPrev = useRef<{ totalEvents: number; timestamp: number }>();
 
