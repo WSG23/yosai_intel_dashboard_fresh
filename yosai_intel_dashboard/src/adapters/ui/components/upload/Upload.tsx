@@ -6,6 +6,7 @@ import { DeviceMappingModal } from "./DeviceMappingModal";
 import { UploadedFile, FileData } from "./types";
 import useUpload from "../../hooks/useUpload";
 
+
 const Upload: React.FC = () => {
   const {
     files,
