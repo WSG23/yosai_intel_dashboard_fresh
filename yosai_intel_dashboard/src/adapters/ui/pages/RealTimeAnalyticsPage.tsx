@@ -21,7 +21,10 @@ import {
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
-import type { RealTimeAnalyticsEvent } from '../hooks/useRealTimeAnalyticsData';
+import type {
+  RealTimeAnalyticsPayload,
+  PatternCount,
+} from '../hooks/useRealTimeAnalyticsData';
 import { AccessibleVisualization } from '../components/accessibility';
 import { ChunkGroup } from '../components/layout';
 import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
@@ -35,9 +38,9 @@ const MAX_BUFFER = 100;
 const RealTimeAnalyticsPage: React.FC = () => {
   const { data: liveData } = useRealTimeAnalytics();
   const prefersReducedMotion = usePrefersReducedMotion();
-  const [data, setData] = useState<Record<string, any> | null>(null);
+  const [data, setData] = useState<RealTimeAnalyticsPayload | null>(null);
   const [paused, setPaused] = useState(false);
-  const bufferRef = useRef<RealTimeAnalyticsEvent[]>([]);
+  const bufferRef = useRef<RealTimeAnalyticsPayload[]>([]);
   const [pending, setPending] = useState(0);
   const scheduler: (cb: () => void) => void =
     typeof window !== 'undefined' && (window as any).requestIdleCallback
@@ -86,12 +89,8 @@ const RealTimeAnalyticsPage: React.FC = () => {
 
   const topUsersRaw = Array.isArray(data.top_users) ? data.top_users : [];
   const topDoorsRaw = Array.isArray(data.top_doors) ? data.top_doors : [];
-  const patternsRaw = data.access_patterns
-
-    ? Object.entries(data.access_patterns).map(([pattern, count]) => ({
-        pattern,
-        count: Number(count),
-      }))
+  const patternsRaw: PatternCount[] = Array.isArray(data.access_patterns)
+    ? data.access_patterns
     : [];
 
   const maxBars = isMobile ? 5 : 10;
