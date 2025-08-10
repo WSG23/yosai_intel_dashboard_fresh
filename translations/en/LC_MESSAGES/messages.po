@@ -1,0 +1,30 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "settings.title"
+msgstr "Settings"
+
+msgid "settings.theme"
+msgstr "Theme"
+
+msgid "settings.theme_light"
+msgstr "Light"
+
+msgid "settings.theme_dark"
+msgstr "Dark"
+
+msgid "settings.items_per_page"
+msgstr "Items Per Page"
+
+msgid "settings.save"
+msgstr "Save"
+
+msgid "settings.saving"
+msgstr "Saving..."
+
+msgid "settings.saved"
+msgstr "Settings saved."

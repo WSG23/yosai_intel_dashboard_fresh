@@ -7,6 +7,7 @@ import {
   faDownload,
   faCog,
 } from '@fortawesome/free-solid-svg-icons';
+import { t } from '../../i18n';
 
 export interface NavItem {
   path: string;
@@ -39,6 +40,6 @@ export const navItems: NavItem[] = [
   { path: '/analytics', label: 'Analytics', icon: AnalyticsIcon },
   { path: '/graphs', label: 'Graphs', icon: GraphsIcon },
   { path: '/export', label: 'Export', icon: ExportIcon },
-  { path: '/settings', label: 'Settings', icon: SettingsIcon },
+  { path: '/settings', label: t('settings.title'), icon: SettingsIcon },
 ];
 
