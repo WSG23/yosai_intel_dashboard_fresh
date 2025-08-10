@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 const SuspenseList = (React as any).SuspenseList;
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { SelectionProvider } from './core/interaction/SelectionContext';
 import BottomNav from './components/navigation/BottomNav';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
+import useIsMobile from './hooks/useIsMobile';
 
 config.autoAddCss = false;
 
@@ -39,13 +40,7 @@ const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl as HTMLElement);
   const AppRoot: React.FC = () => {
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-    useEffect(() => {
-      const handleResize = () => setIsMobile(window.innerWidth <= 768);
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    const isMobile = useIsMobile();
 
     return (
       <SelectionProvider>

@@ -10,6 +10,17 @@ jest.mock('react-router-dom', () => ({
   MemoryRouter: ({ children }: any) => <div>{children}</div>,
 }), { virtual: true });
 
+beforeAll(() => {
+  (window as any).matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  });
+});
+
 const MemoryRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div>{children}</div>
 );

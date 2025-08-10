@@ -67,14 +67,10 @@ def _create_app(monkeypatch):
         filenames: list[str] | None = None
 
     class UploadResponseSchema(BaseModel):
-        job_id: str
-
-    class StatusSchema(BaseModel):
-        status: str
+        results: list[str]
 
     upload_upload_stub.UploadRequestSchema = UploadRequestSchema
     upload_upload_stub.UploadResponseSchema = UploadResponseSchema
-    upload_upload_stub.StatusSchema = StatusSchema
     monkeypatch.setitem(
         sys.modules,
         "yosai_intel_dashboard.src.services.upload.upload_endpoint",
@@ -117,4 +113,4 @@ def test_csrf_token_and_protected_endpoint(monkeypatch):
         json={"contents": ["data:text/plain;base64,Zm8="], "filenames": ["t.txt"]},
         headers={"X-CSRFToken": token},
     )
-    assert resp.status_code == 202
+    assert resp.status_code == 200
