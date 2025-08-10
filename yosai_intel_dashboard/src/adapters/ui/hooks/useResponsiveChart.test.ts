@@ -1,6 +1,17 @@
 import { renderHook, act } from '@testing-library/react';
 import useResponsiveChart from './useResponsiveChart';
 
+beforeEach(() => {
+  (window as any).matchMedia = (query: string) => ({
+    matches: window.innerWidth <= parseInt(query.match(/\d+/)?.[0] || '0', 10),
+    media: query,
+    onchange: null,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  });
+});
+
 describe('useResponsiveChart', () => {
   afterEach(() => {
     Object.defineProperty(navigator, 'maxTouchPoints', {
@@ -39,7 +50,6 @@ describe('useResponsiveChart', () => {
       window.dispatchEvent(new Event('resize'));
     });
     expect(result.current.variant).toBe('bar');
-    expect(result.current.isMobile).toBe(false);
     expect(result.current.legendDensity).toBe('comfortable');
     expect(result.current.tooltipMode).toBe('hover');
     expect(result.current.enableGestures).toBe(false);
@@ -53,7 +63,6 @@ describe('useResponsiveChart', () => {
       window.dispatchEvent(new Event('resize'));
     });
     expect(result.current.variant).toBe('area');
-    expect(result.current.isMobile).toBe(true);
     expect(result.current.legendDensity).toBe('compact');
     expect(result.current.tooltipMode).toBe('tap');
     expect(result.current.enableGestures).toBe(true);

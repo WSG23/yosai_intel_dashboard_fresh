@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
@@ -12,18 +12,35 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { graphsAPI, AvailableChart } from '../api/graphs';
 import { AccessibleVisualization } from '../components/accessibility';
 import { NetworkGraph, FacilityLayout } from './visualizations';
+import useGraphsData from '../hooks/useGraphsData';
+
+interface ChartData {
+  hourly_distribution?: Record<string, number | string>;
+  temporal_patterns?: {
+    hourly_distribution?: Record<string, number | string>;
+  };
+  [key: string]: unknown;
+}
 
 const Graphs: React.FC = () => {
-  const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
-  const [selectedChart, setSelectedChart] = useState('');
-  const [chartData, setChartData] = useState<any>(null);
+  const {
+    charts,
+    data: chartData,
+    isLoading,
+    isError,
+    selectedChart,
+    selectChart,
+  } = useGraphsData();
   const [showDetails, setShowDetails] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const fetchCharts = async () => {
+      setIsLoading(true);
+      setIsError(false);
       try {
         const charts = await graphsAPI.getAvailableCharts();
         const extra: AvailableChart[] = [
@@ -45,6 +62,9 @@ const Graphs: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to fetch chart list', err);
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchCharts();
@@ -55,12 +75,17 @@ const Graphs: React.FC = () => {
       return;
     }
     const fetchData = async () => {
+      setIsLoading(true);
+      setIsError(false);
       try {
         const data = await graphsAPI.getChartData(selectedChart);
         setChartData(data);
       } catch (err) {
         console.error('Failed to fetch chart data', err);
         setChartData(null);
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
@@ -99,8 +124,9 @@ const Graphs: React.FC = () => {
       );
     }
 
-    if (selectedChart === 'timeline' && chartData?.hourly_distribution) {
-      const data = Object.entries(chartData.hourly_distribution).map(([hour, count]) => ({
+    const hourly = chartData?.hourly_distribution;
+    if (selectedChart === 'timeline' && hourly) {
+      const data = Object.entries(hourly).map(([hour, count]) => ({
         hour,
         count: Number(count),
       }));
@@ -126,13 +152,12 @@ const Graphs: React.FC = () => {
       );
     }
 
-    if (selectedChart === 'patterns' && chartData?.temporal_patterns?.hourly_distribution) {
-      const data = Object.entries(chartData.temporal_patterns.hourly_distribution).map(
-        ([hour, count]) => ({
-          hour,
-          count: Number(count),
-        }),
-      );
+    const patternHourly = chartData?.temporal_patterns?.hourly_distribution;
+    if (selectedChart === 'patterns' && patternHourly) {
+      const data = Object.entries(patternHourly).map(([hour, count]) => ({
+        hour,
+        count: Number(count),
+      }));
       return (
         <AccessibleVisualization
           title="Temporal Patterns"
@@ -165,19 +190,23 @@ const Graphs: React.FC = () => {
           <LineChartIcon size={20} />
           <span>Security Graphs</span>
         </h1>
-        {availableCharts.length > 0 && (
+        {charts.length > 0 && (
           <select
             className="mb-4 border p-2 rounded"
             value={selectedChart}
-            onChange={(e) => setSelectedChart(e.target.value)}
+            onChange={(e) => selectChart(e.target.value)}
             aria-label="Select chart type"
           >
-            {availableCharts.map((chart) => (
+            {charts.map((chart) => (
               <option key={chart.type} value={chart.type}>
                 {chart.name}
               </option>
             ))}
           </select>
+        )}
+        {isLoading && <p className="text-sm">Loading...</p>}
+        {isError && (
+          <p className="text-sm text-red-600">Failed to load chart data.</p>
         )}
         <ProgressiveSection
           title="Advanced Settings"
@@ -194,8 +223,20 @@ const Graphs: React.FC = () => {
           </label>
         </ProgressiveSection>
       </ChunkGroup>
-      <div role="presentation">{renderChart()}</div>
-      {showDetails && chartData && (
+      {isLoading && (
+        <div className="graphs-placeholder" role="status" aria-live="polite">
+          Loading graphs...
+        </div>
+      )}
+      {isError && (
+        <div className="graphs-placeholder" role="alert">
+          Failed to load graphs.
+        </div>
+      )}
+      {!isLoading && !isError && (
+        <div role="presentation">{renderChart()}</div>
+      )}
+      {!isLoading && !isError && showDetails && chartData && (
         <pre
           aria-label="chart-details"
           className="mt-4 whitespace-pre-wrap text-xs border p-2 rounded"

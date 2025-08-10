@@ -3,6 +3,27 @@
 /* =================================================================== */
 
 .graphs-placeholder {
-  min-height: 300px;
+  min-height: var(--graphs-placeholder-min-height, 300px);
   background-color: var(--surface-section);
+}
+
+/* Responsive grid container for graphs */
+.graphs-grid {
+  --graphs-grid-min-col: 300px;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: var(--grid-bp-tablet)) {
+  .graphs-grid {
+    grid-template-columns: repeat(auto-fit, minmax(var(--graphs-grid-min-col), 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .graphs-placeholder {
+    transition: none !important;
+    animation: none !important;
+  }
 }
