@@ -32,7 +32,11 @@ export const FilePreview: React.FC<Props> = ({ file, onRemove, onCancel }) => {
 
         </div>
         <ProgressBar progress={file.progress} className="mt-2" />
-        {file.error && <p className="text-xs text-red-500 mt-1">{file.error}</p>}
+        {file.error && (
+          <p role="alert" aria-live="assertive" className="text-xs text-red-500 mt-1">
+            {file.error}
+          </p>
+        )}
       </div>
     </div>
   );

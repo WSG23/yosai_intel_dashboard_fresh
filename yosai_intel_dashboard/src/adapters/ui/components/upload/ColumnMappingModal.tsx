@@ -185,7 +185,11 @@ export const ColumnMappingModal: React.FC<Props> = ({
 
             {/* Errors */}
             {errors.length > 0 && (
-              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <div
+                className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg"
+                role="alert"
+                aria-live="assertive"
+              >
                 <p className="font-medium text-red-800 dark:text-red-200 mb-2">
                   Please fix the following issues:
                 </p>
