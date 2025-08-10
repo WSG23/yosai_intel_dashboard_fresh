@@ -1405,6 +1405,7 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - State stores: [docs/state_management.md](docs/state_management.md)
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
+- Upload endpoint notes: [docs/pr/Upload_PR.md](docs/pr/Upload_PR.md)
 
 Update the spec by running `go run ./api/openapi` which writes `docs/api/v2/openapi.json` for the UI.
 

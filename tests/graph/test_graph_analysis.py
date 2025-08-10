@@ -7,10 +7,13 @@ pytest.importorskip("sklearn")
 
 from services.analytics.graph_analysis import (
     GraphModel,
+    Node,
+    NodeType,
     build_graph_from_logs,
 )
 from services.analytics.graph_analysis.algorithms import (
     betweenness_centrality,
+    graph_lof,
     louvain_communities,
     risk_propagation,
     shortest_path,
@@ -59,3 +62,12 @@ def test_algorithms_basic():
     assert path[0] == "alice"
     scores = risk_propagation(graph, {"alice": 1.0})
     assert scores["door1"] < 1.0
+
+
+def test_graph_lof_handles_small_graphs():
+    empty_graph = GraphModel()
+    assert graph_lof(empty_graph) == {}
+
+    single = GraphModel()
+    single.add_node(Node("a", NodeType.PERSON))
+    assert graph_lof(single) == {}
