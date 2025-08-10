@@ -98,9 +98,9 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
         )}
       </div>
       {status !== 'idle' && (
-        <div className="mt-4" role="status" aria-live="polite">
+        <div className="mt-4">
           {status === 'exporting' && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" role="status" aria-live="polite">
               <progress
                 value={progress}
                 max="100"
@@ -113,8 +113,16 @@ const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) =
               <span>{progress}%</span>
             </div>
           )}
-          {status === 'completed' && <p className="text-green-600">Export complete.</p>}
-          {status === 'error' && <p className="text-red-600">Export failed.</p>}
+          {status === 'completed' && (
+            <p role="status" aria-live="polite" className="text-green-600">
+              Export complete.
+            </p>
+          )}
+          {status === 'error' && (
+            <p role="alert" aria-live="assertive" className="text-red-600">
+              Export failed.
+            </p>
+          )}
         </div>
       )}
     </form>

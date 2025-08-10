@@ -8,4 +8,6 @@ test('renders alert description', () => {
     </Alert>
   );
   expect(screen.getByText('text')).toBeInTheDocument();
+  const alert = screen.getByRole('alert');
+  expect(alert).toHaveAttribute('aria-live', 'assertive');
 });

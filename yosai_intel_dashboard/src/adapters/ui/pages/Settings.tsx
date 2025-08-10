@@ -71,8 +71,16 @@ const Settings: React.FC = () => {
           >
             {status === 'saving' ? 'Saving...' : 'Save'}
           </button>
-          {status === 'success' && <p className="text-green-600">Settings saved.</p>}
-          {status === 'error' && <p className="text-red-600">{error}</p>}
+          {status === 'success' && (
+            <p role="status" aria-live="polite" className="text-green-600">
+              Settings saved.
+            </p>
+          )}
+          {status === 'error' && (
+            <p role="alert" aria-live="assertive" className="text-red-600">
+              {error}
+            </p>
+          )}
         </ChunkGroup>
       </form>
     </div>
