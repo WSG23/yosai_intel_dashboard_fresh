@@ -147,11 +147,17 @@ def audit_decorator(action_type: str, resource_type: str):
                         action_type=f"FAILED_{action_type}",
                         resource_type=resource_type,
                         description=f"Function {func.__name__} failed: {str(e)}",
+                        status="failure",
+                        error=str(e),
                     )
-                except:
-                    pass  # Don't let audit logging break the original exception
+                except Exception as log_err:
+                    logger.error(
+                        "Audit logging in decorator failed: %s",
+                        log_err,
+                        exc_info=True,
+                    )
 
-                raise e
+                raise
 
         return wrapper
 
