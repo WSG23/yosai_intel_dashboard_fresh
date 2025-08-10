@@ -18,7 +18,7 @@ export const GraphDashboard: React.FC = () => {
   const [is3D, setIs3D] = useState(false);
   const [labelFilter, setLabelFilter] = useState('');
   const heatmapRef = useRef<HTMLDivElement>(null);
-  const [heatmapInstance, setHeatmapInstance] = useState<any>(null);
+  const heatmapInstance = useRef<Heatmap.Heatmap | null>(null);
 
   const fetchGraph = async () => {
     const query = gql`
@@ -31,8 +31,8 @@ export const GraphDashboard: React.FC = () => {
     `;
     const data = await request<{ graph: Graph }>(GRAPHQL_ENDPOINT, query, { label: labelFilter || null });
     setGraph(data.graph);
-    if (heatmapInstance) {
-      heatmapInstance.setData({
+    if (heatmapInstance.current) {
+      heatmapInstance.current.setData({
         max: 5,
         data: data.graph.nodes.map((n, i) => ({ x: i * 10, y: i * 10, value: 1 })),
       });
@@ -44,11 +44,17 @@ export const GraphDashboard: React.FC = () => {
   }, [labelFilter]);
 
   useEffect(() => {
-    if (heatmapRef.current && !heatmapInstance) {
-      const instance = Heatmap.create({ container: heatmapRef.current });
-      setHeatmapInstance(instance);
-    }
-  }, [heatmapRef, heatmapInstance]);
+    if (!heatmapRef.current) return;
+
+    const instance: Heatmap.Heatmap = Heatmap.create({
+      container: heatmapRef.current,
+    } as Heatmap.Configuration);
+    heatmapInstance.current = instance;
+
+    return () => {
+      instance.setData({ max: 0, data: [] });
+    };
+  }, []);
 
   const exportGraph = async (format: string) => {
     const query = gql`
