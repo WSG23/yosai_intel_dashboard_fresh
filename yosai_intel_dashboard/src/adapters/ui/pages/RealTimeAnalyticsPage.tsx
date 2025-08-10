@@ -25,6 +25,7 @@ import type { RealTimeAnalyticsEvent } from '../hooks/useRealTimeAnalyticsData';
 import { AccessibleVisualization } from '../components/accessibility';
 import { ChunkGroup } from '../components/layout';
 import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
+import useIsMobile from '../hooks/useIsMobile';
 
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
@@ -73,12 +74,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
 
   const replay = () => processBuffered();
 
-  const isMobile = useMemo(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(max-width: 640px)').matches,
-    [],
-  );
+  const isMobile = useIsMobile();
 
 
   if (!data) {
