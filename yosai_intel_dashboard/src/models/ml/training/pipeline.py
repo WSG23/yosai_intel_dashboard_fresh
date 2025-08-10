@@ -87,19 +87,17 @@ class TrainingPipeline:
         y: np.ndarray,
         dataset_hash: str,
     ) -> ExperimentResult:
-        if (
-            self.distributed
-            and DaskClient
-            and DaskLocalCluster
-            and JoblibParallelBackend
-        ):
-            cluster = DaskLocalCluster(n_workers=2, threads_per_worker=2)
-            client = DaskClient(cluster)
-        else:
-            cluster = None
-            client = None
-
+        client = None
+        cluster = None
         try:
+            if (
+                self.distributed
+                and DaskClient
+                and DaskLocalCluster
+                and JoblibParallelBackend
+            ):
+                cluster = DaskLocalCluster(n_workers=2, threads_per_worker=2)
+                client = DaskClient(cluster)
             if client and JoblibParallelBackend:
                 with JoblibParallelBackend("dask"):
                     best_model = self._tune_hyperparams(estimator, param_space, X, y)
@@ -167,11 +165,8 @@ class TrainingPipeline:
         assert best_res is not None
 
         active = self.registry.get_model(best_res.name, active_only=True)
-        improved = (
-            active is None
-            or self.registry._metrics_improved(
-                best_res.metrics, active.metrics or {}
-            )
+        improved = active is None or self.registry._metrics_improved(
+            best_res.metrics, active.metrics or {}
         )
         record = self.registry.register_model(
             best_res.name,
