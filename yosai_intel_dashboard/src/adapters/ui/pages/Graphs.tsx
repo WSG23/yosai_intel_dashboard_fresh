@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
@@ -12,59 +12,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { graphsAPI, AvailableChart } from '../api/graphs';
 import { AccessibleVisualization } from '../components/accessibility';
 import { NetworkGraph, FacilityLayout } from './visualizations';
+import useGraphsData from '../hooks/useGraphsData';
 
 const Graphs: React.FC = () => {
-  const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
-  const [selectedChart, setSelectedChart] = useState('');
-  const [chartData, setChartData] = useState<any>(null);
+  const {
+    charts,
+    data: chartData,
+    isLoading,
+    isError,
+    selectedChart,
+    selectChart,
+  } = useGraphsData();
   const [showDetails, setShowDetails] = useState(false);
-
-  useEffect(() => {
-    const fetchCharts = async () => {
-      try {
-        const charts = await graphsAPI.getAvailableCharts();
-        const extra: AvailableChart[] = [
-          {
-            type: 'network',
-            name: 'Network Graph',
-            description: 'Graph relationships',
-          },
-          {
-            type: 'facility',
-            name: 'Facility Layout',
-            description: '3D facility layout',
-          },
-        ];
-        const allCharts = [...charts, ...extra];
-        setAvailableCharts(allCharts);
-        if (allCharts.length > 0) {
-          setSelectedChart(allCharts[0].type);
-        }
-      } catch (err) {
-        console.error('Failed to fetch chart list', err);
-      }
-    };
-    fetchCharts();
-  }, []);
-
-  useEffect(() => {
-    if (selectedChart === 'network' || selectedChart === 'facility' || !selectedChart) {
-      return;
-    }
-    const fetchData = async () => {
-      try {
-        const data = await graphsAPI.getChartData(selectedChart);
-        setChartData(data);
-      } catch (err) {
-        console.error('Failed to fetch chart data', err);
-        setChartData(null);
-      }
-    };
-    fetchData();
-  }, [selectedChart]);
 
   const renderChart = () => {
     if (selectedChart === 'network') {
@@ -165,19 +126,23 @@ const Graphs: React.FC = () => {
           <LineChartIcon size={20} />
           <span>Security Graphs</span>
         </h1>
-        {availableCharts.length > 0 && (
+        {charts.length > 0 && (
           <select
             className="mb-4 border p-2 rounded"
             value={selectedChart}
-            onChange={(e) => setSelectedChart(e.target.value)}
+            onChange={(e) => selectChart(e.target.value)}
             aria-label="Select chart type"
           >
-            {availableCharts.map((chart) => (
+            {charts.map((chart) => (
               <option key={chart.type} value={chart.type}>
                 {chart.name}
               </option>
             ))}
           </select>
+        )}
+        {isLoading && <p className="text-sm">Loading...</p>}
+        {isError && (
+          <p className="text-sm text-red-600">Failed to load chart data.</p>
         )}
         <ProgressiveSection
           title="Advanced Settings"
