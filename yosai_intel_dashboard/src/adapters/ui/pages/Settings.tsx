@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../api/client';
+import { api, csrfHeader } from '../api/client';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ChunkGroup } from '../components/layout';
 import { t } from '../i18n';
@@ -10,21 +10,9 @@ interface UserSettings {
 }
 
 const Settings: React.FC = () => {
-  const [settings, setSettings] = useState<UserSettings>({
-    theme: 'light',
-    itemsPerPage: 10,
-  });
+  const { settings, setSettings } = useSettingsData();
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api
-      .get<UserSettings>('/settings')
-      .then((data) => setSettings((prev) => ({ ...prev, ...data })))
-      .catch(() => {
-        /* ignore load errors */
-      });
-  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -35,7 +23,7 @@ const Settings: React.FC = () => {
     e.preventDefault();
     setStatus('saving');
     api
-      .put('/settings', settings)
+      .patch('/settings', settings, { headers: csrfHeader() })
       .then(() => {
         setStatus('success');
         setError(null);
@@ -74,6 +62,8 @@ const Settings: React.FC = () => {
               type="number"
               id="itemsPerPage"
               name="itemsPerPage"
+              min={1}
+              max={100}
               value={settings.itemsPerPage}
               onChange={handleChange}
               className="border rounded p-2 w-full"

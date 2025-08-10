@@ -111,6 +111,8 @@ const defaultThresholds: Thresholds = {
   anomaliesDetected: 0,
 };
 
+const MAX_BUFFER = 100;
+
 export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
   thresholds = defaultThresholds,
 }) => {
@@ -209,6 +211,9 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
     if (activeData) {
       const event = JSON.parse(activeData) as AccessEvent;
       if (paused) {
+        if (bufferRef.current.length >= MAX_BUFFER) {
+          bufferRef.current.shift();
+        }
         bufferRef.current.push(event);
         setPending(bufferRef.current.length);
       } else {
@@ -228,16 +233,14 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
 
   const processBuffered = () => {
     const next = bufferRef.current.shift();
+    setPending(bufferRef.current.length);
     if (!next) {
-      setPending(0);
       return;
     }
     setEvents((prev) => [next, ...prev].slice(0, 1000));
     updateMetrics(next);
     if (bufferRef.current.length > 0) {
       scheduler(processBuffered);
-    } else {
-      setPending(0);
     }
   };
 

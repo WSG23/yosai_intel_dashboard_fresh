@@ -4,6 +4,7 @@ import { Menu, X, Shield } from 'lucide-react';
 import { navItems } from '../navigation/navItems';
 import { useNavbarTitle } from './NavbarTitleContext';
 import './Navbar.css';
+import useIsMobile from '../../hooks/useIsMobile';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -11,18 +12,11 @@ const Navbar: React.FC = () => {
   const { title } = useNavbarTitle();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(location.pathname);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setActiveTab(location.pathname);
   }, [location]);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   useEffect(() => {
     if (!isMobile) setIsMenuOpen(false);

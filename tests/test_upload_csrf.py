@@ -27,16 +27,7 @@ from yosai_intel_dashboard.src.error_handling import ErrorHandler
 from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
 
 
-class DummyUploadService:
-    async def process_uploaded_files(self, contents, filenames):
-        return {
-            "upload_results": [],
-            "file_preview_components": [],
-            "file_info_dict": {},
-        }
-
-
-def _create_app(monkeypatch):
+def _create_app(monkeypatch, tmp_path):
     from yosai_intel_dashboard.src.services import upload_endpoint
 
     app = Flask(__name__)
@@ -45,7 +36,9 @@ def _create_app(monkeypatch):
     CSRFProtect(app)
     if not hasattr(werkzeug, "__version__"):
         werkzeug.__version__ = "3"
-    bp = upload_endpoint.create_upload_blueprint(DummyUploadService(), handler=ErrorHandler())
+    bp = upload_endpoint.create_upload_blueprint(
+        storage_dir=tmp_path, handler=ErrorHandler()
+    )
     app.register_blueprint(bp)
 
     @app.route("/v1/csrf-token")
@@ -55,18 +48,22 @@ def _create_app(monkeypatch):
     return app
 
 
-def test_upload_requires_csrf(monkeypatch):
-    app = _create_app(monkeypatch)
+def test_upload_requires_csrf(monkeypatch, tmp_path):
+    app = _create_app(monkeypatch, tmp_path)
     client = app.test_client()
+    content = "data:text/plain;base64,Zm8="
 
-    resp = client.post("/v1/upload", json={"contents": [], "filenames": []})
+    resp = client.post(
+        "/v1/upload",
+        json={"contents": [content], "filenames": ["t.txt"]},
+    )
     assert resp.status_code == 400
 
     with client:
         token = client.get("/v1/csrf-token").get_json()["csrf_token"]
         resp = client.post(
             "/v1/upload",
-            json={"contents": [], "filenames": []},
+            json={"contents": [content], "filenames": ["t.txt"]},
             headers={"X-CSRFToken": token},
         )
         assert resp.status_code == 200

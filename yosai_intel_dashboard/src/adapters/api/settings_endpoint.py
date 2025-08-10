@@ -5,7 +5,8 @@ from pathlib import Path
 from filelock import FileLock
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+from flask_babel import lazy_gettext as _
 
 from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
@@ -18,6 +19,14 @@ handler = ErrorHandler()
 class SettingsSchema(BaseModel):
     theme: str | None = None
     itemsPerPage: int | None = None
+
+    @validator("itemsPerPage")
+    def validate_items_per_page(cls, v):
+        if v is None:
+            return v
+        if not 1 <= v <= 100:
+            raise ValueError(_("Items per page must be between 1 and 100."))
+        return v
 
 
 SETTINGS_FILE = Path(
