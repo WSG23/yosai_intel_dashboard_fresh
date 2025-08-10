@@ -29,6 +29,8 @@ import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
+const MAX_BUFFER = 100;
+
 const RealTimeAnalyticsPage: React.FC = () => {
   const { data: liveData } = useRealTimeAnalytics();
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -44,6 +46,9 @@ const RealTimeAnalyticsPage: React.FC = () => {
   useEffect(() => {
     if (liveData) {
       if (paused) {
+        if (bufferRef.current.length >= MAX_BUFFER) {
+          bufferRef.current.shift();
+        }
         bufferRef.current.push(liveData);
         setPending(bufferRef.current.length);
       } else {
@@ -54,15 +59,13 @@ const RealTimeAnalyticsPage: React.FC = () => {
 
   const processBuffered = () => {
     const next = bufferRef.current.shift();
+    setPending(bufferRef.current.length);
     if (!next) {
-      setPending(0);
       return;
     }
     setData(next);
     if (bufferRef.current.length > 0) {
       scheduler(processBuffered);
-    } else {
-      setPending(0);
     }
   };
 
