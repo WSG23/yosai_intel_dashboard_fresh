@@ -10,31 +10,58 @@ import BottomNav from './components/navigation/BottomNav';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import useIsMobile from './hooks/useIsMobile';
+import ErrorBoundary from './components/ErrorBoundary';
+
+type PreloadableComponent<T = {}> = React.LazyExoticComponent<React.FC<T>> & {
+  preload?: () => void;
+};
 
 config.autoAddCss = false;
 
-const RealTimeAnalyticsPage = React.lazy(() => import('./pages/RealTimeAnalyticsPage')) as any;
-RealTimeAnalyticsPage.preload = () => import('./pages/RealTimeAnalyticsPage');
+const RealTimeAnalyticsPage: PreloadableComponent = React.lazy(
+  () => import('./pages/RealTimeAnalyticsPage'),
+);
+RealTimeAnalyticsPage.preload = () => {
+  import('./pages/RealTimeAnalyticsPage');
+};
 
-const Upload = React.lazy(() => import('./pages/Upload')) as any;
-Upload.preload = () => import('./pages/Upload');
+const Upload: PreloadableComponent = React.lazy(() => import('./pages/Upload'));
+Upload.preload = () => {
+  import('./pages/Upload');
+};
 
-const Analytics = React.lazy(() => import('./pages/Analytics')) as any;
-Analytics.preload = () => import('./pages/Analytics');
+const Analytics: PreloadableComponent = React.lazy(
+  () => import('./pages/Analytics'),
+);
+Analytics.preload = () => {
+  import('./pages/Analytics');
+};
 
-const Graphs = React.lazy(() => import('./pages/Graphs')) as any;
-Graphs.preload = () => import('./pages/Graphs');
+const Graphs: PreloadableComponent = React.lazy(() => import('./pages/Graphs'));
+Graphs.preload = () => {
+  import('./pages/Graphs');
+};
 
-const Export = React.lazy(() => import('./pages/Export')) as any;
-Export.preload = () => import('./pages/Export');
+const Export: PreloadableComponent = React.lazy(() => import('./pages/Export'));
+Export.preload = () => {
+  import('./pages/Export');
+};
 
-const Settings = React.lazy(() => import('./pages/Settings')) as any;
-Settings.preload = () => import('./pages/Settings');
+const Settings: PreloadableComponent = React.lazy(
+  () => import('./pages/Settings'),
+);
+Settings.preload = () => {
+  import('./pages/Settings');
+};
 
-const DashboardBuilder = React.lazy(() => import('./pages/DashboardBuilder')) as any;
-DashboardBuilder.preload = () => import('./pages/DashboardBuilder');
+const DashboardBuilder: PreloadableComponent = React.lazy(
+  () => import('./pages/DashboardBuilder'),
+);
+DashboardBuilder.preload = () => {
+  import('./pages/DashboardBuilder');
+};
 
-import "./index.css";
+import './index.css';
 
 const rootEl = document.getElementById('root');
 if (rootEl) {
@@ -68,14 +95,16 @@ if (rootEl) {
 
   root.render(
     <React.StrictMode>
-      <AppRoot />
-    </React.StrictMode>
+      <ErrorBoundary>
+        <AppRoot />
+      </ErrorBoundary>
+    </React.StrictMode>,
   );
 
   const pages = [Upload, Analytics, Graphs, Export, Settings, DashboardBuilder];
   if ('requestIdleCallback' in window) {
     (window as any).requestIdleCallback(() =>
-      pages.forEach((p) => p.preload?.())
+      pages.forEach((p) => p.preload?.()),
     );
   } else {
     setTimeout(() => pages.forEach((p) => p.preload?.()), 2000);
@@ -94,8 +123,7 @@ if (rtEl) {
           </Suspense>
         </ZustandProvider>
       </SelectionProvider>
-
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }
 
@@ -106,3 +134,13 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+export {
+  RealTimeAnalyticsPage,
+  Upload,
+  Analytics,
+  Graphs,
+  Export,
+  Settings,
+  DashboardBuilder,
+};
