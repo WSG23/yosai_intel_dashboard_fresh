@@ -19,6 +19,16 @@ interface ApiResponse<T = any> {
   timestamp?: string;
 }
 
+export interface AuthHeaders {
+  Authorization?: string;
+}
+
+export interface CsrfHeaders {
+  'X-CSRF-Token'?: string;
+}
+
+export type ApiHeaders = Record<string, string> & AuthHeaders & CsrfHeaders;
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
 const TIMEOUT = 30000;
 
@@ -57,11 +67,28 @@ class HttpError extends Error {
   }
 }
 
-export interface ApiRequestConfig extends RequestInit {
+export function getCsrfToken(): string | undefined {
+  return document.cookie
+    .split('; ')
+    .find((row) => row.startsWith('csrf_token='))
+    ?.split('=')[1];
+}
+
+export function authHeader(token: string): AuthHeaders {
+  return { Authorization: `Bearer ${token}` };
+}
+
+export function csrfHeader(token?: string): CsrfHeaders {
+  const value = token ?? getCsrfToken();
+  return value ? { 'X-CSRF-Token': value } : {};
+}
+
+export interface ApiRequestConfig extends Omit<RequestInit, 'headers'> {
   url: string;
   data?: any;
   params?: Record<string, any>;
   responseType?: 'json' | 'blob';
+  headers?: ApiHeaders;
 }
 
 function generateRequestId(): string {
@@ -139,10 +166,10 @@ export async function apiRequest<T = any>(
       params
     );
 
-    const finalHeaders: Record<string, string> = {
+    const finalHeaders: ApiHeaders = {
       Accept: 'application/json',
       ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(headers as Record<string, string>),
+      ...(headers as ApiHeaders),
       'X-Request-ID': generateRequestId(),
       'X-Request-Time': new Date().toISOString(),
     };
@@ -237,5 +264,5 @@ export const api = {
   ) => apiRequest<T>({ ...config, method: 'PATCH', url, data }),
 };
 
-export type { ApiError, ApiResponse };
+export type { ApiError, ApiResponse, AuthHeaders, CsrfHeaders };
 
