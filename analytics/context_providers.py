@@ -13,9 +13,25 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+import re
 import requests
 
 logger = logging.getLogger(__name__)
+
+
+class ContextProviderError(RuntimeError):
+    """Raised when an external context provider returns an invalid response."""
+
+
+_QUERY_RE = re.compile(r"^[\w\s-]{1,64}$")
+
+
+def _validate_query(value: str, name: str) -> str:
+    """Validate and return *value* if it matches the allowed pattern."""
+
+    if not _QUERY_RE.match(value):
+        raise ValueError(f"Invalid {name} parameter")
+    return value
 
 
 @dataclass
@@ -63,19 +79,24 @@ def fetch_local_events(city: str) -> List[Dict[str, Any]]:
     failures result in an empty list.
     """
 
+    city = _validate_query(city, "city")
     url = os.environ.get("EVENTS_API_URL")
     if not url:
         return []
     try:
         resp = requests.get(url, params={"city": city}, timeout=5)
         resp.raise_for_status()
+        if "application/json" not in resp.headers.get("Content-Type", ""):
+            raise ContextProviderError("Unexpected content type")
+        if len(resp.content) > 1_000_000:
+            raise ContextProviderError("Response too large")
         items = resp.json().get("events", [])
         return [
             {"name": item.get("name"), "start": item.get("start")} for item in items
         ]
     except Exception as exc:  # pragma: no cover - defensive logging
         logger.warning("Event fetch failed: %s", exc)
-        return []
+        raise ContextProviderError("event fetch failed") from exc
 
 
 def fetch_social_signals(topic: str) -> Dict[str, Any]:
@@ -86,16 +107,21 @@ def fetch_social_signals(topic: str) -> Dict[str, Any]:
     endpoint is configured via ``SOCIAL_API_URL``.
     """
 
+    topic = _validate_query(topic, "topic")
     url = os.environ.get("SOCIAL_API_URL")
     if not url:
         return {}
     try:
         resp = requests.get(url, params={"q": topic}, timeout=5)
         resp.raise_for_status()
+        if "application/json" not in resp.headers.get("Content-Type", ""):
+            raise ContextProviderError("Unexpected content type")
+        if len(resp.content) > 1_000_000:
+            raise ContextProviderError("Response too large")
         return {"sentiment": resp.json().get("sentiment", 0)}
     except Exception as exc:  # pragma: no cover - defensive logging
         logger.warning("Social signal fetch failed: %s", exc)
-        return {}
+        raise ContextProviderError("social signal fetch failed") from exc
 
 
 def gather_context(

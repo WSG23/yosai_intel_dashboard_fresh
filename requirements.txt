@@ -10,6 +10,7 @@ Flask-Caching==2.0.2
 cachetools==6.1.0
 websockets==11.0.3
 plotly==5.15.0
+dash-bootstrap-components==1.6.0
 pandas==2.1.4
 numpy==1.26.4
 Authlib==1.6.1

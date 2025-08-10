@@ -1,0 +1,124 @@
+import React, { useState } from 'react';
+import type { ExportOptions } from '../../hooks/useExportData';
+
+interface Props {
+  onExport: (options: ExportOptions) => void;
+  progress: number;
+  status: 'idle' | 'exporting' | 'completed' | 'error';
+  onCancel: () => void;
+}
+
+const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) => {
+  const [fileType, setFileType] = useState('csv');
+  const [columns, setColumns] = useState('');
+  const [timezone, setTimezone] = useState('UTC');
+  const [locale, setLocale] = useState('en-US');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const opts: ExportOptions = {
+      fileType,
+      columns: columns.split(',').map((c) => c.trim()).filter(Boolean),
+      timezone,
+      locale,
+    };
+    onExport(opts);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="export-file-type" className="block mb-1">
+          File Type
+        </label>
+        <select
+          id="export-file-type"
+          value={fileType}
+          onChange={(e) => setFileType(e.target.value)}
+          className="border p-1 rounded"
+        >
+          <option value="csv">CSV</option>
+          <option value="json">JSON</option>
+        </select>
+      </div>
+      <div>
+        <label htmlFor="export-columns" className="block mb-1">
+          Columns (comma separated)
+        </label>
+        <input
+          id="export-columns"
+          type="text"
+          value={columns}
+          onChange={(e) => setColumns(e.target.value)}
+          className="border p-1 rounded w-full"
+        />
+      </div>
+      <div>
+        <label htmlFor="export-timezone" className="block mb-1">
+          Timezone
+        </label>
+        <input
+          id="export-timezone"
+          type="text"
+          value={timezone}
+          onChange={(e) => setTimezone(e.target.value)}
+          className="border p-1 rounded w-full"
+        />
+      </div>
+      <div>
+        <label htmlFor="export-locale" className="block mb-1">
+          Locale
+        </label>
+        <input
+          id="export-locale"
+          type="text"
+          value={locale}
+          onChange={(e) => setLocale(e.target.value)}
+          className="border p-1 rounded w-full"
+        />
+      </div>
+      <div className="flex items-center space-x-2">
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={status === 'exporting'}
+          aria-label="Export data"
+        >
+          Export
+        </button>
+        {status === 'exporting' && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onCancel}
+            aria-label="Cancel export"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+      {status !== 'idle' && (
+        <div className="mt-4" role="status" aria-live="polite">
+          {status === 'exporting' && (
+            <div className="flex items-center space-x-2">
+              <progress
+                value={progress}
+                max="100"
+                className="flex-1"
+                role="progressbar"
+                aria-valuenow={progress}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              />
+              <span>{progress}%</span>
+            </div>
+          )}
+          {status === 'completed' && <p className="text-green-600">Export complete.</p>}
+          {status === 'error' && <p className="text-red-600">Export failed.</p>}
+        </div>
+      )}
+    </form>
+  );
+};
+
+export default ExportForm;
