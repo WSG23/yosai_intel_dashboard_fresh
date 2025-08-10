@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
+
+logger = logging.getLogger(__name__)
 
 # This module expects an audit logger instance to be provided by the
 # application. Tests inject a dummy logger by assigning to this variable.
@@ -23,16 +26,18 @@ def log_feature_flag_created(
     """Record creation of a feature flag."""
     if audit_logger is None:
         return
-
     metadata = {"new_value": new_value, "reason": reason, "timestamp": timestamp}
-    audit_logger.log_action(
-        actor_user_id=actor_user_id,
-        action_type="FEATURE_FLAG_CREATED",
-        resource_type="feature_flag",
-        resource_id=name,
-        description=f"Feature flag {name} created",
-        metadata=metadata,
-    )
+    try:
+        audit_logger.log_action(
+            actor_user_id=actor_user_id,
+            action_type="FEATURE_FLAG_CREATED",
+            resource_type="feature_flag",
+            resource_id=name,
+            description=f"Feature flag {name} created",
+            metadata=metadata,
+        )
+    except Exception:  # pragma: no cover - defensive
+        logger.exception("Failed to audit feature flag creation")
 
 
 def log_feature_flag_updated(
@@ -54,14 +59,17 @@ def log_feature_flag_updated(
         "reason": reason,
         "timestamp": timestamp,
     }
-    audit_logger.log_action(
-        actor_user_id=actor_user_id,
-        action_type="FEATURE_FLAG_UPDATED",
-        resource_type="feature_flag",
-        resource_id=name,
-        description=f"Feature flag {name} updated",
-        metadata=metadata,
-    )
+    try:
+        audit_logger.log_action(
+            actor_user_id=actor_user_id,
+            action_type="FEATURE_FLAG_UPDATED",
+            resource_type="feature_flag",
+            resource_id=name,
+            description=f"Feature flag {name} updated",
+            metadata=metadata,
+        )
+    except Exception:  # pragma: no cover - defensive
+        logger.exception("Failed to audit feature flag update")
 
 
 def log_feature_flag_deleted(
@@ -75,16 +83,18 @@ def log_feature_flag_deleted(
     """Record deletion of a feature flag."""
     if audit_logger is None:
         return
-
     metadata = {"old_value": old_value, "reason": reason, "timestamp": timestamp}
-    audit_logger.log_action(
-        actor_user_id=actor_user_id,
-        action_type="FEATURE_FLAG_DELETED",
-        resource_type="feature_flag",
-        resource_id=name,
-        description=f"Feature flag {name} deleted",
-        metadata=metadata,
-    )
+    try:
+        audit_logger.log_action(
+            actor_user_id=actor_user_id,
+            action_type="FEATURE_FLAG_DELETED",
+            resource_type="feature_flag",
+            resource_id=name,
+            description=f"Feature flag {name} deleted",
+            metadata=metadata,
+        )
+    except Exception:  # pragma: no cover - defensive
+        logger.exception("Failed to audit feature flag deletion")
 
 
 def get_feature_flag_audit_history(name: str, limit: int = 50) -> List[Dict[str, Any]]:
@@ -92,10 +102,13 @@ def get_feature_flag_audit_history(name: str, limit: int = 50) -> List[Dict[str,
     if audit_logger is None:
         return []
 
-    logs = audit_logger.search_audit_logs(
-        resource_type="feature_flag",
-        resource_id=name,
-        limit=limit,
-    )
+    try:
+        logs = audit_logger.search_audit_logs(
+            resource_type="feature_flag",
+            resource_id=name,
+            limit=limit,
+        )
+    except Exception:  # pragma: no cover - defensive
+        logger.exception("Failed to fetch feature flag audit history")
+        return []
     return logs[:limit] if logs else []
-

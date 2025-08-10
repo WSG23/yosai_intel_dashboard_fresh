@@ -7,8 +7,8 @@ interval. Metrics are persisted via a user provided callback and alerts are
 emitted when configured thresholds are exceeded.
 """
 
-from typing import Callable, Dict, List, Any
 import logging
+from typing import Callable, Dict, List
 
 import pandas as pd
 
@@ -62,7 +62,9 @@ class DriftMonitor:
         self.schedule_interval_minutes = schedule_interval_minutes
         self.metric_store = metric_store or (lambda metrics: None)
         self.alert_func = alert_func or (
-            lambda col, metrics: logger.warning("Drift detected for %s: %s", col, metrics)
+            lambda col, metrics: logger.warning(
+                "Drift detected for %s: %s", col, metrics
+            )
         )
         self.scheduler = BackgroundScheduler() if BackgroundScheduler else None
         self.history: List[Dict[str, Dict[str, float]]] = []
@@ -77,20 +79,35 @@ class DriftMonitor:
                     break
 
     def _run(self) -> None:
-        base = self.baseline_supplier()
-        current = self.live_supplier()
-        metrics = detect_drift(base, current)
-        logger.info("Drift metrics: %s", metrics)
-        self.metric_store(metrics)
+        try:
+            base = self.baseline_supplier()
+            current = self.live_supplier()
+            metrics = detect_drift(base, current)
+            logger.info("Drift metrics: %s", metrics)
+        except Exception:  # pragma: no cover - defensive
+            logger.exception("Drift monitor evaluation failed")
+            return
+
+        try:
+            self.metric_store(metrics)
+        except Exception:  # pragma: no cover - defensive
+            logger.exception("Drift monitor metric persistence failed")
+
         self.history.append(metrics)
-        self._check_thresholds(metrics)
+
+        try:
+            self._check_thresholds(metrics)
+        except Exception:  # pragma: no cover - defensive
+            logger.exception("Drift monitor threshold check failed")
 
     # ------------------------------------------------------------------
     def start(self) -> None:
         """Start the scheduled drift monitoring job."""
         if not self.scheduler:
             raise RuntimeError("APScheduler is required for DriftMonitor")
-        self.scheduler.add_job(self._run, "interval", minutes=self.schedule_interval_minutes)
+        self.scheduler.add_job(
+            self._run, "interval", minutes=self.schedule_interval_minutes
+        )
         self.scheduler.start()
 
     def stop(self) -> None:

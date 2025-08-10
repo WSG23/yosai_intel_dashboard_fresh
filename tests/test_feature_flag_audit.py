@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.util
 import pathlib
 import sys
@@ -79,10 +81,7 @@ def test_log_feature_flag_created(monkeypatch):
     assert entry.get("old_value") in (None, entry.get("metadata", {}).get("old_value"))
     new_val = entry.get("new_value") or entry.get("metadata", {}).get("new_value")
     assert new_val is True
-    assert (
-        entry.get("reason")
-        or entry.get("metadata", {}).get("reason")
-    ) == "initial"
+    assert (entry.get("reason") or entry.get("metadata", {}).get("reason")) == "initial"
     ts_logged = entry.get("timestamp") or entry.get("metadata", {}).get("timestamp")
     assert ts_logged == ts
 
@@ -91,20 +90,21 @@ def test_log_feature_flag_updated(monkeypatch):
     module, dummy = load_module(monkeypatch)
     ts = datetime.now(timezone.utc)
     module.log_feature_flag_updated(
-        "my_flag", old_value=False, new_value=True, actor_user_id="user2", reason="update", timestamp=ts
+        "my_flag",
+        old_value=False,
+        new_value=True,
+        actor_user_id="user2",
+        reason="update",
+        timestamp=ts,
     )
     entry = dummy.calls[-1]
     assert entry["actor_user_id"] == "user2"
     assert (
-        entry.get("old_value")
-        or entry.get("metadata", {}).get("old_value")
+        entry.get("old_value") or entry.get("metadata", {}).get("old_value")
     ) is False
     new_val = entry.get("new_value") or entry.get("metadata", {}).get("new_value")
     assert new_val is True
-    assert (
-        entry.get("reason")
-        or entry.get("metadata", {}).get("reason")
-    ) == "update"
+    assert (entry.get("reason") or entry.get("metadata", {}).get("reason")) == "update"
     ts_logged = entry.get("timestamp") or entry.get("metadata", {}).get("timestamp")
     assert ts_logged == ts
 
@@ -118,15 +118,11 @@ def test_log_feature_flag_deleted(monkeypatch):
     entry = dummy.calls[-1]
     assert entry["actor_user_id"] == "user3"
     assert (
-        entry.get("old_value")
-        or entry.get("metadata", {}).get("old_value")
+        entry.get("old_value") or entry.get("metadata", {}).get("old_value")
     ) is True
     new_val = entry.get("new_value") or entry.get("metadata", {}).get("new_value")
     assert new_val in (None, False)
-    assert (
-        entry.get("reason")
-        or entry.get("metadata", {}).get("reason")
-    ) == "cleanup"
+    assert (entry.get("reason") or entry.get("metadata", {}).get("reason")) == "cleanup"
     ts_logged = entry.get("timestamp") or entry.get("metadata", {}).get("timestamp")
     assert ts_logged == ts
 
@@ -164,3 +160,26 @@ def test_get_feature_flag_audit_history_respects_limit(monkeypatch):
     assert search_call["resource_type"] == "feature_flag"
     assert search_call["resource_id"] == "my_flag"
     assert search_call["limit"] == limit
+
+
+def test_audit_logger_errors_are_handled(monkeypatch, caplog):
+    module, _dummy = load_module(monkeypatch)
+
+    class BrokenLogger(DummyAuditLogger):
+        def log_action(self, **kwargs):
+            raise RuntimeError("fail")
+
+        def search_audit_logs(self, **kwargs):
+            raise RuntimeError("fail")
+
+    broken = BrokenLogger()
+    module.audit_logger = broken
+
+    with caplog.at_level("ERROR"):
+        module.log_feature_flag_created("flag", new_value=True, actor_user_id="u")
+    assert "Failed to audit feature flag creation" in caplog.text
+
+    with caplog.at_level("ERROR"):
+        result = module.get_feature_flag_audit_history("flag")
+    assert result == []
+    assert "Failed to fetch feature flag audit history" in caplog.text
