@@ -159,6 +159,10 @@ msgstr "インシデント通知"
 msgid "Weak-Signal Live Feed"
 msgstr "ウィークシグナルライブフィード"
 
+# Validation messages
+msgid "Items per page must be between 1 and 100."
+msgstr "ページごとのアイテム数は1から100の間で指定してください。"
+
 msgid "News Scraping"
 msgstr "ニューススクレイピング"
 

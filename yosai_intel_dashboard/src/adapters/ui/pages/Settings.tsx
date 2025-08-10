@@ -57,6 +57,8 @@ const Settings: React.FC = () => {
               type="number"
               id="itemsPerPage"
               name="itemsPerPage"
+              min={1}
+              max={100}
               value={settings.itemsPerPage}
               onChange={handleChange}
               className="border rounded p-2 w-full"
