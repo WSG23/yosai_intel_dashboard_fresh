@@ -6,17 +6,17 @@ import warnings
 
 # Explicitly import only the public symbols from the upload endpoint module.
 from .upload.upload_endpoint import (
-    StatusSchema,
     UploadRequestSchema,
-    UploadResponseSchema,
+    UploadResponse,
+    UploadResult,
     create_upload_blueprint as _create_upload_blueprint,
 )
 
 # Re-export the imported symbols to maintain the public API of this module.
 __all__ = [
     "UploadRequestSchema",
-    "UploadResponseSchema",
-    "StatusSchema",
+    "UploadResponse",
+    "UploadResult",
     "create_upload_blueprint",
 ]
 

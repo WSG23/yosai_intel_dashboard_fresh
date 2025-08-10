@@ -18,6 +18,9 @@ from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 from yosai_intel_dashboard.src.services.analytics.proficiency_endpoint import (
     router as proficiency_router,
 )
+from yosai_intel_dashboard.src.components.analytics.real_time_dashboard import (
+    router as realtime_router,
+)
 from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
 from yosai_intel_dashboard.src.services.security import require_permission
 
@@ -30,6 +33,7 @@ cfg = get_cache_config()
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
 _cached_service = CachedAnalyticsService(_cache_manager)
 router.include_router(proficiency_router)
+router.include_router(realtime_router)
 
 
 async def init_cache_manager() -> None:

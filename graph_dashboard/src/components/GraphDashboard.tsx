@@ -1,22 +1,32 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import ForceGraph2D from 'react-force-graph';
 import ForceGraph3D from 'react-force-graph-3d';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import Heatmap from 'heatmap.js';
-import { request, gql } from 'graphql-request';
 import { AccessibleVisualization } from '../../../components/accessibility';
 
-type Node = { id: string; label: string; properties?: Record<string, string> };
-type Edge = { source: string; target: string; weight?: number };
-type Graph = { nodes: Node[]; edges: Edge[] };
+export type Node = { id: string; label: string; properties?: Record<string, string> };
+export type Edge = { source: string; target: string; weight?: number };
+export type Graph = { nodes: Node[]; edges: Edge[] };
 
-const GRAPHQL_ENDPOINT = '/ui/graphql';
+type GraphDashboardProps = {
+  graph: Graph;
+  is3D: boolean;
+  labelFilter: string;
+  onToggle3D: () => void;
+  onFilterChange: (value: string) => void;
+  onExport: (format: string) => void;
+};
 
-export const GraphDashboard: React.FC = () => {
-  const [graph, setGraph] = useState<Graph>({ nodes: [], edges: [] });
-  const [is3D, setIs3D] = useState(false);
-  const [labelFilter, setLabelFilter] = useState('');
+const GraphDashboardComponent: React.FC<GraphDashboardProps> = ({
+  graph,
+  is3D,
+  labelFilter,
+  onToggle3D,
+  onFilterChange,
+  onExport,
+}) => {
   const heatmapRef = useRef<HTMLDivElement>(null);
   const heatmapInstance = useRef<Heatmap.Heatmap | null>(null);
 
@@ -40,8 +50,10 @@ export const GraphDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchGraph();
-  }, [labelFilter]);
+    if (heatmapRef.current && !heatmapInstanceRef.current) {
+      heatmapInstanceRef.current = Heatmap.create({ container: heatmapRef.current });
+    }
+  }, []);
 
   useEffect(() => {
     if (!heatmapRef.current) return;
@@ -68,6 +80,7 @@ export const GraphDashboard: React.FC = () => {
     a.click();
   };
 
+
   const graphVisualization = is3D ? (
     <ForceGraph3D graphData={graph} />
   ) : (
@@ -90,26 +103,20 @@ export const GraphDashboard: React.FC = () => {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}>
-        <button
-          onClick={() => setIs3D(!is3D)}
-          aria-label="Toggle 3D view"
-        >
+        <button onClick={onToggle3D} aria-label="Toggle 3D view">
           {is3D ? '2D' : '3D'}
         </button>
         <input
           placeholder="Filter by label"
           aria-label="Filter nodes by label"
           value={labelFilter}
-          onChange={(e) => setLabelFilter(e.target.value)}
+          onChange={(e) => onFilterChange(e.target.value)}
           style={{ marginLeft: 10 }}
         />
-        <button onClick={() => exportGraph('gephi')} aria-label="Export Gephi">
+        <button onClick={() => onExport('gephi')} aria-label="Export Gephi">
           Export Gephi
         </button>
-        <button
-          onClick={() => exportGraph('cytoscape')}
-          aria-label="Export Cytoscape"
-        >
+        <button onClick={() => onExport('cytoscape')} aria-label="Export Cytoscape">
           Export Cytoscape
         </button>
         <div style={{ width: 200, marginTop: 10 }}>
@@ -124,3 +131,5 @@ export const GraphDashboard: React.FC = () => {
     </div>
   );
 };
+
+export const GraphDashboard = React.memo(GraphDashboardComponent);

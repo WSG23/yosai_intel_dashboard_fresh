@@ -9,10 +9,9 @@ instance.
 from __future__ import annotations
 
 from collections import defaultdict
+from itertools import combinations
 from statistics import mean, stdev
 from typing import Dict, Iterable, List, Sequence, Tuple
-
-from itertools import combinations
 
 import networkx as nx
 from sklearn.neighbors import LocalOutlierFactor
@@ -125,7 +124,10 @@ def graph_lof(graph: GraphModel | nx.Graph, n_neighbors: int = 5) -> Dict[str, f
 
     G = _to_nx(graph)
     features = [[d] for _, d in G.degree()]
-    lof = LocalOutlierFactor(n_neighbors=min(n_neighbors, len(features) - 1))
+    if len(features) <= 1:
+        return {}
+    n_neighbors = max(1, min(n_neighbors, len(features) - 1))
+    lof = LocalOutlierFactor(n_neighbors=n_neighbors)
     lof.fit(features)
     return {node: score for node, score in zip(G.nodes(), lof.negative_outlier_factor_)}
 
@@ -239,9 +241,7 @@ def deviation_from_group_norms(
         m = mean(degrees)
         s = stdev(degrees)
         if s:
-            outliers.extend(
-                n for n, d in zip(community, degrees) if abs(d - m) > 2 * s
-            )
+            outliers.extend(n for n, d in zip(community, degrees) if abs(d - m) > 2 * s)
     return outliers
 
 
