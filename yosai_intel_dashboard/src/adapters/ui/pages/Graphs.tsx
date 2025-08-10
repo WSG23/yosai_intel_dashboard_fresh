@@ -16,10 +16,18 @@ import { graphsAPI, AvailableChart } from '../api/graphs';
 import { AccessibleVisualization } from '../components/accessibility';
 import { NetworkGraph, FacilityLayout } from './visualizations';
 
+interface ChartData {
+  hourly_distribution?: Record<string, number | string>;
+  temporal_patterns?: {
+    hourly_distribution?: Record<string, number | string>;
+  };
+  [key: string]: unknown;
+}
+
 const Graphs: React.FC = () => {
   const [availableCharts, setAvailableCharts] = useState<AvailableChart[]>([]);
   const [selectedChart, setSelectedChart] = useState('');
-  const [chartData, setChartData] = useState<any>(null);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
@@ -56,7 +64,7 @@ const Graphs: React.FC = () => {
     }
     const fetchData = async () => {
       try {
-        const data = await graphsAPI.getChartData(selectedChart);
+        const data: ChartData = await graphsAPI.getChartData(selectedChart);
         setChartData(data);
       } catch (err) {
         console.error('Failed to fetch chart data', err);
@@ -99,8 +107,9 @@ const Graphs: React.FC = () => {
       );
     }
 
-    if (selectedChart === 'timeline' && chartData?.hourly_distribution) {
-      const data = Object.entries(chartData.hourly_distribution).map(([hour, count]) => ({
+    const hourly = chartData?.hourly_distribution;
+    if (selectedChart === 'timeline' && hourly) {
+      const data = Object.entries(hourly).map(([hour, count]) => ({
         hour,
         count: Number(count),
       }));
@@ -126,13 +135,12 @@ const Graphs: React.FC = () => {
       );
     }
 
-    if (selectedChart === 'patterns' && chartData?.temporal_patterns?.hourly_distribution) {
-      const data = Object.entries(chartData.temporal_patterns.hourly_distribution).map(
-        ([hour, count]) => ({
-          hour,
-          count: Number(count),
-        }),
-      );
+    const patternHourly = chartData?.temporal_patterns?.hourly_distribution;
+    if (selectedChart === 'patterns' && patternHourly) {
+      const data = Object.entries(patternHourly).map(([hour, count]) => ({
+        hour,
+        count: Number(count),
+      }));
       return (
         <AccessibleVisualization
           title="Temporal Patterns"
