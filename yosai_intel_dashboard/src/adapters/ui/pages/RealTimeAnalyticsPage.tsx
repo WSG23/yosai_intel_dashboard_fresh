@@ -21,22 +21,25 @@ import {
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
+import type { RealTimeAnalyticsEvent } from '../hooks/useRealTimeAnalyticsData';
 import { AccessibleVisualization } from '../components/accessibility';
 import { ChunkGroup } from '../components/layout';
+import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
 
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 const RealTimeAnalyticsPage: React.FC = () => {
   const { data: liveData } = useRealTimeAnalytics();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [data, setData] = useState<Record<string, any> | null>(null);
   const [paused, setPaused] = useState(false);
-  const bufferRef = useRef<Record<string, any>[]>([]);
+  const bufferRef = useRef<RealTimeAnalyticsEvent[]>([]);
   const [pending, setPending] = useState(0);
-  const scheduler =
-    (typeof window !== 'undefined' && (window as any).requestIdleCallback)
-      ? (window as any).requestIdleCallback
-      : (fn: Function) => setTimeout(fn, 0);
+  const scheduler: (cb: () => void) => void =
+    typeof window !== 'undefined' && (window as any).requestIdleCallback
+      ? (cb) => (window as any).requestIdleCallback(cb)
+      : (cb) => setTimeout(cb, 0);
 
   useEffect(() => {
     if (liveData) {
@@ -70,9 +73,16 @@ const RealTimeAnalyticsPage: React.FC = () => {
 
   const replay = () => processBuffered();
 
+  const isMobile = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 640px)').matches,
+    [],
+  );
+
 
   if (!data) {
-    return <div>Waiting for analytics...</div>;
+    return <div aria-live="polite">Waiting for analytics...</div>;
   }
 
   const topUsersRaw = Array.isArray(data.top_users) ? data.top_users : [];
@@ -135,7 +145,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
           )}
         </ChunkGroup>
       </ChunkGroup>
-      <ChunkGroup className="mb-4 space-y-1">
+      <ChunkGroup className="mb-4 space-y-1" role="status" aria-live="polite">
         <div>Total Events: {data.total_events ?? 0}</div>
         <div>
           Active Users:{' '}
@@ -163,7 +173,11 @@ const RealTimeAnalyticsPage: React.FC = () => {
                 <XAxis dataKey="user_id" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="count" fill="#8884d8" />
+                <Bar
+                  dataKey="count"
+                  fill="#8884d8"
+                  isAnimationActive={!prefersReducedMotion}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -186,7 +200,11 @@ const RealTimeAnalyticsPage: React.FC = () => {
                 <XAxis dataKey="door_id" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="count" fill="#82ca9d" />
+                <Bar
+                  dataKey="count"
+                  fill="#82ca9d"
+                  isAnimationActive={!prefersReducedMotion}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -205,7 +223,13 @@ const RealTimeAnalyticsPage: React.FC = () => {
           <div className="mb-4" style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <PieChart>
-                <Pie data={patterns} dataKey="count" nameKey="pattern" label>
+              <Pie
+                data={patterns}
+                dataKey="count"
+                nameKey="pattern"
+                label
+                isAnimationActive={!prefersReducedMotion}
+              >
 
                   {patterns.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />

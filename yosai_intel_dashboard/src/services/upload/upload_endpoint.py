@@ -18,7 +18,7 @@ import redis
 from flask import Blueprint, request
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from middleware.rate_limit import RedisRateLimiter, rate_limit
 from yosai_intel_dashboard.src.error_handling import (
@@ -36,7 +36,6 @@ from yosai_intel_dashboard.src.utils.pydantic_decorators import (
     validate_output,
 )
 from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
-
 
 _service_cfg = ConfigurationLoader().get_service_config()
 redis_client = redis.Redis.from_url(_service_cfg.redis_url)
@@ -58,8 +57,8 @@ class UploadRequestSchema(BaseModel):
     contents: list[str] | None = None
     filenames: list[str] | None = None
 
-    model_config = ConfigDict(
-        json_schema_extra={
+    class Config:
+        json_schema_extra = {
             "examples": [
                 {
                     "contents": ["data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="],
@@ -139,7 +138,6 @@ def _decode_base64(content: str) -> tuple[str, bytes]:
 # Blueprint factory
 # ---------------------------------------------------------------------------
 
-
 def create_upload_blueprint(
     storage_dir: str | Path,
     *,
@@ -182,7 +180,7 @@ def create_upload_blueprint(
         },
     )
     @validate_input(UploadRequestSchema)
-    @validate_output(UploadResponseSchema)
+    @validate_output(UploadResponse)
     @rate_limit(rate_limiter)
     def upload_files(payload: UploadRequestSchema):
         """Validate and persist uploaded files."""
