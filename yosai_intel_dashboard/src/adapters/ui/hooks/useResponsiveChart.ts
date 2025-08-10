@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import useIsMobile from './useIsMobile';
 
 export type ChartVariant = 'line' | 'bar' | 'area';
 export type LegendDensity = 'compact' | 'comfortable' | 'expanded';
@@ -43,7 +44,6 @@ export const useResponsiveChart = () => {
   const [variant, setVariant] = useState<ChartVariant>(() =>
     getVariant(initialWidth),
   );
-  const [isMobile, setIsMobile] = useState<boolean>(initialWidth < 640);
   const [legendDensity, setLegendDensity] = useState<LegendDensity>(() =>
     getLegendDensity(initialWidth),
   );
@@ -59,8 +59,6 @@ export const useResponsiveChart = () => {
       const width = window.innerWidth;
       const touch = isTouchDevice();
       setVariant(getVariant(width));
-      const mobile = width < 640;
-      setIsMobile(mobile);
       setLegendDensity(getLegendDensity(width));
       setTooltipMode(getTooltipMode(width, touch));
       setEnableGestures(getEnableGestures(width, touch));
@@ -69,6 +67,7 @@ export const useResponsiveChart = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  const isMobile = useIsMobile();
   return { variant, isMobile, legendDensity, tooltipMode, enableGestures };
 };
 
