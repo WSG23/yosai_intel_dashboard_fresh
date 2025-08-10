@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # Create Kafka topics required by the Y\xC5\x8Dsai Intel Dashboard.
 # Usage: ./scripts/create_kafka_topics.sh [broker-list]
 # Requires kafka-topics.sh from Kafka distribution in your PATH.
 
-set -euo pipefail
 
 BROKERS=${1:-localhost:9092}
 # URL of the schema registry used for Avro schemas

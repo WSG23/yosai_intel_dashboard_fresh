@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 echo "🗄️  Running compliance audit..."
 echo "No compliance audit defined. Skipping."

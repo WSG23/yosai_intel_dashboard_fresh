@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 echo "♻️  Running recovery test..."
 echo "No recovery test defined. Skipping."

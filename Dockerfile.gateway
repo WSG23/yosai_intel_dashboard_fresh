@@ -9,9 +9,21 @@ COPY gateway/ ./gateway/
 RUN CGO_ENABLED=0 GOOS=linux go build -o /gateway ./gateway/cmd/gateway
 
 FROM alpine:3.18
+ARG UID=1000
+ARG GID=1000
+RUN set -eux; \
+    if command -v addgroup >/dev/null 2>&1; then \
+      addgroup -g "${GID}" appuser || true; \
+      adduser -D -u "${UID}" -G appuser appuser 2>/dev/null || adduser --uid "${UID}" --gid "${GID}" --disabled-password --gecos "" appuser; \
+    else \
+      groupadd -g "${GID}" appuser || true; \
+      useradd -m -u "${UID}" -g "${GID}" appuser || true; \
+    fi
 WORKDIR /app
 RUN apk add --no-cache curl
 COPY --from=build /gateway /usr/local/bin/gateway
+RUN chown appuser:appuser /usr/local/bin/gateway /app
+USER appuser
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/health || exit 1
 ENTRYPOINT ["/usr/local/bin/gateway"]
