@@ -28,7 +28,26 @@ const GraphDashboardComponent: React.FC<GraphDashboardProps> = ({
   onExport,
 }) => {
   const heatmapRef = useRef<HTMLDivElement>(null);
-  const heatmapInstanceRef = useRef<any>(null);
+  const heatmapInstance = useRef<Heatmap.Heatmap | null>(null);
+
+  const fetchGraph = async () => {
+    const query = gql`
+      query($label: String) {
+        graph(label: $label) {
+          nodes { id label }
+          edges { source target weight }
+        }
+      }
+    `;
+    const data = await request<{ graph: Graph }>(GRAPHQL_ENDPOINT, query, { label: labelFilter || null });
+    setGraph(data.graph);
+    if (heatmapInstance.current) {
+      heatmapInstance.current.setData({
+        max: 5,
+        data: data.graph.nodes.map((n, i) => ({ x: i * 10, y: i * 10, value: 1 })),
+      });
+    }
+  };
 
   useEffect(() => {
     if (heatmapRef.current && !heatmapInstanceRef.current) {
@@ -37,13 +56,30 @@ const GraphDashboardComponent: React.FC<GraphDashboardProps> = ({
   }, []);
 
   useEffect(() => {
-    if (heatmapInstanceRef.current) {
-      heatmapInstanceRef.current.setData({
-        max: 5,
-        data: graph.nodes.map((n, i) => ({ x: i * 10, y: i * 10, value: 1 })),
-      });
-    }
-  }, [graph]);
+    if (!heatmapRef.current) return;
+
+    const instance: Heatmap.Heatmap = Heatmap.create({
+      container: heatmapRef.current,
+    } as Heatmap.Configuration);
+    heatmapInstance.current = instance;
+
+    return () => {
+      instance.setData({ max: 0, data: [] });
+    };
+  }, []);
+
+  const exportGraph = async (format: string) => {
+    const query = gql`
+      query($fmt: String!) { exportGraph(format: $fmt) }
+    `;
+    const data = await request<{ exportGraph: string }>(GRAPHQL_ENDPOINT, query, { fmt: format });
+    const blob = new Blob([data.exportGraph], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `graph.${format}.json`;
+    a.click();
+  };
+
 
   const graphVisualization = is3D ? (
     <ForceGraph3D graphData={graph} />
