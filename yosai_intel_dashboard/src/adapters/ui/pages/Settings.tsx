@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../api/client';
+import { api, csrfHeader } from '../api/client';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ChunkGroup } from '../components/layout';
 
@@ -34,7 +34,7 @@ const Settings: React.FC = () => {
     e.preventDefault();
     setStatus('saving');
     api
-      .put('/settings', settings)
+      .patch('/settings', settings, { headers: csrfHeader() })
       .then(() => {
         setStatus('success');
         setError(null);
