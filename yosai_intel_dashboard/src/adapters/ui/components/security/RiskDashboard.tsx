@@ -13,6 +13,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
+import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 import { usePreferencesStore } from '../../state';
 import { useNetworkStatus } from '../../lib/network';
 
@@ -33,6 +34,7 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
   history,
   factors,
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [displayScore, setDisplayScore] = useState(score);
   const [expanded, setExpanded] = useState(false);
   const { saveData } = usePreferencesStore();
@@ -118,7 +120,12 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" barSize={20} fill="#3b82f6" />
+              <Bar
+                dataKey="value"
+                barSize={20}
+                fill="#3b82f6"
+                isAnimationActive={!prefersReducedMotion}
+              />
               <Line type="monotone" dataKey="benchmark" stroke="#ef4444" />
             </ComposedChart>
           </ResponsiveContainer>

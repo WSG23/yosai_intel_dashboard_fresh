@@ -16,6 +16,14 @@ import { AccessibleVisualization } from '../components/accessibility';
 import { NetworkGraph, FacilityLayout } from './visualizations';
 import useGraphsData from '../hooks/useGraphsData';
 
+interface ChartData {
+  hourly_distribution?: Record<string, number | string>;
+  temporal_patterns?: {
+    hourly_distribution?: Record<string, number | string>;
+  };
+  [key: string]: unknown;
+}
+
 const Graphs: React.FC = () => {
   const {
     charts,
@@ -26,7 +34,6 @@ const Graphs: React.FC = () => {
     selectChart,
   } = useGraphsData();
   const [showDetails, setShowDetails] = useState(false);
-
   const renderChart = () => {
     if (selectedChart === 'network') {
       const links = [
@@ -60,8 +67,9 @@ const Graphs: React.FC = () => {
       );
     }
 
-    if (selectedChart === 'timeline' && chartData?.hourly_distribution) {
-      const data = Object.entries(chartData.hourly_distribution).map(([hour, count]) => ({
+    const hourly = chartData?.hourly_distribution;
+    if (selectedChart === 'timeline' && hourly) {
+      const data = Object.entries(hourly).map(([hour, count]) => ({
         hour,
         count: Number(count),
       }));
@@ -87,13 +95,12 @@ const Graphs: React.FC = () => {
       );
     }
 
-    if (selectedChart === 'patterns' && chartData?.temporal_patterns?.hourly_distribution) {
-      const data = Object.entries(chartData.temporal_patterns.hourly_distribution).map(
-        ([hour, count]) => ({
-          hour,
-          count: Number(count),
-        }),
-      );
+    const patternHourly = chartData?.temporal_patterns?.hourly_distribution;
+    if (selectedChart === 'patterns' && patternHourly) {
+      const data = Object.entries(patternHourly).map(([hour, count]) => ({
+        hour,
+        count: Number(count),
+      }));
       return (
         <AccessibleVisualization
           title="Temporal Patterns"
