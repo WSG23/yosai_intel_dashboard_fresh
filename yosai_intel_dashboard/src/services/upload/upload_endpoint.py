@@ -7,7 +7,7 @@ import redis
 from flask import Blueprint, jsonify, request
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from middleware.rate_limit import RedisRateLimiter, rate_limit
 from yosai_intel_dashboard.src.error_handling import (
@@ -23,6 +23,7 @@ from yosai_intel_dashboard.src.utils.pydantic_decorators import (
     validate_input,
     validate_output,
 )
+from .schemas import UploadResponse, UploadResult
 from yosai_intel_dashboard.src.utils.sanitization import sanitize_text, sanitize_filename
 
 _service_cfg = ConfigurationLoader().get_service_config()
@@ -34,8 +35,8 @@ class UploadRequestSchema(BaseModel):
     contents: list[str] | None = None
     filenames: list[str] | None = None
 
-    model_config = ConfigDict(
-        json_schema_extra={
+    class Config:
+        json_schema_extra = {
             "examples": [
                 {
                     "contents": ["data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="],
@@ -43,21 +44,6 @@ class UploadRequestSchema(BaseModel):
                 }
             ]
         }
-    )
-
-
-class UploadResponseSchema(BaseModel):
-    job_id: str
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [{"job_id": "123e4567-e89b-12d3-a456-426614174000"}]
-        }
-    )
-
-
-class StatusSchema(BaseModel):
-    status: dict
 
 
 def create_upload_blueprint(
@@ -84,7 +70,7 @@ def create_upload_blueprint(
         },
     )
     @validate_input(UploadRequestSchema)
-    @validate_output(UploadResponseSchema)
+    @validate_output(UploadResponse)
     @rate_limit(rate_limiter)
     def upload_files(payload: UploadRequestSchema):
         """Process an uploaded file.
@@ -186,7 +172,7 @@ def create_upload_blueprint(
             500: "Internal Server Error",
         },
     )
-    @validate_output(StatusSchema)
+    @validate_output(UploadResult)
     def upload_status(job_id: str):
         """Fetch upload processing status.
 
