@@ -21,9 +21,13 @@ const Graphs: React.FC = () => {
   const [selectedChart, setSelectedChart] = useState('');
   const [chartData, setChartData] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const fetchCharts = async () => {
+      setIsLoading(true);
+      setIsError(false);
       try {
         const charts = await graphsAPI.getAvailableCharts();
         const extra: AvailableChart[] = [
@@ -45,6 +49,9 @@ const Graphs: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to fetch chart list', err);
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchCharts();
@@ -55,12 +62,17 @@ const Graphs: React.FC = () => {
       return;
     }
     const fetchData = async () => {
+      setIsLoading(true);
+      setIsError(false);
       try {
         const data = await graphsAPI.getChartData(selectedChart);
         setChartData(data);
       } catch (err) {
         console.error('Failed to fetch chart data', err);
         setChartData(null);
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
@@ -194,8 +206,20 @@ const Graphs: React.FC = () => {
           </label>
         </ProgressiveSection>
       </ChunkGroup>
-      <div role="presentation">{renderChart()}</div>
-      {showDetails && chartData && (
+      {isLoading && (
+        <div className="graphs-placeholder" role="status" aria-live="polite">
+          Loading graphs...
+        </div>
+      )}
+      {isError && (
+        <div className="graphs-placeholder" role="alert">
+          Failed to load graphs.
+        </div>
+      )}
+      {!isLoading && !isError && (
+        <div role="presentation">{renderChart()}</div>
+      )}
+      {!isLoading && !isError && showDetails && chartData && (
         <pre
           aria-label="chart-details"
           className="mt-4 whitespace-pre-wrap text-xs border p-2 rounded"
