@@ -8,10 +8,15 @@ spec:
     spec:
       template:
         spec:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
           restartPolicy: OnFailure
           containers:
             - name: replicate-to-timescale
-              image: yosai-intel-dashboard:latest
+              image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+              imagePullPolicy: IfNotPresent
               command: ["python", "scripts/replicate_to_timescale.py"]
               envFrom:
                 - configMapRef:
