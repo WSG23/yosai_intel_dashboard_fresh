@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ChunkGroup } from '../components/layout';
+import { t } from '../i18n';
 
 interface UserSettings {
   theme: string;
@@ -47,12 +48,12 @@ const Settings: React.FC = () => {
 
   return (
     <div className="page-container">
-      <h1 className="mb-4">Settings</h1>
+      <h1 className="mb-4">{t('settings.title')}</h1>
       <form onSubmit={handleSubmit} className="space-y-4 max-w-sm">
         <ChunkGroup>
           <div>
             <label htmlFor="theme" className="block font-semibold mb-1">
-              Theme
+              {t('settings.theme')}
             </label>
             <select
               id="theme"
@@ -61,13 +62,13 @@ const Settings: React.FC = () => {
               onChange={handleChange}
               className="border rounded p-2 w-full"
             >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+              <option value="light">{t('settings.theme_light')}</option>
+              <option value="dark">{t('settings.theme_dark')}</option>
             </select>
           </div>
           <div>
             <label htmlFor="itemsPerPage" className="block font-semibold mb-1">
-              Items Per Page
+              {t('settings.items_per_page')}
             </label>
             <input
               type="number"
@@ -83,9 +84,11 @@ const Settings: React.FC = () => {
             className="px-4 py-2 bg-blue-600 text-white rounded"
             disabled={status === 'saving'}
           >
-            {status === 'saving' ? 'Saving...' : 'Save'}
+            {status === 'saving' ? t('settings.saving') : t('settings.save')}
           </button>
-          {status === 'success' && <p className="text-green-600">Settings saved.</p>}
+          {status === 'success' && (
+            <p className="text-green-600">{t('settings.saved')}</p>
+          )}
           {status === 'error' && <p className="text-red-600">{error}</p>}
         </ChunkGroup>
       </form>

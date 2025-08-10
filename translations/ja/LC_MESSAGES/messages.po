@@ -186,3 +186,27 @@ msgstr "グラフは利用不可"
 
 msgid "Summary cards not available"
 msgstr "サマリーカードは利用不可"
+
+msgid "settings.title"
+msgstr "設定"
+
+msgid "settings.theme"
+msgstr "テーマ"
+
+msgid "settings.theme_light"
+msgstr "ライト"
+
+msgid "settings.theme_dark"
+msgstr "ダーク"
+
+msgid "settings.items_per_page"
+msgstr "ページあたりの項目数"
+
+msgid "settings.save"
+msgstr "保存"
+
+msgid "settings.saving"
+msgstr "保存中..."
+
+msgid "settings.saved"
+msgstr "設定が保存されました。"
