@@ -34,6 +34,63 @@ const Graphs: React.FC = () => {
     selectChart,
   } = useGraphsData();
   const [showDetails, setShowDetails] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    const fetchCharts = async () => {
+      setIsLoading(true);
+      setIsError(false);
+      try {
+        const charts = await graphsAPI.getAvailableCharts();
+        const extra: AvailableChart[] = [
+          {
+            type: 'network',
+            name: 'Network Graph',
+            description: 'Graph relationships',
+          },
+          {
+            type: 'facility',
+            name: 'Facility Layout',
+            description: '3D facility layout',
+          },
+        ];
+        const allCharts = [...charts, ...extra];
+        setAvailableCharts(allCharts);
+        if (allCharts.length > 0) {
+          setSelectedChart(allCharts[0].type);
+        }
+      } catch (err) {
+        console.error('Failed to fetch chart list', err);
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCharts();
+  }, []);
+
+  useEffect(() => {
+    if (selectedChart === 'network' || selectedChart === 'facility' || !selectedChart) {
+      return;
+    }
+    const fetchData = async () => {
+      setIsLoading(true);
+      setIsError(false);
+      try {
+        const data = await graphsAPI.getChartData(selectedChart);
+        setChartData(data);
+      } catch (err) {
+        console.error('Failed to fetch chart data', err);
+        setChartData(null);
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [selectedChart]);
+
   const renderChart = () => {
     if (selectedChart === 'network') {
       const links = [
@@ -166,8 +223,20 @@ const Graphs: React.FC = () => {
           </label>
         </ProgressiveSection>
       </ChunkGroup>
-      <div role="presentation">{renderChart()}</div>
-      {showDetails && chartData && (
+      {isLoading && (
+        <div className="graphs-placeholder" role="status" aria-live="polite">
+          Loading graphs...
+        </div>
+      )}
+      {isError && (
+        <div className="graphs-placeholder" role="alert">
+          Failed to load graphs.
+        </div>
+      )}
+      {!isLoading && !isError && (
+        <div role="presentation">{renderChart()}</div>
+      )}
+      {!isLoading && !isError && showDetails && chartData && (
         <pre
           aria-label="chart-details"
           className="mt-4 whitespace-pre-wrap text-xs border p-2 rounded"
