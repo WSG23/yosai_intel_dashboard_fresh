@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import os
+from pathlib import Path
 
 from fastapi import (
     APIRouter,
@@ -44,6 +45,13 @@ from yosai_intel_dashboard.src.core.rbac import create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
 from yosai_intel_dashboard.src.infrastructure.config import get_security_config
 from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
+from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
+from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
+    ALLOWED_MIME_TYPES,
+    UploadRequestSchema,
+    UploadResponseSchema,
+    stream_upload,
+)
 from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import (
     upload_file_bytes,
     upload_files_total,
@@ -179,7 +187,6 @@ def _register_upload_endpoints(
     service: BaseService, serializer: URLSafeTimedSerializer
 ) -> None:
     """Register upload, settings and token refresh endpoints."""
-    file_processor = container.get("file_processor")
     file_handler = (
         container.get("file_handler") if container.has("file_handler") else None
     )
@@ -200,11 +207,6 @@ def _register_upload_endpoints(
                 raise HTTPException(status_code=400, detail="Invalid CSRF token")
         return await call_next(request)
 
-    from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
-        StatusSchema,
-        UploadRequestSchema,
-        UploadResponseSchema,
-    )
 
     @service.app.get("/v1/csrf-token")
     def get_csrf_token(response: Response) -> dict:
@@ -225,20 +227,20 @@ def _register_upload_endpoints(
         except BadSignature:
             raise HTTPException(status_code=400, detail="Invalid CSRF token")
 
+    cfg = UploadConfig()
+
     @service.app.post(
         "/v1/upload",
         response_model=UploadResponseSchema,
-        status_code=202,
+        status_code=200,
         dependencies=[Depends(verify_csrf)],
     )
     async def upload_files(
         payload: UploadRequestSchema,
         files: list[UploadFile] = File([]),
     ) -> dict:
-        contents: list[str] = []
-        filenames: list[str] = []
-        validator = getattr(file_processor, "validator", None)
-        if validator is None and file_handler is not None:
+        validator = None
+        if file_handler is not None:
             validator = getattr(file_handler, "validator", None)
         if validator is None:
             from yosai_intel_dashboard.src.services.data_processing.file_handler import (
@@ -247,35 +249,58 @@ def _register_upload_endpoints(
 
             validator = FileHandler().validator
 
+        results: list[dict[str, str]] = []
+        storage_dir = Path(cfg.folder)
+
         if files:
             for upload in files:
                 if not upload.filename:
                     continue
-                file_bytes = await upload.read()
+                data = await upload.read()
+                mime = upload.content_type or "application/octet-stream"
                 upload_files_total.inc()
-                upload_file_bytes.observe(len(file_bytes))
+                upload_file_bytes.observe(len(data))
+                if mime not in ALLOWED_MIME_TYPES:
+                    raise HTTPException(status_code=400, detail="Invalid file type")
                 try:
-                    validator.validate_file_upload(upload.filename, file_bytes)
+                    res = validator.validate_file_upload(upload.filename, data)
+                    if not res.valid:
+                        raise ValueError(", ".join(res.issues or []))
                 except Exception:
                     raise HTTPException(status_code=400, detail="Invalid file")
-                b64 = base64.b64encode(file_bytes).decode("utf-8", errors="replace")
-                mime = upload.content_type or "application/octet-stream"
-                contents.append(f"data:{mime};base64,{b64}")
-                filenames.append(upload.filename)
+                if len(data) > cfg.max_file_size_bytes:
+                    raise HTTPException(status_code=400, detail="File too large")
+                dest = stream_upload(storage_dir, upload.filename, data)
+                results.append({"filename": upload.filename, "path": str(dest)})
         else:
             contents = payload.contents or []
             filenames = payload.filenames or []
+            for content, name in zip(contents, filenames):
+                if "," not in content:
+                    raise HTTPException(status_code=400, detail="Invalid file")
+                header, b64data = content.split(",", 1)
+                mime = header.split(";")[0].replace("data:", "", 1)
+                if mime not in ALLOWED_MIME_TYPES:
+                    raise HTTPException(status_code=400, detail="Invalid file type")
+                try:
+                    data = base64.b64decode(b64data)
+                except Exception:
+                    raise HTTPException(status_code=400, detail="Invalid file")
+                try:
+                    res = validator.validate_file_upload(name, data)
+                    if not res.valid:
+                        raise ValueError(", ".join(res.issues or []))
+                except Exception:
+                    raise HTTPException(status_code=400, detail="Invalid file")
+                if len(data) > cfg.max_file_size_bytes:
+                    raise HTTPException(status_code=400, detail="File too large")
+                dest = stream_upload(storage_dir, name, data)
+                results.append({"filename": name, "path": str(dest)})
 
-        if not contents or not filenames:
+        if not results:
             raise HTTPException(status_code=400, detail="No file provided")
 
-        job_id = file_processor.process_file_async(contents[0], filenames[0])
-        return {"job_id": job_id}
-
-    @service.app.get("/v1/upload/status/{job_id}", response_model=StatusSchema)
-    def upload_status(job_id: str) -> dict:
-        status_data = file_processor.get_job_status(job_id)
-        return {"status": status_data}
+        return {"results": results}
 
     from yosai_intel_dashboard.src.adapters.api.settings_endpoint import (
         SettingsSchema,
