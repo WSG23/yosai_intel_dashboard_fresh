@@ -1,29 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { api } from '../api/client';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ChunkGroup } from '../components/layout';
-
-interface UserSettings {
-  theme: string;
-  itemsPerPage: number;
-}
+import useSettingsData from '../hooks/useSettingsData';
 
 const Settings: React.FC = () => {
-  const [settings, setSettings] = useState<UserSettings>({
-    theme: 'light',
-    itemsPerPage: 10,
-  });
+  const { settings, setSettings } = useSettingsData();
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api
-      .get<UserSettings>('/settings')
-      .then((data) => setSettings((prev) => ({ ...prev, ...data })))
-      .catch(() => {
-        /* ignore load errors */
-      });
-  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
