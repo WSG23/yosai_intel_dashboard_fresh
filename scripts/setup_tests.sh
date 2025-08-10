@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Install Python dependencies required to run the test suite.
 set -euo pipefail
+# Install Python dependencies required to run the test suite.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(realpath "$SCRIPT_DIR/..")"
 

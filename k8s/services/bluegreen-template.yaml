@@ -18,9 +18,14 @@ spec:
         app: example-service
         color: blue
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: example-service
-          image: example:latest
+          image: example:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
 ---
@@ -43,9 +48,14 @@ spec:
         app: example-service
         color: green
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: example-service
-          image: example:latest
+          image: example:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
 ---

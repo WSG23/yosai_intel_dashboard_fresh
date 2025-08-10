@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Wait until Kafka docker-compose stack becomes healthy.
 set -euo pipefail
+# Wait until Kafka docker-compose stack becomes healthy.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"

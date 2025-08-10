@@ -17,9 +17,14 @@ spec:
         app: yosai-dashboard
         color: green
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: yosai-dashboard
-          image: yosai-intel-dashboard:latest
+          image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8050
           env:

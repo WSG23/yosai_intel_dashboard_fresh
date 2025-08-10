@@ -15,13 +15,19 @@ spec:
       labels:
         app: yosai-dashboard
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       initContainers:
         - name: setup-symlinks
-          image: yosai-intel-dashboard:latest
+          image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           command: ["python", "scripts/create_symlinks.py"]
       containers:
         - name: yosai-dashboard
-          image: yosai-intel-dashboard:latest
+          image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8050
           env:

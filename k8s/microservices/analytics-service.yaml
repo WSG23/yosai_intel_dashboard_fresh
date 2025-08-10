@@ -18,12 +18,18 @@ spec:
         app.kubernetes.io/part-of: yosai-microservices
         app.kubernetes.io/component: analytics
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: analytics-service
-          image: yosai-intel-dashboard:latest
+          image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
+            runAsGroup: 1000
             readOnlyRootFilesystem: true
           command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
           ports:

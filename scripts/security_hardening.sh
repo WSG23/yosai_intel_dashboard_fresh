@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # Simple security hardening script
 # Configures VPC firewall rules, generates TLS certificates, and prepares basic SSO configuration.
 
-set -euo pipefail
 
 # Ensure required tools are available
 command -v openssl >/dev/null 2>&1 || { echo "openssl is required" >&2; exit 1; }

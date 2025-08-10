@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 # Install all Python dependencies required by the dashboard.
-set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(realpath "$SCRIPT_DIR/..")"
 if [ -d "$ROOT_DIR/packages" ]; then

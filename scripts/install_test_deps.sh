@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 # Install the Python dependencies required for running the tests.
-set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(realpath "$SCRIPT_DIR/..")"
 
