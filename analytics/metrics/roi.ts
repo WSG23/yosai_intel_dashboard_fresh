@@ -1,5 +1,6 @@
 export const calculateROI = (revenue: number, cost: number): number => {
-  return cost === 0 ? 0 : (revenue - cost) / cost;
+  // Guard against zero or negative costs which would skew ROI
+  return cost <= 0 ? 0 : (revenue - cost) / cost;
 };
 
 export interface ABTestOutcome {
