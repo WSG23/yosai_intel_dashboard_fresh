@@ -11,7 +11,7 @@ import {
   ClickExpand,
 } from '../components/interaction/ContextDisclosure';
 import './Analytics.css';
-import useAnalyticsData from '../hooks/useAnalyticsData';
+import { useAnalyticsData } from '../hooks/useAnalyticsData';
 
 const Analytics: React.FC = () => {
   const [sourceType, setSourceType] = useState('all');

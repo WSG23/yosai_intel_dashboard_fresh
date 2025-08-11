@@ -2,9 +2,11 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AnalyticsPage from '../Analytics';
-import useAnalyticsData from '../../hooks/useAnalyticsData';
+import { useAnalyticsData } from '../../hooks/useAnalyticsData';
 
-jest.mock('../../hooks/useAnalyticsData');
+jest.mock('../../hooks/useAnalyticsData', () => ({
+  useAnalyticsData: jest.fn(),
+}));
 
 // simple stub to show empty state when no children
 jest.mock('../../components/layout', () => ({
