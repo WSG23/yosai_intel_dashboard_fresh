@@ -10,4 +10,5 @@ RUN go build -o processor ./cmd/processor
 # Runtime stage
 FROM gcr.io/distroless/base-debian12
 COPY --from=build /src/services/event_processing/processor /usr/local/bin/processor
+USER 1000
 ENTRYPOINT ["/usr/local/bin/processor"]

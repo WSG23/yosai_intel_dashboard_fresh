@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Collects audit evidence such as configs, logs, and system information.
-set -e
+set -euo pipefail
 OUTPUT_DIR=${1:-evidence}
 mkdir -p "$OUTPUT_DIR"
 

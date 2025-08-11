@@ -18,12 +18,18 @@ spec:
         app.kubernetes.io/part-of: yosai-microservices
         app.kubernetes.io/component: ingestion
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: event-ingestion
-          image: event-ingestion:latest
+          image: event-ingestion:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
+            runAsGroup: 1000
             readOnlyRootFilesystem: true
           command: ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
           ports:

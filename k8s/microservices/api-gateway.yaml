@@ -22,12 +22,18 @@ spec:
         prometheus.io/path: "/metrics"
         prometheus.io/port: "8080"
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: api-gateway
-          image: yosai-gateway:latest
+          image: yosai-gateway:${IMAGE_TAG:-v0.1.0}
+          imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
+            runAsGroup: 1000
             readOnlyRootFilesystem: true
           ports:
             - containerPort: 8080

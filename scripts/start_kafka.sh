@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Start the Kafka cluster defined in docker-compose.kafka.yml
 

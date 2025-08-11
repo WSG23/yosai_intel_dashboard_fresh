@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Install all Python dependencies required by the dashboard.
-set -e
+set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(realpath "$SCRIPT_DIR/..")"
 if [ -d "$ROOT_DIR/packages" ]; then
@@ -24,6 +24,6 @@ fi
 alembic -c "$ROOT_DIR/database/migrations/alembic.ini" upgrade head
 
 # Optionally run a single replication cycle
-if [ "$RUN_REPLICATION" = "1" ]; then
+if [ "${RUN_REPLICATION:-}" = "1" ]; then
     python3 "$ROOT_DIR/scripts/replicate_to_timescale.py" &
 fi
