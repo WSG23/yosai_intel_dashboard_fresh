@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"time"
 
 	framework "github.com/WSG23/yosai-framework"
 	"github.com/sony/gobreaker"
@@ -12,7 +11,6 @@ import (
 	"github.com/WSG23/yosai-event-processing/internal/handlers"
 	"github.com/WSG23/yosai-event-processing/internal/kafka"
 	"github.com/WSG23/yosai-event-processing/internal/repository"
-	"github.com/sony/gobreaker"
 )
 
 func main() {
@@ -45,7 +43,6 @@ func main() {
 			}
 			return c.ConsecutiveFailures >= uint32(t)
 		},
-
 	}
 	handler := handlers.NewEventHandler(repository.NewMemoryTokenStore(), settings)
 	go func() {
