@@ -229,8 +229,11 @@ const RealTimeAnalyticsPage: React.FC = () => {
                 isAnimationActive={!prefersReducedMotion}
               >
 
-                  {patterns.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  {patterns.map((pattern, i) => (
+                    <Cell
+                      key={pattern.pattern}
+                      fill={COLORS[i % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
