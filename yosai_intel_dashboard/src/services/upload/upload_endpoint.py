@@ -18,14 +18,7 @@ import redis
 from flask import Blueprint, request
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
-
-try:  # pragma: no cover - fallback for environments with Pydantic v1
-    from pydantic import BaseModel, ConfigDict
-except Exception:  # pragma: no cover - executed only when ConfigDict missing
-    from pydantic import BaseModel  # type: ignore
-
-    class ConfigDict(dict):
-        pass
+from pydantic import BaseModel
 
 from middleware.rate_limit import RedisRateLimiter, rate_limit
 from yosai_intel_dashboard.src.error_handling import (
@@ -34,6 +27,13 @@ from yosai_intel_dashboard.src.error_handling import (
     api_error_response,
 )
 from yosai_intel_dashboard.src.services.upload.file_validator import FileValidator
+from yosai_intel_dashboard.src.services.upload.schemas import UploadResponse, UploadResult
+from yosai_intel_dashboard.src.utils.pydantic_decorators import (
+    validate_input,
+    validate_output,
+)
+from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
+
 
 try:  # pragma: no cover - fallback when configuration unavailable
     from yosai_intel_dashboard.src.infrastructure.config.loader import (
@@ -126,32 +126,6 @@ class UploadRequestSchema(BaseModel):
         }
 
 
-class UploadResultSchema(BaseModel):
-    """Details for a single uploaded file."""
-
-    filename: str
-    path: str
-
-
-class UploadResponseSchema(BaseModel):
-    """Response payload returned from the upload endpoint."""
-
-    results: list[UploadResultSchema]
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "examples": [
-                {
-                    "results": [
-                        {
-                            "filename": "hello.txt",
-                            "path": "/tmp/uploads/hello.txt",
-                        }
-                    ]
-                }
-            ]
-        }
-    )
 
 
 ALLOWED_MIME_TYPES: set[str] = {
@@ -253,7 +227,7 @@ def create_upload_blueprint(
         },
     )
     @validate_input(UploadRequestSchema)
-    @validate_output(UploadResponseSchema)
+    @validate_output(UploadResponse)
     @rate_limit(rate_limiter)
     def upload_files(payload: UploadRequestSchema):
         """Validate and persist uploaded files."""
@@ -361,8 +335,8 @@ def create_upload_blueprint(
 
 __all__ = [
     "UploadRequestSchema",
-    "UploadResultSchema",
-    "UploadResponseSchema",
+    "UploadResult",
+    "UploadResponse",
     "create_upload_blueprint",
     "stream_upload",
     "ALLOWED_MIME_TYPES",
