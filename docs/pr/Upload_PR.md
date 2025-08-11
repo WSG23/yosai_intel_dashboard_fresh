@@ -7,6 +7,6 @@ python -m pip install -r requirements-dev.txt
 black .
 ruff check .
 pytest -q
-npm install
+npm ci
 npm test
 ```
