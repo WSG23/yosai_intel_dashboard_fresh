@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useDropzone } from "react-dropzone";
 import { Upload as UploadIcon } from "lucide-react";
 import { FilePreview } from "./FilePreview";
 import { ColumnMappingModal } from "./ColumnMappingModal";
@@ -17,24 +16,14 @@ const Upload: React.FC = () => {
 
   const {
     files,
-    onDrop,
+    getRootProps,
+    getInputProps,
+    isDragActive,
     removeFile,
     uploadAllFiles,
     uploading,
     cancelUpload,
   } = useUpload();
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "text/csv": [".csv"],
-      "application/vnd.ms-excel": [".xls"],
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-        ".xlsx",
-      ],
-    },
-    multiple: true,
-  });
 
   const handleColumnMappingConfirm = (_mappings: Record<string, string>) => {
     setShowColumnMapping(false);
@@ -52,12 +41,16 @@ const Upload: React.FC = () => {
         <h1 className="text-3xl font-bold mb-6">Upload Files</h1>
 
         <div
-          {...getRootProps()}
-          role="button"
-          aria-label="File upload drop zone"
-          aria-describedby="upload-desc"
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-            ${isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+          {...getRootProps({
+            role: "button",
+            "aria-label": "File upload drop zone",
+            "aria-describedby": "upload-desc",
+            className: `border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              isDragActive
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50"
+            }`,
+          })}
         >
           <input {...getInputProps({ 'aria-label': 'Upload files' })} />
           <UploadIcon
