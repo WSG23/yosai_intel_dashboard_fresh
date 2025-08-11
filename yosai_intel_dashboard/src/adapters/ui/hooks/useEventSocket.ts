@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { eventBus } from '../eventBus';
 import { HEARTBEAT_TIMEOUT } from './websocketPool';
+import ExtendedWebSocket from './extendedWebSocket';
 
 export enum EventSocketState {
   DISCONNECTED = 'DISCONNECTED',
@@ -16,7 +17,7 @@ export const useEventSocket = (
 ) => {
   const [data, setData] = useState<string | null>(null);
   const [state, setState] = useState<EventSocketState>(EventSocketState.DISCONNECTED);
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<ExtendedWebSocket | null>(null);
   const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartbeatTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attemptRef = useRef(0);
@@ -26,7 +27,7 @@ export const useEventSocket = (
     setState(EventSocketState.CONNECTING);
     eventBus.emit('event_socket_state', EventSocketState.CONNECTING);
 
-    const ws = socketFactory ? socketFactory(url) : new WebSocket(url);
+    const ws = (socketFactory ? socketFactory(url) : new WebSocket(url)) as ExtendedWebSocket;
     wsRef.current = ws;
 
     const resetHeartbeat = () => {
@@ -36,9 +37,9 @@ export const useEventSocket = (
       heartbeatTimeout.current = setTimeout(() => ws.close(), HEARTBEAT_TIMEOUT);
     };
     resetHeartbeat();
-    if (typeof (ws as any).on === 'function') {
-      (ws as any).on('ping', () => {
-        (ws as any).pong?.();
+    if (typeof ws.on === 'function') {
+      ws.on('ping', () => {
+        ws.pong?.();
         resetHeartbeat();
       });
     }
