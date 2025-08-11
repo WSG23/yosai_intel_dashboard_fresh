@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+addopts = "--maxfail=1 -q --cov --cov-report=term-missing"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true

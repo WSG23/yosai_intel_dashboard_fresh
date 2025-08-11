@@ -1720,9 +1720,13 @@ flake8 .
 npm run lint
 ```
 
-### Test
+### Testing
+Install development dependencies and run the test suite:
+
 ```bash
-pytest -q
+pip install -r requirements-dev.txt
+make test-quick  # run tests without coverage
+make test-cov    # run tests with coverage report
 ```
 
 ### Docker

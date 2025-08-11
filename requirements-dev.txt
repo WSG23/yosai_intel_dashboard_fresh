@@ -18,6 +18,7 @@ flask-apispec<0.12
 locust
 pytest
 pytest-cov
+coverage
 pytest-randomly
 pytest-socket
 python-dotenv
