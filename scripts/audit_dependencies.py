@@ -10,7 +10,7 @@ cmd = ["safety", "check", "--full-report", "--json"]
 for req in REQ_FILES:
     cmd.extend(["-r", req])
 
-result = subprocess.run(cmd, capture_output=True, text=True)
+result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 if result.returncode not in (0, 1):
     print(result.stdout)
     print(result.stderr, file=sys.stderr)
