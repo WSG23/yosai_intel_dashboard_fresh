@@ -9,26 +9,26 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_header() {
-    echo -e "${BLUE}================================================${NC}"
-    echo -e "${BLUE}🔧 Mac Dependencies & Architecture Fix${NC}"
-    echo -e "${BLUE}================================================${NC}"
+    printf '%b\n' "${BLUE}================================================${NC}"
+    printf '%b\n' "${BLUE}🔧 Mac Dependencies & Architecture Fix${NC}"
+    printf '%b\n' "${BLUE}================================================${NC}"
     echo ""
 }
 
 print_status() {
-    echo -e "${GREEN}✅ $1${NC}"
+    printf '%b\n' "${GREEN}✅ $1${NC}"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    printf '%b\n' "${YELLOW}⚠️  $1${NC}"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+    printf '%b\n' "${RED}❌ $1${NC}"
 }
 
 print_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    printf '%b\n' "${BLUE}ℹ️  $1${NC}"
 }
 
 check_system() {
@@ -56,10 +56,8 @@ check_system() {
     # Check if in virtual environment
     if [ -z "$VIRTUAL_ENV" ]; then
         print_warning "Not in virtual environment - this is the main issue!"
-        IN_VENV=false
     else
         print_status "In virtual environment: $VIRTUAL_ENV"
-        IN_VENV=true
     fi
 }
 
@@ -300,7 +298,7 @@ main() {
     echo ""
     print_status "Setup complete!"
     echo ""
-    echo -e "${GREEN}Next steps:${NC}"
+    printf '%b\n' "${GREEN}Next steps:${NC}"
     echo "1. Run: source venv/bin/activate"
     echo "2. Run: python3 app.py"
     echo "   OR"
