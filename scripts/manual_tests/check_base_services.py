@@ -11,7 +11,7 @@ def safe_str(obj):
         return (
             str(obj).encode("utf-8", errors="ignore").decode("utf-8", errors="replace")
         )
-    except:
+    except Exception:
         return repr(obj)
 
 
