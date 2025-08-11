@@ -5,6 +5,7 @@ from typing import Any
 
 import structlog
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from opentelemetry import trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.exporter.zipkin.json import ZipkinExporter
@@ -155,9 +156,18 @@ class BaseService:
 
     # ------------------------------------------------------------------
     def _add_health_routes(self) -> None:
+        from yosai_intel_dashboard.src.core.app_factory.health import (
+            check_critical_dependencies,
+        )
+
         @self.app.get("/health")
         async def _health() -> dict[str, str]:
-            return {"status": "ok"}
+            healthy, reason = check_critical_dependencies()
+            if healthy:
+                return {"status": "healthy"}
+            return JSONResponse(
+                {"status": "unhealthy", "reason": reason}, status_code=503
+            )
 
         @self.app.get("/health/live")
         async def _health_live() -> dict[str, str]:
