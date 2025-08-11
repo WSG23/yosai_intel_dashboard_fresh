@@ -62,3 +62,29 @@ jobs:
         env:
           PYTHONPATH: yosai_intel_dashboard/src
         run: pytest -q
+
+# CI Repair: toolchain and caching
+# (Idempotent append – safe if duplicates exist)
+# --- begin ci-repair block ---
+  - name: Setup Node
+    uses: actions/setup-node@v4
+    with:
+      node-version: '20'
+      cache: npm
+  - name: Setup Python
+    uses: actions/setup-python@v5
+    with:
+      python-version: '3.11'
+  - name: Cache pip
+    uses: actions/cache@v4
+    with:
+      path: ~/.cache/pip
+      key: pip-${{ runner.os }}-3.11-${{ hashFiles('**/requirements*.txt', '**/constraints*.txt') }}
+      restore-keys: |
+        pip-${{ runner.os }}-3.11-
+  - name: Install dev deps
+    shell: bash
+    run: |
+      pip install -r requirements.txt || true
+      [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt || true
+# --- end ci-repair block ---
