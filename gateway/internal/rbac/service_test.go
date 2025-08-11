@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -79,4 +80,90 @@ func TestRBACServiceRedisStore(t *testing.T) {
 	if len(perms) != 2 || perms[0] != "alpha" || perms[1] != "beta" {
 		t.Fatalf("unexpected perms: %v", perms)
 	}
+}
+
+func TestRBACServiceConcurrentAccess(t *testing.T) {
+	t.Setenv("PERMISSIONS_DAVE", "read")
+	svc := New(time.Millisecond)
+	ctx := context.Background()
+
+	var wg sync.WaitGroup
+	const goroutines = 1000
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if i%2 == 0 {
+				if _, err := svc.Permissions(ctx, "dave"); err != nil {
+					t.Error(err)
+				}
+			} else {
+				svc.mu.Lock()
+				delete(svc.cache, "dave")
+				svc.mu.Unlock()
+			}
+		}(i)
+	}
+	wg.Wait()
+}
+
+func BenchmarkRBACServiceMap(b *testing.B) {
+	svc := New(time.Minute)
+	ctx := context.Background()
+	svc.cache["bob"] = cacheEntry{perms: []string{"alpha"}, exp: time.Now().Add(time.Hour)}
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			if _, err := svc.Permissions(ctx, "bob"); err != nil {
+				b.Fatalf("Permissions: %v", err)
+			}
+		}
+	})
+}
+
+type syncMapService struct {
+	ttl   time.Duration
+	cache sync.Map
+	store PermissionStore
+}
+
+func newSyncMapService(ttl time.Duration) *syncMapService {
+	return &syncMapService{ttl: ttl}
+}
+
+func (r *syncMapService) Permissions(ctx context.Context, subject string) ([]string, error) {
+	if v, ok := r.cache.Load(subject); ok {
+		entry := v.(cacheEntry)
+		if time.Now().Before(entry.exp) {
+			return append([]string(nil), entry.perms...), nil
+		}
+	}
+
+	perms, err := r.fetchPermissions(ctx, subject)
+	if err != nil {
+		return nil, err
+	}
+	r.cache.Store(subject, cacheEntry{perms: perms, exp: time.Now().Add(r.ttl)})
+	return perms, nil
+}
+
+func (r *syncMapService) fetchPermissions(ctx context.Context, subject string) ([]string, error) {
+	if r.store == nil {
+		return nil, nil
+	}
+	return r.store.Permissions(ctx, subject)
+}
+
+func BenchmarkRBACServiceSyncMap(b *testing.B) {
+	svc := newSyncMapService(time.Minute)
+	ctx := context.Background()
+	svc.cache.Store("bob", cacheEntry{perms: []string{"alpha"}, exp: time.Now().Add(time.Hour)})
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			if _, err := svc.Permissions(ctx, "bob"); err != nil {
+				b.Fatalf("Permissions: %v", err)
+			}
+		}
+	})
 }
