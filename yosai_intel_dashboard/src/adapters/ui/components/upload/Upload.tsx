@@ -36,14 +36,12 @@ const Upload: React.FC = () => {
     multiple: true,
   });
 
-  const handleColumnMappingConfirm = (mappings: Record<string, string>) => {
-    console.log("Column mappings confirmed:", mappings);
+  const handleColumnMappingConfirm = (_mappings: Record<string, string>) => {
     setShowColumnMapping(false);
     setCurrentFile(null);
   };
 
-  const handleDeviceMappingConfirm = (mappings: Record<string, any>) => {
-    console.log("Device mappings confirmed:", mappings);
+  const handleDeviceMappingConfirm = (_mappings: Record<string, unknown>) => {
     setShowDeviceMapping(false);
     setCurrentFile(null);
   };
