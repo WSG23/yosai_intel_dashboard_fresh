@@ -8,6 +8,7 @@ from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Use lightweight imports
 os.environ["LIGHTWEIGHT_SERVICES"] = "1"
+os.environ.setdefault("JWT_SECRET_KEY", os.urandom(16).hex())
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 

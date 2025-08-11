@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 import uuid
+import logging
+import time
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict
@@ -29,6 +31,7 @@ from pydantic import BaseModel, ConfigDict
 
 from analytics import anomaly_detection, feature_extraction, security_patterns
 from shared.errors.types import ErrorCode, ErrorResponse
+from jose import jwt
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
@@ -36,10 +39,8 @@ from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter
 from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.error_handling import http_error
-from yosai_intel_dashboard.src.infrastructure.config import (
-    get_app_config,
-    get_database_config,
-)
+from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
+from yosai_intel_dashboard.src.infrastructure.config import get_database_config
 from yosai_intel_dashboard.src.infrastructure.config.loader import (
     ConfigurationLoader,
 )
@@ -56,12 +57,14 @@ from yosai_intel_dashboard.src.services.analytics_microservice.unicode_middlewar
     UnicodeSanitizationMiddleware,
 )
 from yosai_intel_dashboard.src.services.auth import verify_jwt_token
-from yosai_intel_dashboard.src.services.common import async_db
 from yosai_intel_dashboard.src.services.common.async_db import close_pool, create_pool
-from yosai_intel_dashboard.src.services.common.secrets import get_secret
 from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
+from fastapi.responses import JSONResponse
+from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
+
+logger = logging.getLogger(__name__)
 
 SERVICE_NAME = "analytics-microservice"
 service = (
@@ -72,7 +75,6 @@ app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(UnicodeSanitizationMiddleware)
 
 service_cfg = ConfigurationLoader().get_service_config()
-app_cfg = get_app_config()
 
 # Configure a Redis backed rate limiter
 redis_client = redis.Redis.from_url(service_cfg.redis_url)
@@ -125,10 +127,11 @@ register_health_check(app, "external_api", _external_api_check)
 
 def _jwt_secret() -> str:
     """Return the current JWT secret."""
-    secret_path = app_cfg.jwt_secret_path
-    if not secret_path:
-        raise RuntimeError("JWT secret path not configured")
-    return get_secret(secret_path)
+    secret = os.getenv("JWT_SECRET_KEY")
+    if not secret:
+        logger.error("JWT_SECRET_KEY not set")
+        raise RuntimeError("missing JWT secret")
+    return secret
 
 
 def verify_token(authorization: str = Header("")) -> dict:

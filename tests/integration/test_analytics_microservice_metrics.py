@@ -13,8 +13,8 @@ services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
 safe_import('services', services_stub)
 
-# Ensure JWT_SECRET for microservice
-os.environ.setdefault("JWT_SECRET", os.urandom(16).hex())
+# Ensure JWT_SECRET_KEY for microservice
+os.environ.setdefault("JWT_SECRET_KEY", os.urandom(16).hex())
 
 # Stub metrics and tracing instrumentation
 prom_stub = types.ModuleType("prometheus_fastapi_instrumentator")

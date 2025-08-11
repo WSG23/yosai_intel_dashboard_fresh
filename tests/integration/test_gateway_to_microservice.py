@@ -16,8 +16,8 @@ services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
 safe_import('services', services_stub)
 
-# Ensure JWT_SECRET is set for microservice import
-os.environ.setdefault("JWT_SECRET", os.urandom(16).hex())
+# Ensure JWT_SECRET_KEY is set for microservice import
+os.environ.setdefault("JWT_SECRET_KEY", os.urandom(16).hex())
 
 otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
 otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
@@ -131,7 +131,7 @@ def test_requests_without_valid_token_return_401():
     assert resp.status_code == 401
 
     # Expired token
-    jwt_secret = os.environ["JWT_SECRET"]
+    jwt_secret = os.environ["JWT_SECRET_KEY"]
     bad_token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) - 1},
         jwt_secret,
