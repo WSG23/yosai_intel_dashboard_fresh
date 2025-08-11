@@ -143,38 +143,54 @@ const Analytics: React.FC = () => {
           >
             <section className="patterns-section">
               <h2>Top Security Patterns</h2>
-              <ChunkGroup className="patterns-list" limit={9}>
-                {analyticsData.patterns.map((pattern) => (
-                  <div key={pattern.pattern} className="pattern-item">
-                    <div className="pattern-info">
-                      <span className="pattern-name">{pattern.pattern}</span>
-                      <span className="pattern-count">
-                        {pattern.count} occurrences
-                      </span>
+              <ChunkGroup className="patterns-list" limit={9} role="list">
+                {analyticsData.patterns.length > 0 ? (
+                  analyticsData.patterns.map((pattern) => (
+                    <div
+                      key={pattern.pattern}
+                      className="pattern-item"
+                      role="listitem"
+                    >
+                      <div className="pattern-info">
+                        <span className="pattern-name">{pattern.pattern}</span>
+                        <span className="pattern-count">
+                          {pattern.count} occurrences
+                        </span>
+                      </div>
+                      <div className="pattern-bar">
+                        <div
+                          className="pattern-bar-fill"
+                          style={{ width: `${pattern.percentage}%` }}
+                        />
+                        <span className="pattern-percentage">
+                          {pattern.percentage}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="pattern-bar">
-                      <div
-                        className="pattern-bar-fill"
-                        style={{ width: `${pattern.percentage}%` }}
-                      />
-                      <span className="pattern-percentage">
-                        {pattern.percentage}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="empty-state">No pattern data available</div>
+                )}
               </ChunkGroup>
             </section>
 
             <section className="devices-section">
               <h2>Device Distribution</h2>
-              <ChunkGroup className="device-grid" limit={9}>
-                {analyticsData.device_distribution.map((device) => (
-                  <div key={device.device} className="device-card">
-                    <span className="device-name">{device.device}</span>
-                    <span className="device-count">{device.count}</span>
-                  </div>
-                ))}
+              <ChunkGroup className="device-grid" limit={9} role="list">
+                {analyticsData.device_distribution.length > 0 ? (
+                  analyticsData.device_distribution.map((device) => (
+                    <div
+                      key={device.device}
+                      className="device-card"
+                      role="listitem"
+                    >
+                      <span className="device-name">{device.device}</span>
+                      <span className="device-count">{device.count}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">No device data available</div>
+                )}
               </ChunkGroup>
             </section>
           </ProgressiveSection>

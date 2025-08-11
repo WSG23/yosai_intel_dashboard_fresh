@@ -1408,7 +1408,7 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - State stores: [docs/state_management.md](docs/state_management.md)
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
-- Upload endpoint notes: [docs/pr/Upload_PR.md](docs/pr/Upload_PR.md)
+- Upload results endpoint documentation: [docs/pr/Upload_PR.md](docs/pr/Upload_PR.md)
 
 Update the spec by running `go run ./api/openapi` which writes `docs/api/v2/openapi.json` for the UI.
 
@@ -1727,6 +1727,14 @@ Install development dependencies and run the test suite:
 pip install -r requirements-dev.txt
 make test-quick  # run tests without coverage
 make test-cov    # run tests with coverage report
+```
+
+For frontend UI tests:
+
+```bash
+npm test          # run all Vitest tests
+npm run test:watch  # watch mode
+npm run test:ui     # run tests in src directory
 ```
 
 ### Docker

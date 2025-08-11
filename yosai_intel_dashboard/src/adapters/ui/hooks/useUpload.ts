@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { api } from '../api/client';
 import {
   UploadedFile,
@@ -31,6 +32,18 @@ export const useUpload = () => {
     }));
     setFiles((prev) => [...prev, ...newFiles]);
   }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
+        '.xlsx',
+      ],
+    },
+    multiple: true,
+  });
 
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -176,11 +189,14 @@ export const useUpload = () => {
 
   return {
     files,
-    onDrop,
+    getRootProps,
+    getInputProps,
+    isDragActive,
     removeFile,
     uploadAllFiles,
     uploading,
     cancelUpload,
+    onDrop,
   };
 };
 

@@ -120,14 +120,19 @@ required:
 pytest --cov --cov-fail-under=80
 ```
 
+### Deterministic Test Order
+
+The test suite employs [`pytest-randomly`](https://pypi.org/project/pytest-randomly/)
+to shuffle tests while keeping results reproducible. A fixed seed of `1234` is
+configured in `pytest.ini` so failures can be replicated exactly.
+
 ### Network Isolation
 
 The test suite uses [`pytest-socket`](https://pypi.org/project/pytest-socket/)
-to prevent outbound network calls. By default all network access is blocked
-during tests. Local connections to `localhost` or `127.0.0.1` are permitted for
-services that bind to the loopback interface. External hosts must not be
-contacted; if a test requires network access it should mock the interaction
-instead of performing a real request.
+to prevent outbound network calls. `pytest.ini` enables `--disable-socket` and
+allows only `localhost` and `127.0.0.1` via `--allow-hosts`. External hosts must
+not be contacted; if a test requires network access it should mock the
+interaction instead of performing a real request.
 
 ### Memory Profiling
 
