@@ -1,0 +1,61 @@
+name: Docker build & push
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            image: backend
+            context: .
+            dockerfile: Dockerfile
+          - service: gateway
+            image: gateway
+            context: .
+            dockerfile: Dockerfile.gateway
+          - service: jobs
+            image: jobs
+            context: jobs
+            dockerfile: jobs/Dockerfile
+    if: ${{ hashFiles(matrix.dockerfile) != '' }}
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set image tags
+        id: meta
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          TAGS="$IMAGE:${{ github.sha }}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION=${GITHUB_REF_NAME}
+            TAGS="$TAGS,$IMAGE:$VERSION"
+          fi
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
