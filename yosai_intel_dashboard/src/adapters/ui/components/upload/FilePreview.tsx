@@ -27,13 +27,22 @@ export const FilePreview: React.FC<Props> = ({ file, onRemove, onCancel }) => {
                 Cancel
               </button>
             )}
-            <button onClick={onRemove} className="text-red-500 text-xs">Remove</button>
+            <button
+              onClick={onRemove}
+              className="text-red-500 text-xs"
+              aria-label={`Remove ${file.file.name}`}
+            >
+              Remove
+            </button>
           </div>
-
         </div>
         <ProgressBar progress={file.progress} className="mt-2" />
         {file.error && (
-          <p role="alert" aria-live="assertive" className="text-xs text-red-500 mt-1">
+          <p
+            role="alert"
+            aria-live="assertive"
+            className="text-xs text-red-500 mt-1"
+          >
             {file.error}
           </p>
         )}

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+IFS=$'\n\t'
 
 # Colors for output
 RED='\033[0;31m'
@@ -97,7 +98,10 @@ create_fresh_venv() {
     python3 -m venv venv
     
     # Activate virtual environment
-    source venv/bin/activate
+    if [ -f venv/bin/activate ]; then
+        # shellcheck disable=SC1091
+        . venv/bin/activate
+    fi
     
     print_status "Virtual environment created and activated"
     
@@ -111,7 +115,10 @@ install_compatible_packages() {
     
     # Make sure we're in venv
     if [ -z "$VIRTUAL_ENV" ]; then
-        source venv/bin/activate
+        if [ -f venv/bin/activate ]; then
+            # shellcheck disable=SC1091
+            . venv/bin/activate
+        fi
     fi
     
     # Upgrade pip first
@@ -152,7 +159,10 @@ install_project_requirements() {
     
     # Make sure we're in venv
     if [ -z "$VIRTUAL_ENV" ]; then
-        source venv/bin/activate
+        if [ -f venv/bin/activate ]; then
+            # shellcheck disable=SC1091
+            . venv/bin/activate
+        fi
     fi
     
     if [ -f "requirements.txt" ]; then
@@ -207,7 +217,10 @@ verify_installation() {
     
     # Make sure we're in venv
     if [ -z "$VIRTUAL_ENV" ]; then
-        source venv/bin/activate
+        if [ -f venv/bin/activate ]; then
+            # shellcheck disable=SC1091
+            . venv/bin/activate
+        fi
     fi
     
     # Test imports

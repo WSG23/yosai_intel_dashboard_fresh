@@ -105,8 +105,8 @@ def test_summarize_dataframe_schema_unicode_and_utc() -> None:
     assert clean_unicode_surrogates(user_id) == user_id
     assert clean_unicode_text(door_id) == door_id
 
-    assert summary["date_range"]["start"].endswith("+00:00")
-    assert summary["date_range"]["end"].endswith("+00:00")
+    assert summary["date_range"]["start"].endswith(UTC_SUFFIX)
+    assert summary["date_range"]["end"].endswith(UTC_SUFFIX)
 
 
 def test_summarize_dataframe_large_access_patterns() -> None:

@@ -7,7 +7,8 @@ CLI ?= python3 -m tools.ops_cli
 
 .PHONY: load-test load-tests validate build test deploy format lint security clean \
 build-all test-all deploy-all logs deprecation-docs \
-proto-python proto-go proto-all docs test-quick test-cov
+proto-python proto-go proto-all docs test-quick test-cov \
+infra-up infra-down infra-logs
 
 load-test:
 	python3 tools/load_test.py --brokers $(BROKERS) --prom-url $(PROM_URL) --rate $(RATE) --duration $(DURATION)
@@ -83,6 +84,15 @@ test-quick:
 	cd api && pytest --no-cov
 
 test-cov:
-	cd services && pytest
-	cd api && pytest --cov-report=html
+        cd services && pytest
+        cd api && pytest --cov-report=html
+
+infra-up:
+        docker compose -f dev/docker-compose.dev.yml up -d
+
+infra-down:
+        docker compose -f dev/docker-compose.dev.yml down
+
+infra-logs:
+        docker compose -f dev/docker-compose.dev.yml logs -f
 

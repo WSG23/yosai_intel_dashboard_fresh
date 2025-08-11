@@ -13,6 +13,14 @@ extend-exclude = """
 /(.direnv|.eggs|.git|.hg|.ipynb_checkpoints|.mypy_cache|.nox|.pytest_cache|.ruff_cache|.tox|.svn|.venv|.vscode|pypackages|_build|buck-out|build|dist|venv|config/generated)/
 """
 
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E501"]
+
 [tool.poetry.scripts]
 yosai-review = "file_processing.user_review:review"
 diagnose-upload-config = "tools.diagnose_upload_config:main"
@@ -21,3 +29,6 @@ diagnose-upload-config = "tools.diagnose_upload_config:main"
 profile = "black"
 line_length = 88
 skip_gitignore = true
+
+[tool.setuptools.packages.find]
+include = ["core", "yosai_intel_dashboard", "yosai_intel_dashboard.*"]

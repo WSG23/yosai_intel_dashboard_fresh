@@ -50,20 +50,30 @@ class DependencyChecker:
         ]
         missing = check_dependencies(packages)
         if missing:
-            logger.info(
-                "\u2705 Dependency validation skipped - packages assumed installed via requirements.txt"
+            raise RuntimeError(
+                f"Missing required dependencies: {', '.join(sorted(missing))}"
             )
-            logger.debug(
-                f"Packages that failed import check: {', '.join(missing)}"
-            )
-            # Dependency check disabled for some packages with complex import patterns
-            # logger.error("Missing required dependencies: %s", ", ".join(missing))
-            # logger.info("Run `pip install -r requirements.txt`")
-            # sys.exit(1)
 
 
 def verify_requirements(path: str = "requirements.txt") -> None:
-    """Compatibility wrapper using a file-based requirements repository."""
+    """Compatibility wrapper using a file-based requirements repository.
+
+    Raises
+    ------
+    RuntimeError
+        If any required dependency is missing or a requirement is not pinned.
+    """
 
     repo = FileRequirementsRepository(Path(path))
+    unpinned = repo.get_unpinned_packages()
+    if unpinned:
+        raise RuntimeError(
+            "Unpinned dependencies detected: " + ", ".join(sorted(unpinned))
+        )
+
     DependencyChecker(repo).verify_requirements()
+    # TODO: integrate CVE scanning (e.g. `pip-audit` or `safety`).
+
+
+if __name__ == "__main__":
+    verify_requirements()

@@ -2,9 +2,11 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AnalyticsPage from '../Analytics';
-import useAnalyticsData from '../../hooks/useAnalyticsData';
+import { useAnalyticsData } from '../../hooks/useAnalyticsData';
 
-jest.mock('../../hooks/useAnalyticsData');
+jest.mock('../../hooks/useAnalyticsData', () => ({
+  useAnalyticsData: jest.fn(),
+}));
 
 // simple stub to show empty state when no children
 jest.mock('../../components/layout', () => ({
@@ -29,10 +31,18 @@ describe('Analytics page', () => {
     jest.clearAllMocks();
   });
 
-  it('shows loading spinner initially', async () => {
-    mockUseAnalyticsData.mockReturnValue({ data: null, loading: true, error: null, refresh: jest.fn() } as AnalyticsHookReturn);
+  it('shows loading spinner initially', () => {
+    mockUseAnalyticsData.mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+      refresh: jest.fn(),
+    } as AnalyticsHookReturn);
+
     render(<AnalyticsPage />);
-    expect(await screen.findByText(/loading analytics/i)).toBeInTheDocument();
+
+    // queryBy* used to assert presence without waiting
+    expect(screen.queryByText(/loading analytics/i)).toBeInTheDocument();
   });
 
   it('displays error state with retry button that refreshes', async () => {

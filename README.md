@@ -21,6 +21,29 @@ The dashboard now includes interactive security maps and relationship graphs pow
 
 To embed these visualizations, import them from `yosai_intel_dashboard/src/adapters/ui/pages/visualizations` and include them in your page or route.
 
+## Performance Tuning
+
+Both the streaming and batch components expose simple knobs to tweak performance without changing default behaviour.
+
+### Flink jobs
+
+Set the desired parallelism via `FLINK_PARALLELISM` and pass it during submission:
+
+```bash
+export FLINK_PARALLELISM=4
+flink run -p ${FLINK_PARALLELISM} path/to/job.jar
+```
+
+### Batch training
+
+`scripts/train_security_models.py` can run model training in parallel threads. Use the `NUM_WORKERS` environment variable or the `--num-workers` flag:
+
+```bash
+NUM_WORKERS=4 python scripts/train_security_models.py data.csv --num-workers 4
+```
+
+Benchmark different settings with tools like `time`; keeping `NUM_WORKERS=1` retains the original sequential behaviour.
+
 ## Migration Status
 
 The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
@@ -1408,7 +1431,7 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - State stores: [docs/state_management.md](docs/state_management.md)
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
-- Upload endpoint notes: [docs/pr/Upload_PR.md](docs/pr/Upload_PR.md)
+- Upload results endpoint documentation: [docs/pr/Upload_PR.md](docs/pr/Upload_PR.md)
 
 Update the spec by running `go run ./api/openapi` which writes `docs/api/v2/openapi.json` for the UI.
 
@@ -1727,6 +1750,14 @@ Install development dependencies and run the test suite:
 pip install -r requirements-dev.txt
 make test-quick  # run tests without coverage
 make test-cov    # run tests with coverage report
+```
+
+For frontend UI tests:
+
+```bash
+npm test          # run all Vitest tests
+npm run test:watch  # watch mode
+npm run test:ui     # run tests in src directory
 ```
 
 ### Docker
