@@ -9,21 +9,23 @@ import base64
 import logging
 import os
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
-from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
-from yosai_intel_dashboard.src.services.task_queue import create_task, get_status
-from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
+from yosai_intel_dashboard.src.core.interfaces.protocols import FileProcessorProtocol
 from yosai_intel_dashboard.src.infrastructure.callbacks import (
     CallbackType,
     UnifiedCallbackRegistry,
 )
+from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
+from yosai_intel_dashboard.src.services.task_queue import create_task, get_status
+from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
+from .core.exceptions import FileProcessingError
 from .file_processor import UnicodeFileProcessor
 
 
@@ -45,6 +47,7 @@ class AsyncFileProcessor(FileProcessorProtocol):
         self.logger = logging.getLogger(__name__)
         self.callbacks = callback_registry or UnifiedCallbackRegistry()
         self._queue: RabbitMQClient | None = None
+        self._semaphore = asyncio.Semaphore(4)
         if task_queue_url:
             try:
                 self._queue = RabbitMQClient(task_queue_url)
@@ -113,25 +116,53 @@ class AsyncFileProcessor(FileProcessorProtocol):
         path = Path(path_str)
         await asyncio.to_thread(path.write_bytes, raw)
 
+        correlation_id = str(uuid.uuid4())
         try:
-            if filename.lower().endswith(".csv"):
-                df = await self.load_csv(path, component_id=filename)
-            elif filename.lower().endswith((".xlsx", ".xls")):
-                df = await asyncio.to_thread(pd.read_excel, path)
-                df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
-                self.callbacks.trigger_callback(CallbackType.PROGRESS, filename, 100)
-            elif filename.lower().endswith(".json"):
-                df = await asyncio.to_thread(pd.read_json, path)
-                df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
-                self.callbacks.trigger_callback(CallbackType.PROGRESS, filename, 100)
-            else:
-                raise ValueError(f"Unsupported file type: {filename}")
+            async with self._semaphore:
+                self.logger.info(
+                    "Processing file %s",
+                    filename,
+                    extra={"correlation_id": correlation_id},
+                )
+                if filename.lower().endswith(".csv"):
+                    df = await self.load_csv(path, component_id=filename)
+                elif filename.lower().endswith((".xlsx", ".xls")):
+                    df = await asyncio.to_thread(pd.read_excel, path)
+                    df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
+                    self.callbacks.trigger_callback(
+                        CallbackType.PROGRESS, filename, 100
+                    )
+                elif filename.lower().endswith(".json"):
+                    df = await asyncio.to_thread(pd.read_json, path)
+                    df = UnicodeFileProcessor.sanitize_dataframe_unicode(df)
+                    self.callbacks.trigger_callback(
+                        CallbackType.PROGRESS, filename, 100
+                    )
+                else:
+                    raise ValueError(f"Unsupported file type: {filename}")
+                return df
+        except asyncio.CancelledError:
+            self.logger.warning(
+                "Processing cancelled: %s",
+                filename,
+                extra={"correlation_id": correlation_id},
+            )
+            raise
+        except Exception as exc:
+            self.logger.error(
+                "Processing failed: %s",
+                filename,
+                exc_info=exc,
+                extra={"correlation_id": correlation_id},
+            )
+            raise FileProcessingError(f"Failed to process {filename}") from exc
         finally:
             try:
                 os.unlink(path)
-            except Exception:  # pragma: no cover - cleanup best effort
-                pass
-        return df
+            except OSError:
+                self.logger.debug(
+                    "cleanup failed", extra={"correlation_id": correlation_id}
+                )
 
     async def read_uploaded_file(
         self, contents: str, filename: str

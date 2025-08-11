@@ -3,20 +3,41 @@
 from __future__ import annotations
 
 import json
+import logging
+import time
 import uuid
 from typing import Any, Optional
 
 import pika
 
+logger = logging.getLogger(__name__)
+
 
 class RabbitMQClient:
-    """Lightweight publisher for RabbitMQ queues."""
+    """Lightweight publisher for RabbitMQ queues with a simple circuit breaker."""
 
-    def __init__(self, url: str) -> None:
+    def __init__(
+        self,
+        url: str,
+        *,
+        max_failures: int = 5,
+        reset_timeout: float = 30.0,
+    ) -> None:
         """Create a new client using the connection ``url``."""
         self._params = pika.URLParameters(url)
         self._connection = pika.BlockingConnection(self._params)
         self._channel = self._connection.channel()
+        self._failures = 0
+        self._max_failures = max_failures
+        self._reset_timeout = reset_timeout
+        self._cooldown_start: float | None = None
+
+    def _check_circuit(self) -> None:
+        if self._cooldown_start is not None:
+            if time.monotonic() - self._cooldown_start < self._reset_timeout:
+                raise RuntimeError("Circuit breaker open")
+            self._cooldown_start = None
+            self._failures = 0
 
     def declare_queue(
         self,
@@ -57,8 +78,19 @@ class RabbitMQClient:
         if delay_ms:
             props.headers["x-delay"] = delay_ms
         body = json.dumps(task)
-        self._channel.basic_publish("", queue, body, properties=props)
-        return task["id"]
+        self._check_circuit()
+        try:
+            self._channel.basic_publish("", queue, body, properties=props)
+            self._failures = 0
+            return task["id"]
+        except Exception:
+            self._failures += 1
+            if self._failures >= self._max_failures:
+                self._cooldown_start = time.monotonic()
+                logger.warning(
+                    "RabbitMQ circuit opened after %s failures", self._failures
+                )
+            raise
 
     def close(self) -> None:
         """Close the underlying connection."""
