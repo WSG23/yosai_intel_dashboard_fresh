@@ -1,28 +1,14 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.22@sha256:1cf6c45ba39db9fd6db16922041d074a63c935556a05c5ccb62d181034df7f02 AS build
-WORKDIR /src
 
+FROM golang:1.22-alpine AS build
+WORKDIR /app/gateway
 COPY gateway/go.mod gateway/go.sum ./
-RUN go mod download && go mod download github.com/riferrei/srclient@v0.7.3
+RUN go mod download
+COPY gateway/ .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway ./cmd/gateway
 
-COPY gateway/ ./gateway/
-RUN CGO_ENABLED=0 GOOS=linux go build -o /gateway ./gateway/cmd/gateway
-
-FROM alpine:3.18@sha256:de0eb0b3f2a47ba1eb89389859a9bd88b28e82f5826b6969ad604979713c2d4f
-RUN apk add --no-cache curl
-
-ARG UID=1000
-ARG GID=1000
-RUN addgroup -g "${GID}" appuser && adduser -D -u "${UID}" -G appuser appuser
-
-WORKDIR /app
-COPY --from=build --chown=appuser:appuser /gateway /usr/local/bin/gateway
-COPY --chown=appuser:appuser . /app
-RUN chmod 0755 /usr/local/bin/gateway \
-    && find /app -type f -name '*.sh' -exec chmod 0755 {} \; \
-    && find /app -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.conf' \) -exec chmod 0644 {} \;
-USER appuser
-
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/health || exit 1
+FROM gcr.io/distroless/base-debian12
+WORKDIR /home/app
+COPY --from=build /out/gateway /usr/local/bin/gateway
+USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/gateway"]
