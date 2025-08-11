@@ -40,14 +40,30 @@ try:
 except ImportError:  # pragma: no cover - for Python <3.12
     from typing_extensions import override
 
-from pandas import DataFrame, Series
 import pandas as pd
+from pandas import DataFrame, Series
+from pydantic import ValidationError
 
-from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager, cache_with_lock
+from validation.security_validator import SecurityValidator
+from yosai_intel_dashboard.models.ml import ModelRegistry
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+    cache_with_lock,
+)
 from yosai_intel_dashboard.src.core.di_decorators import inject, injectable
 from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
+from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
+    AnalyticsDataLoaderProtocol,
+    DatabaseAnalyticsRetrieverProtocol,
+    get_analytics_data_loader,
+    get_database_analytics_retriever,
+    get_upload_data_service,
+)
 from yosai_intel_dashboard.src.services.analytics.calculator import Calculator
-from yosai_intel_dashboard.src.services.analytics.orchestrator import AnalyticsOrchestrator
+from yosai_intel_dashboard.src.services.analytics.orchestrator import (
+    AnalyticsOrchestrator,
+)
 from yosai_intel_dashboard.src.services.analytics.protocols import (
     AnalyticsServiceProtocol,
     CalculatorProtocol,
@@ -57,25 +73,29 @@ from yosai_intel_dashboard.src.services.analytics.protocols import (
     UploadAnalyticsProtocol,
 )
 from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
-from yosai_intel_dashboard.src.services.upload_processing import UploadAnalyticsProcessor
-from yosai_intel_dashboard.src.services.analytics_summary import generate_sample_analytics
-from yosai_intel_dashboard.src.services.controllers.protocols import UploadProcessingControllerProtocol
-from yosai_intel_dashboard.src.services.controllers.upload_controller import UploadProcessingController
+from yosai_intel_dashboard.src.services.analytics_summary import (
+    generate_sample_analytics,
+)
+from yosai_intel_dashboard.src.services.controllers.protocols import (
+    UploadProcessingControllerProtocol,
+)
+from yosai_intel_dashboard.src.services.controllers.upload_controller import (
+    UploadProcessingController,
+)
 from yosai_intel_dashboard.src.services.data_processing.processor import Processor
-from yosai_intel_dashboard.src.services.helpers.database_initializer import initialize_database
-from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
-    AnalyticsDataLoaderProtocol,
-    DatabaseAnalyticsRetrieverProtocol,
-    get_analytics_data_loader,
-    get_database_analytics_retriever,
-    get_upload_data_service,
+from yosai_intel_dashboard.src.services.helpers.database_initializer import (
+    initialize_database,
 )
 from yosai_intel_dashboard.src.services.protocols import UploadDataServiceProtocol
-from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
-from validation.security_validator import SecurityValidator
-from yosai_intel_dashboard.models.ml import ModelRegistry
-from pydantic import ValidationError
+from yosai_intel_dashboard.src.services.summary_report_generator import (
+    SummaryReportGenerator,
+)
+from yosai_intel_dashboard.src.services.upload_processing import (
+    UploadAnalyticsProcessor,
+)
+
 from .schemas import AnalyticsQueryV1, AnalyticsSummaryV1
+from .unicode import normalize_text
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
 
@@ -95,6 +115,7 @@ class AnalyticsProviderProtocol(Protocol):
 # ----------------------------------------------------------------------
 # Dependency protocol definitions
 # ----------------------------------------------------------------------
+
 
 class Database(Protocol):
     """Database dependency interface."""
@@ -211,12 +232,16 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self.processor: DataProcessor = data_processor
         # Legacy attribute aliases
         self.data_loading_service: DataProcessor = self.processor
-        from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
+        from yosai_intel_dashboard.src.services.data_processing.file_handler import (
+            FileHandler,
+        )
 
         self.file_handler: FileHandler = FileHandler()
 
         self.upload_processor: UploadAnalyticsProtocol | None = upload_processor
-        self.upload_controller: UploadProcessingControllerProtocol | None = upload_controller
+        self.upload_controller: UploadProcessingControllerProtocol | None = (
+            upload_controller
+        )
         self.report_generator: ReportGeneratorProtocol | None = report_generator
         self.database_manager: Any
         self.db_helper: Any
@@ -277,11 +302,12 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         try:
             query = AnalyticsQueryV1.model_validate({"source": source})
         except ValidationError:
-            sanitized = source.strip().lower()
+            sanitized = normalize_text(source).strip().lower()
             logger.error("Invalid analytics source: %s", sanitized)
             raise ValueError(f"Invalid analytics source: {sanitized}")
 
-        result = self.router.get_analytics(query.source)
+        normalized = normalize_text(query.source)
+        result = self.router.get_analytics(normalized)
         summary = AnalyticsSummaryV1.model_validate(result)
         return summary.model_dump()
 
@@ -307,6 +333,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
 
     def clean_uploaded_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply standard column mappings and basic cleaning."""
+        df.columns = [normalize_text(c) for c in df.columns]
         return self.data_loader.clean_uploaded_dataframe(df)
 
     def summarize_dataframe(self, df: pd.DataFrame) -> Dict[str, Any]:
