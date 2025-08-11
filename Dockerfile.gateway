@@ -1,13 +1,23 @@
-# syntax=docker/dockerfile:1
-
+# Stage 1: build
 FROM golang:1.22-alpine AS build
-WORKDIR /app/gateway
-COPY gateway/go.mod gateway/go.sum ./
-RUN go mod download
-COPY gateway/ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway ./cmd/gateway
+WORKDIR /src
 
-FROM gcr.io/distroless/base-debian12 AS runtime
+# Optionally stitch multi-module repos via go.work if present
+COPY go.work* .  # ok if missing
+COPY go/ go/
+
+# If go.work exists, sync; otherwise continue
+RUN go work sync || true
+
+# Build the gateway binary from the hard-wired path
+WORKDIR /src/go/cmd/gateway
+# Initialize go.mod if missing (prefer existing)
+RUN [ -f go.mod ] || (go mod init example.com/gateway && go mod tidy)
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway
+
+# Stage 2: minimal runtime, non-root
+FROM gcr.io/distroless/base-debian12
 WORKDIR /home/app
 COPY --from=build /out/gateway /usr/local/bin/gateway
 USER 1000:1000

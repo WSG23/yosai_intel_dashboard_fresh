@@ -26,11 +26,15 @@ jobs:
             image: jobs
             context: jobs
             dockerfile: jobs/Dockerfile
-    if: ${{ hashFiles(matrix.dockerfile) != '' }}
     outputs:
       image: ${{ steps.meta.outputs.image }}
       tags: ${{ steps.meta.outputs.tags }}
     steps:
+      - name: Check dockerfile exists
+        id: df
+        run: |
+          test -f \"${{ matrix.dockerfile }}\" && echo \"present=true\" >> $GITHUB_OUTPUT || echo \"present=false\" >> $GITHUB_OUTPUT
+
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - name: Log in to registry
@@ -52,6 +56,7 @@ jobs:
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
       - name: Build and push
         uses: docker/build-push-action@v5
+        if: ${{ steps.df.outputs.present == 'true' }}
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
