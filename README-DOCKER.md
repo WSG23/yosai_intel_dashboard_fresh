@@ -78,6 +78,41 @@ Or focus on a single service:
 docker compose logs -f api
 ```
 
+## Health Probes
+
+Services expose a `/health` endpoint that can be used for liveness and readiness checks.
+
+### Docker Compose
+
+Add a healthcheck to `docker-compose.yml`:
+
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 5
+```
+
+### Kubernetes
+
+Configure probes in your pod spec:
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+```
+
 ## Troubleshooting
 
 ### Missing Dependencies
@@ -104,4 +139,12 @@ pip install cryptography
 
 Images built on Apple Silicon may not run on Intel machines. Always specify
 `--platform=linux/amd64` when building on ARM hardware to ensure compatibility.
+
+## Running Tests
+
+Verify the health endpoint with pytest:
+
+```bash
+pytest tests/test_health_endpoint.py
+```
 
