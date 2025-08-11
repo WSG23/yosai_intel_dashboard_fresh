@@ -19,17 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - id: setup-python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt', '**/constraints*.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -62,29 +66,3 @@ jobs:
         env:
           PYTHONPATH: yosai_intel_dashboard/src
         run: pytest -q
-
-# CI Repair: toolchain and caching
-# (Idempotent append – safe if duplicates exist)
-# --- begin ci-repair block ---
-  - name: Setup Node
-    uses: actions/setup-node@v4
-    with:
-      node-version: '20'
-      cache: npm
-  - name: Setup Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.11'
-  - name: Cache pip
-    uses: actions/cache@v4
-    with:
-      path: ~/.cache/pip
-      key: pip-${{ runner.os }}-3.11-${{ hashFiles('**/requirements*.txt', '**/constraints*.txt') }}
-      restore-keys: |
-        pip-${{ runner.os }}-3.11-
-  - name: Install dev deps
-    shell: bash
-    run: |
-      pip install -r requirements.txt || true
-      [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt || true
-# --- end ci-repair block ---

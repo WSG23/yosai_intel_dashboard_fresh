@@ -139,7 +139,7 @@ jobs:
             body,
           });
     - name: Fail on high or critical
-      if: ${{ steps.report.outputs.severity == 'HIGH' || 
+      if: ${{ steps.report.outputs.severity == 'HIGH' ||
         steps.report.outputs.severity == 'CRITICAL' }}
       run: exit 1
 
@@ -151,7 +151,9 @@ jobs:
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
     - uses: actions/checkout@v3
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
     - name: Scan with Trivy
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
       uses: aquasecurity/trivy-action@0.11.2
       with:
         scan-type: fs
@@ -160,11 +162,10 @@ jobs:
         exit-code: '1'
         severity: HIGH,CRITICAL
     - uses: actions/upload-artifact@v4
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
       with:
         name: trivy-results
         path: trivy-results.sarif
-
-    if: ${{ github.event.pull_request.head.repo.fork == false }}
   snyk-scan:
     needs: build-test
     runs-on: ubuntu-latest
@@ -172,11 +173,6 @@ jobs:
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - name: Fallback noop on forks
-      if: ${{ github.event.pull_request.head.repo.fork }}
-      run: |
-        echo "Fork PR: skipping secret-requiring scan"
-        exit 0
     - uses: actions/checkout@v4
       if: ${{ github.event.pull_request.head.repo.fork == false }}
     - uses: snyk/actions/setup@v1
@@ -191,8 +187,6 @@ jobs:
       with:
         name: snyk-results
         path: snyk-results.json
-
-    if: ${{ github.event.pull_request.head.repo.fork == false }}
   owasp-zap:
     needs: build-test
     runs-on: ubuntu-latest
@@ -201,13 +195,13 @@ jobs:
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
     - uses: actions/checkout@v3
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
     - name: OWASP ZAP baseline scan
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
       uses: zaproxy/action-baseline@v0.10.0
       with:
         target: http://localhost:8000
         fail_action: true
-
-    if: ${{ github.event.pull_request.head.repo.fork == false }}
   secret-scan:
     needs: build-test
     runs-on: ubuntu-latest
@@ -235,7 +229,9 @@ jobs:
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
     - uses: actions/checkout@v3
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
     - name: Build gateway Docker image
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -243,9 +239,8 @@ jobs:
         tags: gateway-image
         load: true
     - name: Run container security checks
+      if: ${{ github.event.pull_request.head.repo.fork == false }}
       run: tests/container/security_checks.sh gateway-image
-
-    if: ${{ github.event.pull_request.head.repo.fork == false }}
   release:
     needs: [trivy-scan, snyk-scan, security-scan, owasp-zap, container-security]
 

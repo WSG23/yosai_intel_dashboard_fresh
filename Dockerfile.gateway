@@ -2,7 +2,7 @@
 FROM golang:1.22-alpine AS build
 WORKDIR /src
 
-# Optionally stitch multi-module repos via go.work if present
+# If a go.work exists, copy it (optional) to stitch multiple modules under /go/*
 COPY go.work* .  # ok if missing
 COPY go/ go/
 
@@ -11,7 +11,6 @@ RUN go work sync || true
 
 # Build the gateway binary from the hard-wired path
 WORKDIR /src/go/cmd/gateway
-# Initialize go.mod if missing (prefer existing)
 RUN [ -f go.mod ] || (go mod init example.com/gateway && go mod tidy)
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway
