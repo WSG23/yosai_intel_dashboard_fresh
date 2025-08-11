@@ -10,6 +10,7 @@ types-bleach
 types-hvac
 types-psutil
 types-requests
+requests
 bandit
 safety==3.6.0
 pip-audit

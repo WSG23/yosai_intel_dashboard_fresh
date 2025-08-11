@@ -49,7 +49,7 @@ from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadCon
 from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
     ALLOWED_MIME_TYPES,
     UploadRequestSchema,
-    UploadResponseSchema,
+    UploadResponse,
     stream_upload,
 )
 from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import (
@@ -231,7 +231,7 @@ def _register_upload_endpoints(
 
     @service.app.post(
         "/v1/upload",
-        response_model=UploadResponseSchema,
+        response_model=UploadResponse,
         status_code=200,
         dependencies=[Depends(verify_csrf)],
     )

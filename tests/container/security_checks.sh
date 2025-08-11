@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+IFS=$'\n\t'
 
 IMAGE="${1:-}"
 if [[ -z "$IMAGE" ]]; then
@@ -19,12 +20,12 @@ echo "UID check passed"
 # 2. Check for unexpected writable directories
 WRITABLE=$(docker run --rm "$IMAGE" sh -c "find / -xdev -type d -writable 2>/dev/null")
 if [[ -n "$WRITABLE" ]]; then
-  echo "Writable directories:\n$WRITABLE"
+  printf 'Writable directories:\n%s\n' "$WRITABLE"
 fi
 # Fail if any writable directories besides /tmp or /var/tmp are present
 BAD=$(docker run --rm "$IMAGE" sh -c "find / -xdev -type d -writable ! -path '/tmp' ! -path '/var/tmp' 2>/dev/null")
 if [[ -n "$BAD" ]]; then
-  echo "Unexpected writable directories found:\n$BAD" >&2
+  printf 'Unexpected writable directories found:\n%s\n' "$BAD" >&2
   exit 1
 fi
 
