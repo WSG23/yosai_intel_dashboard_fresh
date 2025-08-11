@@ -191,8 +191,18 @@ jobs:
           name: secret-scan-report
           path: secret-scan-report.json
 
+  container-security:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker image
+        run: docker build -t dashboard-image .
+      - name: Run container security checks
+        run: tests/container/security_checks.sh dashboard-image
+
   release:
-    needs: [trivy-scan, snyk-scan, security-scan, owasp-zap]
+    needs: [trivy-scan, snyk-scan, security-scan, owasp-zap, container-security]
 
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
