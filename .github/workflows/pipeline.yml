@@ -196,10 +196,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build Docker image
-        run: docker build -t dashboard-image .
+      - name: Build gateway Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.gateway
+          tags: gateway-image
+          load: true
       - name: Run container security checks
-        run: tests/container/security_checks.sh dashboard-image
+        run: tests/container/security_checks.sh gateway-image
 
   release:
     needs: [trivy-scan, snyk-scan, security-scan, owasp-zap, container-security]
