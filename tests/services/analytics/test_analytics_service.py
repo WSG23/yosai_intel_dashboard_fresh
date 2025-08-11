@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from typing import Dict, List
 
@@ -8,10 +10,15 @@ from pydantic import BaseModel
 from tests.config import FakeConfiguration  # noqa: F401
 from unicode_toolkit.helpers import clean_unicode_surrogates, clean_unicode_text
 
+UTC_SUFFIX = "+00:00"
+LARGE_N = 5000
+
 try:  # pragma: no cover - pydantic v1 fallback
     from pydantic import ConfigDict  # type: ignore
+
     _EXTRA_CONFIG = {"model_config": ConfigDict(extra="ignore")}
 except Exception:  # pragma: no cover
+
     class _Extra:  # pragma: no cover - pydantic v1 style
         class Config:
             extra = "ignore"
@@ -19,7 +26,9 @@ except Exception:  # pragma: no cover
     _EXTRA_CONFIG = {"Config": _Extra.Config}
 
 try:  # pragma: no cover - dependency validation
-    from yosai_intel_dashboard.src.services.analytics.analytics_service import AnalyticsService
+    from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+        AnalyticsService,
+    )
 except Exception:  # pragma: no cover
     pytest.skip("analytics dependencies missing", allow_module_level=True)
 
@@ -65,6 +74,7 @@ def _basic_df() -> pd.DataFrame:
 
 
 def test_summarize_dataframe_schema_unicode_and_utc():
+    """Schema validation and Unicode/timestamp normalization."""
     service = AnalyticsService()
     summary = service.summarize_dataframe(_basic_df())
 
@@ -75,13 +85,14 @@ def test_summarize_dataframe_schema_unicode_and_utc():
     assert clean_unicode_surrogates(user_id) == user_id
     assert clean_unicode_text(door_id) == door_id
 
-    assert summary["date_range"]["start"].endswith("+00:00")
-    assert summary["date_range"]["end"].endswith("+00:00")
+    assert summary["date_range"]["start"].endswith(UTC_SUFFIX)
+    assert summary["date_range"]["end"].endswith(UTC_SUFFIX)
 
 
 def test_summarize_dataframe_large_access_patterns():
+    """Large access_patterns list remains performant and accurate."""
     service = AnalyticsService()
-    n = 5000
+    n = LARGE_N
     df = pd.DataFrame(
         {
             "person_id": ["u1"] * n,
