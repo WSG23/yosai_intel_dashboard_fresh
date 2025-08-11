@@ -22,7 +22,7 @@ export const useUpload = () => {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
-      id: `${Date.now()}-${Math.random()}`,
+      id: crypto.randomUUID(),
       file,
       name: file.name,
       size: file.size,
