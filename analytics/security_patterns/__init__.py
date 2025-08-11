@@ -4,7 +4,7 @@ import contextlib
 import io
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -69,21 +69,7 @@ class SecurityPatternsAnalyzer:
         prepared = self._prepare_data(df)
         threats = list(detect_critical_door_risks(prepared))
         threats.extend(_detect_rapid_failures(prepared))
-        try:  # pragma: no cover - import may fail in test environment
-            from yosai_intel_dashboard.src.infrastructure.security import (
-                events as se,  # type: ignore
-            )
-
-            manager = se.security_unified_callbacks
-        except Exception:  # pragma: no cover
-            manager = fallback_callbacks
-        if manager is None:
-            manager = TrulyUnifiedCallbacks()
-        if threats:
-            manager.trigger_event(SecurityEvent.THREAT_DETECTED, {"threats": threats})
-        manager.trigger_event(
-            SecurityEvent.ANALYSIS_COMPLETE, {"records": len(prepared)}
-        )
+        _dispatch_security_events(prepared, threats)
         return threats
 
 
@@ -139,6 +125,24 @@ def _detect_rapid_failures(df: pd.DataFrame) -> List[Threat]:
         Threat("rapid_denied_access", {"person_id": person})
         for person in summary[mask].index
     ]
+
+
+def _dispatch_security_events(prepared: pd.DataFrame, threats: List[Threat]) -> None:
+    try:  # pragma: no cover - import may fail in test environment
+        from yosai_intel_dashboard.src.infrastructure.security import (
+            events as se,  # type: ignore
+        )
+
+        manager = se.security_unified_callbacks
+    except Exception:  # pragma: no cover
+        manager = fallback_callbacks
+    if manager is None:
+        manager = TrulyUnifiedCallbacks()
+    if threats:
+        manager.trigger_event(SecurityEvent.THREAT_DETECTED, {"threats": threats})
+    manager.trigger_event(
+        SecurityEvent.ANALYSIS_COMPLETE, {"records": len(prepared)}
+    )
 
 
 # ---------------------------------------------------------------------------
