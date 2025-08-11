@@ -43,8 +43,9 @@ class DataLoader:
             for key in ("start", "end"):
                 value = date_range.get(key)
                 if value and value != "Unknown":
-                    ts = pd.to_datetime(value, utc=True)
-                    date_range[key] = ts.isoformat()
+                    dt = pd.to_datetime(value, utc=True)
+                    # ensure Python datetime before ISO formatting
+                    date_range[key] = dt.to_pydatetime().isoformat()
         return summary
 
     def analyze_with_chunking(
