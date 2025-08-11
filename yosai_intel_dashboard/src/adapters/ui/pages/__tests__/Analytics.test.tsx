@@ -69,6 +69,12 @@ describe('Analytics page', () => {
   it('has accessible controls', async () => {
     mockUseAnalyticsData.mockReturnValue({ data: sampleData, loading: false, error: null, refresh: jest.fn() } as AnalyticsHookReturn);
     render(<AnalyticsPage />);
+    expect(
+      await screen.findByRole('heading', {
+        name: /security analytics/i,
+        level: 1,
+      }),
+    ).toBeInTheDocument();
     expect(await screen.findByRole('combobox', { name: /select data source/i })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /export csv/i })).toBeInTheDocument();
   });
