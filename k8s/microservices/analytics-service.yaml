@@ -17,6 +17,10 @@ spec:
         app.kubernetes.io/name: analytics-service
         app.kubernetes.io/part-of: yosai-microservices
         app.kubernetes.io/component: analytics
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
     spec:
       securityContext:
         runAsUser: 1000

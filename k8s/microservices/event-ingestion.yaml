@@ -17,6 +17,10 @@ spec:
         app.kubernetes.io/name: event-ingestion
         app.kubernetes.io/part-of: yosai-microservices
         app.kubernetes.io/component: ingestion
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
     spec:
       securityContext:
         runAsUser: 1000
