@@ -11,7 +11,6 @@ describe('useUpload', () => {
   it('assigns a string id to dropped files', () => {
     const { result } = renderHook(() => useUpload());
     const file = new File(['data'], 'test.csv', { type: 'text/csv' });
-
     act(() => {
       result.current.onDrop([file]);
     });
