@@ -32,7 +32,9 @@ func (h *HealthManager) SetStartupComplete(v bool) { h.startupComplete = v }
 
 func writeJSON(w http.ResponseWriter, status string) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": status})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": status}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // Handler returns /health status.

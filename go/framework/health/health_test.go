@@ -2,6 +2,7 @@ package health
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -38,5 +39,29 @@ func TestHandlers(t *testing.T) {
 		if string(bytes.TrimSpace(body)) != tt.expect {
 			t.Fatalf("unexpected body %s", string(body))
 		}
+	}
+}
+
+type errorWriter struct {
+	http.ResponseWriter
+	fail bool
+}
+
+func (e *errorWriter) Write(p []byte) (int, error) {
+	if e.fail {
+		e.fail = false
+		return 0, errors.New("write error")
+	}
+	return e.ResponseWriter.Write(p)
+}
+
+func TestWriteJSONError(t *testing.T) {
+	rr := httptest.NewRecorder()
+	ew := &errorWriter{ResponseWriter: rr, fail: true}
+
+	writeJSON(ew, "ok")
+
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("expected %d got %d", http.StatusInternalServerError, rr.Code)
 	}
 }
