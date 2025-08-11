@@ -3,7 +3,6 @@ package framework
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -23,7 +22,7 @@ var schemaPath = "../../config/service.schema.yaml"
 
 func LoadConfig(path string) (Config, error) {
 	var cfg Config
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return cfg, err
 	}
