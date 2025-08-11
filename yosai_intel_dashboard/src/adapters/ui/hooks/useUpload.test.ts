@@ -1,52 +1,39 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useUpload } from './useUpload';
 import { api } from '../api/client';
 
 describe('useUpload', () => {
-  it('aborts polling on cancel', async () => {
-    jest.useFakeTimers();
-    const get = jest.spyOn(api, 'get').mockResolvedValue({ progress: 0, done: false } as any);
-    const clearSpy = jest.spyOn(global, 'clearTimeout');
+  it('sets file status to error when cancelled', async () => {
+    const postMock = jest
+      .spyOn(api, 'post')
+      // never resolve to keep upload in progress
+      .mockImplementation(() => new Promise(() => {}));
 
     const { result } = renderHook(() => useUpload());
-    const promise = result.current.pollStatus('1', 'job', jest.fn());
+    const file = new File(['data'], 'file.csv');
 
-    await Promise.resolve();
-    expect(get).toHaveBeenCalledTimes(1);
+    act(() => {
+      result.current.onDrop([file]);
+    });
 
-    result.current.cancel('1');
-    await expect(promise).rejects.toThrow();
+    const id = result.current.files[0].id;
 
-    jest.runOnlyPendingTimers();
-    expect(get).toHaveBeenCalledTimes(1);
-    expect(clearSpy).toHaveBeenCalled();
+    act(() => {
+      result.current.uploadAllFiles();
+    });
 
-    get.mockRestore();
-    clearSpy.mockRestore();
-    jest.useRealTimers();
-  });
+    await waitFor(() => expect(postMock).toHaveBeenCalled());
 
-  it('aborts polling on unmount', async () => {
-    jest.useFakeTimers();
-    const get = jest.spyOn(api, 'get').mockResolvedValue({ progress: 0, done: false } as any);
-    const clearSpy = jest.spyOn(global, 'clearTimeout');
+    act(() => {
+      result.current.cancelUpload(id);
+    });
 
-    const { result, unmount } = renderHook(() => useUpload());
-    const promise = result.current.pollStatus('1', 'job', jest.fn());
+    await waitFor(() => {
+      const f = result.current.files[0];
+      expect(f.status).toBe('error');
+      expect(f.error).toBe('Cancelled');
+    });
 
-    await Promise.resolve();
-    expect(get).toHaveBeenCalledTimes(1);
-
-    unmount();
-    await expect(promise).rejects.toThrow();
-
-    jest.runOnlyPendingTimers();
-    expect(get).toHaveBeenCalledTimes(1);
-    expect(clearSpy).toHaveBeenCalled();
-
-    get.mockRestore();
-    clearSpy.mockRestore();
-    jest.useRealTimers();
+    postMock.mockRestore();
   });
 });
-

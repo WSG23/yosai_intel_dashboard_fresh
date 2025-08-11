@@ -17,7 +17,7 @@ export const useUpload = () => {
   const [uploading, setUploading] = useState(false);
 
   const controllers = useRef<Record<string, AbortController>>({});
-  const polls = useRef<Record<string, NodeJS.Timeout>>({});
+  const polls = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
@@ -32,8 +32,7 @@ export const useUpload = () => {
     setFiles((prev) => [...prev, ...newFiles]);
   }, []);
 
-  const removeFile = useCallback((id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
+  const abortTransfer = useCallback((id: string) => {
     controllers.current[id]?.abort();
     delete controllers.current[id];
     if (polls.current[id]) {
@@ -41,6 +40,11 @@ export const useUpload = () => {
       delete polls.current[id];
     }
   }, []);
+
+  const removeFile = useCallback((id: string) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id));
+    abortTransfer(id);
+  }, [abortTransfer]);
 
   const uploadFile = useCallback(async (uploadedFile: UploadedFile) => {
     const formData = new FormData();
@@ -155,24 +159,19 @@ export const useUpload = () => {
     setUploading(false);
   }, [files, uploadFile]);
 
-  const cancelUpload = useCallback((id: string) => {
-    const controller = controllers.current[id];
-    if (controller) {
-      controller.abort();
-      delete controllers.current[id];
-    }
-    if (polls.current[id]) {
-      clearInterval(polls.current[id]);
-      delete polls.current[id];
-    }
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === id
-          ? { ...f, status: 'error' as Status, error: 'Cancelled' }
-          : f,
-      ),
-    );
-  }, []);
+  const cancelUpload = useCallback(
+    (id: string) => {
+      abortTransfer(id);
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === id
+            ? { ...f, status: 'error' as Status, error: 'Cancelled' }
+            : f,
+        ),
+      );
+    },
+    [abortTransfer],
+  );
 
   return {
     files,
