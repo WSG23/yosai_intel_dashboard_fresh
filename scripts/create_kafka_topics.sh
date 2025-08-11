@@ -5,9 +5,11 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=common.sh
-source "${SCRIPT_DIR}/common.sh"
+# shellcheck source=./common.sh
+COMMON_SH="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/common.sh"
+if [ -f "$COMMON_SH" ]; then . "$COMMON_SH"; else
+  echo "Warning: common.sh not found at $COMMON_SH; continuing without it." >&2
+fi
 
 BROKERS="${1:-localhost:9092}"
 # URL of the schema registry used for Avro schemas
