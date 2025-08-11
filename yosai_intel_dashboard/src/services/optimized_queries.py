@@ -50,17 +50,8 @@ class OptimizedQueryService:
             table = builder.table("people")
             column = builder.column("person_id")
             placeholders = ", ".join("%s" for _ in user_ids)
-            raw_sql = (
-                "SELECT * FROM "
-                + table
-                + " WHERE "
-                + column
-                + " IN ("
-                + placeholders
-                + ")"
-            )
-            query, _ = builder.build(raw_sql)
-            params = tuple(user_ids)
+            query_str = f"SELECT * FROM {table} WHERE {column} IN ({placeholders})"
+            query, params = builder.build(query_str, tuple(user_ids))
             rows = execute_secure_query(self.db, query, params)
 
         return [dict(r) for r in rows]
