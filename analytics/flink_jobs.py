@@ -20,6 +20,12 @@ from pyflink.table import (
 __all__ = ["run_kafka_analytics_job", "run_kafka_to_database_job"]
 
 
+def _sanitize(value: str) -> str:
+    """Escape single quotes for safe SQL string interpolation."""
+
+    return value.replace("'", "''")
+
+
 def _create_table_environment() -> StreamTableEnvironment:
     """Create a streaming :class:`StreamTableEnvironment` instance.
 
@@ -46,6 +52,10 @@ def run_kafka_analytics_job(
     """
 
     t_env = _create_table_environment()
+
+    input_topic = _sanitize(input_topic)
+    output_topic = _sanitize(output_topic)
+    bootstrap_servers = _sanitize(bootstrap_servers)
 
     source_ddl = f"""
         CREATE TABLE source_events (
@@ -115,6 +125,13 @@ def run_kafka_to_database_job(
     """
 
     t_env = _create_table_environment()
+
+    input_topic = _sanitize(input_topic)
+    bootstrap_servers = _sanitize(bootstrap_servers)
+    jdbc_url = _sanitize(jdbc_url)
+    table_name = _sanitize(table_name)
+    username = _sanitize(username) if username else None
+    password = _sanitize(password) if password else None
 
     auth_section = ""
     if username and password:
