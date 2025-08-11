@@ -33,10 +33,9 @@ RUN set -eux; \
       useradd -m -u "${UID}" -g "${GID}" appuser || true; \
     fi
 WORKDIR /app
-COPY . /app
+COPY --chown=appuser:appuser . /app
 RUN chmod +x docker-entrypoint.sh \
-    && rm -rf /app/yosai_intel_dashboard/tests \
-    && chown -R appuser:appuser /app
+    && rm -rf /app/yosai_intel_dashboard/tests
 USER appuser
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
