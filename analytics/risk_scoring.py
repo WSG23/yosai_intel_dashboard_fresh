@@ -78,25 +78,8 @@ def _context_modifier(context: Optional[Dict[str, object]]) -> float:
 
 
 def _make_result(score: float, level: str) -> RiskScoreResult:
-    """Instantiate :class:`RiskScoreResult` with fallbacks.
-
-    Some unit tests stub modules which can accidentally replace
-    :class:`RiskScoreResult` with a plain ``object``.  This helper ensures a
-    usable dataclass instance is returned regardless of such stubbing.
-    """
-
-    global RiskScoreResult  # allow reassignment if necessary
-    try:
-        return RiskScoreResult(score=score, level=level)  # type: ignore[arg-type]
-    except TypeError:
-
-        @dataclass
-        class _RiskScoreResult:
-            score: float
-            level: str
-
-        RiskScoreResult = _RiskScoreResult  # type: ignore
-        return RiskScoreResult(score=score, level=level)
+    """Return a :class:`RiskScoreResult` with the given values."""
+    return RiskScoreResult(score=score, level=level)
 
 
 def calculate_risk_score(
