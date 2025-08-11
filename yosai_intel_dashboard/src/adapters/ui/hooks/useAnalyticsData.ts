@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAnalyticsStore } from '../state/store';
 import { AnalyticsData } from '../state/analyticsSlice';
 
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
 
-const useAnalyticsData = (sourceType: string) => {
+export const useAnalyticsData = (sourceType: string) => {
   const { analyticsCache, setAnalytics } = useAnalyticsStore();
   const controllerRef = useRef<AbortController | null>(null);
   const [loading, setLoading] = useState(!analyticsCache[sourceType]);
@@ -59,4 +59,3 @@ const useAnalyticsData = (sourceType: string) => {
   return { data, loading, error, refresh } as const;
 };
 
-export default useAnalyticsData;
