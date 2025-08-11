@@ -8,7 +8,7 @@ import (
 
 // RBACService retrieves and caches permissions for subjects.
 type RBACService struct {
-	mu    sync.Mutex
+	mu    sync.RWMutex
 	ttl   time.Duration
 	cache map[string]cacheEntry
 	store PermissionStore
@@ -34,14 +34,14 @@ func NewWithStore(store PermissionStore, ttl time.Duration) *RBACService {
 
 // Permissions returns the permission list for a subject, populating the cache if needed.
 func (r *RBACService) Permissions(ctx context.Context, subject string) ([]string, error) {
-	r.mu.Lock()
+	r.mu.RLock()
 	entry, ok := r.cache[subject]
 	if ok && time.Now().Before(entry.exp) {
 		perms := append([]string(nil), entry.perms...)
-		r.mu.Unlock()
+		r.mu.RUnlock()
 		return perms, nil
 	}
-	r.mu.Unlock()
+	r.mu.RUnlock()
 
 	perms, err := r.fetchPermissions(ctx, subject)
 	if err != nil {
@@ -63,6 +63,20 @@ func (r *RBACService) fetchPermissions(ctx context.Context, subject string) ([]s
 
 // HasPermission checks if subject has the given permission.
 func (r *RBACService) HasPermission(ctx context.Context, subject, perm string) (bool, error) {
+	r.mu.RLock()
+	entry, ok := r.cache[subject]
+	if ok && time.Now().Before(entry.exp) {
+		perms := append([]string(nil), entry.perms...)
+		r.mu.RUnlock()
+		for _, p := range perms {
+			if p == perm {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	r.mu.RUnlock()
+
 	perms, err := r.Permissions(ctx, subject)
 	if err != nil {
 		return false, err
