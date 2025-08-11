@@ -2,6 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: analytics-service
+  labels:
+    app: analytics-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8001"
 spec:
   selector:
     app: analytics-service
@@ -13,6 +19,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: analytics-service-headless
+  labels:
+    app: analytics-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8001"
 spec:
   clusterIP: None
   selector:
@@ -36,6 +48,10 @@ spec:
     metadata:
       labels:
         app: analytics-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
     spec:
       securityContext:
         runAsUser: 1000
