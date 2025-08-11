@@ -71,22 +71,13 @@ safe_import('config', config_stub)
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_startup_requires_jwt_secret(monkeypatch):
-    class DummySecrets:
-        def get_secret(self, key):
-            raise RuntimeError("missing")
-
-        def invalidate(self, key=None):
-            pass
-
-    secrets_mod = types.ModuleType("services.common.secrets")
-    secrets_mod.get_secret = DummySecrets().get_secret
-    secrets_mod.invalidate_secret = lambda key=None: None
-    safe_import('services.common.secrets', secrets_mod)
+    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
 
     app_spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",
         SERVICES_PATH / "analytics_microservice" / "app.py",
     )
     app_module = importlib.util.module_from_spec(app_spec)
+    app_spec.loader.exec_module(app_module)
     with pytest.raises(RuntimeError):
-        app_spec.loader.exec_module(app_module)
+        await app_module._startup()

@@ -6,7 +6,7 @@ import types
 import pytest
 
 
-def load_app(jwt_secret: str):
+def load_app(jwt_secret: str | None):
     if "scipy" not in sys.modules:
         scipy_stub = types.ModuleType("scipy")
         scipy_stub.stats = types.ModuleType("scipy.stats")
@@ -22,7 +22,14 @@ def load_app(jwt_secret: str):
 
 
 @pytest.mark.asyncio
-async def test_startup_fails_on_placeholder():
-    module, _, _ = load_app(jwt_secret="change-me")
+async def test_startup_fails_without_secret():
+    module, _, _ = load_app(jwt_secret=None)
     with pytest.raises(RuntimeError):
         await module._startup()
+
+
+@pytest.mark.asyncio
+async def test_startup_succeeds_with_secret():
+    module, _, _ = load_app(jwt_secret="super-secret")
+    await module._startup()
+    assert module._jwt_secret() == "super-secret"

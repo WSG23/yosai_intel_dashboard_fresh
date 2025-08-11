@@ -29,7 +29,7 @@ services_stub.__path__ = [str(SERVICES_PATH)]
 sys.modules["services"] = services_stub
 
 
-def load_app(jwt_secret: str = "secret") -> tuple:
+def load_app(jwt_secret: str | None = "secret") -> tuple:
 
     otel_stub = types.ModuleType("opentelemetry.instrumentation.fastapi")
     otel_stub.FastAPIInstrumentor = types.SimpleNamespace(
@@ -385,7 +385,10 @@ def load_app(jwt_secret: str = "secret") -> tuple:
     sys.modules.setdefault("tracing", types.ModuleType("tracing"))
     sys.modules.setdefault("hvac", types.ModuleType("hvac"))
 
-    os.environ["JWT_SECRET"] = jwt_secret
+    if jwt_secret is not None:
+        os.environ["JWT_SECRET_KEY"] = jwt_secret
+    else:
+        os.environ.pop("JWT_SECRET_KEY", None)
 
     spec = importlib.util.spec_from_file_location(
         "services.analytics_microservice.app",
