@@ -79,6 +79,12 @@ the testing protocols, container builder and available test doubles.
 
 Please ensure tests and linters pass before opening a pull request.
 
+## Dependency Updates
+
+Automated pull requests labeled `deps` are created by Dependabot to keep
+dependencies current. Maintainers review these weekly and merge them once
+continuous integration checks succeed.
+
 ## Generating Protobuf Code
 
 Protobuf service definitions live under `proto/`. When the `.proto` files
