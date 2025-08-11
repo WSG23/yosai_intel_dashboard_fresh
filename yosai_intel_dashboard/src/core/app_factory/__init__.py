@@ -14,6 +14,9 @@ from yosai_intel_dashboard.src.adapters.ui.components.ui.navbar import (
 from yosai_intel_dashboard.src.infrastructure.error_handling.handlers import (
     register_error_handlers,
 )
+from yosai_intel_dashboard.src.core.app_factory.health import (
+    register_health_endpoints,
+)
 
 
 def create_app(mode=None, **kwargs):
@@ -29,6 +32,7 @@ def create_app(mode=None, **kwargs):
     )
 
     register_error_handlers(app.server)
+    register_health_endpoints(app.server)
     # Simple working layout
     app.layout = html.Div(
         [
