@@ -18,7 +18,14 @@ type Config struct {
 	TracingEndpoint string `yaml:"tracing_endpoint"`
 }
 
-var schemaPath = "../../config/service.schema.yaml"
+const defaultSchemaPath = "../../config/service.schema.yaml"
+
+func schemaPath() string {
+	if path := os.Getenv("YOSAI_SCHEMA_PATH"); path != "" {
+		return path
+	}
+	return defaultSchemaPath
+}
 
 func LoadConfig(path string) (Config, error) {
 	var cfg Config
@@ -67,7 +74,7 @@ func validateConfig(yamlData []byte) error {
 	if err != nil {
 		return err
 	}
-	loader := gojsonschema.NewReferenceLoader("file://" + schemaPath)
+	loader := gojsonschema.NewReferenceLoader("file://" + schemaPath())
 	docLoader := gojsonschema.NewBytesLoader(jsonBytes)
 	result, err := gojsonschema.Validate(loader, docLoader)
 	if err != nil {

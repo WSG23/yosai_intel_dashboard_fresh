@@ -18,3 +18,7 @@ introduced in `go/framework`.
 The builder configures a zap logger, Prometheus metrics collector and Jaeger
 tracer. Custom implementations can be supplied via the `WithLogger`,
 `WithMetrics` and `WithTracer` methods before calling `Build`.
+
+Configuration is validated against `config/service.schema.yaml` by default.
+Set the `YOSAI_SCHEMA_PATH` environment variable to point to a different
+schema file when needed.
