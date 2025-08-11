@@ -120,7 +120,7 @@ install_compatible_packages() {
     
     # Install NumPy first with compatible version
     print_info "Installing compatible NumPy version..."
-    pip3 install "numpy>=1.21.6,<1.28.0"
+    pip3 install "numpy>=1.23,<2.0"
     
     # Install SciPy
     print_info "Installing SciPy..."
@@ -161,7 +161,7 @@ install_project_requirements() {
         
         cat > requirements_fixed.txt << 'EOF'
 # Core dependencies with compatible versions
-numpy>=1.21.6,<1.28.0
+numpy>=1.23,<2.0
 scipy>=1.7.0,<1.12.0
 pandas>=1.3.0
 scikit-learn>=1.0.0
