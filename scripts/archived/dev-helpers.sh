@@ -7,6 +7,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=../common.sh
+source "${ROOT_DIR}/common.sh"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
 
 port_forward() {
@@ -43,7 +45,7 @@ check_health() {
   local all_ok=0
   for url in "${endpoints[@]}"; do
     echo "Checking $url ..."
-    if curl -fs "$url" >/dev/null; then
+    if curl_with_timeout "$url" >/dev/null; then
       echo "✅ $url healthy"
     else
       echo "❌ $url failed"
@@ -63,7 +65,7 @@ run_load_test() {
   else
     echo "hey not installed, using curl loop" >&2
     for ((i=1;i<=total;i++)); do
-      curl -fs "$url" >/dev/null &
+      curl_with_timeout "$url" >/dev/null &
       ((i % concurrent == 0)) && wait
     done
     wait

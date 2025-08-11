@@ -21,6 +21,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           npm ci
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: ShellCheck
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git ls-files '*.sh')
+          if [ "${#files[@]}" -gt 0 ]; then shellcheck -x "${files[@]}"; else echo "No shell scripts found."; fi
       - name: Lint
         run: |
           black . --check
