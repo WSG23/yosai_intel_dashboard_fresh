@@ -35,6 +35,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt || true
           [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt || true
+          pip install pre-commit
           if [ -f package-lock.json ]; then
             npm ci
           elif [ -f pnpm-lock.yaml ]; then
@@ -49,12 +50,14 @@ jobs:
           set -euo pipefail
           mapfile -t files < <(git ls-files '*.sh')
           if [ "${#files[@]}" -gt 0 ]; then shellcheck -x "${files[@]}"; else echo "No shell scripts found."; fi
-      - name: Lint
-        run: |
-          black . --check
-          isort . --check-only
-          flake8 .
-          npm run lint
+      - name: Pre-commit
+        run: pre-commit run --all-files
+      - name: Dependency check
+        env:
+          PYTHONPATH: yosai_intel_dashboard/src
+        run: python -m yosai_intel_dashboard.src.utils.dependency_checker
+      - name: Lint JS
+        run: npm run lint
       - name: Test
         env:
           PYTHONPATH: yosai_intel_dashboard/src

@@ -1,4 +1,5 @@
 """Repository for loading requirement specifications."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -29,6 +30,17 @@ class FileRequirementsRepository:
                 packages.append(pkg)
         return packages
 
+    def get_unpinned_packages(self) -> List[str]:
+        """Return any requirement lines that do not pin an exact version."""
+        unpinned: List[str] = []
+        with self._path.open("r", encoding="utf-8", errors="ignore") as fh:
+            for line in fh:
+                raw = line.strip()
+                if not raw or raw.startswith("#"):
+                    continue
+                if "==" not in raw:
+                    unpinned.append(raw.split("#")[0].strip())
+        return unpinned
+
 
 __all__ = ["RequirementsRepository", "FileRequirementsRepository"]
-

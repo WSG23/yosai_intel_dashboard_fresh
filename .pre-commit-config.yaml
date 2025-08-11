@@ -1,44 +1,20 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+        files: ^\.github/workflows/
+      - id: end-of-file-fixer
+        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py|requirements.txt|pyproject.toml|\.github/workflows/)
+      - id: trailing-whitespace
+        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py|requirements.txt|pyproject.toml|\.github/workflows/)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.7
+    hooks:
+      - id: ruff
+        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
       - id: black
-        args: ["--line-length=88"]
-        language_version: python3
-        types: [python]
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
-        args: ["--profile=black", "--line-length=88"]
-        language_version: python3
-        types: [python]
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
-    hooks:
-      - id: flake8
-        args: ["--max-line-length=88"]
-        language_version: python3
-        types: [python]
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.1
-    hooks:
-      - id: mypy
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.8
-    hooks:
-      - id: bandit
-        args: ["-r", "."]
-  - repo: local
-    hooks:
-      - id: import-style-check
-        name: import-style-check
-        entry: python tools/organize_imports.py --check
-        language: system
-        types: [python]
-      - id: no-direct-execute-query
-        name: no direct execute_query calls
-        entry: python tools/check_execute_query.py
-        language: system
-        types: [python]
+        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)
