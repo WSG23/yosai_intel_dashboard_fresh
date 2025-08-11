@@ -114,6 +114,15 @@ async_queries_stub.fetch_dashboard_summary = _fetch_summary
 async_queries_stub.fetch_access_patterns = _fetch_patterns
 safe_import('services.analytics_microservice.async_queries', async_queries_stub)
 
+# Ensure base health check always succeeds during tests
+health_stub = types.ModuleType(
+    "yosai_intel_dashboard.src.core.app_factory.health"
+)
+health_stub.check_critical_dependencies = lambda: (True, None)
+safe_import(
+    "yosai_intel_dashboard.src.core.app_factory.health", health_stub
+)
+
 app_spec = importlib.util.spec_from_file_location(
     "services.analytics_microservice.app",
     SERVICES_PATH / "analytics_microservice" / "app.py",
@@ -162,4 +171,4 @@ def test_health_endpoint():
 
     resp = client.get("/health")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok"}
+    assert resp.json() == {"status": "healthy"}

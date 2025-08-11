@@ -129,7 +129,7 @@ def load_module():
 
             @self.app.get("/health")
             async def _health():
-                return {"status": "ok"}
+                return {"status": "healthy"}
 
             @self.app.get("/health/live")
             async def _live():
@@ -224,7 +224,7 @@ async def test_health_endpoint(monkeypatch):
     ) as client:
         resp = await client.get("/health")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok"}
+    assert resp.json() == {"status": "healthy"}
 
 
 @pytest.mark.asyncio
