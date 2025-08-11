@@ -1,0 +1,3 @@
+- name: deps
+  description: "Dependency updates"
+  color: "0E8A16"
