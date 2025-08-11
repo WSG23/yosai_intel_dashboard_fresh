@@ -24,7 +24,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Hadolint
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: "Dockerfile,Dockerfile.gateway"
+      - name: Hadolint (Dockerfiles)
+        run: |
+          set -euo pipefail
+          files=("Dockerfile" "Dockerfile.gateway")
+          for f in "${files[@]}"; do
+            if [[ -f "$f" ]]; then
+              echo "Linting $f"
+              docker run --rm -i hadolint/hadolint < "$f"
+            else
+              echo "Skip $f (not found)"
+            fi
+          done
