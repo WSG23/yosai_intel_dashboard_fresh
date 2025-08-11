@@ -3,8 +3,7 @@ from __future__ import annotations
 """Device learning feature callbacks."""
 
 import pandas as pd
-from dash import html
-from dash._callback_context import callback_context
+from dash import callback_context, html
 from dash.dependencies import Input, Output
 
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import (

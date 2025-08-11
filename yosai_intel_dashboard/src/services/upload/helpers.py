@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -12,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def get_trigger_id() -> str:
     """Return the triggered Dash callback identifier."""
-    from dash._callback_context import callback_context
+    from dash import callback_context
 
     ctx = callback_context
     return ctx.triggered[0]["prop_id"] if ctx.triggered else ""
