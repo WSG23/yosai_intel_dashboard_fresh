@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee AS builder
 WORKDIR /app
 
 # Install system packages
@@ -28,7 +28,7 @@ RUN python -m venv /opt/venv && \
      echo "dash-bootstrap-components" >> requirements.essential.txt && \
      pip install --no-cache-dir -r requirements.essential.txt)
 
-FROM python:3.11-slim
+FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
@@ -51,8 +51,10 @@ RUN set -eux; \
       useradd -m -u "${UID}" -g "${GID}" appuser || true; \
     fi
 WORKDIR /app
-COPY . /app
-RUN chmod +x docker-entrypoint.sh && chown -R appuser:appuser /app
+COPY --chown=appuser:appuser . /app
+RUN chmod 0755 docker-entrypoint.sh \
+    && find /app -type f -name '*.sh' -exec chmod 0755 {} \; \
+    && find /app -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.conf' \) -exec chmod 0644 {} \;
 USER appuser
 
 EXPOSE 8050 8000
