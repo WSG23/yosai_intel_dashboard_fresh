@@ -17,7 +17,7 @@ export const useUpload = () => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const controllers = useRef<Record<string, AbortController>>({});
+  const controllers = useRef<Map<string, AbortController>>(new Map());
   const polls = useRef<Record<string, NodeJS.Timeout>>({});
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -47,8 +47,11 @@ export const useUpload = () => {
 
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
-    controllers.current[id]?.abort();
-    delete controllers.current[id];
+    const controller = controllers.current.get(id);
+    if (controller) {
+      controller.abort();
+      controllers.current.delete(id);
+    }
     if (polls.current[id]) {
       clearInterval(polls.current[id]);
       delete polls.current[id];
@@ -73,7 +76,7 @@ export const useUpload = () => {
     );
 
     const controller = new AbortController();
-    controllers.current[uploadedFile.id] = controller;
+    controllers.current.set(uploadedFile.id, controller);
 
     try {
       const response = await api.post<{ job_id: string }>(
@@ -98,7 +101,7 @@ export const useUpload = () => {
           if (res.done) {
             clearInterval(poll);
             delete polls.current[uploadedFile.id];
-            delete controllers.current[uploadedFile.id];
+            controllers.current.delete(uploadedFile.id);
             setFiles((prev) =>
               prev.map((f) =>
                 f.id === uploadedFile.id
@@ -113,7 +116,7 @@ export const useUpload = () => {
           if (controller.signal.aborted) {
             // cancellation handled separately
           } else {
-            delete controllers.current[uploadedFile.id];
+            controllers.current.delete(uploadedFile.id);
             setFiles((prev) =>
               prev.map((f) =>
                 f.id === uploadedFile.id
@@ -130,7 +133,7 @@ export const useUpload = () => {
       }, 1000);
       polls.current[uploadedFile.id] = poll;
     } catch (err: unknown) {
-      delete controllers.current[uploadedFile.id];
+      controllers.current.delete(uploadedFile.id);
       const message = controller.signal.aborted
         ? 'Cancelled'
         : err instanceof Error
@@ -169,10 +172,10 @@ export const useUpload = () => {
   }, [files, uploadFile]);
 
   const cancelUpload = useCallback((id: string) => {
-    const controller = controllers.current[id];
+    const controller = controllers.current.get(id);
     if (controller) {
       controller.abort();
-      delete controllers.current[id];
+      controllers.current.delete(id);
     }
     if (polls.current[id]) {
       clearInterval(polls.current[id]);
