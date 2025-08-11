@@ -84,11 +84,21 @@ class DriftMonitor:
             current = self.live_supplier()
             metrics = detect_drift(base, current)
             logger.info("Drift metrics: %s", metrics)
+        except Exception:  # pragma: no cover - defensive
+            logger.exception("Drift monitor evaluation failed")
+            return
+
+        try:
             self.metric_store(metrics)
-            self.history.append(metrics)
+        except Exception:  # pragma: no cover - defensive
+            logger.exception("Drift monitor metric persistence failed")
+
+        self.history.append(metrics)
+
+        try:
             self._check_thresholds(metrics)
-        except Exception as e:
-            logger.error("Drift monitoring run failed: %s", e, exc_info=True)
+        except Exception:  # pragma: no cover - defensive
+            logger.exception("Drift monitor threshold check failed")
 
     # ------------------------------------------------------------------
     def start(self) -> None:
