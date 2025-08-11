@@ -9,6 +9,8 @@ be submitted to an existing Flink cluster.
 
 from __future__ import annotations
 
+import logging
+import os
 from typing import Optional
 
 from pyflink.datastream import StreamExecutionEnvironment
@@ -18,6 +20,8 @@ from pyflink.table import (
 )
 
 __all__ = ["run_kafka_analytics_job", "run_kafka_to_database_job"]
+
+logger = logging.getLogger(__name__)
 
 
 def _sanitize(value: str) -> str:
@@ -30,11 +34,20 @@ def _create_table_environment() -> StreamTableEnvironment:
     """Create a streaming :class:`StreamTableEnvironment` instance.
 
     The helper centralises environment creation so that each job uses the same
-    configuration.  A parallelism of ``1`` is set for deterministic examples.
+    configuration. Parallelism defaults to ``1`` but can be overridden via the
+    ``FLINK_PARALLELISM`` environment variable.
     """
 
     env = StreamExecutionEnvironment.get_execution_environment()
-    env.set_parallelism(1)
+    parallelism = 1
+    try:
+        parallelism = int(os.getenv("FLINK_PARALLELISM", "1"))
+    except ValueError:  # pragma: no cover - best effort logging
+        logger.warning(
+            "Invalid FLINK_PARALLELISM=%r; falling back to 1",
+            os.getenv("FLINK_PARALLELISM"),
+        )
+    env.set_parallelism(parallelism)
     settings = EnvironmentSettings.new_instance().in_streaming_mode().build()
     return StreamTableEnvironment.create(env, environment_settings=settings)
 
