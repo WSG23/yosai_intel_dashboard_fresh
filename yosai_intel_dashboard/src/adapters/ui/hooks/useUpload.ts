@@ -1,6 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import { api } from '../api/client';
-import { UploadedFile, ProcessingStatus as Status } from '../components/upload/types';
+import {
+  UploadedFile,
+  ProcessingStatus as Status,
+} from '../components/upload/types';
 
 const CONCURRENCY_LIMIT = parseInt(
   process.env.REACT_APP_UPLOAD_CONCURRENCY || '3',
@@ -46,7 +49,12 @@ export const useUpload = () => {
     setFiles((prev) =>
       prev.map((f) =>
         f.id === uploadedFile.id
-          ? { ...f, status: 'uploading' as Status, progress: 0, error: undefined }
+          ? {
+              ...f,
+              status: 'uploading' as Status,
+              progress: 0,
+              error: undefined,
+            }
           : f,
       ),
     );
@@ -108,11 +116,13 @@ export const useUpload = () => {
         }
       }, 1000);
       polls.current[uploadedFile.id] = poll;
-    } catch (error: any) {
+    } catch (err: unknown) {
       delete controllers.current[uploadedFile.id];
       const message = controller.signal.aborted
         ? 'Cancelled'
-        : error?.message || 'Unknown error';
+        : err instanceof Error
+          ? err.message
+          : 'Unknown error';
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadedFile.id

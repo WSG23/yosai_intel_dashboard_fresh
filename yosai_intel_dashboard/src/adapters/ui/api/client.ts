@@ -29,7 +29,8 @@ export interface CsrfHeaders {
 
 export type ApiHeaders = Record<string, string> & AuthHeaders & CsrfHeaders;
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
 const TIMEOUT = 30000;
 
 const requestQueue: Array<() => Promise<any>> = [];
@@ -97,7 +98,9 @@ function generateRequestId(): string {
 
 function buildUrl(base: string, params?: Record<string, any>): string {
   if (!params) return base;
-  const search = new URLSearchParams(params as Record<string, string>).toString();
+  const search = new URLSearchParams(
+    params as Record<string, string>,
+  ).toString();
   if (!search) return base;
   return `${base}${base.includes('?') ? '&' : '?'}${search}`;
 }
@@ -147,7 +150,7 @@ function handleErrorResponse(data: any, status: number, url: string): never {
       message: msg,
       status,
       url,
-    })
+    }),
   );
 
   throw new HttpError(msg, status, code);
@@ -155,20 +158,29 @@ function handleErrorResponse(data: any, status: number, url: string): never {
 
 export async function apiRequest<T = any>(
   config: ApiRequestConfig,
-  retries = 3
+  retries = 3,
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
   for (let i = 0; i < retries; i++) {
-    const { url, data, params, headers, responseType = 'json', ...rest } = config;
+    const {
+      url,
+      data,
+      params,
+      headers,
+      responseType = 'json',
+      ...rest
+    } = config;
 
     const finalUrl = buildUrl(
       url.startsWith('http') ? url : `${API_BASE_URL}${url}`,
-      params
+      params,
     );
 
     const finalHeaders: ApiHeaders = {
       Accept: 'application/json',
-      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+      ...(data instanceof FormData
+        ? {}
+        : { 'Content-Type': 'application/json' }),
       ...(headers as ApiHeaders),
       'X-Request-ID': generateRequestId(),
       'X-Request-Time': new Date().toISOString(),
@@ -206,10 +218,13 @@ export async function apiRequest<T = any>(
 
       const payload = (await response.json()) as ApiResponse<T>;
       if (payload.status === 'error') {
-        throw new HttpError(payload.message || 'Request failed', response.status);
+        throw new HttpError(
+          payload.message || 'Request failed',
+          response.status,
+        );
       }
       return payload.data as T;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeout);
       lastError = error;
       if (error instanceof HttpError) {
@@ -219,7 +234,7 @@ export async function apiRequest<T = any>(
       } else {
         if (!isOnline) {
           toast.error(
-            'You are offline. Request will be retried when connection is restored.'
+            'You are offline. Request will be retried when connection is restored.',
           );
           requestQueue.push(() => apiRequest(config));
           return Promise.reject(error);
@@ -230,12 +245,14 @@ export async function apiRequest<T = any>(
             level: 'error',
             message: 'Network error',
             url: finalUrl,
-          })
+          }),
         );
       }
 
       if (i < retries - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, i)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * Math.pow(2, i)),
+        );
       }
     }
   }
@@ -243,26 +260,29 @@ export async function apiRequest<T = any>(
 }
 
 export const api = {
-  get: <T = any>(url: string, config?: Omit<ApiRequestConfig, 'url' | 'method'>) =>
-    apiRequest<T>({ ...config, method: 'GET', url }),
+  get: <T = any>(
+    url: string,
+    config?: Omit<ApiRequestConfig, 'url' | 'method'>,
+  ) => apiRequest<T>({ ...config, method: 'GET', url }),
   post: <T = any>(
     url: string,
     data?: any,
-    config?: Omit<ApiRequestConfig, 'url' | 'method' | 'data'>
+    config?: Omit<ApiRequestConfig, 'url' | 'method' | 'data'>,
   ) => apiRequest<T>({ ...config, method: 'POST', url, data }),
   put: <T = any>(
     url: string,
     data?: any,
-    config?: Omit<ApiRequestConfig, 'url' | 'method' | 'data'>
+    config?: Omit<ApiRequestConfig, 'url' | 'method' | 'data'>,
   ) => apiRequest<T>({ ...config, method: 'PUT', url, data }),
-  delete: <T = any>(url: string, config?: Omit<ApiRequestConfig, 'url' | 'method'>) =>
-    apiRequest<T>({ ...config, method: 'DELETE', url }),
+  delete: <T = any>(
+    url: string,
+    config?: Omit<ApiRequestConfig, 'url' | 'method'>,
+  ) => apiRequest<T>({ ...config, method: 'DELETE', url }),
   patch: <T = any>(
     url: string,
     data?: any,
-    config?: Omit<ApiRequestConfig, 'url' | 'method' | 'data'>
+    config?: Omit<ApiRequestConfig, 'url' | 'method' | 'data'>,
   ) => apiRequest<T>({ ...config, method: 'PATCH', url, data }),
 };
 
 export type { ApiError, ApiResponse, AuthHeaders, CsrfHeaders };
-
