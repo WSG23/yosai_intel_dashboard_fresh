@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strconv"
@@ -19,7 +18,7 @@ func Load(path string) (*pb.YosaiConfig, error) {
 	var err error
 
 	if path != "" {
-		data, err = ioutil.ReadFile(path)
+		data, err = os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
