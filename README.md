@@ -1729,6 +1729,14 @@ make test-quick  # run tests without coverage
 make test-cov    # run tests with coverage report
 ```
 
+For frontend UI tests:
+
+```bash
+npm test          # run all Vitest tests
+npm run test:watch  # watch mode
+npm run test:ui     # run tests in src directory
+```
+
 ### Docker
 ```bash
 docker compose up --build

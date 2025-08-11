@@ -18,7 +18,13 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["react", "react-dom", "react-router-dom"]
+    "types": [
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "vitest/globals",
+      "testing-library__jest-dom"
+    ]
   },
   "include": ["yosai_intel_dashboard/src/adapters/ui"]
 }
