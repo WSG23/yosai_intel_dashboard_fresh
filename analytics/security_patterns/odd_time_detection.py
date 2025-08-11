@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Dict, Iterator
 
-import numpy as np
 import pandas as pd
 
 from .pattern_detection import Threat
@@ -68,7 +67,6 @@ def detect_odd_time(df: pd.DataFrame) -> Iterator[Threat]:
         for row in first_offenders.itertuples(index=False)
     )
     return (t for t in threats)
-
 
 
 __all__ = ["BaselineMetricsDB", "detect_odd_time"]
