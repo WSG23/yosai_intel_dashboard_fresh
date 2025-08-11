@@ -99,9 +99,12 @@ def test_log_feature_flag_updated(monkeypatch):
     )
     entry = dummy.calls[-1]
     assert entry["actor_user_id"] == "user2"
-    assert (
-        entry.get("old_value") or entry.get("metadata", {}).get("old_value")
-    ) is False
+    old_val = (
+        entry["old_value"]
+        if "old_value" in entry
+        else entry.get("metadata", {}).get("old_value")
+    )
+    assert old_val is False
     new_val = entry.get("new_value") or entry.get("metadata", {}).get("new_value")
     assert new_val is True
     assert (entry.get("reason") or entry.get("metadata", {}).get("reason")) == "update"
@@ -117,9 +120,12 @@ def test_log_feature_flag_deleted(monkeypatch):
     )
     entry = dummy.calls[-1]
     assert entry["actor_user_id"] == "user3"
-    assert (
-        entry.get("old_value") or entry.get("metadata", {}).get("old_value")
-    ) is True
+    old_val = (
+        entry["old_value"]
+        if "old_value" in entry
+        else entry.get("metadata", {}).get("old_value")
+    )
+    assert old_val is True
     new_val = entry.get("new_value") or entry.get("metadata", {}).get("new_value")
     assert new_val in (None, False)
     assert (entry.get("reason") or entry.get("metadata", {}).get("reason")) == "cleanup"
@@ -166,7 +172,16 @@ def test_audit_logger_errors_are_handled(monkeypatch, caplog):
     module, _dummy = load_module(monkeypatch)
 
     class BrokenLogger(DummyAuditLogger):
-        def log_action(self, **kwargs):
+        def log_feature_flag_created(self, **kwargs):
+            raise RuntimeError("fail")
+
+        def log_feature_flag_updated(self, **kwargs):
+            raise RuntimeError("fail")
+
+        def log_feature_flag_deleted(self, **kwargs):
+            raise RuntimeError("fail")
+
+        def log_action(self, **kwargs):  # fallback
             raise RuntimeError("fail")
 
         def search_audit_logs(self, **kwargs):

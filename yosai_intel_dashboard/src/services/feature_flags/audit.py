@@ -28,14 +28,23 @@ def log_feature_flag_created(
         return
     metadata = {"new_value": new_value, "reason": reason, "timestamp": timestamp}
     try:
-        audit_logger.log_action(
-            actor_user_id=actor_user_id,
-            action_type="FEATURE_FLAG_CREATED",
-            resource_type="feature_flag",
-            resource_id=name,
-            description=f"Feature flag {name} created",
-            metadata=metadata,
-        )
+        if hasattr(audit_logger, "log_feature_flag_created"):
+            audit_logger.log_feature_flag_created(
+                name=name,
+                new_value=new_value,
+                actor_user_id=actor_user_id,
+                reason=reason,
+                timestamp=timestamp,
+            )
+        else:
+            audit_logger.log_action(
+                actor_user_id=actor_user_id,
+                action_type="FEATURE_FLAG_CREATED",
+                resource_type="feature_flag",
+                resource_id=name,
+                description=f"Feature flag {name} created",
+                metadata=metadata,
+            )
     except Exception:  # pragma: no cover - defensive
         logger.exception("Failed to audit feature flag creation")
 
@@ -60,14 +69,24 @@ def log_feature_flag_updated(
         "timestamp": timestamp,
     }
     try:
-        audit_logger.log_action(
-            actor_user_id=actor_user_id,
-            action_type="FEATURE_FLAG_UPDATED",
-            resource_type="feature_flag",
-            resource_id=name,
-            description=f"Feature flag {name} updated",
-            metadata=metadata,
-        )
+        if hasattr(audit_logger, "log_feature_flag_updated"):
+            audit_logger.log_feature_flag_updated(
+                name=name,
+                old_value=old_value,
+                new_value=new_value,
+                actor_user_id=actor_user_id,
+                reason=reason,
+                timestamp=timestamp,
+            )
+        else:
+            audit_logger.log_action(
+                actor_user_id=actor_user_id,
+                action_type="FEATURE_FLAG_UPDATED",
+                resource_type="feature_flag",
+                resource_id=name,
+                description=f"Feature flag {name} updated",
+                metadata=metadata,
+            )
     except Exception:  # pragma: no cover - defensive
         logger.exception("Failed to audit feature flag update")
 
@@ -85,14 +104,23 @@ def log_feature_flag_deleted(
         return
     metadata = {"old_value": old_value, "reason": reason, "timestamp": timestamp}
     try:
-        audit_logger.log_action(
-            actor_user_id=actor_user_id,
-            action_type="FEATURE_FLAG_DELETED",
-            resource_type="feature_flag",
-            resource_id=name,
-            description=f"Feature flag {name} deleted",
-            metadata=metadata,
-        )
+        if hasattr(audit_logger, "log_feature_flag_deleted"):
+            audit_logger.log_feature_flag_deleted(
+                name=name,
+                old_value=old_value,
+                actor_user_id=actor_user_id,
+                reason=reason,
+                timestamp=timestamp,
+            )
+        else:
+            audit_logger.log_action(
+                actor_user_id=actor_user_id,
+                action_type="FEATURE_FLAG_DELETED",
+                resource_type="feature_flag",
+                resource_id=name,
+                description=f"Feature flag {name} deleted",
+                metadata=metadata,
+            )
     except Exception:  # pragma: no cover - defensive
         logger.exception("Failed to audit feature flag deletion")
 
