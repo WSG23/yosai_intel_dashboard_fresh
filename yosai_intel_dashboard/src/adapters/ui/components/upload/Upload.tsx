@@ -4,7 +4,10 @@ import { Upload as UploadIcon } from "lucide-react";
 import { FilePreview } from "./FilePreview";
 import { ColumnMappingModal } from "./ColumnMappingModal";
 import { DeviceMappingModal } from "./DeviceMappingModal";
-import { UploadedFile, FileData } from "./types";
+import {
+  FileData,
+  UploadedFile,
+} from "./types";
 import useUpload from "../../hooks/useUpload";
 
 const Upload: React.FC = () => {
