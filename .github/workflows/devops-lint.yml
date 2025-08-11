@@ -25,6 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Hadolint (Dockerfiles)
+        shell: bash
         run: |
           set -euo pipefail
           files=("Dockerfile" "Dockerfile.gateway")
