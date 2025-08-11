@@ -11,7 +11,7 @@ cachetools==6.1.0
 websockets==11.0.3
 plotly==5.15.0
 pandas==2.1.4
-numpy==1.26.4
+numpy>=1.23,<2.0
 Authlib==1.6.1
 python-jose==3.5.0
 argon2-cffi==23.1.0
