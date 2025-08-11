@@ -12,13 +12,12 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
-from typing import Iterable
 
 import redis
 from flask import Blueprint, request
 from flask_apispec import doc
 from flask_wtf.csrf import validate_csrf
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from middleware.rate_limit import RedisRateLimiter, rate_limit
 from yosai_intel_dashboard.src.error_handling import (
@@ -26,11 +25,11 @@ from yosai_intel_dashboard.src.error_handling import (
     ErrorHandler,
     api_error_response,
 )
-from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
 from yosai_intel_dashboard.src.infrastructure.config.loader import (
     ConfigurationLoader,
 )
 from yosai_intel_dashboard.src.services.data_processing.file_handler import FileHandler
+from yosai_intel_dashboard.src.services.upload.file_validator import FileValidator
 from yosai_intel_dashboard.src.utils.pydantic_decorators import (
     validate_input,
     validate_output,
@@ -66,7 +65,6 @@ class UploadRequestSchema(BaseModel):
                 }
             ]
         }
-    )
 
 
 class UploadResultSchema(BaseModel):
@@ -138,6 +136,7 @@ def _decode_base64(content: str) -> tuple[str, bytes]:
 # Blueprint factory
 # ---------------------------------------------------------------------------
 
+
 def create_upload_blueprint(
     storage_dir: str | Path,
     *,
@@ -166,7 +165,7 @@ def create_upload_blueprint(
     if validator is None:
         validator = FileHandler().validator
 
-    cfg = UploadConfig()
+    file_validator = FileValidator(storage_path)
 
     @upload_bp.route("/v1/upload", methods=["POST"])
     @doc(
@@ -180,7 +179,7 @@ def create_upload_blueprint(
         },
     )
     @validate_input(UploadRequestSchema)
-    @validate_output(UploadResponse)
+    @validate_output(UploadResponseSchema)
     @rate_limit(rate_limiter)
     def upload_files(payload: UploadRequestSchema):
         """Validate and persist uploaded files."""
@@ -223,19 +222,13 @@ def create_upload_blueprint(
 
                     data = file.read()
                     try:
+                        file_validator.validate(filename, mime, data)
                         res = validator.validate_file_upload(filename, data)
                         if not res.valid:
                             raise ValueError(", ".join(res.issues or []))
                     except Exception as exc:
                         return api_error_response(
                             exc, ErrorCategory.INVALID_INPUT, handler=err_handler
-                        )
-
-                    if len(data) > cfg.max_file_size_bytes:
-                        return api_error_response(
-                            ValueError("File too large"),
-                            ErrorCategory.INVALID_INPUT,
-                            handler=err_handler,
                         )
                     dest = stream_upload(storage_path, filename, data)
                     results.append({"filename": filename, "path": str(dest)})
@@ -265,19 +258,13 @@ def create_upload_blueprint(
                         )
 
                     try:
+                        file_validator.validate(filename, mime, data)
                         res = validator.validate_file_upload(filename, data)
                         if not res.valid:
                             raise ValueError(", ".join(res.issues or []))
                     except Exception as exc:
                         return api_error_response(
                             exc, ErrorCategory.INVALID_INPUT, handler=err_handler
-                        )
-
-                    if len(data) > cfg.max_file_size_bytes:
-                        return api_error_response(
-                            ValueError("File too large"),
-                            ErrorCategory.INVALID_INPUT,
-                            handler=err_handler,
                         )
 
                     dest = stream_upload(storage_path, filename, data)
@@ -306,4 +293,3 @@ __all__ = [
     "stream_upload",
     "ALLOWED_MIME_TYPES",
 ]
-
