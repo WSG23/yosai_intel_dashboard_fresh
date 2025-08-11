@@ -52,8 +52,9 @@
   cursor: pointer;
 }
 
+
 .source-select:focus-visible {
-  outline: 2px solid var(--color-text-primary);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -72,8 +73,9 @@
   transition: background-color 0.2s ease;
 }
 
+
 .export-button:focus-visible {
-  outline: 2px solid var(--color-text-primary);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -234,4 +236,10 @@
 .device-count {
   color: var(--color-primary);
   font-weight: 600;
+}
+
+.empty-state {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
 }

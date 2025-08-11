@@ -1,7 +1,33 @@
 import types
 import sys
 from pathlib import Path
-import pandas as pd
+import datetime as dt
+# Minimal pandas stub: provides to_datetime returning Timestamp-like object
+
+
+class _Timestamp(dt.datetime):
+    def to_pydatetime(self):
+        return self
+
+
+class _PandasStub:
+    DataFrame = object
+
+    @staticmethod
+    def to_datetime(value, utc=False):
+        ts = _Timestamp.fromisoformat(value.replace("Z", "+00:00"))
+        if utc:
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=dt.timezone.utc)
+            else:
+                ts = ts.astimezone(dt.timezone.utc)
+        return ts
+
+
+pd = _PandasStub()
+sys.modules['pandas'] = pd
+
+# pandas is optional; tests use simple lists instead of real DataFrames
 
 # Stub dependencies required by DataLoader
 controller_module = types.ModuleType('upload_controller')
@@ -29,7 +55,7 @@ class DummyController:
     def __init__(self):
         self.upload_processor = object()
 
-    def summarize_dataframe(self, df: pd.DataFrame):
+    def summarize_dataframe(self, df):
         return {
             "rows": len(df),
             "date_range": {"start": "2024-01-01", "end": "2024-01-02"},
@@ -41,8 +67,30 @@ class DummyProcessor:
 
 
 def test_summarize_dataframe_normalizes_dates():
-    df = pd.DataFrame({"a": [1]})
+    df = [1]
     loader = DataLoader(DummyController(), DummyProcessor())
     summary = loader.summarize_dataframe(df)
     assert summary["date_range"]["start"] == "2024-01-01T00:00:00+00:00"
     assert summary["date_range"]["end"] == "2024-01-02T00:00:00+00:00"
+
+
+class TZController:
+    def __init__(self):
+        self.upload_processor = object()
+
+    def summarize_dataframe(self, df):
+        return {
+            "rows": len(df),
+            "date_range": {
+                "start": "2024-01-01T00:00:00-05:00",
+                "end": "2024-01-02T00:00:00-05:00",
+            },
+        }
+
+
+def test_summarize_dataframe_normalizes_timezone_offsets():
+    df = [1]
+    loader = DataLoader(TZController(), DummyProcessor())
+    summary = loader.summarize_dataframe(df)
+    assert summary["date_range"]["start"] == "2024-01-01T05:00:00+00:00"
+    assert summary["date_range"]["end"] == "2024-01-02T05:00:00+00:00"

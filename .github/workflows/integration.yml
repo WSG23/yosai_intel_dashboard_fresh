@@ -1,0 +1,23 @@
+name: Integration Smoke Test
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and start services
+        run: docker compose -f dev/docker-compose.integration.yml up -d --build
+      - name: Run smoke tests
+        run: ./dev/scripts/integration_smoke.sh
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -f dev/docker-compose.integration.yml logs
+      - name: Tear down
+        if: always()
+        run: docker compose -f dev/docker-compose.integration.yml down

@@ -29,10 +29,18 @@ describe('Analytics page', () => {
     jest.clearAllMocks();
   });
 
-  it('shows loading spinner initially', async () => {
-    mockUseAnalyticsData.mockReturnValue({ data: null, loading: true, error: null, refresh: jest.fn() } as AnalyticsHookReturn);
+  it('shows loading spinner initially', () => {
+    mockUseAnalyticsData.mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+      refresh: jest.fn(),
+    } as AnalyticsHookReturn);
+
     render(<AnalyticsPage />);
-    expect(await screen.findByText(/loading analytics/i)).toBeInTheDocument();
+
+    // queryBy* used to assert presence without waiting
+    expect(screen.queryByText(/loading analytics/i)).toBeInTheDocument();
   });
 
   it('displays error state with retry button that refreshes', async () => {

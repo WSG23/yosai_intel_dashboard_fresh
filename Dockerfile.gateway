@@ -7,7 +7,7 @@ RUN go mod download
 COPY gateway/ .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway ./cmd/gateway
 
-FROM gcr.io/distroless/base-debian12
+FROM gcr.io/distroless/base-debian12 AS runtime
 WORKDIR /home/app
 COPY --from=build /out/gateway /usr/local/bin/gateway
 USER 1000:1000

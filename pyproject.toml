@@ -21,3 +21,6 @@ diagnose-upload-config = "tools.diagnose_upload_config:main"
 profile = "black"
 line_length = 88
 skip_gitignore = true
+
+[tool.setuptools.packages.find]
+include = ["core", "yosai_intel_dashboard", "yosai_intel_dashboard.*"]
