@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=common.sh
+source "${SCRIPT_DIR}/common.sh"
+
 # Install k3s (lightweight Kubernetes)
 if ! command -v k3s >/dev/null 2>&1; then
-  curl -sfL https://get.k3s.io | sh -
+  curl_with_timeout --location https://get.k3s.io | sh -
 fi
 
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+export KUBECONFIG="/etc/rancher/k3s/k3s.yaml"
 
 # Install Istio CLI if missing
 if ! command -v istioctl >/dev/null 2>&1; then
-  curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.21.0 sh -
-  export PATH=$PATH:$(pwd)/istio-1.21.0/bin
+  curl_with_timeout --location https://istio.io/downloadIstio | ISTIO_VERSION=1.21.0 sh -
+  istio_bin="$(pwd)/istio-1.21.0/bin"
+  export PATH="${PATH}:${istio_bin}"
 fi
 
 # Install Istio control plane using the demo profile
@@ -24,11 +29,11 @@ done
 
 # Install Strimzi Kafka operator
 kubectl create namespace kafka --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f https://strimzi.io/install/latest?namespace=kafka -n kafka
+curl_with_timeout --location "https://strimzi.io/install/latest?namespace=kafka" | kubectl apply -n kafka -f -
 
 # Install observability stack (Prometheus and Grafana via Helm)
 if ! command -v helm >/dev/null 2>&1; then
-  curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  curl_with_timeout --location https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 fi
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
