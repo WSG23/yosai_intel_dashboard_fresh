@@ -1,73 +1,42 @@
 # Developer Onboarding
 
-This guide walks new contributors through setting up a local development environment for the Yōsai Intel Dashboard.
+Get a local environment running quickly.
 
-## Prerequisites
+## Tools
 
-- **Python 3.8+**
-- **PostgreSQL 13+**
-- **Redis**
+- Python 3.11+
+- Node.js 18+
+- Docker and Docker Compose
+- Make
 
-## Setup Steps
+## Setup
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repository>
-   cd yosai_intel_dashboard
-   ```
+```bash
+git clone <repo-url>
+cd yosai_intel_dashboard_fresh
+python -m venv .venv && source .venv/bin/activate
+./scripts/setup.sh && npm install
+cp .env.example .env  # set SECRET_KEY and DB_PASSWORD
+docker compose -f docker-compose.dev.yml up --build
+```
 
-2. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   ```
+## Environment Variables
 
-3. **Install Python dependencies:**
-   ```bash
-   ./scripts/setup.sh
-   ```
-   This installs `requirements.txt` and `requirements-dev.txt`. The
-   development requirements include additional packages such as **PyYAML**
-   that are necessary when running the test suite.
+- `SECRET_KEY` – required to start the API.
+- `DB_PASSWORD` / `DATABASE_URL` – database credentials.
+- `TRACING_EXPORTER` – select `jaeger` or `zipkin` for tracing (optional).
 
-4. **Install Node dependencies:**
-   ```bash
-   npm install
-   ```
-   These PostCSS packages are required when building the CSS bundle.
-5. **Compile translations:**
-   ```bash
-   pybabel compile -d translations
-   ```
+## Make Targets
 
-6. **Configure environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env as needed
-   ```
-   The development helper `setup_dev_mode` expects `DB_PASSWORD` to be
-   defined. The placeholder value in `.env.example` is sufficient for a
-   local setup. If you omit it the app only emits a warning but database
-   features may not be available.
+- `make test-quick` – run unit tests.
+- `make test-cov` – run tests with coverage.
+- `make lint` – execute linters.
+- `make format` – apply formatting.
 
-   `SECRET_KEY` **must** also be set. The API exits with a
-   `RuntimeError` if this variable is missing.
+## Common Pitfalls
 
-7. **(Optional) Initialize the database or load sample data.**
-   Prepare your PostgreSQL database and populate it with any example data if desired.
+- Missing `SECRET_KEY` causes the server to exit on startup.
+- Skipping `npm install` breaks the CSS build.
+- Docker not running results in services being unreachable.
+- Forgetting to activate the virtual environment leads to missing packages.
 
-8. **Run the test suite:**
-   ```bash
-   pytest --cov
-   mypy .
-   flake8 .
-   black --check .
-   ```
-   
-9. **Start the application:**
-   Use the unified entry point which warms caches before launching the server.
-   ```bash
-   python start_api.py
-   ```
-
-The dashboard will be available at `http://127.0.0.1:8050` once the server starts.

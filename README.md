@@ -6,11 +6,29 @@
 
 An AI-powered modular security intelligence dashboard for physical access control monitoring.
 
+## What Changed Recently
+
+- Containers now run as a non-root user.
+- Deployments use immutable image tags for reproducible builds.
+- CI and test status are surfaced via the badges above.
+- Services expose `/health` endpoints for basic liveness checks.
+
 ## Quick Start for End Users
 
 1. Open the dashboard in your browser and sign in with your credentials.
 2. Use the navigation menu to access analytics, real-time monitoring, uploads, and settings.
 3. For tips on working with alerts and customizing your view, see the [User Guide](docs/user_guide.md).
+
+## Developer Quickstart
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+make test-quick    # run unit tests
+make test-cov      # run tests with coverage
+pytest tests/test_integration.py  # integration smoke test
+```
+
+See the [Observability guide](docs/observability.md) and the [Testing guide](docs/testing.md) for additional details.
 
 ## Interactive Visualizations
 
