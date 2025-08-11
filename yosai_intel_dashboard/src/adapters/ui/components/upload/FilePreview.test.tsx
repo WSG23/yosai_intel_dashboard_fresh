@@ -18,3 +18,14 @@ test('remove button is focusable and supports keyboard activation', () => {
   fireEvent.keyUp(button, { key: 'Enter', code: 'Enter' });
   expect(onRemove).toHaveBeenCalled();
 });
+
+test('invokes onCancel when cancel button clicked', () => {
+  const onCancel = jest.fn();
+  const uploadingFile = { ...file, status: 'uploading' };
+  render(
+    <FilePreview file={uploadingFile} onRemove={() => {}} onCancel={onCancel} />,
+  );
+  const button = screen.getByRole('button', { name: `Cancel ${file.file.name}` });
+  fireEvent.click(button);
+  expect(onCancel).toHaveBeenCalled();
+});

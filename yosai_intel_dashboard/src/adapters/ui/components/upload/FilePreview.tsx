@@ -23,11 +23,21 @@ export const FilePreview: React.FC<Props> = ({ file, onRemove, onCancel }) => {
           <span className="font-medium text-sm">{file.file.name}</span>
           <div className="flex gap-2">
             {file.status === 'uploading' && onCancel && (
-              <button onClick={onCancel} className="text-red-500 text-xs">
+              <button
+                onClick={onCancel}
+                className="text-red-500 text-xs"
+                aria-label={`Cancel ${file.file.name}`}
+              >
                 Cancel
               </button>
             )}
-            <button onClick={onRemove} className="text-red-500 text-xs">Remove</button>
+            <button
+              onClick={onRemove}
+              className="text-red-500 text-xs"
+              aria-label={`Remove ${file.file.name}`}
+            >
+              Remove
+            </button>
           </div>
 
         </div>
