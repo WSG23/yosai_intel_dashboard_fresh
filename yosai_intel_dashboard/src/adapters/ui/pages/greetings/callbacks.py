@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from dash import Input, Output
 from dash.exceptions import PreventUpdate
 
 try:  # pragma: no cover - allow tests without full core package
-    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-except Exception:  # pragma: no cover - lightweight fallback
+    from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+        TrulyUnifiedCallbacks,
+    )
+except ImportError:  # pragma: no cover - lightweight fallback for missing dependency
+
     class TrulyUnifiedCallbacks:  # type: ignore[too-few-public-methods]
         """Minimal stub used when core package isn't available."""
 
@@ -19,6 +24,8 @@ except Exception:  # pragma: no cover - lightweight fallback
             return decorator
 
         register_handler = callback
+
+
 from yosai_intel_dashboard.src.services.greeting import GreetingService
 from yosai_intel_dashboard.src.simple_di import inject
 
