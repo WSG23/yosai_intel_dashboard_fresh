@@ -65,17 +65,26 @@ class QueryOptimizer:
     _TABLE_RE = re.compile(r"FROM\s+([\w\.]+)", re.IGNORECASE)
     _WHERE_RE = re.compile(r"WHERE\s+(.+)", re.IGNORECASE)
     _COND_RE = re.compile(r"\b(\w+)\s*=\s*[^\s]+", re.IGNORECASE)
+    _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+    @staticmethod
+    def _sanitize_identifier(name: str) -> str:
+        if not QueryOptimizer._IDENTIFIER_RE.fullmatch(name):
+            raise ValueError(f"Invalid identifier: {name}")
+        return name
 
     def _extract_table_and_columns(self, query: str) -> tuple[str, Sequence[str]]:
         table_match = self._TABLE_RE.search(query)
-        table = table_match.group(1) if table_match else ""
+        table = (
+            self._sanitize_identifier(table_match.group(1)) if table_match else ""
+        )
         where_match = self._WHERE_RE.search(query)
         cols: List[str] = []
         if where_match:
             for cond in where_match.group(1).split("AND"):
                 m = self._COND_RE.search(cond)
                 if m:
-                    cols.append(m.group(1))
+                    cols.append(self._sanitize_identifier(m.group(1)))
         return table, cols
 
     # ------------------------------------------------------------------
@@ -90,10 +99,7 @@ class QueryOptimizer:
             table_q = builder.table(table)
             col_q = builder.column(column)
             query = (
-                "SELECT COUNT(DISTINCT "
-                + col_q
-                + ") AS distinct, COUNT(*) AS total FROM "
-                + table_q
+                f"SELECT COUNT(DISTINCT {col_q}) AS distinct, COUNT(*) AS total FROM {table_q}"
             )
             sql, _ = builder.build(query, logger=logger)
             stats = execute_query(self.connection, sql)
