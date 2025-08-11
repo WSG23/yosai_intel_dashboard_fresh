@@ -1055,6 +1055,9 @@ environment variables:
 - `YOSAI_APP_MODE` – set to `full`, `simple` or `json-safe` to select the
   startup mode for `create_app()` (default: `full`).
 
+Go-based services validate their configuration against `config/service.schema.yaml` by default.
+Set `YOSAI_SCHEMA_PATH` to override this schema location when needed.
+
 Example:
 
 ```bash
