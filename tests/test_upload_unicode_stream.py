@@ -7,8 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "stubs"))
 os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 
-from yosai_intel_dashboard.src.services.upload.stream_upload import stream_upload
-from yosai_intel_dashboard.src.services.upload.unicode import (
+from src.services.upload.stream_upload import stream_upload
+from src.services.upload.unicode import (
     normalize_text,
     safe_decode_bytes,
     safe_encode_text,
