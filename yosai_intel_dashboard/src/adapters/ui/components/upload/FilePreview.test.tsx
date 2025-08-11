@@ -27,3 +27,17 @@ test('remove button is focusable and supports keyboard activation', () => {
   fireEvent.keyUp(button, { key: ' ', code: 'Space' });
   expect(onRemove).toHaveBeenCalledTimes(2);
 });
+
+test('cancel button invokes callback when uploading', () => {
+  const onCancel = jest.fn();
+  render(
+    <FilePreview
+      file={{ ...file, status: 'uploading' }}
+      onRemove={() => {}}
+      onCancel={onCancel}
+    />,
+  );
+  const cancelButton = screen.getByText('Cancel');
+  fireEvent.click(cancelButton);
+  expect(onCancel).toHaveBeenCalledTimes(1);
+});
