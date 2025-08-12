@@ -66,6 +66,8 @@ data/learned_mappings.json
 !public/manifest.json
 !yosai_intel_dashboard/src/adapters/ui/lib/
 !yosai_intel_dashboard/src/adapters/ui/lib/gestures.ts
+!scripts/lib/
+!scripts/lib/**
 !dashboards/grafana/*.json
 !dashboards/performance/*.json
 !monitoring/grafana/*.json

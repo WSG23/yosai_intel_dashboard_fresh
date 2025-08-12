@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-set -euo pipefail
-IFS=$'\n\t'
+
+SCRIPTDIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+# shellcheck source=lib/strict_mode.sh
+. "${SCRIPTDIR}/lib/strict_mode.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -289,6 +291,7 @@ EOF
 
 main() {
     print_header
+    require brew
     
     # Navigate to project directory if not already there
     if [ ! -f "app.py" ]; then
