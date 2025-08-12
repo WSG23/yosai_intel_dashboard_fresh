@@ -13,6 +13,9 @@ MIGRATION_CHUNK_SIZE: int = 1_000
 # File extensions supported across upload services
 UPLOAD_ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
+# Hour prefixes considered outside normal working hours for anomaly detection
+AFTER_HOURS = ["22:", "23:", "00:", "01:", "02:", "03:", "04:", "05:"]
+
 
 class SecurityLimits:
     """Security-related validation limits."""

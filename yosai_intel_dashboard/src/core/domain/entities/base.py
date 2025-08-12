@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import pandas as pd
+from yosai_intel_dashboard.src.infrastructure.config import constants
 
 logger = logging.getLogger(__name__)
 
@@ -152,10 +153,7 @@ class AnomalyDetectionModel(BaseModel):
             for event in events:
                 # After hours access (simple check)
                 timestamp = str(event.get("timestamp", ""))
-                if any(
-                    hour in timestamp
-                    for hour in ["22:", "23:", "00:", "01:", "02:", "03:", "04:", "05:"]
-                ):
+                if any(hour in timestamp for hour in constants.AFTER_HOURS):
                     anomalies.append(
                         {
                             "type": "after_hours_access",
