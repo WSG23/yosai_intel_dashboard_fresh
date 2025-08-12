@@ -1450,6 +1450,7 @@ The running application exposes Swagger-based API docs at `http://<host>:<port>/
 - Profiling the data processor: [docs/profile_data_processor.md](docs/profile_data_processor.md)
 - Upload progress SSE: `/upload/progress/<task_id>` streams `data: <progress>` events roughly 60 times per second.
 - Callback design: [docs/callback_architecture.md](docs/callback_architecture.md)
+- Callback registration & metrics: [docs/callbacks.md](docs/callbacks.md)
 - State stores: [docs/state_management.md](docs/state_management.md)
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)
