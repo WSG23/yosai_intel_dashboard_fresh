@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,19 +13,38 @@ import (
 	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
+func reasonFromError(err error) string {
+	switch {
+	case errors.Is(err, jwt.ErrTokenExpired):
+		return "expired"
+	case errors.Is(err, jwt.ErrTokenInvalidAudience):
+		return "invalid_aud"
+	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+		return "invalid_signature"
+	case errors.Is(err, jwt.ErrTokenNotValidYet):
+		return "not_yet_valid"
+	case errors.Is(err, jwt.ErrTokenInvalidIssuer):
+		return "invalid_iss"
+	case errors.Is(err, jwt.ErrTokenMalformed):
+		return "malformed"
+	default:
+		return "invalid"
+	}
+}
+
 // Auth middleware validates a JWT Authorization header using the provided signing secret.
 func Auth(secret []byte) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHdr := r.Header.Get("Authorization")
 			if authHdr == "" {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
 				return
 			}
 
 			parts := strings.Fields(authHdr)
 			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
 				return
 			}
 
@@ -37,17 +57,17 @@ func Auth(secret []byte) func(http.Handler) http.Handler {
 				return secret, nil
 			})
 			if err != nil || !token.Valid {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": reasonFromError(err)})
 				return
 			}
 
 			if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "expired"})
 				return
 			}
 
 			if claims.Issuer == "" {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_iss"})
 				return
 			}
 
