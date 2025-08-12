@@ -34,6 +34,8 @@ class DriftMonitor:
         schedule_interval_minutes: int = 60,
         metric_store: Callable[[Dict[str, Dict[str, float]]], None] | None = None,
         alert_func: Callable[[str, Dict[str, float]], None] | None = None,
+        monitoring_hook: Callable[[str], None] | None = None,
+        log_path: str | None = None,
     ) -> None:
         """Create a new :class:`DriftMonitor`.
 
@@ -66,15 +68,32 @@ class DriftMonitor:
                 "Drift detected for %s: %s", col, metrics
             )
         )
+        self.monitoring_hook = monitoring_hook
+        self.log_path = log_path
         self.scheduler = BackgroundScheduler() if BackgroundScheduler else None
         self.history: List[Dict[str, Dict[str, float]]] = []
 
     # ------------------------------------------------------------------
+    def _log(self, message: str) -> None:
+        if self.monitoring_hook:
+            try:
+                self.monitoring_hook(message)
+                return
+            except Exception:  # pragma: no cover - defensive
+                logger.exception("Drift monitor hook failed")
+        if self.log_path:
+            try:
+                with open(self.log_path, "a", encoding="utf-8") as fh:
+                    fh.write(message + "\n")
+            except Exception:  # pragma: no cover - defensive
+                logger.exception("Drift monitor file log failed")
+
     def _check_thresholds(self, metrics: Dict[str, Dict[str, float]]) -> None:
         for col, values in metrics.items():
             for metric_name, value in values.items():
                 threshold = self.thresholds.get(metric_name)
                 if threshold is not None and value > threshold:
+                    self._log(f"breach:{col}:{metric_name}={value}")
                     self.alert_func(col, values)
                     break
 
@@ -94,11 +113,18 @@ class DriftMonitor:
             logger.exception("Drift monitor metric persistence failed")
 
         self.history.append(metrics)
+        self._log(f"comparison:{metrics}")
 
         try:
             self._check_thresholds(metrics)
         except Exception:  # pragma: no cover - defensive
             logger.exception("Drift monitor threshold check failed")
+
+    def get_recent_history(self, limit: int | None = None) -> List[Dict[str, Dict[str, float]]]:
+        """Return the most recent drift metrics."""
+        if limit is None:
+            return list(self.history)
+        return self.history[-limit:]
 
     # ------------------------------------------------------------------
     def start(self) -> None:

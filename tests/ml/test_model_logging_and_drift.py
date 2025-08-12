@@ -33,6 +33,11 @@ if not hasattr(pd, "date_range"):
 
 from intel_analysis_service.ml import AnomalyDetector, RiskScorer
 
+try:  # pragma: no cover - support both package layouts
+    from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
+except Exception:  # pragma: no cover
+    from services.monitoring.drift_monitor import DriftMonitor
+
 
 class DummyDriftDetector:
     def __init__(self):
@@ -76,3 +81,28 @@ def test_risk_scorer_logs_and_detects_drift(caplog):
     assert drift.values is not None and drift.thresholds is not None
     assert 'model=v1' in caplog.text
     assert 'thresholds' in caplog.text
+
+
+def test_drift_monitor_logs_and_rollback():
+    baseline = pd.DataFrame({"pred": [0] * 100 + [1] * 100})
+    current = pd.DataFrame({"pred": [0] * 200})
+
+    logs: list[str] = []
+    alerts: list[tuple[str, dict]] = []
+
+    monitor = DriftMonitor(
+        baseline_supplier=lambda: baseline,
+        live_supplier=lambda: current,
+        thresholds={"psi": 0.1},
+        alert_func=lambda col, m: alerts.append((col, m)),
+        monitoring_hook=lambda msg: logs.append(msg),
+    )
+
+    monitor._run()
+
+    assert any("comparison" in m for m in logs)
+    assert any("breach" in m for m in logs)
+    assert alerts
+    history = monitor.get_recent_history()
+    assert history and history[-1]["pred"]["psi"] > 0
+    assert monitor.get_recent_history(limit=1) == history[-1:]
