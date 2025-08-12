@@ -10,11 +10,18 @@ cmd = ["safety", "check", "--full-report", "--json"]
 for req in REQ_FILES:
     cmd.extend(["-r", req])
 
-result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-if result.returncode not in (0, 1):
-    print(result.stdout)
-    print(result.stderr, file=sys.stderr)
-    sys.exit(result.returncode)
+try:
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=True)
+except FileNotFoundError:
+    print("The 'safety' CLI is not installed or not found in PATH", file=sys.stderr)
+    raise SystemExit(1)
+except subprocess.CalledProcessError as exc:
+    if exc.returncode != 1:
+        print(exc.stdout)
+        print(exc.stderr, file=sys.stderr)
+        print(f"'safety' exited unexpectedly with code {exc.returncode}", file=sys.stderr)
+        raise SystemExit(exc.returncode)
+    result = exc
 
 try:
     vulnerabilities = json.loads(result.stdout)
