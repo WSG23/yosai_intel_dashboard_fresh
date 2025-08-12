@@ -58,8 +58,8 @@ def main() -> None:
     app = create_api_app()
     app.state.container = container
 
-    # Ensure a basic health endpoint is available
-    if not any(getattr(route, "path", None) == "/health" for route in app.router.routes):
+    # Ensure a /health endpoint is available for container checks
+    if not any(getattr(r, "path", "") == "/health" for r in app.routes):
         @app.get("/health")
         async def _health() -> dict[str, str]:
             return {"status": "ok"}
