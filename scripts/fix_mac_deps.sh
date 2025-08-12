@@ -137,15 +137,18 @@ install_compatible_packages() {
     print_info "Installing scikit-learn..."
     pip3 install "scikit-learn>=1.0.0"
     
-    # For Apple Silicon, ensure we get the right wheels
-    if [ "$IS_APPLE_SILICON" = true ]; then
-        print_info "Installing Apple Silicon optimized packages..."
-        
+        # For Apple Silicon, ensure we get the right wheels
+        if [ "$IS_APPLE_SILICON" = true ]; then
+            print_info "Installing Apple Silicon optimized packages..."
+
         # Force reinstall with platform-specific wheels
-        pip3 install --force-reinstall --no-deps \
+        if ! pip3 install --force-reinstall --no-deps \
             --platform macosx_11_0_arm64 \
             --target ./temp_packages \
-            numpy scipy scikit-learn 2>/dev/null || true
+            numpy scipy scikit-learn 2>/dev/null; then
+            print_error "Failed to install Apple Silicon optimized packages"
+            exit 1
+        fi
             
         # Clean up temp
         rm -rf ./temp_packages 2>/dev/null || true
