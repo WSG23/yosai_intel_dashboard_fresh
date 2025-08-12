@@ -12,7 +12,20 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import Mapping
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Protocol
+
+
+class DatabaseManagerProtocol(Protocol):
+    """Protocol describing the minimal database manager interface used."""
+
+    def health_check(self) -> bool:
+        """Return ``True`` when the database connection is healthy."""  # pragma: no cover - simple protocol
+
+    def get_connection(self) -> Any:
+        """Retrieve a database connection object."""  # pragma: no cover - simple protocol
+
+    def release_connection(self, connection: Any) -> None:
+        """Release a previously acquired connection."""  # pragma: no cover - simple protocol
 
 from yosai_intel_dashboard.src.infrastructure.config.connection_pool import (
     DatabaseConnectionPool,
@@ -34,14 +47,8 @@ class AnalyticsService:
         ``DEFAULT_POOL_ACQUIRE_TIMEOUT``.
     """
 
-    def __init__(
-        self,
-        pool: DatabaseConnectionPool,
-        ttl: int = 60,
-        *,
-        acquire_timeout: float | None = None,
-    ) -> None:
-        self._pool = pool
+    def __init__(self, db_manager: DatabaseManagerProtocol, ttl: int = 60) -> None:
+        self._db_manager: DatabaseManagerProtocol = db_manager
         self._ttl = ttl
         self._timeout = (
             acquire_timeout if acquire_timeout is not None else DEFAULT_POOL_ACQUIRE_TIMEOUT
@@ -112,8 +119,8 @@ class AnalyticsService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    async def get_analytics(self) -> Dict[str, Any]:
-        """Return analytics data, using the cache when possible."""
+    async def aget_analytics(self) -> Dict[str, Any]:
+        """Asynchronously return analytics data, using the cache when possible."""
 
         cached = self._get_cached()
         if cached is not None:
@@ -138,12 +145,22 @@ class AnalyticsService:
                 "error_code": "pool_timeout",
             }
 
+        try:
+            data = await self._gather_analytics(connection)
+            result = {"status": "success", "data": data}
+            self._set_cache(result)
+            return result
         except Exception as exc:  # pragma: no cover - best effort
             return {
                 "status": "error",
                 "message": str(exc),
                 "error_code": "query_failed",
             }
+
+    def get_analytics(self) -> Dict[str, Any]:
+        """Synchronous wrapper for :meth:`aget_analytics`."""
+
+        return asyncio.run(self.aget_analytics())
 
 
 __all__ = ["AnalyticsService"]
