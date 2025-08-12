@@ -1,52 +1,122 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHONPATH: "${{ github.workspace }}:${{ github.workspace }}/src:${{ github.workspace }}/yosai_intel_dashboard:${{ github.workspace }}/yosai_intel_dashboard/src"
 
 jobs:
   backend-tests:
+    name: Backend Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
-      - name: Install Python deps (prefer wheels)
-        env:
-          PIP_PREFER_BINARY: "1"
-          PIP_ONLY_BINARY: ":all:"
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies
         run: |
-          python -m pip install -U pip setuptools wheel
-          pip install 'numpy>=1.23,<2.0'
-          pip install -r requirements.txt || pip install --no-build-isolation -r requirements.txt
-          if [ -f requirements-dev.txt ]; then
-            pip install -r requirements-dev.txt || pip install --no-build-isolation -r requirements-dev.txt
-          fi
-      - name: Pip debug (on failure)
-        if: ${{ failure() }}
-        run: |
-          pip --version
-          python -m pip debug
-          pip freeze | sed -n '1,200p'
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
       - name: Run pytest
-        run: pytest --cov
+        run: pytest
 
   frontend-tests:
+    name: Frontend Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 20
+          cache: "npm"
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Run frontend tests
+        run: npm test -- --watchAll=false
+
+  lint-test:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
       - name: Install dependencies
-        env:
-          NPM_CONFIG_LEGACY_PEER_DEPS: "true"
         run: |
-          npm ci --no-audit --prefer-offline
-      - name: Run vitest
-        run: npx vitest run --coverage
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Run flake8
+        run: flake8 .
+      - name: Run SQL linter
+        run: python tools/check_execute_query.py
+
+  build-test:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: |
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.kafka.yml \
+            build
+
+  hadolint:
+    name: Hadolint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install hadolint
+        run: |
+          curl -sL https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -o hadolint
+          chmod +x hadolint
+          sudo mv hadolint /usr/local/bin/hadolint
+      - name: Run hadolint
+        run: |
+          for file in $(git ls-files '*Dockerfile*'); do
+            echo "Linting $file"
+            hadolint --config infra/.hadolint.yaml "$file"
+          done
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Run integration tests
+        run: |
+          if ! docker info >/dev/null 2>&1; then
+            echo "Docker not available - skipping integration tests."
+            exit 0
+          fi
+          pytest tests/integration
