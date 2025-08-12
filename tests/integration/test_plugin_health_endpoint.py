@@ -17,9 +17,8 @@ protocols_mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(protocols_mod)
 
 services_mod = types.ModuleType("services")
-registry_mod = types.ModuleType("services.registry")
+registry_mod = types.ModuleType("core.registry")
 registry_mod.get_service = lambda name: None
-services_mod.registry = registry_mod
 
 core_mod = types.ModuleType("services.data_processing.core")
 core_mod.protocols = protocols_mod
@@ -29,7 +28,7 @@ data_proc_mod.core = core_mod
 services_mod.data_processing = data_proc_mod
 
 safe_import("services", services_mod)
-safe_import("services.registry", registry_mod)
+safe_import("core.registry", registry_mod)
 safe_import("services.data_processing", data_proc_mod)
 safe_import("services.data_processing.core", core_mod)
 safe_import("core.protocols.plugin", protocols_mod)

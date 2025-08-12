@@ -32,7 +32,7 @@ stub_pkg.feature_flags = flags_module
 safe_import("services.feature_flags", lambda: flags_module)
 
 # Minimal registry stub
-registry_stub = types.ModuleType("services.registry")
+registry_stub = types.ModuleType("core.registry")
 
 
 class ServiceDiscovery:
@@ -41,8 +41,7 @@ class ServiceDiscovery:
 
 
 registry_stub.ServiceDiscovery = ServiceDiscovery
-stub_pkg.registry = registry_stub
-safe_import("services.registry", lambda: registry_stub)
+safe_import("core.registry", lambda: registry_stub)
 
 # Minimal resilience.circuit_breaker stub
 resilience_pkg = types.ModuleType("services.resilience")

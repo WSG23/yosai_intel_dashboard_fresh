@@ -13,6 +13,16 @@ This project implements safeguards aligned with the OWASP Top 10 categories.
 
 Authentication mechanisms enforce strong credential and session management. Tokens and session IDs are protected and validated on every request to minimize the risk of broken authentication.
 
+### Auth Flow
+
+Service-to-service calls use signed JWTs. Each token includes a `sub` claim identifying the calling service and may include an `aud` claim for the intended recipient. The `verify_jwt_token` helper decodes the token and validates:
+
+- the signature and expiration (`exp`)
+- presence of the `sub` claim
+- optional audience matching when an `aud` value is supplied
+
+Failures return HTTP 401 with specific error codes such as `token_expired` or `invalid_audience` to aid debugging and auditing.
+
 ## Sensitive Data Exposure
 
 Secrets and personal data are stored using encrypted channels and secret management tooling. Configuration files avoid embedding credentials directly and rely on secure storage.

@@ -33,10 +33,19 @@ except Exception:  # pragma: no cover - optional dependency
 
     class Counter:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
-            self._value = type("V", (), {"get": lambda self: 0})()
+            self._count = 0.0
 
-        def inc(self, *args, **kwargs) -> None:
-            pass
+            class _V:
+                def __init__(self, outer: "Counter") -> None:
+                    self._outer = outer
+
+                def get(self) -> float:
+                    return self._outer._count
+
+            self._value = _V(self)
+
+        def inc(self, amount: float = 1.0, *args, **kwargs) -> None:
+            self._count += amount
 
 _event_bus: EventBus | None = None
 _metrics_started = False
@@ -71,12 +80,23 @@ else:  # pragma: no cover - defensive for test imports
         registry=registry,
     )
 
+def _counter_value(counter: Counter) -> float:
+    try:
+        return counter._value.get()  # type: ignore[attr-defined]
+    except AttributeError:
+        return 0.0
+
+
 def _snapshot() -> Dict[str, float]:
     """Return the current metric values."""
     return {
-        "websocket_connections_total": websocket_connections_total._value.get(),
-        "websocket_reconnect_attempts_total": websocket_reconnect_attempts_total._value.get(),
-        "websocket_ping_failures_total": websocket_ping_failures_total._value.get(),
+        "websocket_connections_total": _counter_value(websocket_connections_total),
+        "websocket_reconnect_attempts_total": _counter_value(
+            websocket_reconnect_attempts_total
+        ),
+        "websocket_ping_failures_total": _counter_value(
+            websocket_ping_failures_total
+        ),
     }
 
 

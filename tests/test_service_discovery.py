@@ -1,7 +1,7 @@
 import asyncio
 from unittest.mock import MagicMock
 
-from yosai_intel_dashboard.src.services.registry import ServiceDiscovery
+from yosai_intel_dashboard.src.core.registry import ServiceDiscovery
 
 
 class DummyResponse:
@@ -40,7 +40,7 @@ class DummySession:
 def test_resolve_async_cache(monkeypatch):
     handler = MagicMock()
     monkeypatch.setattr(
-        "yosai_intel_dashboard.src.services.registry.ErrorHandler", lambda: handler
+        "yosai_intel_dashboard.src.core.registry.ErrorHandler", lambda: handler
     )
     monkeypatch.setattr(
         "aiohttp.ClientSession",
@@ -58,7 +58,7 @@ def test_resolve_async_cache(monkeypatch):
 def test_resolve_async_env(monkeypatch):
     handler = MagicMock()
     monkeypatch.setattr(
-        "yosai_intel_dashboard.src.services.registry.ErrorHandler", lambda: handler
+        "yosai_intel_dashboard.src.core.registry.ErrorHandler", lambda: handler
     )
     monkeypatch.setenv("FOO_SERVICE_URL", "env:1234")
     monkeypatch.setattr(

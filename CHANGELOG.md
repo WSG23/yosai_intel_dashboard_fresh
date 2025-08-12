@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 - Added deprecation warnings for `publish`, `register_all_services`,
   `sanitize_data_frame`, and `safe_unicode_encode` to guide migration.
 - Consolidated migration progress notes into `docs/MIGRATION_STATUS.md` and removed temporary step-tracking files.
+- Merged rate limiter features into `core/security.py` and deprecated
+  `core/rate_limiter.py`.
 
 ### Fixed
 - Navigation bar icons failed to load when `app.get_asset_url` returned

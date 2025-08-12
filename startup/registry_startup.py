@@ -1,7 +1,7 @@
 """Initialize the optional service registry after configuration loads."""
 from __future__ import annotations
 
-from yosai_intel_dashboard.src.services.registry import register_builtin_services
+from yosai_intel_dashboard.src.core.registry import register_builtin_services
 
 
 def register_optional_services() -> None:

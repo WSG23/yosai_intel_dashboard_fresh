@@ -46,3 +46,35 @@ pipe.rollback("model", version)
 ```
 
 Rollback simply marks an earlier version as active via the registry.
+
+## End-to-End Usage
+
+```python
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
+from yosai_intel_dashboard.models.ml.feature_pipeline import FeaturePipeline
+from yosai_intel_dashboard.src.models.ml.training.pipeline import TrainingPipeline
+from yosai_intel_dashboard.models.ml import ModelRegistry
+
+# 1. Load and preprocess raw events
+events = pd.read_csv("events.csv")
+events = preprocess_events(events)
+
+# 2. Transform features
+pipe = FeaturePipeline("defs.yaml")
+pipe.load_definitions()
+X = pipe.fit_transform(events)
+y = events["label"]
+
+# 3. Train using the same contract
+registry = ModelRegistry("sqlite:///registry.db", bucket="models")
+tp = TrainingPipeline(registry)
+tp.run(events, target_column="label", models={
+    "logreg": (LogisticRegression(), {"C": [1.0]}),
+})
+```
+
+The example demonstrates how preprocessing, feature transformation and model
+training share the `preprocess_events` contract for consistent behaviour.
