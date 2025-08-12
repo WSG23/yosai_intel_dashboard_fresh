@@ -11,7 +11,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from yosai_intel_dashboard.src.services.analytics.feature_extraction import extract_event_features
+from .pipeline_contract import preprocess_events
 from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
@@ -99,7 +99,7 @@ def train_access_anomaly_iforest(
     model_name: str = "access-anomaly-iso",
 ) -> TrainResult:
     """Train an Isolation Forest anomaly detector for access patterns."""
-    features = extract_event_features(df)
+    features = preprocess_events(df)
     data_cols = [
         "hour",
         "day_of_week",
@@ -132,7 +132,7 @@ def train_risk_scoring_xgboost(
         raise ImportError("xgboost is not available")
     if target_column not in df:
         raise ValueError(f"target column '{target_column}' missing")
-    features = extract_event_features(df.drop(columns=[target_column]))
+    features = preprocess_events(df.drop(columns=[target_column]))
     numeric = features.select_dtypes(include=["number", "bool"]).fillna(0)
     scaler = StandardScaler()
     X = scaler.fit_transform(numeric)
@@ -201,7 +201,7 @@ def train_user_clustering_dbscan(
     model_name: str = "user-cluster-dbscan",
 ) -> TrainResult:
     """Train a DBSCAN model for user behavior clustering."""
-    features = extract_event_features(df)
+    features = preprocess_events(df)
     scaler = StandardScaler()
     X = scaler.fit_transform(
         features[["hour", "day_of_week", "user_event_count", "door_event_count"]]
@@ -231,7 +231,7 @@ def train_online_threat_detector(
             raise ValueError("df must contain 'label' column for training")
         classes = sorted(df["label"].unique())
 
-    features = extract_event_features(df.drop(columns=["label"]))
+    features = preprocess_events(df.drop(columns=["label"]))
     numeric = features.select_dtypes(include=["number", "bool"]).fillna(0)
     scaler = StandardScaler()
     X = scaler.fit_transform(numeric)

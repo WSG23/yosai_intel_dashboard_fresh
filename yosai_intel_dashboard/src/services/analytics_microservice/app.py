@@ -29,7 +29,8 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, ConfigDict
 
-from analytics import anomaly_detection, feature_extraction, security_patterns
+from analytics import anomaly_detection, security_patterns
+from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 from shared.errors.types import ErrorCode, ErrorResponse
 from jose import jwt
 from yosai_framework import ServiceBuilder
@@ -374,7 +375,7 @@ async def threat_assessment(
     else:
         df = pd.DataFrame(payload)
 
-    features = feature_extraction.extract_event_features(df)
+    features = preprocess_events(df)
     anomaly = anomaly_detection.AnomalyDetector().analyze_anomalies(features)
     patterns = security_patterns.SecurityPatternsAnalyzer().analyze_security_patterns(
         features

@@ -2,6 +2,7 @@
 
 from .base_model import BaseModel, ModelMetadata
 from .model_registry import ModelRecord, ModelRegistry
+from .pipeline_contract import preprocess_events
 from .security_models import (
     TrainResult,
     train_access_anomaly_iforest,
@@ -16,6 +17,7 @@ __all__ = [
     "ModelRecord",
     "BaseModel",
     "ModelMetadata",
+    "preprocess_events",
     "TrainResult",
     "train_access_anomaly_iforest",
     "train_risk_scoring_xgboost",
