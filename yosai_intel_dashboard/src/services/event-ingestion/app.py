@@ -6,6 +6,7 @@ import os
 import pathlib
 from typing import Any, Dict
 
+import redis.asyncio as aioredis
 from fastapi import Header, Request, status
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
@@ -39,6 +40,19 @@ try:
 except Exception:
     service = None
 
+redis_client = aioredis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
+rate_limiter = RateLimiter(redis_client, max_requests=100, window_minutes=1)
+
+
+@app.on_event("startup")
+async def _start_rate_limiter() -> None:
+    rate_limiter.start_cleanup()
+
+
+@app.on_event("shutdown")
+async def _stop_rate_limiter() -> None:
+    await rate_limiter.stop_cleanup()
+
 
 def _broker_health(_: FastAPI) -> Dict[str, Any]:
     return {
@@ -54,7 +68,7 @@ async def rate_limit(request: Request, call_next):
     identifier = (
         auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
     )
-    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    result = await rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
     headers = {
         "X-RateLimit-Limit": str(result.get("limit", rate_limiter.max_requests)),
         "X-RateLimit-Remaining": str(result.get("remaining", 0)),

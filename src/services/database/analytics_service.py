@@ -96,7 +96,7 @@ class AnalyticsService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def get_analytics(self) -> Dict[str, Any]:
+    async def get_analytics(self) -> Dict[str, Any]:
         """Return analytics data, using the cache when possible."""
 
         cached = self._get_cached()
@@ -119,7 +119,7 @@ class AnalyticsService:
             }
 
         try:
-            data = asyncio.run(self._gather_analytics(connection))
+            data = await self._gather_analytics(connection)
             result = {"status": "success", "data": data}
             self._set_cache(result)
             return result
