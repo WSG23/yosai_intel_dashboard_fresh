@@ -8,12 +8,23 @@ import (
 	"time"
 )
 
-// Notify returns a context that is canceled on SIGINT/SIGTERM.
-func Notify(parent context.Context) (context.Context, context.CancelFunc) {
-	return signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
-}
+// WithTimeout returns a context that is cancelled when the timeout expires or
+// when an interrupt or termination signal is received. It returns the derived
+// context and a cancel function to release resources.
+func WithTimeout(parent context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(parent, timeout)
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
-// WithTimeout returns a child context that times out after d.
-func WithTimeout(parent context.Context, d time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(parent, d)
+	go func() {
+		select {
+		case <-sigCh:
+			cancel()
+		case <-ctx.Done():
+		}
+		signal.Stop(sigCh)
+		close(sigCh)
+	}()
+
+	return ctx, cancel
 }
