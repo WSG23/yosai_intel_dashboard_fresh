@@ -13,3 +13,4 @@ if [[ -n "$violations" ]]; then
 fi
 
 echo "✅ No :latest image tags found in Kubernetes manifests"
+
