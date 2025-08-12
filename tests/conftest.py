@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Callable, Iterator, List
+from unittest import mock
 
 # Make project package importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -196,6 +197,14 @@ def fake_unicode_processor():
     from .fake_unicode_processor import FakeUnicodeProcessor
 
     return FakeUnicodeProcessor()
+
+
+@pytest.fixture
+def mock_db_connection():
+    """Reusable mock database connection."""
+    conn = mock.Mock()
+    conn.health_check.return_value = True
+    return conn
 
 
 @pytest.fixture
