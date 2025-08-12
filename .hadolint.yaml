@@ -1,0 +1,4 @@
+failure-threshold: error
+override:
+  DL3008: info
+  DL3046: info

@@ -26,10 +26,17 @@ jobs:
         cache-dependency-path: |
           requirements.txt
           requirements-dev.txt
-    - name: Install dependencies
+    - name: Install Python deps (prefer wheels)
+      env:
+        PIP_PREFER_BINARY: "1"
+        PIP_ONLY_BINARY: ":all:"
       run: |
-        pip install -r requirements.txt
-        [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt
+        python -m pip install -U pip setuptools wheel
+        pip install 'numpy>=1.23,<2.0'
+        pip install -r requirements.txt || pip install --no-build-isolation -r requirements.txt
+        if [ -f requirements-dev.txt ]; then
+          pip install -r requirements-dev.txt || pip install --no-build-isolation -r requirements-dev.txt
+        fi
     - name: Build project
       run: |
         make build
@@ -68,8 +75,17 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+    - name: Install Python deps (prefer wheels)
+      env:
+        PIP_PREFER_BINARY: "1"
+        PIP_ONLY_BINARY: ":all:"
+      run: |
+        python -m pip install -U pip setuptools wheel
+        pip install 'numpy>=1.23,<2.0'
+        pip install -r requirements.txt || pip install --no-build-isolation -r requirements.txt
+        if [ -f requirements-dev.txt ]; then
+          pip install -r requirements-dev.txt || pip install --no-build-isolation -r requirements-dev.txt
+        fi
     - name: Run profiling
       run: PYTHONPATH=. python scripts/profile_critical_paths.py
     - name: Upload profiling report
