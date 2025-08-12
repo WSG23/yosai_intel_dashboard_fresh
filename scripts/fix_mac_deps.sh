@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
+# Fix Mac dependencies and architecture issues for the project.
+# Homebrew is a prerequisite for running this script.
 set -euo pipefail
 IFS=$'\n\t'
+
+command -v brew >/dev/null || { echo "Homebrew is required" >&2; exit 1; }
 
 # Colors for output
 RED='\033[0;31m'
