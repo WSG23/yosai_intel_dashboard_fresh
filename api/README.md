@@ -1,45 +1,22 @@
 # API Service
 
-This FastAPI application provides simple health and echo endpoints for testing and development.
+## Endpoints
 
-## Available Endpoints
+### `POST /v1/echo`
 
-### `GET /health`
-Returns a JSON object indicating service status.
+Echo the provided message.
 
-```bash
-curl http://localhost:8000/health
+**Request**
+
+```json
+{ "message": "hello" }
 ```
 
-### `POST /echo`
-Echoes back the request payload as raw bytes.
+**Response**
 
-```bash
-curl -X POST http://localhost:8000/echo -d 'hello world'
-```
+```json
+{ "message": "hello" }
 
-## Authentication
-
-These endpoints do not require authentication.
-
-## API Documentation
-
-Interactive Swagger docs are available at `http://localhost:8000/docs` and Redoc at `http://localhost:8000/redoc`.
-The OpenAPI specification can be accessed at `http://localhost:8000/openapi.json`.
-
-## Running Locally
-
-Install dependencies and start the server:
-
-```bash
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-```
-
-Alternatively, from the repository root you can run the unified startup script:
-
-```bash
-python start_api.py
 ```
 
 ## Testing
