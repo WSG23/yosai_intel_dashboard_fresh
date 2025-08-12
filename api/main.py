@@ -1,36 +1,14 @@
 from __future__ import annotations
 
-from starlette.applications import Starlette
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import PlainTextResponse, JSONResponse, Response
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, Response
 
-MAX_PAYLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+from api.middleware.body_size_limit import BodySizeLimitMiddleware
+from api.middleware.security_headers import SecurityHeadersMiddleware
 
-
-class PayloadLimitMiddleware(BaseHTTPMiddleware):
-    """Middleware enforcing a maximum request payload size."""
-
-    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
-        content_length = request.headers.get("content-length")
-        if content_length is not None and int(content_length) > MAX_PAYLOAD_SIZE:
-            return PlainTextResponse("Payload too large", status_code=413)
-        return await call_next(request)
-
-
-app = Starlette()
-
-
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Referrer-Policy"] = "no-referrer"
-    return response
-
-
-app.add_middleware(PayloadLimitMiddleware)
+app = FastAPI()
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=50 * 1024 * 1024)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.route("/health")
