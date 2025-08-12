@@ -23,6 +23,7 @@ from yosai_intel_dashboard.src.components.analytics.real_time_dashboard import (
 )
 from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
 from yosai_intel_dashboard.src.services.security import require_permission
+from yosai_intel_dashboard.src.core import registry
 
 # Routes now use an unversioned prefix and are mounted under /v1 by the
 # adapter. This simplifies preparing future versions while keeping unversioned
@@ -31,7 +32,9 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 cfg = get_cache_config()
 _cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=cfg.ttl))
-_cached_service = CachedAnalyticsService(_cache_manager)
+registry.register(
+    "cached_analytics_service", CachedAnalyticsService(_cache_manager)
+)
 router.include_router(proficiency_router)
 router.include_router(realtime_router)
 
@@ -61,7 +64,8 @@ async def get_patterns_analysis(
     """
     facility_id = validate_user_input(query.facility_id or "", "facility_id")
     range_val = validate_user_input(query.range or "", "range")
-    data = _cached_service.get_analytics_summary_sync(facility_id, range_val)
+    service = registry.get("cached_analytics_service")
+    data = service.get_analytics_summary_sync(facility_id, range_val)
     return cached_json_response(data, max_age=cfg.ttl)
 
 
@@ -104,7 +108,8 @@ async def get_chart_data(
     chart_type = validate_user_input(chart_type, "chart_type")
     facility_id = validate_user_input(query.facility_id or "", "facility_id")
     range_val = validate_user_input(query.range or "", "range")
-    data = _cached_service.get_analytics_summary_sync(facility_id, range_val)
+    service = registry.get("cached_analytics_service")
+    data = service.get_analytics_summary_sync(facility_id, range_val)
     if chart_type == "patterns":
         return cached_json_response({"type": "patterns", "data": data}, max_age=cfg.ttl)
     if chart_type == "timeline":

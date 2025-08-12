@@ -17,6 +17,7 @@ from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGener
 from yosai_intel_dashboard.src.services.common import ModelRegistry
 from yosai_intel_dashboard.src.services.common.config_utils import common_init, create_config_methods
 from yosai_intel_dashboard.src.services.learning.src.api.consolidated_service import get_learning_service
+from yosai_intel_dashboard.src.core import registry
 
 logger = logging.getLogger(__name__)
 
@@ -456,7 +457,17 @@ class DoorMappingService:
             return ""
 
 
-# Service instance
-door_mapping_service = DoorMappingService(DynamicConfigurationService())
+def get_door_mapping_service() -> DoorMappingService:
+    try:
+        return registry.get("door_mapping_service")
+    except KeyError:
+        from yosai_intel_dashboard.src.services.configuration_service import (
+            DynamicConfigurationService,
+        )
 
-__all__ = ["DoorMappingService", "DeviceAttributeData", "door_mapping_service"]
+        service = DoorMappingService(DynamicConfigurationService())
+        registry.register("door_mapping_service", service)
+        return service
+
+
+__all__ = ["DoorMappingService", "DeviceAttributeData", "get_door_mapping_service"]

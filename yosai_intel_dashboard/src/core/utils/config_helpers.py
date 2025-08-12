@@ -11,25 +11,34 @@ is not provided.
 from typing import Any
 
 from src.common.config import ConfigService, ConfigurationMixin
+from yosai_intel_dashboard.src.core import registry
 
 
-_default_cfg = ConfigService()
 _mixin = ConfigurationMixin()
+
+
+def _resolve_cfg(cfg: Any | None) -> Any:
+    if cfg is not None:
+        return cfg
+    try:
+        return registry.get("config_service")
+    except KeyError:
+        return ConfigService()
 
 
 def get_ai_confidence_threshold(cfg: Any | None = None) -> float:
     """Return the AI confidence threshold from ``cfg`` or defaults."""
-    return _mixin.get_ai_confidence_threshold(cfg or _default_cfg)
+    return _mixin.get_ai_confidence_threshold(_resolve_cfg(cfg))
 
 
 def get_max_upload_size_mb(cfg: Any | None = None) -> int:
     """Return the maximum upload size in megabytes from ``cfg`` or defaults."""
-    return _mixin.get_max_upload_size_mb(cfg or _default_cfg)
+    return _mixin.get_max_upload_size_mb(_resolve_cfg(cfg))
 
 
 def get_upload_chunk_size(cfg: Any | None = None) -> int:
     """Return the upload chunk size from ``cfg`` or defaults."""
-    return _mixin.get_upload_chunk_size(cfg or _default_cfg)
+    return _mixin.get_upload_chunk_size(_resolve_cfg(cfg))
 
 
 __all__ = [

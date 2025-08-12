@@ -10,6 +10,8 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
+from .registry import ServiceRegistry, registry
+
 if TYPE_CHECKING:  # pragma: no cover - type hints only
     from .async_utils import (
         AsyncContextManager,
@@ -100,6 +102,8 @@ __all__ = [
     "CircuitBreakerOpen",
     "circuit_breaker",
     "async_batch",
+    "ServiceRegistry",
+    "registry",
 ]
 
 _ASYNC_EXPORTS = {
