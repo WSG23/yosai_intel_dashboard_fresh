@@ -21,3 +21,18 @@ act pull_request -W .github/workflows/ci-cd.yml -j tests
 act pull_request -W .github/workflows/microservices-ci-cd.yml -j deploy
 act push -W .github/workflows/docker-release.yml -j build-and-push
 ```
+
+## Security Checks
+
+The CI pipeline runs additional security scans after the test jobs complete:
+
+- **Dependency Review** using `actions/dependency-review-action` fails if new
+  dependencies introduce critical vulnerabilities.
+- **Trivy** scans the repository for known vulnerabilities and exits with an
+  error when critical issues are found.
+
+Run these checks locally with `act`:
+
+```bash
+act pull_request -j security-scans
+```

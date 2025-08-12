@@ -7,6 +7,7 @@ import time
 from contextlib import asynccontextmanager, contextmanager
 from typing import Callable, List, Tuple
 
+from .connection_retry import RetryConfig
 from yosai_intel_dashboard.src.database.types import DatabaseConnection
 
 from .database_exceptions import ConnectionValidationFailed, PoolExhaustedError
@@ -18,6 +19,10 @@ from ..monitoring.prometheus.connection_pool import (
     db_pool_current_size,
     db_pool_wait_seconds,
 )
+
+
+DEFAULT_POOL_ACQUIRE_TIMEOUT = 5.0
+DEFAULT_RETRY_CONFIG = RetryConfig()
 
 
 class DatabaseConnectionPool:
@@ -272,3 +277,5 @@ class DatabaseConnectionPool:
             yield conn
         finally:
             await asyncio.to_thread(self.release_connection, conn)
+
+__all__ = ["DatabaseConnectionPool", "DEFAULT_POOL_ACQUIRE_TIMEOUT", "DEFAULT_RETRY_CONFIG"]

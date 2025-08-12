@@ -122,7 +122,7 @@ def test_set_active_version_closes_session(tmp_path, registry, track_session_clo
     assert len(track_session_closes) >= 1
 
 
-def test_rollback_to_previous_closes_session(tmp_path, registry, track_session_closes):
+def test_rollback_model_closes_session(tmp_path, registry, track_session_closes):
     p1 = tmp_path / "m1.bin"
     p1.write_text("a")
     registry.register_model("m5", str(p1), {"acc": 1.0}, "h1", version="0.1.0")
@@ -132,7 +132,7 @@ def test_rollback_to_previous_closes_session(tmp_path, registry, track_session_c
     registry.register_model("m5", str(p2), {"acc": 0.9}, "h2", version="0.1.1")
     registry.set_active_version("m5", "0.1.1")
     track_session_closes.clear()
-    registry.rollback_to_previous("m5")
+    registry.rollback_model("m5")
     calls = len(track_session_closes)
     active = registry.get_model("m5", active_only=True)
     assert calls >= 1

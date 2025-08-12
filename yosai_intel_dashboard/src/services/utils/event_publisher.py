@@ -1,7 +1,7 @@
 import logging
-from typing import Dict
+from typing import Any, Dict
 
-from src.common.events import EventBus
+from shared.events.bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ def publish_event(
     """Safely publish ``payload`` to ``event_bus`` if available."""
     if event_bus:
         try:
-            event_bus.emit(event, payload)
+            event_bus.publish(event, payload)
         except Exception as exc:  # pragma: no cover - best effort
             logger.debug("Event bus publish failed: %s", exc)
 

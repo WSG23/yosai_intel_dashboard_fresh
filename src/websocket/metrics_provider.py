@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 
 from src.common.base import BaseComponent
-from src.common.events import EventBus, EventPublisher
+from shared.events.bus import EventBus, EventPublisher
 from src.common.mixins import LoggingMixin, SerializationMixin
 from src.repository import InMemoryMetricsRepository, MetricsRepository
 

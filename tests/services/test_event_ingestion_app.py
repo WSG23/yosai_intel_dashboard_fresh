@@ -98,13 +98,22 @@ def load_module():
     core_stub = types.ModuleType("core.security")
 
     class DummyLimiter:
-        def is_allowed(self, *a, **k):
+        def __init__(self, *a, **k):
+            pass
+
+        async def is_allowed(self, *a, **k):
             return {
                 "allowed": True,
                 "limit": 100,
                 "remaining": 99,
                 "reset": time.time() + 60,
             }
+
+        def start_cleanup(self):
+            pass
+
+        async def stop_cleanup(self):
+            pass
 
     core_stub.RateLimiter = DummyLimiter
     safe_import("core.security", core_stub)

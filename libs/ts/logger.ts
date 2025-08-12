@@ -1,12 +1,19 @@
 const LEVELS = ['debug', 'info', 'warn', 'error'] as const;
-export type LogLevel = typeof LEVELS[number];
+export type LogLevel = (typeof LEVELS)[number];
+
+export interface Logger {
+  debug: (...args: any[]) => void;
+  info: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+}
 
 function resolveLevel(raw?: string): LogLevel {
   const lvl = raw?.toLowerCase();
   return LEVELS.includes(lvl as LogLevel) ? (lvl as LogLevel) : 'info';
 }
 
-export function createLogger(name: string, level?: string) {
+export function createLogger(name: string, level?: string): Logger {
   // @ts-ignore process may be undefined in some runtimes
   const env = level ?? (typeof process !== 'undefined' ? process?.env?.LOG_LEVEL : undefined);
   const resolved = resolveLevel(env);
@@ -23,6 +30,6 @@ export function createLogger(name: string, level?: string) {
     info: log('info'),
     warn: log('warn'),
     error: log('error'),
-  };
+  } satisfies Logger;
 }
 
