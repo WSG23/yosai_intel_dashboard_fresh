@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 import websockets
 from src.common.config import ConfigService
+from shared.events.names import EventName
 
 
 def _load_server():
@@ -85,7 +86,7 @@ def test_websocket_events_broadcast():
 
             task = asyncio.create_task(client())
             await asyncio.sleep(0.1)
-            event_bus.emit("analytics_update", {"value": 42})
+            event_bus.emit(EventName.ANALYTICS_UPDATE, {"value": 42})
             return await asyncio.wait_for(task, timeout=5)
 
         data = asyncio.run(runner())

@@ -9,6 +9,7 @@ import types
 from pathlib import Path
 
 from src.common.config import ConfigService
+from shared.events.names import EventName
 
 
 
@@ -108,12 +109,12 @@ def test_buffered_events_flushed_on_client_connect() -> None:
     time.sleep(0.1)
 
     for i in range(3):
-        event_bus.emit("analytics_update", {"idx": i})
+        event_bus.emit(EventName.ANALYTICS_UPDATE, {"idx": i})
 
     messages = _run_client(8766, 3)
     assert [m["idx"] for m in messages] == [0, 1, 2]
 
-    history = event_bus.get_event_history("analytics_update")
+    history = event_bus.get_event_history(EventName.ANALYTICS_UPDATE)
     assert len(history) == 6  # original 3 + republished 3
 
     server.stop()
@@ -129,12 +130,12 @@ def test_queue_bound() -> None:
     time.sleep(0.1)
 
     for i in range(3):
-        event_bus.emit("analytics_update", {"idx": i})
+        event_bus.emit(EventName.ANALYTICS_UPDATE, {"idx": i})
 
     messages = _run_client(8767, 2)
     assert [m["idx"] for m in messages] == [1, 2]
 
-    history = event_bus.get_event_history("analytics_update")
+    history = event_bus.get_event_history(EventName.ANALYTICS_UPDATE)
     assert len(history) == 5  # initial 3 + republished 2
 
     server.stop()
@@ -154,7 +155,7 @@ def test_compressed_broadcast() -> None:
     time.sleep(0.1)
 
     payload = {"data": "x" * 100}
-    event_bus.emit("analytics_update", payload)
+    event_bus.emit(EventName.ANALYTICS_UPDATE, payload)
 
     messages = _run_client(8768, 1)
     assert messages[0] == payload

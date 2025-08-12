@@ -10,6 +10,10 @@ This guide describes how to install ArgoCD, apply Helm charts, and verify deploy
 - [Helm](https://helm.sh/) installed locally
 - Access to the Git repository containing the Helm charts
 
+## Image Vulnerability Scan
+
+The CI pipeline scans every published container image with `trivy image` and uploads a SARIF report. Deployments should proceed only after the scan job succeeds without critical findings in the workflow.
+
 ## Install ArgoCD
 
 1. Create the ArgoCD namespace:

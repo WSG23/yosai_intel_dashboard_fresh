@@ -1,7 +1,6 @@
-"""Lightweight service registry for application-wide singletons."""
+"""Simple registry for optional services and service discovery."""
 
 from __future__ import annotations
-
 from typing import Any, Dict, Optional, TypeVar
 
 T = TypeVar("T")
@@ -33,6 +32,5 @@ class ServiceRegistry:
 
 # Shared registry instance used across the application.
 registry = ServiceRegistry()
-
 
 __all__ = ["ServiceRegistry", "registry"]

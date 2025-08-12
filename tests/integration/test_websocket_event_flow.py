@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 import websockets
 from src.common.config import ConfigService
+from shared.events.names import EventName
 
 
 def _load_server():
@@ -92,6 +93,6 @@ async def test_websocket_event_flow(websocket_server):
     async with websockets.connect("ws://127.0.0.1:8770") as ws:
         await asyncio.sleep(0.05)
         payload = {"value": 42}
-        websocket_server.emit("analytics_update", payload)
+        websocket_server.emit(EventName.ANALYTICS_UPDATE, payload)
         message = await asyncio.wait_for(ws.recv(), timeout=5)
         assert json.loads(message) == payload

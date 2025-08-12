@@ -3,12 +3,28 @@ from __future__ import annotations
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from yosai_intel_dashboard.src.services.security.jwt_service import verify_service_jwt
+from yosai_intel_dashboard.src.services.security.jwt_service import (
+    TokenValidationError,
+    verify_service_jwt,
+)
 
 
-def verify_jwt_token(token: str, validator=verify_service_jwt) -> dict:
-    """Return JWT claims or raise HTTPException if invalid."""
-    claims = validator(token)
+def verify_jwt_token(
+    token: str,
+    validator=verify_service_jwt,
+    *,
+    audience: str | None = None,
+    subject: str | None = None,
+) -> dict:
+    """Return JWT claims or raise HTTPException with precise error codes."""
+    kwargs = {k: v for k, v in {"audience": audience, "subject": subject}.items() if v is not None}
+    try:
+        claims = validator(token, **kwargs)
+    except TokenValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": exc.code, "message": exc.code},
+        ) from exc
     if claims is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

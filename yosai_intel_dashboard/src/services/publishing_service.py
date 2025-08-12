@@ -6,6 +6,7 @@ from src.common import BaseComponent, EventDispatchMixin, handle_deprecated
 from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
 from yosai_intel_dashboard.src.services.analytics.protocols import PublishingProtocol
 from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
+from shared.events.names import EventName
 
 
 class PublishingService(EventDispatchMixin, BaseComponent, PublishingProtocol):
@@ -16,7 +17,7 @@ class PublishingService(EventDispatchMixin, BaseComponent, PublishingProtocol):
         super().__init__(event_bus=event_bus)
         self._publisher = Publisher(event_bus)
 
-    def publish(self, payload: Dict[str, Any], event: str = "analytics_update") -> None:
+    def publish(self, payload: Dict[str, Any], event: str = EventName.ANALYTICS_UPDATE) -> None:
         self._publisher.publish(payload, event)
 
 
