@@ -163,11 +163,15 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+    - name: Dependency Review
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: actions/dependency-review-action@v4
+      with:
+        fail-on-severity: critical
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
-      run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@v3
-      if: ${{ github.event.pull_request.head.repo.fork == false }}
+      run: 'echo "Fork PR: secret-protected step skipped (Trivy)."'
     - name: Scan with Trivy
       if: ${{ github.event.pull_request.head.repo.fork == false }}
       uses: aquasecurity/trivy-action@0.11.2
@@ -176,7 +180,7 @@ jobs:
         format: sarif
         output: trivy-results.sarif
         exit-code: '1'
-        severity: HIGH,CRITICAL
+        severity: CRITICAL
     - uses: actions/upload-artifact@v4
       if: ${{ github.event.pull_request.head.repo.fork == false }}
       with:

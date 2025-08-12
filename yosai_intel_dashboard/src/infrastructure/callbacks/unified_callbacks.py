@@ -29,7 +29,7 @@ from dash.dependencies import Input, Output, State
 
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
 from .events import CallbackEvent
-from ...core.callbacks.event_bus import EventBus, EventPublisher
+from shared.events.bus import EventBus, EventPublisher
 
 # ---------------------------------------------------------------------------
 # Type aliases

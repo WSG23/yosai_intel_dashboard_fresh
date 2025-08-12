@@ -281,13 +281,16 @@ def load_app(jwt_secret: str | None = "secret") -> tuple:
     registry_mod.ModelRegistry = DummyRegistry
     registry_mod.ModelRecord = DummyRecord
     sys.modules["models.ml.model_registry"] = registry_mod
+    sys.modules["yosai_intel_dashboard.models.ml.model_registry"] = registry_mod
     ml_pkg = types.ModuleType("models.ml")
     ml_pkg.ModelRegistry = DummyRegistry
     ml_pkg.ModelRecord = DummyRecord
     sys.modules["models.ml"] = ml_pkg
+    sys.modules["yosai_intel_dashboard.models.ml"] = ml_pkg
     models_stub = types.ModuleType("models")
     models_stub.ml = ml_pkg
     sys.modules["models"] = models_stub
+    sys.modules["yosai_intel_dashboard.models"] = models_stub
 
     # Stub analytics modules used by threat_assessment endpoint
     fe_stub = types.ModuleType("analytics.feature_extraction")
@@ -354,7 +357,7 @@ def load_app(jwt_secret: str | None = "secret") -> tuple:
     security_stub = types.ModuleType("core.security")
 
     class DummyRateLimiter:
-        def is_allowed(self, *a, **k):
+        async def is_allowed(self, *a, **k):
             return {"allowed": True}
 
     security_stub.RateLimiter = DummyRateLimiter
@@ -412,11 +415,19 @@ async def test_health_endpoints():
     module, _, _ = load_app()
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.get("/health/live")
+        resp = await client.get("/api/v1/health")
         assert resp.status_code == 200
         assert resp.json() == {"status": "ok"}
 
-        resp = await client.get("/health/ready")
+        resp = await client.get("/api/v1/health/live")
+        assert resp.status_code == 200
+        assert resp.json() == {"status": "ok"}
+
+        resp = await client.get("/api/v1/health/startup")
+        assert resp.status_code == 200
+        assert resp.json() == {"status": "complete"}
+
+        resp = await client.get("/api/v1/health/ready")
         assert resp.status_code == 200
         assert resp.json() == {"status": "ready"}
 

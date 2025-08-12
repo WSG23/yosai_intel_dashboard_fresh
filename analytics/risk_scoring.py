@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from . import feature_extraction
+from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 
 
 @dataclass
@@ -122,7 +122,7 @@ def score_events(
 ) -> RiskScoreResult:
     """Score raw event data using simple heuristics and context."""
 
-    features = feature_extraction.extract_event_features(df)
+    features = preprocess_events(df)
     total = len(features)
     denied = int(features["access_denied"].sum())
     anomaly_score = (denied / total) * 100 if total else 0
