@@ -9,7 +9,7 @@ from typing import Any, Dict
 from src.common.base import BaseComponent
 from src.common.events import EventBus, EventPublisher
 from src.common.mixins import LoggingMixin, SerializationMixin
-from src.repository import InMemoryMetricsRepository, MetricsRepository
+from src.repository import InMemoryMetricsRepository
 
 
 def generate_sample_metrics() -> Dict[str, Any]:
@@ -24,7 +24,7 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
     def __init__(
         self,
         event_bus: EventBus,
-        repo: MetricsRepository | None = None,
+        repo: Any | None = None,
         interval: float = 1.0,
     ) -> None:
         BaseComponent.__init__(
