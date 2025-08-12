@@ -19,34 +19,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - id: setup-python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - uses: actions/setup-node@v4
+      # --- Node toolchain for frontend lint/tests ---
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt', '**/constraints*.txt') }}
-          restore-keys: |
-            pip-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-
-      - name: Install dependencies
+      - name: Install Node deps (CI-safe)
+        env:
+          NPM_CONFIG_LEGACY_PEER_DEPS: "true"
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt || true
-          [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt || true
-          pip install pre-commit
-          if [ -f package-lock.json ]; then
-            npm ci
-          elif [ -f pnpm-lock.yaml ]; then
-            pnpm install --frozen-lockfile
-          elif [ -f yarn.lock ]; then
-            yarn --frozen-lockfile
+          npm ci --no-audit --prefer-offline
+      # --- Python toolchain for lint/tests ---
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Prepare pip build tools
+        run: |
+          python -m pip install -U pip setuptools wheel
+      - name: Install Python deps (prefer wheels; fallback)
+        env:
+          PIP_PREFER_BINARY: "1"
+          PIP_ONLY_BINARY: ":all:"
+        shell: bash
+        run: |
+          set -euo pipefail
+          (pip install -r requirements.txt || pip install --no-build-isolation -r requirements.txt)
+          if [ -f requirements-dev.txt ]; then
+            (pip install -r requirements-dev.txt || pip install --no-build-isolation -r requirements-dev.txt)
           fi
+      # Collect logs if anything above fails
+      - name: Upload npm/pip logs (always)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-logs-code_quality
+          path: |
+            ~/.npm/_logs/**
+            ~/.cache/pip/log/debug.log
+          if-no-files-found: ignore
       - name: Install ShellCheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
       - name: ShellCheck
