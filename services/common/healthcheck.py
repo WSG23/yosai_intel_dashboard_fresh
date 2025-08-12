@@ -1,17 +1,24 @@
 import asyncio
-from typing import Callable, Dict
+from typing import Callable, Dict, Iterable, Tuple
 
-async def check_with_timeout(name: str, probe: Callable, timeout_s: float = 1.5) -> Dict[str, str]:
+Probe = Tuple[str, Callable[[], asyncio.Future]]
+
+
+async def check_with_timeout(
+    name: str, probe: Callable, timeout_s: float = 1.5
+) -> Dict[str, str]:
     try:
         await asyncio.wait_for(probe(), timeout=timeout_s)
         return {name: "ok"}
     except Exception as e:
         return {name: f"fail:{type(e).__name__}"}
 
-async def aggregate(*entries):
+
+async def aggregate(entries: Iterable[Probe]):
     status = {"status": "ok", "checks": {}}
     for name, probe in entries:
-        status["checks"].update(await check_with_timeout(name, probe))
-        if not list(status["checks"].values())[-1] == "ok":
+        res = await check_with_timeout(name, probe)
+        status["checks"].update(res)
+        if list(res.values())[0] != "ok":
             status["status"] = "fail"
     return status
