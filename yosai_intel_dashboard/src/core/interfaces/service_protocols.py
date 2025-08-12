@@ -12,6 +12,7 @@ from yosai_intel_dashboard.src.mapping.core.interfaces import (
     StorageInterface,
 )
 from yosai_intel_dashboard.src.mapping.core.models import MappingData
+from yosai_intel_dashboard.src.core import registry
 
 
 @runtime_checkable
@@ -118,11 +119,10 @@ def get_door_mapping_service(
     c = _get_container(container)
     if c and c.has("door_mapping_service"):
         return c.get("door_mapping_service")
-    from yosai_intel_dashboard.src.services.door_mapping_service import (
-        door_mapping_service,
-    )
+    # Ensure registration side effects
+    import yosai_intel_dashboard.src.services.door_mapping_service  # noqa: F401
 
-    return door_mapping_service
+    return registry.get("door_mapping_service")
 
 
 def get_device_learning_service(

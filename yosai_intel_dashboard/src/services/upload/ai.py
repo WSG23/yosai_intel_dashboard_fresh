@@ -3,6 +3,8 @@ from typing import Any, Dict, List
 
 from dash.dash import no_update
 
+from yosai_intel_dashboard.src.core import registry
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,13 +78,14 @@ class AISuggestionService:
         return [suggested_values]
 
 
-# Shared instance for module level helpers
-_DEFAULT_AI_SERVICE = AISuggestionService()
+# Register service for global lookups
+registry.register("ai_suggestion_service", AISuggestionService())
 
 
 def analyze_device_name_with_ai(device_name: str) -> Dict[str, Any]:
     """Convenience wrapper calling :class:`AISuggestionService`."""
-    return _DEFAULT_AI_SERVICE.analyze_device_name_with_ai(device_name)
+    service: AISuggestionService = registry.get("ai_suggestion_service")
+    return service.analyze_device_name_with_ai(device_name)
 
 
 __all__ = ["AISuggestionService", "analyze_device_name_with_ai"]
