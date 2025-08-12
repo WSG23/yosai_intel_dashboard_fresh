@@ -196,6 +196,12 @@ def test_download_artifact_invalid_scheme(tmp_path, registry):
         registry.download_artifact("ftp://host/file.bin", str(tmp_path / "x"))
 
 
+def test_version_metadata(tmp_path, registry, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    registry.store_version_metadata("demo", "1.2.3")
+    assert registry.get_version_metadata("demo") == "1.2.3"
+
+
 @pytest.mark.skip(reason="requires full analytics stack")
 def test_log_features_and_drift(monkeypatch, stub_services_registry):
     # Provide minimal stubs so mlflow import succeeds

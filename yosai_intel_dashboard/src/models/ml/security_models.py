@@ -6,6 +6,8 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Tuple
+import shutil
+import tempfile
 
 import joblib
 import numpy as np
@@ -265,9 +267,15 @@ def _register_model(
         )
     )
     dataset_hash = hash_dataframe(df)
-    with Path(f"{name}.joblib").open("wb") as fh:
+    with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as fh:
         joblib.dump(model_obj, fh)
-    record = registry.register_model(name, f"{name}.joblib", metrics, dataset_hash)
+        tmp_path = Path(fh.name)
+    record = registry.register_model(name, str(tmp_path), metrics, dataset_hash)
+    dest_dir = Path("models") / name / record.version
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = dest_dir / f"{name}.joblib"
+    shutil.move(str(tmp_path), dest_path)
+    registry.store_version_metadata(name, record.version)
     registry.set_active_version(name, record.version)
 
 

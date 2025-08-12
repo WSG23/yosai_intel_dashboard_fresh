@@ -302,6 +302,20 @@ class ModelRegistry:
         return self.rollback_model(name)
 
     # --------------------------------------------------------------
+    def store_version_metadata(self, name: str, version: str) -> None:
+        """Persist the active version for *name* to the local models directory."""
+        path = Path("models") / name
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "VERSION").write_text(version)
+
+    def get_version_metadata(self, name: str) -> str | None:
+        """Return the stored local version for *name*, if available."""
+        path = Path("models") / name / "VERSION"
+        if path.exists():
+            return path.read_text().strip()
+        return None
+
+    # --------------------------------------------------------------
     def download_artifact(self, storage_uri: str, destination: str) -> None:
         parsed = urlparse(storage_uri)
         scheme = parsed.scheme
