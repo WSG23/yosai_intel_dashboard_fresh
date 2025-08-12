@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
-# Ensure no Kubernetes manifest uses :latest image tags.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+SCRIPTDIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-violations=$(grep -R --line-number ':latest' "$ROOT_DIR/k8s" || true)
-if [[ -n "$violations" ]]; then
-  echo "❌ Found :latest image tags in Kubernetes manifests:" >&2
-  echo "$violations" >&2
-  exit 1
+COMMON_SH="$SCRIPTDIR/../common.sh"
+if [[ -f "$COMMON_SH" ]]; then
+  # shellcheck disable=SC1090
+  source "$COMMON_SH"
+else
+  echo "Warning: common.sh not found at $COMMON_SH" >&2
 fi
 
-echo "✅ No :latest image tags found in Kubernetes manifests"
-
+TARGET_DIR="${1:-$SCRIPTDIR/../../k8s}"
+if grep -R --line-number --exclude-dir='.git' -e ':latest' "$TARGET_DIR"; then
+  echo "Error: 'latest' tag found in Kubernetes manifests" >&2
+  exit 1
+fi
