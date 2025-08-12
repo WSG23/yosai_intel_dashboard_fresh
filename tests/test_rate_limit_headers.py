@@ -56,7 +56,7 @@ from yosai_intel_dashboard.src.core.security import RateLimiter
 
 def test_rate_limiter_returns_header_fields():
     redis_client = FakeRedis()
-    limiter = RateLimiter(redis_client, max_requests=2, window_minutes=1)
+    limiter = RateLimiter(redis_client, limit=2, window=60)
     result1 = asyncio.run(limiter.is_allowed("user"))
     assert result1["allowed"] is True
     assert result1["limit"] == 2

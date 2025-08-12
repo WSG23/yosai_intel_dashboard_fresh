@@ -41,7 +41,7 @@ except Exception:
     service = None
 
 redis_client = aioredis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
-rate_limiter = RateLimiter(redis_client, max_requests=100, window_minutes=1)
+rate_limiter = RateLimiter(redis_client, limit=100, window=60)
 
 
 @app.on_event("startup")

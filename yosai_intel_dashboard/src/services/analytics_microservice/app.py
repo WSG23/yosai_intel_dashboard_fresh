@@ -77,7 +77,7 @@ service_cfg = ConfigurationLoader().get_service_config()
 
 # Configure a Redis backed rate limiter
 redis_client = aioredis.from_url(service_cfg.redis_url)
-rate_limiter = RateLimiter(redis_client, max_requests=100, window_minutes=1)
+rate_limiter = RateLimiter(redis_client, limit=100, window=60)
 
 
 @app.on_event("startup")

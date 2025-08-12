@@ -1,7 +1,7 @@
 import time
 import pytest
 
-from yosai_intel_dashboard.src.core.rate_limiter import RateLimiter
+from yosai_intel_dashboard.src.core.security import RateLimiter
 
 pytestmark = pytest.mark.unit
 
