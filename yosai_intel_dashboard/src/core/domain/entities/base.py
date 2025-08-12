@@ -4,10 +4,9 @@ from __future__ import annotations
 """Base classes for data models used throughout the application."""
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Protocol, runtime_checkable
 
-import pandas as pd
 from yosai_intel_dashboard.src.infrastructure.config import constants
 
 from ..value_objects.enums import AccessResult

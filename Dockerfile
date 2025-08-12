@@ -17,6 +17,13 @@ RUN python -m venv /opt/venv \
     && pip install --no-cache-dir -r requirements.filtered
 
 FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee
+
+# Install runtime packages
+# hadolint ignore=DL3008
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 

@@ -68,6 +68,7 @@ def main() -> None:
 
     # Ensure a /health endpoint is available for container checks
     if not any(getattr(r, "path", "") == "/health" for r in app.routes):
+
         @app.get("/health")
         async def _health() -> dict[str, str]:
             return {"status": "ok"}

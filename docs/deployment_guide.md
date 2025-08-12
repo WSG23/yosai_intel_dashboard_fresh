@@ -62,4 +62,8 @@ The CI pipeline scans every published container image with `trivy image` and upl
    argocd app get yosai-dashboard
    ```
 3. Verify services respond as expected by inspecting logs or accessing exposed endpoints.
+4. Confirm the API health endpoint responds:
+   ```bash
+   curl -f http://<service-host>:5001/health
+   ```
 
