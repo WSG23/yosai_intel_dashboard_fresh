@@ -49,8 +49,9 @@ class MigrationStrategy(ABC):
             return
         async with self.target_pool.acquire() as conn:
             builder = SecureQueryBuilder(allowed_tables=APPROVED_TABLES)
-            table = builder.table(self.name)
-            sql, _ = builder.build(f"TRUNCATE TABLE {table} CASCADE", logger=LOG)
+            sql, _ = builder.build(
+                "TRUNCATE TABLE %s CASCADE", self.name, logger=LOG
+            )
             await conn.execute(sql)
 
 
