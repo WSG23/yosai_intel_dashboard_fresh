@@ -12,7 +12,20 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import Mapping
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Protocol
+
+
+class DatabaseManagerProtocol(Protocol):
+    """Protocol describing the minimal database manager interface used."""
+
+    def health_check(self) -> bool:
+        """Return ``True`` when the database connection is healthy."""  # pragma: no cover - simple protocol
+
+    def get_connection(self) -> Any:
+        """Retrieve a database connection object."""  # pragma: no cover - simple protocol
+
+    def release_connection(self, connection: Any) -> None:
+        """Release a previously acquired connection."""  # pragma: no cover - simple protocol
 
 
 class AnalyticsService:
@@ -27,8 +40,8 @@ class AnalyticsService:
         Number of seconds analytics results remain cached.  Defaults to ``60``.
     """
 
-    def __init__(self, db_manager: Any, ttl: int = 60) -> None:
-        self._db_manager = db_manager
+    def __init__(self, db_manager: DatabaseManagerProtocol, ttl: int = 60) -> None:
+        self._db_manager: DatabaseManagerProtocol = db_manager
         self._ttl = ttl
         self._cache: Dict[str, Any] | None = None
         self._expiry: float = 0.0
@@ -96,8 +109,8 @@ class AnalyticsService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def get_analytics(self) -> Dict[str, Any]:
-        """Return analytics data, using the cache when possible."""
+    async def aget_analytics(self) -> Dict[str, Any]:
+        """Asynchronously return analytics data, using the cache when possible."""
 
         cached = self._get_cached()
         if cached is not None:
@@ -119,7 +132,7 @@ class AnalyticsService:
             }
 
         try:
-            data = asyncio.run(self._gather_analytics(connection))
+            data = await self._gather_analytics(connection)
             result = {"status": "success", "data": data}
             self._set_cache(result)
             return result
@@ -134,6 +147,11 @@ class AnalyticsService:
                 self._db_manager.release_connection(connection)
             except Exception:
                 pass
+
+    def get_analytics(self) -> Dict[str, Any]:
+        """Synchronous wrapper for :meth:`aget_analytics`."""
+
+        return asyncio.run(self.aget_analytics())
 
 
 __all__ = ["AnalyticsService"]
