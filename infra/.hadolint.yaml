@@ -1,17 +1,6 @@
-format: tty
-failure-threshold: warning
-trustedRegistries:
-  - docker.io
-  - ghcr.io
-  - gcr.io
 ignored:
-  # Allow /bin/sh in distroless/alpine based images where bash is absent
-  - DL4006
-rules:
-  # Require pinned tags (no :latest)
   - DL3007
-  # No sudo inside containers
-  - DL3002
-  # Use apk/apt best practices; clean up lists/cache
-  - DL3015
   - DL3018
+  - DL3041
+  - DL4006
+failure-threshold: error

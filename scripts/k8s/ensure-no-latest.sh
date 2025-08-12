@@ -1,32 +1,16 @@
 #!/usr/bin/env bash
+# Ensure no Kubernetes manifest uses :latest image tags.
 set -euo pipefail
 
-root="$(git rev-parse --show-toplevel)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-usage() {
-  cat <<USAGE >&2
-Usage: $(basename "$0") [DIRECTORY]
-
-Ensures no ':latest' image tags are used in Kubernetes manifests under DIRECTORY.
-DIRECTORY defaults to '${root}/deploy'.
-USAGE
-}
-
-if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
-  usage
-  exit 0
-fi
-
-dir="${1:-${root}/deploy}"
-
-if [[ ! -d "$dir" ]]; then
-  echo "Directory '$dir' does not exist." >&2
+violations=$(grep -R --line-number ':latest' "$ROOT_DIR/k8s" || true)
+if [[ -n "$violations" ]]; then
+  echo "❌ Found :latest image tags in Kubernetes manifests:" >&2
+  echo "$violations" >&2
   exit 1
 fi
 
-if grep -R --include='*.yaml' --include='*.yml' -n ':latest' "$dir"; then
-  echo "Error: ':latest' tag found in manifests under $dir" >&2
-  exit 1
-fi
+echo "✅ No :latest image tags found in Kubernetes manifests"
 
-exit 0
