@@ -7,7 +7,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict
 
-from .enums import AccessResult, AnomalyType, BadgeStatus, SeverityLevel, TicketStatus
+from ..value_objects.enums import (
+    AccessResult,
+    AnomalyType,
+    BadgeStatus,
+    SeverityLevel,
+    TicketStatus,
+)
 
 
 @dataclass(slots=True)
