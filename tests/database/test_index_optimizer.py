@@ -86,3 +86,40 @@ def test_apply_recommendations_executes_statements(monkeypatch):
     opt = IndexOptimizer(conn)
     opt.apply_recommendations("tbl", ["col1"])
     assert ("CREATE INDEX idx_tbl_col1 ON tbl (col1)", None) in conn.executed
+
+
+def test_recommend_new_indexes_rejects_malicious_identifiers(monkeypatch):
+    import re
+
+    conn = make_sqlite_conn([])
+    monkeypatch.setattr(
+        idx_mod, "execute_query", lambda c, q, p=None: c.execute_query(q, p)
+    )
+
+    class ValidatingBuilder:
+        _re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+        def __init__(self, *, allowed_tables=None, allowed_columns=None):
+            self.allowed_tables = allowed_tables or set()
+            self.allowed_columns = allowed_columns or set()
+
+        def table(self, name: str) -> str:
+            if name not in self.allowed_tables or not self._re.match(name):
+                raise ValueError
+            return name
+
+        def column(self, name: str) -> str:
+            if name not in self.allowed_columns or not self._re.match(name):
+                raise ValueError
+            return name
+
+        def build(self, sql: str, params=None, logger=None):
+            return sql, params
+
+    monkeypatch.setattr(idx_mod, "SecureQueryBuilder", ValidatingBuilder)
+
+    opt = IndexOptimizer(conn)
+    bad_table = "tbl; DROP TABLE users; --"
+    assert opt.recommend_new_indexes(bad_table, ["col1"]) == []
+    bad_column = "col1; DROP TABLE users; --"
+    assert opt.recommend_new_indexes("tbl", [bad_column]) == []

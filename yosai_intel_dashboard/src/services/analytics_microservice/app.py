@@ -11,7 +11,6 @@ from typing import Any, Dict
 
 import joblib
 import pandas as pd
-import redis
 import redis.asyncio as aioredis
 from fastapi import (
     APIRouter,
@@ -62,7 +61,6 @@ from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
 from fastapi.responses import JSONResponse
-from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -77,9 +75,18 @@ app.add_middleware(UnicodeSanitizationMiddleware)
 service_cfg = ConfigurationLoader().get_service_config()
 
 # Configure a Redis backed rate limiter
-redis_client = redis.Redis.from_url(service_cfg.redis_url)
-rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
-app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
+redis_client = aioredis.from_url(service_cfg.redis_url)
+rate_limiter = RateLimiter(redis_client, max_requests=100, window_minutes=1)
+
+
+@app.on_event("startup")
+async def _start_rate_limiter() -> None:
+    rate_limiter.start_cleanup()
+
+
+@app.on_event("shutdown")
+async def _stop_rate_limiter() -> None:
+    await rate_limiter.stop_cleanup()
 
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse, "description": "Bad Request"},
@@ -95,7 +102,7 @@ async def rate_limit(request: Request, call_next):
     identifier = (
         auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
     )
-    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    result = await rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
     headers = {
         "X-RateLimit-Limit": str(result.get("limit", rate_limiter.max_requests)),
         "X-RateLimit-Remaining": str(result.get("remaining", 0)),

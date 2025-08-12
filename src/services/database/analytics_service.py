@@ -112,7 +112,7 @@ class AnalyticsService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def get_analytics(self) -> Dict[str, Any]:
+    async def get_analytics(self) -> Dict[str, Any]:
         """Return analytics data, using the cache when possible."""
 
         cached = self._get_cached()
@@ -137,6 +137,7 @@ class AnalyticsService:
                 "message": str(exc),
                 "error_code": "pool_timeout",
             }
+
         except Exception as exc:  # pragma: no cover - best effort
             return {
                 "status": "error",

@@ -354,7 +354,7 @@ def load_app(jwt_secret: str | None = "secret") -> tuple:
     security_stub = types.ModuleType("core.security")
 
     class DummyRateLimiter:
-        def is_allowed(self, *a, **k):
+        async def is_allowed(self, *a, **k):
             return {"allowed": True}
 
     security_stub.RateLimiter = DummyRateLimiter
