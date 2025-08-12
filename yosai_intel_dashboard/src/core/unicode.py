@@ -31,26 +31,27 @@ from .security_patterns import (
     SQL_INJECTION_PATTERNS,
     XSS_PATTERNS,
 )
+from .registry import ServiceRegistry
 
 logger = logging.getLogger(__name__)
 
 # Lazy Unicode security validator used across this module
-_unicode_validator = None
 
 
 def _get_unicode_validator():
     """Return a shared :class:`UnicodeSecurityValidator` instance."""
-    global _unicode_validator
-    if _unicode_validator is None:
+    validator = ServiceRegistry.get("unicode_validator")
+    if validator is None:
         from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
             UnicodeSecurityConfig,
             UnicodeSecurityValidator,
         )
 
-        _unicode_validator = UnicodeSecurityValidator(
+        validator = UnicodeSecurityValidator(
             config=UnicodeSecurityConfig(strict_mode=True, remove_surrogates=True)
         )
-    return _unicode_validator
+        ServiceRegistry.register("unicode_validator", validator)
+    return validator
 
 
 # ---------------------------------------------------------------------------
