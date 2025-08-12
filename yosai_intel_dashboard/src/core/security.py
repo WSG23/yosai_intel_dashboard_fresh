@@ -9,17 +9,27 @@ import hashlib
 import logging
 import secrets
 import time
-from concurrent.futures import ProcessPoolExecutor
+# ``ProcessPoolExecutor`` may not be available in some minimal environments.
+try:  # pragma: no cover - best effort
+    from concurrent.futures import ProcessPoolExecutor
+except Exception:  # pragma: no cover
+    ProcessPoolExecutor = None  # type: ignore
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
+import asyncio
+import contextlib
+import redis.asyncio as aioredis
 
 from argon2 import PasswordHasher
 from argon2 import exceptions as argon2_exceptions
 
-_executor = ProcessPoolExecutor()
-_ph = PasswordHasher()
+_executor = ProcessPoolExecutor() if callable(ProcessPoolExecutor) else None
+try:  # pragma: no cover - optional dependency
+    _ph = PasswordHasher()
+except Exception:  # pragma: no cover
+    _ph = None
 
 
 def _pbkdf2_sha256(password: bytes, salt: bytes, iterations: int) -> bytes:
@@ -81,66 +91,58 @@ class SecurityEvent:
 
 
 class RateLimiter:
-    """Rate limiting to prevent abuse"""
+    """Redis backed rate limiting with IP blocking support."""
 
     def __init__(
         self,
+        redis_client: aioredis.Redis,
         max_requests: int = dynamic_config.security.rate_limit_requests,
         window_minutes: int = dynamic_config.security.rate_limit_window_minutes,
-    ):
+    ) -> None:
+        self.redis = redis_client
         self.max_requests = max_requests
         self.window_seconds = window_minutes * 60
-        self.requests: Dict[str, List[float]] = {}
-        self.blocked_ips: Dict[str, float] = {}
         self.logger = logging.getLogger(__name__)
+        self._cleanup_task: asyncio.Task | None = None
+        self._req_prefix = "rl:req:"
+        self._block_prefix = "rl:block:"
 
-    def is_allowed(
+    async def is_allowed(
         self, identifier: str, source_ip: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Check if request is allowed"""
+        """Check if request is allowed using Redis storage."""
         current_time = time.time()
 
-        # Check if IP is blocked
-        if source_ip and source_ip in self.blocked_ips:
-            if current_time < self.blocked_ips[source_ip]:
-                retry_after = self.blocked_ips[source_ip] - current_time
+        if source_ip:
+            block_key = f"{self._block_prefix}{source_ip}"
+            ttl = await self.redis.ttl(block_key)
+            if ttl > 0:
                 return {
                     "allowed": False,
                     "reason": "IP temporarily blocked",
-                    "retry_after": retry_after,
+                    "retry_after": ttl,
                     "limit": self.max_requests,
                     "remaining": 0,
-                    "reset": self.blocked_ips[source_ip],
+                    "reset": current_time + ttl,
                 }
-            # Unblock IP when the timeout has passed
-            del self.blocked_ips[source_ip]
 
-        # Initialize or clean old requests
-        if identifier not in self.requests:
-            self.requests[identifier] = []
+        req_key = f"{self._req_prefix}{identifier}"
+        count = await self.redis.incr(req_key)
+        if count == 1:
+            await self.redis.expire(req_key, self.window_seconds)
+        ttl = await self.redis.ttl(req_key)
+        reset_time = current_time + (ttl if ttl > 0 else self.window_seconds)
 
-        # Remove old requests outside the window
-        cutoff_time = current_time - self.window_seconds
-        self.requests[identifier] = [
-            req_time for req_time in self.requests[identifier] if req_time > cutoff_time
-        ]
-
-        requests = self.requests[identifier]
-        if requests:
-            reset_time = requests[0] + self.window_seconds
-        else:
-            reset_time = current_time + self.window_seconds
-
-        # Check if under limit
-        if len(requests) >= self.max_requests:
+        if count > self.max_requests:
             if source_ip:
-                self.blocked_ips[source_ip] = current_time + (self.window_seconds * 2)
+                block_key = f"{self._block_prefix}{source_ip}"
+                await self.redis.set(block_key, 1, ex=self.window_seconds * 2)
                 self.logger.warning(f"Rate limit exceeded, blocking IP: {source_ip}")
             retry_after = reset_time - current_time
             return {
                 "allowed": False,
                 "reason": "Rate limit exceeded",
-                "requests_in_window": len(requests),
+                "requests_in_window": count,
                 "max_requests": self.max_requests,
                 "window_seconds": self.window_seconds,
                 "limit": self.max_requests,
@@ -149,18 +151,33 @@ class RateLimiter:
                 "retry_after": retry_after,
             }
 
-        # Record this request
-        requests.append(current_time)
-        reset_time = requests[0] + self.window_seconds
-        remaining = self.max_requests - len(requests)
-
+        remaining = self.max_requests - count
         return {
             "allowed": True,
-            "requests_in_window": len(requests),
+            "requests_in_window": count,
             "remaining": remaining,
             "limit": self.max_requests,
             "reset": reset_time,
         }
+
+    async def _cleanup_blocked_ips(self) -> None:
+        while True:
+            async for key in self.redis.scan_iter(match=f"{self._block_prefix}*"):
+                ttl = await self.redis.ttl(key)
+                if ttl <= 0:
+                    await self.redis.delete(key)
+            await asyncio.sleep(self.window_seconds)
+
+    def start_cleanup(self) -> None:
+        if self._cleanup_task is None:
+            self._cleanup_task = asyncio.create_task(self._cleanup_blocked_ips())
+
+    async def stop_cleanup(self) -> None:
+        if self._cleanup_task:
+            self._cleanup_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._cleanup_task
+            self._cleanup_task = None
 
 
 class SecurityAuditor(BaseModel):
@@ -350,8 +367,10 @@ def validate_user_input(value: str, field: str) -> str:
     return result.get("sanitized", value)
 
 
-rate_limiter = RateLimiter()
-security_auditor = SecurityAuditor()
+try:  # pragma: no cover - optional dependency setup
+    security_auditor = SecurityAuditor()
+except Exception:  # pragma: no cover
+    security_auditor = None
 
 
 # Decorators for easy security integration
