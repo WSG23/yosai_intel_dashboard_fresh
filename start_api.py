@@ -66,6 +66,12 @@ def main() -> None:
     app = create_api_app()
     app.state.container = container
 
+    # Ensure a basic health endpoint is available
+    if not any(getattr(route, "path", None) == "/health" for route in app.router.routes):
+        @app.get("/health")
+        async def _health() -> dict[str, str]:
+            return {"status": "ok"}
+
     logger.info("\n🚀 Starting Yosai Intel Dashboard API...")
     logger.info(f"   Available at: http://localhost:{API_PORT}")
     logger.info(f"   Health check: http://localhost:{API_PORT}/health")
