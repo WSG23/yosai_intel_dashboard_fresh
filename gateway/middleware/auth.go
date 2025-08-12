@@ -27,9 +27,11 @@ import (
 
 // JWTConfig holds configuration for JWT validation and refresh.
 type JWTConfig struct {
-	PublicKeys    []string      // PEM encoded RSA public keys
-	RefreshURL    string        // optional token refresh endpoint
-	RefreshBefore time.Duration // duration before expiry to trigger refresh
+        PublicKeys    []string      // PEM encoded RSA public keys
+        RefreshURL    string        // optional token refresh endpoint
+        RefreshBefore time.Duration // duration before expiry to trigger refresh
+        MaxJSONBytes  int64         // max bytes to read from JSON responses; 0 for unlimited
+        Client        *http.Client  // HTTP client used for refresh requests
 }
 
 // TokenCache caches validated tokens and tracks blacklisted JTIs.
@@ -127,7 +129,10 @@ type AuthMiddleware struct {
 
 // NewAuthMiddleware creates a configured AuthMiddleware.
 func NewAuthMiddleware(cfg JWTConfig, cache *TokenCache, rl *RateLimiter, settings gobreaker.Settings) (*AuthMiddleware, error) {
-	am := &AuthMiddleware{cfg: cfg, cache: cache, limiter: rl, breaker: gobreaker.NewCircuitBreaker(settings)}
+       if cfg.Client == nil {
+               cfg.Client = http.DefaultClient
+       }
+       am := &AuthMiddleware{cfg: cfg, cache: cache, limiter: rl, breaker: gobreaker.NewCircuitBreaker(settings)}
 	for _, pemStr := range cfg.PublicKeys {
 		block, _ := pem.Decode([]byte(pemStr))
 		if block == nil {
@@ -164,19 +169,23 @@ func (am *AuthMiddleware) refresh(ctx context.Context, token string) (string, *a
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("refresh failed: %s", resp.Status)
-		}
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
+               req.Header.Set("Authorization", "Bearer "+token)
+               resp, err := am.cfg.Client.Do(req)
+               if err != nil {
+                       return nil, err
+               }
+               defer resp.Body.Close()
+               if resp.StatusCode != http.StatusOK {
+                       return nil, fmt.Errorf("refresh failed: %s", resp.Status)
+               }
+               var reader io.Reader = resp.Body
+               if am.cfg.MaxJSONBytes > 0 {
+                       reader = io.LimitReader(resp.Body, am.cfg.MaxJSONBytes)
+               }
+               body, err := io.ReadAll(reader)
+               if err != nil {
+                       return nil, err
+               }
 		newToken = strings.TrimSpace(string(body))
 		return nil, nil
 	})

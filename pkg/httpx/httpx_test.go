@@ -22,4 +22,3 @@ func TestDoJSON_ContextCancel(t *testing.T) {
         t.Fatal("expected error for unreachable host or timeout")
     }
 }
-

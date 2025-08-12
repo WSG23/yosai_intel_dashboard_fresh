@@ -23,4 +23,3 @@ func DoJSON(ctx context.Context, req *http.Request, dst any) error {
     defer resp.Body.Close()
     return json.NewDecoder(resp.Body).Decode(dst)
 }
-
