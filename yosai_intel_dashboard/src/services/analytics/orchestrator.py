@@ -5,15 +5,14 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Protocol
 
-from yosai_intel_dashboard.src.utils.text_utils import safe_text
-
 import pandas as pd
-
 from validation.security_validator import SecurityValidator
+
+from shared.events import publish_event
+from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 from .data.loader import DataLoader
 from .protocols import DataProcessorProtocol
-from .publisher import Publisher
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +35,14 @@ class AnalyticsOrchestrator:
         validator: SecurityValidator,
         processor: DataProcessorProtocol,
         repository: AnalyticsRepositoryProtocol | None,
-        publisher: Publisher,
+        event_bus: Any | None,
     ) -> None:
         self.loader = loader
         self.validator = validator
         self.processor = processor
 
         self.repository = repository
-        self.publisher = publisher
+        self.event_bus = event_bus
 
     # ------------------------------------------------------------------
     def process_uploaded_data(self) -> Dict[str, Any]:
@@ -52,7 +51,7 @@ class AnalyticsOrchestrator:
             uploaded = self.loader.load_uploaded_data()
             if not uploaded:
                 result = {"status": "no_data", "message": "No uploaded files available"}
-                self.publisher.publish(result)
+                publish_event(self.event_bus, result)
                 return result
 
             frames: list[pd.DataFrame] = []
@@ -69,7 +68,7 @@ class AnalyticsOrchestrator:
 
             if not frames:
                 result = {"status": "no_data", "message": "No valid uploaded data"}
-                self.publisher.publish(result)
+                publish_event(self.event_bus, result)
                 return result
 
             combined = (
@@ -83,7 +82,7 @@ class AnalyticsOrchestrator:
                 except Exception as exc:  # pragma: no cover - best effort
                     logger.debug("Repository save failed: %s", safe_text(exc))
 
-            self.publisher.publish(summary)
+            publish_event(self.event_bus, summary)
             return summary
         except Exception as exc:  # pragma: no cover - best effort
             logger.exception(
@@ -94,7 +93,7 @@ class AnalyticsOrchestrator:
                 "message": safe_text(exc),
                 "error_code": "PROCESSING_FAILED",
             }
-            self.publisher.publish(result)
+            publish_event(self.event_bus, result)
             return result
 
 

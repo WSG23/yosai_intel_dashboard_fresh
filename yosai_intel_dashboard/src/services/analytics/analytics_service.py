@@ -68,11 +68,10 @@ from yosai_intel_dashboard.src.services.analytics.protocols import (
     AnalyticsServiceProtocol,
     CalculatorProtocol,
     DataProcessorProtocol,
-    PublishingProtocol,
     ReportGeneratorProtocol,
     UploadAnalyticsProtocol,
 )
-from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
+from shared.events import publish_event
 from yosai_intel_dashboard.src.services.analytics_summary import (
     generate_sample_analytics,
 )
@@ -213,7 +212,6 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         *,
         loader: AnalyticsDataLoaderProtocol | None = None,
         calculator: CalculatorProtocol | None = None,
-        publisher: PublishingProtocol | None = None,
         report_generator: ReportGeneratorProtocol | None = None,
         db_retriever: DatabaseAnalyticsRetrieverProtocol | None = None,
         upload_controller: UploadProcessingControllerProtocol | None = None,
@@ -249,17 +247,15 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self.database_retriever: DatabaseAnalyticsRetrieverProtocol
         self.data_loader: AnalyticsDataLoaderProtocol
         self.calculator: CalculatorProtocol
-        self.publisher: PublishingProtocol
         self.orchestrator: AnalyticsOrchestrator
         self.router: DataSourceRouter
 
         self._setup_database(db_retriever)
-        if loader is None or calculator is None or publisher is None:
-            raise ValueError("loader, calculator and publisher are required")
+        if loader is None or calculator is None:
+            raise ValueError("loader and calculator are required")
         self.data_loader = loader
         self.calculator = calculator
-        self.publisher = publisher
-        self._create_orchestrator(loader, calculator, publisher)
+        self._create_orchestrator(loader, calculator, self.event_bus)
         self.router = DataSourceRouter(self.orchestrator)
 
     def _setup_database(
@@ -279,18 +275,17 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self,
         loader: AnalyticsDataLoaderProtocol,
         calculator: CalculatorProtocol,
-        publisher: PublishingProtocol,
+        event_bus: EventBus | None,
     ) -> None:
-        """Set up loader, calculator, publisher and orchestrator."""
+        """Set up loader, calculator and orchestrator."""
         self.data_loader = loader
         self.calculator = calculator
-        self.publisher = publisher
         self.orchestrator = AnalyticsOrchestrator(
             self.data_loader,
             self.validation_service,
             self.processor,
             self.database_retriever,
-            self.publisher,
+            event_bus,
         )
 
     def get_analytics_from_uploaded_data(self) -> Dict[str, Any]:
@@ -408,7 +403,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self, payload: Dict[str, Any], event: str = "analytics_update"
     ) -> None:
         """Publish ``payload`` to the event bus if available."""
-        self.publisher.publish(payload, event)
+        publish_event(self.event_bus, payload, event)
 
     def _load_patterns_dataframe(
         self, data_source: str | None
@@ -647,7 +642,6 @@ def create_analytics_service(
     loader = get_analytics_data_loader(upload_controller, processor)
     report_generator = SummaryReportGenerator()
     calculator = Calculator(report_generator)
-    publisher = Publisher(None)
     return AnalyticsService(
         data_processor=processor,
         config=config_provider,
@@ -655,7 +649,6 @@ def create_analytics_service(
         model_registry=model_registry,
         loader=loader,
         calculator=calculator,
-        publisher=publisher,
         report_generator=report_generator,
         upload_controller=upload_controller,
         upload_processor=upload_processor,

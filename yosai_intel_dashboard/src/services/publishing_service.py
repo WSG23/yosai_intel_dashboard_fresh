@@ -5,7 +5,7 @@ from typing import Any, Dict
 from src.common import BaseComponent, EventDispatchMixin, handle_deprecated
 from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
 from yosai_intel_dashboard.src.services.analytics.protocols import PublishingProtocol
-from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
+from shared.events import publish_event
 
 
 class PublishingService(EventDispatchMixin, BaseComponent, PublishingProtocol):
@@ -14,10 +14,9 @@ class PublishingService(EventDispatchMixin, BaseComponent, PublishingProtocol):
     @handle_deprecated("event_bus")
     def __init__(self, *, event_bus: EventBusProtocol | None = None) -> None:
         super().__init__(event_bus=event_bus)
-        self._publisher = Publisher(event_bus)
 
     def publish(self, payload: Dict[str, Any], event: str = "analytics_update") -> None:
-        self._publisher.publish(payload, event)
+        publish_event(self.event_bus, payload, event)
 
 
 __all__ = ["PublishingService"]

@@ -18,6 +18,8 @@ import pytest
 from tests.config import FakeConfiguration  # noqa: F401
 
 
+UTC_SUFFIX = "+00:00"
+
 def clean_unicode_surrogates(value: str) -> str:  # pragma: no cover - simple passthrough
     return value
 

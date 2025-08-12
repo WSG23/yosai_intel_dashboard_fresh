@@ -28,7 +28,6 @@ else:
     from .analytics.data.loader import DataLoader
     from .analytics.generator import AnalyticsGenerator
     from .analytics.processor import AnalyticsProcessor
-    from .analytics.publisher import Publisher
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
     from .controllers.upload_controller import UploadProcessingController
@@ -38,7 +37,7 @@ else:
     from .data_processing_service import DataProcessingService
     from .database_retriever import DatabaseAnalyticsRetriever
     from .db_analytics_helper import DatabaseAnalyticsHelper
-    from .event_publisher import publish_event
+    from shared.events import publish_event
     from .explainability_service import ExplainabilityService
     from .helpers.database_initializer import initialize_database
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
@@ -131,7 +130,6 @@ else:
         "SummaryReportGenerator",
         "DataLoader",
         "Calculator",
-        "Publisher",
         "DataLoadingService",
         "DataProcessingService",
         "ReportGenerationService",
