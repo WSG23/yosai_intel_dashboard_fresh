@@ -10,6 +10,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  hadolint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hadolint (Dockerfiles)
+        run: |
+          set -euo pipefail
+          files=("Dockerfile" "Dockerfile.gateway")
+          for f in "${files[@]}"; do
+            if [[ -f "$f" ]]; then
+              echo "Linting $f"
+              docker run --rm -i hadolint/hadolint < "$f"
+            else
+              echo "Skip $f (not found)"
+            fi
+          done
   devops-hygiene:
     runs-on: ubuntu-latest
     steps:
@@ -17,7 +33,5 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y shellcheck curl
-          curl -sSL https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -o hadolint
-          sudo install hadolint /usr/local/bin/hadolint
       - name: Run DevOps hygiene tests
         run: scripts/ci/test_devops_hygiene.sh

@@ -1,4 +1,3 @@
-module github.com/WSG23/yosai_intel_dashboard_fresh/pkg
+module pkg
 
 go 1.23.8
-
