@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,6 +23,13 @@ func TestAuthMiddlewareSuccessAndFailure(t *testing.T) {
 	h.ServeHTTP(resp, req)
 	if resp.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 got %d", resp.Code)
+	}
+	var e struct {
+		Details map[string]string `json:"details"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&e)
+	if e.Details["reason"] != "missing" {
+		t.Fatalf("expected missing reason got %v", e.Details["reason"])
 	}
 
 	// valid token
@@ -66,5 +74,12 @@ func TestAuthMiddlewareExpired(t *testing.T) {
 	h.ServeHTTP(resp, req)
 	if resp.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 got %d", resp.Code)
+	}
+	var e struct {
+		Details map[string]string `json:"details"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&e)
+	if e.Details["reason"] != "expired" {
+		t.Fatalf("expected expired reason got %v", e.Details["reason"])
 	}
 }

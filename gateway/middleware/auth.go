@@ -27,11 +27,12 @@ import (
 
 // JWTConfig holds configuration for JWT validation and refresh.
 type JWTConfig struct {
-        PublicKeys    []string      // PEM encoded RSA public keys
-        RefreshURL    string        // optional token refresh endpoint
-        RefreshBefore time.Duration // duration before expiry to trigger refresh
-        MaxJSONBytes  int64         // max bytes to read from JSON responses; 0 for unlimited
-        Client        *http.Client  // HTTP client used for refresh requests
+	PublicKeys    []string      // PEM encoded RSA public keys
+	RefreshURL    string        // optional token refresh endpoint
+	RefreshBefore time.Duration // duration before expiry to trigger refresh
+	MaxJSONBytes  int64         // max bytes to read from JSON responses; 0 for unlimited
+	Client        *http.Client  // HTTP client used for refresh requests
+	Audience      string        // expected audience for tokens (optional)
 }
 
 // TokenCache caches validated tokens and tracks blacklisted JTIs.
@@ -129,10 +130,10 @@ type AuthMiddleware struct {
 
 // NewAuthMiddleware creates a configured AuthMiddleware.
 func NewAuthMiddleware(cfg JWTConfig, cache *TokenCache, rl *RateLimiter, settings gobreaker.Settings) (*AuthMiddleware, error) {
-       if cfg.Client == nil {
-               cfg.Client = http.DefaultClient
-       }
-       am := &AuthMiddleware{cfg: cfg, cache: cache, limiter: rl, breaker: gobreaker.NewCircuitBreaker(settings)}
+	if cfg.Client == nil {
+		cfg.Client = http.DefaultClient
+	}
+	am := &AuthMiddleware{cfg: cfg, cache: cache, limiter: rl, breaker: gobreaker.NewCircuitBreaker(settings)}
 	for _, pemStr := range cfg.PublicKeys {
 		block, _ := pem.Decode([]byte(pemStr))
 		if block == nil {
@@ -158,6 +159,33 @@ func (am *AuthMiddleware) keyFunc(_ *jwt.Token) (interface{}, error) {
 	return am.keys[0], nil
 }
 
+func (am *AuthMiddleware) parser() *jwt.Parser {
+	opts := []jwt.ParserOption{jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()})}
+	if am.cfg.Audience != "" {
+		opts = append(opts, jwt.WithAudience(am.cfg.Audience))
+	}
+	return jwt.NewParser(opts...)
+}
+
+func reasonFromError(err error) string {
+	switch {
+	case errors.Is(err, jwt.ErrTokenExpired):
+		return "expired"
+	case errors.Is(err, jwt.ErrTokenInvalidAudience):
+		return "invalid_aud"
+	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+		return "invalid_signature"
+	case errors.Is(err, jwt.ErrTokenNotValidYet):
+		return "not_yet_valid"
+	case errors.Is(err, jwt.ErrTokenInvalidIssuer):
+		return "invalid_iss"
+	case errors.Is(err, jwt.ErrTokenMalformed):
+		return "malformed"
+	default:
+		return "invalid"
+	}
+}
+
 // refresh exchanges token using the configured refresh URL.
 func (am *AuthMiddleware) refresh(ctx context.Context, token string) (string, *auth.EnhancedClaims, error) {
 	if am.cfg.RefreshURL == "" {
@@ -169,23 +197,23 @@ func (am *AuthMiddleware) refresh(ctx context.Context, token string) (string, *a
 		if err != nil {
 			return nil, err
 		}
-               req.Header.Set("Authorization", "Bearer "+token)
-               resp, err := am.cfg.Client.Do(req)
-               if err != nil {
-                       return nil, err
-               }
-               defer resp.Body.Close()
-               if resp.StatusCode != http.StatusOK {
-                       return nil, fmt.Errorf("refresh failed: %s", resp.Status)
-               }
-               var reader io.Reader = resp.Body
-               if am.cfg.MaxJSONBytes > 0 {
-                       reader = io.LimitReader(resp.Body, am.cfg.MaxJSONBytes)
-               }
-               body, err := io.ReadAll(reader)
-               if err != nil {
-                       return nil, err
-               }
+		req.Header.Set("Authorization", "Bearer "+token)
+		resp, err := am.cfg.Client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("refresh failed: %s", resp.Status)
+		}
+		var reader io.Reader = resp.Body
+		if am.cfg.MaxJSONBytes > 0 {
+			reader = io.LimitReader(resp.Body, am.cfg.MaxJSONBytes)
+		}
+		body, err := io.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
 		newToken = strings.TrimSpace(string(body))
 		return nil, nil
 	})
@@ -193,7 +221,7 @@ func (am *AuthMiddleware) refresh(ctx context.Context, token string) (string, *a
 		return token, nil, err
 	}
 	claims := &auth.EnhancedClaims{}
-	parser := jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+	parser := am.parser()
 	if _, err := parser.ParseWithClaims(newToken, claims, am.keyFunc); err != nil {
 		return token, nil, err
 	}
@@ -213,13 +241,15 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		authHdr := r.Header.Get("Authorization")
 		if authHdr == "" {
 			authFailures.Inc()
-			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+			tracing.Logger.WithField("reason", "missing").Warn("authorization failed")
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
 			return
 		}
 		parts := strings.Fields(authHdr)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 			authFailures.Inc()
-			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+			tracing.Logger.WithField("reason", "invalid_header").Warn("authorization failed")
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
 			return
 		}
 		tokenStr := parts[1]
@@ -236,19 +266,21 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 			}
 		}
 		claims := &auth.EnhancedClaims{}
-		parser := jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+		parser := am.parser()
 		token, err := parser.ParseWithClaims(tokenStr, claims, am.keyFunc)
 		if err != nil || !token.Valid {
-			tracing.Logger.WithError(err).Warn("invalid token")
+			reason := reasonFromError(err)
+			tracing.Logger.WithError(err).WithField("reason", reason).Warn("invalid token")
 			authFailures.Inc()
-			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", nil)
+			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": reason})
 			return
 		}
 		if am.cache != nil {
 			black, err := am.cache.IsBlacklisted(ctx, claims.ID)
 			if err == nil && black {
 				authFailures.Inc()
-				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+				tracing.Logger.WithField("reason", "blacklisted").Warn("token blacklisted")
+				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", map[string]string{"reason": "blacklisted"})
 				return
 			}
 		}
