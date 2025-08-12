@@ -241,11 +241,10 @@ def test_log_features_and_drift(monkeypatch, stub_services_registry):
 
     services_pkg = types.ModuleType("services")
     services_pkg.__path__ = [str(Path(__file__).resolve().parents[2] / "services")]
-    registry_mod = types.ModuleType("services.registry")
-    registry_mod.get_service = lambda name: None
-    services_pkg.registry = registry_mod
     safe_import('services', services_pkg)
-    safe_import('services.registry', registry_mod)
+    registry_mod = types.ModuleType("core.registry")
+    registry_mod.get_service = lambda name: None
+    safe_import('core.registry', registry_mod)
 
     path = (
         Path(__file__).resolve().parents[2]

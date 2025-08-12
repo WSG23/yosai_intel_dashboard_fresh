@@ -76,7 +76,7 @@ def test_model_factory_absent(monkeypatch):
     """ModelFactory gracefully handles missing registry entry"""
     from importlib import reload
 
-    import yosai_intel_dashboard.src.services.registry as reg
+    import yosai_intel_dashboard.src.core.registry as reg
 
     original = reg.get_service
 
