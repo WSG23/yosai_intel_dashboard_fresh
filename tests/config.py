@@ -335,7 +335,7 @@ def register_dependency_stubs() -> None:
 
     class _Counter:
         def __init__(self, *a, **k):
-            pass
+            self._value = type("V", (), {"get": lambda self: 0})()
 
         def inc(self, *a, **k):
             pass
