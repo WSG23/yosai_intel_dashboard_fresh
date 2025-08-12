@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -177,7 +177,7 @@ def test_access_event_repository(async_runner, db):
     d = Door(door_id="D1", door_name="Main", facility_id="F1", area_id="A1")
     _insert_door(db, d)
 
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     e1 = AccessEvent(
         event_id="E1",
         timestamp=now - timedelta(minutes=1),

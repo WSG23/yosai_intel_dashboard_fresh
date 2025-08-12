@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import './styles/upload.css';
-import { Upload } from './components/upload';
 import Navigation from './components/Navigation';
 import { Shield, Menu, Sun, Moon } from 'lucide-react';
 import useDarkMode from './hooks/useDarkMode';
+import CenteredSpinner from './components/shared/CenteredSpinner';
+
+const Upload = React.lazy(() =>
+  import('./components/upload').then((m) => ({ default: m.Upload })),
+);
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,7 +50,9 @@ function App() {
         )}
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Upload />
+        <Suspense fallback={<CenteredSpinner className="py-10" />}>
+          <Upload />
+        </Suspense>
       </main>
     </div>
   );

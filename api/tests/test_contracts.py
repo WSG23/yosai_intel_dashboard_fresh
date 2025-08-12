@@ -19,6 +19,6 @@ def test_security_headers_present():
 
 def test_payload_limit_enforced():
     c = TestClient(app)
-    big = b"x" * (50 * 1024 * 1024 + 1)
-    r = c.post("/echo", data=big)
+    big = "x" * (50 * 1024 * 1024 + 1)
+    r = c.post("/v1/echo", json={"message": big})
     assert r.status_code in (400, 413)

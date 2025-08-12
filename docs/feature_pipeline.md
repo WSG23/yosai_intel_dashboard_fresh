@@ -5,6 +5,15 @@
 `FeaturePipeline` orchestrates feature extraction and transformation using the
 existing `FeastFeatureStore` and `ModelRegistry` utilities.
 
+## Transformation Flow
+
+Raw event records are first normalised through the shared
+`preprocess_events` contract. This function applies the project-wide
+feature engineering steps and returns a dataframe enriched with
+temporal, access, user and security attributes. The resulting features
+are then passed into `FeaturePipeline` for any additional per-model
+transformations before training or inference.
+
 ## Loading Definitions
 
 ```python

@@ -283,7 +283,9 @@ Cached results are stored in memory and optionally in Redis if available. Cache
 entries expire automatically after the TTL, ensuring that repeated dashboard
 requests do not trigger heavy calculations unnecessarily. The TTL values for
 analytics results and JWKS lookups are defined in `CacheConfig` (see
-`config/base.py`).
+`config/base.py`). In-memory caches keep at most 1,024 entries by default
+(`CacheConfig.max_items`) and evict the least recently used item when this limit
+is exceeded.
 
 ### L1/L2/L3 Cache Levels
 
@@ -291,7 +293,8 @@ The caching subsystem is organised into three tiers managed by
 `HierarchicalCacheManager`:
 
 * **L1** – in‑process memory for the fastest access. The maximum number of
-  entries is controlled by `CACHE_L1_SIZE`.
+  entries is controlled by `CACHE_L1_SIZE` (default 1,024) and entries are
+  discarded using an LRU policy once the limit is reached.
 * **L2** – a shared Redis cache enabled when `CACHE_TYPE=redis` and configured
   with `CACHE_HOST`, `CACHE_PORT` and `CACHE_DATABASE`.
 * **L3** – an optional file‑based cache activated via `CACHE_L3_PATH`. Use

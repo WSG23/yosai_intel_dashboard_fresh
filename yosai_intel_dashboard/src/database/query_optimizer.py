@@ -9,8 +9,9 @@ from typing import Callable
 class DatabaseQueryOptimizer:
     """Inject simple optimizer hints for supported databases."""
 
-    def __init__(self, db_type: str = "postgresql") -> None:
+    def __init__(self, db_type: str = "postgresql", enable_hints: bool = True) -> None:
         self.db_type = db_type.lower()
+        self.enable_hints = enable_hints
         self._hint_func: Callable[[str], str]
         if self.db_type in {"postgresql", "postgres"}:
             self._hint_func = self._postgres_hint
@@ -32,6 +33,8 @@ class DatabaseQueryOptimizer:
         from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 
         sanitized = UnicodeSQLProcessor.encode_query(query)
+        if not self.enable_hints:
+            return sanitized
         return self._hint_func(sanitized)
 
     # ------------------------------------------------------------------

@@ -1,28 +1,15 @@
 """Metric repository abstractions and in-memory implementation."""
 from __future__ import annotations
 
-from typing import Any, Dict, Protocol, Callable
+from typing import Any, Dict, Callable, TYPE_CHECKING
 from cachetools import TTLCache
 from threading import RLock
 import warnings
 
 from src.common.base import BaseComponent
 
-
-class MetricsRepository(Protocol):
-    """Persistence operations for metric data."""
-
-    def get_performance_metrics(self) -> Dict[str, Any]: ...
-    def get_drift_data(self) -> Dict[str, Any]: ...
-    def get_feature_importances(self) -> Dict[str, Any]: ...
-
-    def snapshot(self) -> Dict[str, Any]:
-        """Return a combined metric snapshot."""
-        return {
-            "performance": self.get_performance_metrics(),
-            "drift": self.get_drift_data(),
-            "feature_importance": self.get_feature_importances(),
-        }
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from yosai_intel_dashboard.src.core.protocols.metrics import MetricsRepositoryProtocol
 
 
 class InMemoryMetricsRepository(BaseComponent):
@@ -88,7 +75,9 @@ class InMemoryMetricsRepository(BaseComponent):
 class CachedMetricsRepository(BaseComponent):
     """Wrap another repository and cache query results for a TTL."""
 
-    def __init__(self, repo: MetricsRepository, ttl: int = 60, maxsize: int = 128) -> None:
+    def __init__(
+        self, repo: MetricsRepositoryProtocol, ttl: int = 60, maxsize: int = 128
+    ) -> None:
         BaseComponent.__init__(self, repo=repo, ttl=ttl, maxsize=maxsize)
         self._cache: TTLCache[str, Dict[str, Any]] = TTLCache(
             maxsize=maxsize, ttl=ttl
@@ -97,7 +86,7 @@ class CachedMetricsRepository(BaseComponent):
 
     # Backward compatibility for ``_repo`` attribute
     @property
-    def _repo(self) -> MetricsRepository:  # pragma: no cover - shim
+    def _repo(self) -> MetricsRepositoryProtocol:  # pragma: no cover - shim
         warnings.warn("_repo is deprecated, use 'repo'", DeprecationWarning, stacklevel=2)
         return self.repo
 
@@ -130,4 +119,4 @@ class CachedMetricsRepository(BaseComponent):
         )
 
 
-__all__ = ["MetricsRepository", "InMemoryMetricsRepository", "CachedMetricsRepository"]
+__all__ = ["InMemoryMetricsRepository", "CachedMetricsRepository"]

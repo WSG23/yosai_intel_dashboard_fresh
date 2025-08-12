@@ -1,6 +1,6 @@
 """Unified callback utilities and event bus."""
 
-from .event_bus import EventBus, EventPublisher
+from shared.events.bus import EventBus, EventPublisher
 
 __all__ = [
     "EventBus",

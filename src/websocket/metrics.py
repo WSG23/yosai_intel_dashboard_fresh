@@ -8,7 +8,7 @@ can register an arbitrary event bus via :func:`set_event_bus`; whenever one of
 the ``record_*`` helpers is invoked the counters are incremented and the current
 snapshot is published on that bus.
 
-The tests use a very small stand‑in bus exposing ``emit`` consistent with the
+The tests use a very small stand‑in bus exposing ``publish`` consistent with the
 ``EventBus`` interface.
 """
 
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from src.common.events import EventBus
+from shared.events.bus import EventBus
 
 try:
     from prometheus_client import REGISTRY, Counter, start_http_server
@@ -84,7 +84,7 @@ def _publish_snapshot() -> None:
     if _event_bus is None:
         return
     payload = _snapshot()
-    _event_bus.emit("metrics_update", payload)
+    _event_bus.publish("metrics_update", payload)
 
 
 def set_event_bus(bus: EventBus) -> None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 Complete Integration Tests for Analytics System
 """
 import pytest
+from datetime import timezone
 
 from yosai_intel_dashboard.src.adapters.access_event_dataframe import dataframe_to_events
 from yosai_intel_dashboard.src.core.domain.entities.base import AccessEventModel, ModelFactory

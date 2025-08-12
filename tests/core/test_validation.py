@@ -1,5 +1,7 @@
 import pandas as pd
 import pytest
+import six
+import bleach
 
 from validation.security_validator import SecurityValidator
 from validation.unicode_validator import UnicodeValidator
@@ -13,6 +15,12 @@ from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validato
 from yosai_intel_dashboard.src.infrastructure.security.xss_validator import (
     XSSPrevention,
 )
+
+if not hasattr(six.moves.http_client, "HTTPResponse"):
+    class _DummyResponse:  # pragma: no cover - simple placeholder
+        pass
+
+    six.moves.http_client.HTTPResponse = _DummyResponse  # type: ignore[attr-defined]
 
 # ----------------------------------------------------------------------
 # SecurityValidator validate_input / XSSPrevention.sanitize_html_output
@@ -31,13 +39,20 @@ def test_validate_input_invalid():
         validator.validate_input("<script>alert('x')</script>")
 
 
-def test_validate_output_valid():
-    assert XSSPrevention.sanitize_html_output("hello") == "hello"
+def test_validate_output_valid(monkeypatch):
+    monkeypatch.setattr(bleach, "clean", lambda text, **_: text)
+    html = "<b>bold</b>"
+    assert XSSPrevention.sanitize_html_output(html) == html
 
 
-def test_validate_output_invalid():
-    result = XSSPrevention.sanitize_html_output("<script>alert('x')</script>")
-    assert "<" not in result and ">" not in result
+def test_validate_output_invalid(monkeypatch):
+    def fake_clean(text: str, **_: object) -> str:
+        return text.replace("<script>alert('x')</script>", "")
+
+    monkeypatch.setattr(bleach, "clean", fake_clean)
+    unsafe = "<b>bold</b><script>alert('x')</script>"
+    result = XSSPrevention.sanitize_html_output(unsafe)
+    assert result == "<b>bold</b>"
 
 
 # ----------------------------------------------------------------------

@@ -8,13 +8,24 @@ from typing import Any
 
 from flask_caching import Cache
 
+from .registry import ServiceRegistry
+
 logger = logging.getLogger(__name__)
 
-cache = Cache()
+
+def get_cache() -> Cache:
+    """Return the shared cache instance from the service registry."""
+
+    cache = ServiceRegistry.get("cache")
+    if cache is None:
+        cache = Cache()
+        ServiceRegistry.register("cache", cache)
+    return cache
 
 
 def init_app(app) -> None:
     """Initialize the cache with the given Flask app."""
+    cache = get_cache()
     try:
         cache.init_app(
             app,
@@ -52,9 +63,9 @@ def _fallback_init(app) -> None:
         def clear(self) -> None:
             self._data.clear()
 
-    global cache
     cache = _DictCache()
+    ServiceRegistry.register("cache", cache)
     app.extensions["cache"] = cache
 
 
-__all__ = ["cache", "init_app"]
+__all__ = ["get_cache", "init_app"]

@@ -1,9 +1,9 @@
 import time
 
-from src.repository import CachedMetricsRepository, MetricsRepository
+from src.repository import CachedMetricsRepository
 
 
-class DummyRepo(MetricsRepository):
+class DummyRepo:
     def __init__(self) -> None:
         self.calls = 0
 

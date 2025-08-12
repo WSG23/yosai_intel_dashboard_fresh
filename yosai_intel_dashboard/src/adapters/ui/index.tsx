@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
-const SuspenseList = (React as any).SuspenseList;
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
@@ -11,6 +10,7 @@ import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import useIsMobile from './hooks/useIsMobile';
 import ErrorBoundary from './components/ErrorBoundary';
+import CenteredSpinner from './components/shared/CenteredSpinner';
 
 type PreloadableComponent<T = {}> = React.LazyExoticComponent<React.FC<T>> & {
   preload?: () => void;
@@ -73,19 +73,57 @@ if (rootEl) {
       <SelectionProvider>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
-            <SuspenseList revealOrder="forwards" tail="collapsed">
-              <Suspense fallback={<div>Loading...</div>}>
-                <Routes>
-                  <Route path="/" element={<Navigate to="/upload" replace />} />
-                  <Route path="/upload" element={<Upload />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/graphs" element={<Graphs />} />
-                  <Route path="/export" element={<Export />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/builder" element={<DashboardBuilder />} />
-                </Routes>
-              </Suspense>
-            </SuspenseList>
+            <Routes>
+              <Route path="/" element={<Navigate to="/upload" replace />} />
+              <Route
+                path="/upload"
+                element={
+                  <Suspense fallback={<CenteredSpinner />}>
+                    <Upload />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <Suspense fallback={<CenteredSpinner />}>
+                    <Analytics />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/graphs"
+                element={
+                  <Suspense fallback={<CenteredSpinner />}>
+                    <Graphs />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/export"
+                element={
+                  <Suspense fallback={<CenteredSpinner />}>
+                    <Export />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <Suspense fallback={<CenteredSpinner />}>
+                    <Settings />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/builder"
+                element={
+                  <Suspense fallback={<CenteredSpinner />}>
+                    <DashboardBuilder />
+                  </Suspense>
+                }
+              />
+            </Routes>
             {isMobile && <BottomNav />}
           </BrowserRouter>
         </QueryClientProvider>
@@ -118,7 +156,7 @@ if (rtEl) {
     <React.StrictMode>
       <SelectionProvider>
         <ZustandProvider>
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<CenteredSpinner />}>
             <RealTimeAnalyticsPage />
           </Suspense>
         </ZustandProvider>

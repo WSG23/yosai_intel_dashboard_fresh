@@ -5,7 +5,9 @@ This project implements safeguards aligned with the OWASP Top 10 categories.
 ## Injection
 
 - Parameterized queries are required for all database access to avoid SQL injection.
-- `SecurityValidator` applies `SQLRule` and `XSSRule` to block SQL injection and cross-site scripting payloads.
+- `SecurityValidator` applies `SQLRule` and `XSSRule` to block SQL injection
+  and cross-site scripting payloads. HTML is sanitized with `bleach.clean`
+  allowing only safe tags and attributes.
 
 ## Authentication
 
