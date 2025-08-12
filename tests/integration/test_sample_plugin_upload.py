@@ -34,6 +34,7 @@ sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 from yosai_intel_dashboard.src.core.events import EventBus
+from shared.events.names import EventName
 from yosai_intel_dashboard.src.core.plugins.auto_config import setup_plugins
 from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
     TrulyUnifiedCallbacks,
@@ -95,7 +96,7 @@ class SamplePlugin:
         def handle_upload(filename, contents):
             if not contents:
                 raise PreventUpdate
-            event_bus.emit("analytics_update", {"file": filename})
+            event_bus.emit(EventName.ANALYTICS_UPDATE, {"file": filename})
             self.called = True
             return f"plugin:{filename}"
         return True
@@ -187,7 +188,7 @@ def test_plugin_upload_event_sse_ws(
     t.join(timeout=5)
 
     assert logs and logs > 3
-    events = event_bus.get_event_history("analytics_update")
+    events = event_bus.get_event_history(EventName.ANALYTICS_UPDATE)
     assert events and events[-1]["data"]["file"] == "sample.csv"
     assert messages and json.loads(messages[0])["file"] == "sample.csv"
 

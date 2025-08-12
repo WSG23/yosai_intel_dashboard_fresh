@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Protocol
 
+from shared.events.names import EventName
+
 import pandas as pd
 
 
@@ -95,7 +97,7 @@ class EventPublisherProtocol(Protocol):
     """Publish analytics events."""
 
     def publish(
-        self, payload: Dict[str, Any], event: str = "analytics_update"
+        self, payload: Dict[str, Any], event: str = EventName.ANALYTICS_UPDATE
     ) -> None: ...
 
 

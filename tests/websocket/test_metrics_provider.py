@@ -1,7 +1,7 @@
 from src.repository import InMemoryMetricsRepository
 from src.websocket.metrics_provider import MetricsProvider
-from yosai_intel_dashboard.src.core.registry import ServiceRegistry
-
+from src.common.config import ConfigService
+from shared.events.names import EventName
 
 class DummyBus:
     def __init__(self) -> None:
@@ -19,5 +19,4 @@ def test_metrics_provider_publishes_snapshot() -> None:
     import time
     time.sleep(0.02)
     provider.stop()
-    ServiceRegistry.remove("metrics_repository")
-    assert ("metrics_update", repo.snapshot()) in bus.events
+    assert (EventName.METRICS_UPDATE, repo.snapshot()) in bus.events

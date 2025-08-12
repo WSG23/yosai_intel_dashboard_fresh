@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
 import pandas as pd
+from shared.events.names import EventName
 
 
 @runtime_checkable
@@ -196,6 +197,8 @@ class PublishingProtocol(Protocol):
     """Publish analytics events."""
 
     @abstractmethod
-    def publish(self, payload: Dict[str, Any], event: str = "analytics_update") -> None:
+    def publish(
+        self, payload: Dict[str, Any], event: str = EventName.ANALYTICS_UPDATE
+    ) -> None:
         """Publish ``payload`` to the event bus."""
         ...
