@@ -28,8 +28,8 @@ make docs
 ```
 
 This command runs the Go generator and then imports both FastAPI services to
-write `docs/api/v2/analytics_microservice_openapi.json` and
-`docs/api/v2/event_ingestion_openapi.json`.
+write `docs/analytics_microservice_openapi.json` and
+`docs/event_ingestion_openapi.json`.
 
 ## Flask/FastAPI Adapter
 
