@@ -31,4 +31,9 @@ class ServiceRegistry:
         cls._services.pop(name, None)
 
 
-__all__ = ["ServiceRegistry"]
+# Backwards compatibility: provide module-level ``registry`` alias so external
+# code can import ``from ...core import ServiceRegistry, registry`` and continue
+# using ``registry.register(...)`` style APIs.
+registry = ServiceRegistry
+
+__all__ = ["ServiceRegistry", "registry"]
