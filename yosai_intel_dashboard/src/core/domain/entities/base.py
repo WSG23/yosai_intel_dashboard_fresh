@@ -4,7 +4,7 @@ from __future__ import annotations
 """Base classes for data models used throughout the application."""
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -17,7 +17,9 @@ class BaseModel:
     """Base class for all models"""
 
     data_source: Any | None = None
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(tz=timezone.utc)
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert model to dictionary"""
