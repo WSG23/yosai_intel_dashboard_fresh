@@ -45,3 +45,4 @@ USER appuser
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["start_api.py"]
+HEALTHCHECK --interval=30s --timeout=10s CMD curl --fail http://localhost:8000/health || exit 1
