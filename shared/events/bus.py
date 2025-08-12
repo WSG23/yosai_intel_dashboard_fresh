@@ -4,8 +4,8 @@ import asyncio
 import inspect
 import time
 from collections import defaultdict
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional
 
 Callback = Callable[..., Any]
 
@@ -16,15 +16,19 @@ class _Subscriber:
     callback: Callback
     throttle: float | None = None
     last_call: float = 0.0
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
 
 class EventBus:
     """Simple publish/subscribe event bus with async support and throttling."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, max_concurrency: Optional[int] = None) -> None:
         self._subscribers: Dict[Any, List[_Subscriber]] = defaultdict(list)
         self._metrics: Dict[Any, Dict[str, float]] = defaultdict(
             lambda: {"calls": 0, "exceptions": 0, "total_time": 0.0, "throttled": 0}
+        )
+        self._semaphore: Optional[asyncio.Semaphore] = (
+            asyncio.Semaphore(max_concurrency) if max_concurrency else None
         )
 
     # ------------------------------------------------------------------
@@ -78,12 +82,26 @@ class EventBus:
     async def publish_async(self, event: Any, *args: Any, **kwargs: Any) -> List[Any]:
         """Asynchronously publish *event* to all subscribers."""
 
-        results: List[Any] = []
+        tasks = []
         for sub in self._subscribers.get(event, []):
             if not self._should_invoke(event, sub):
                 continue
-            results.append(await self._invoke_async(event, sub.callback, *args, **kwargs))
-        return results
+
+            async def invoke(sub=sub):
+                if self._semaphore:
+                    async with self._semaphore:
+                        async with sub.lock:
+                            return await self._invoke_async(
+                                event, sub.callback, *args, **kwargs
+                            )
+                async with sub.lock:
+                    return await self._invoke_async(event, sub.callback, *args, **kwargs)
+
+            tasks.append(asyncio.create_task(invoke()))
+
+        if tasks:
+            return await asyncio.gather(*tasks)
+        return []
 
     # ------------------------------------------------------------------
     def _should_invoke(self, event: Any, sub: _Subscriber) -> bool:
