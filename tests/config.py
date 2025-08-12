@@ -274,6 +274,7 @@ def register_dependency_stubs() -> None:
             "ConfigManager", (), {"__init__": lambda self, *a, **k: None}
         ),
         get_config=lambda: types.SimpleNamespace(),
+        reload_config=lambda: None,
     )
     register_fallback(
         "yosai_intel_dashboard.src.infrastructure.config.config_manager",
@@ -352,6 +353,7 @@ def register_dependency_stubs() -> None:
         Counter=_Counter,
         Gauge=_Counter,
         Histogram=_Counter,
+        CollectorRegistry=_CollectorRegistry,
         core=prom_core,
     )
     register_fallback("prometheus_client", prom_client)
@@ -377,6 +379,10 @@ def register_dependency_stubs() -> None:
     pydantic_stub.model_validator = _validator
     register_fallback("pydantic", pydantic_stub)
     sys.modules.setdefault("pydantic", pydantic_stub)
+
+    core_pkg = _simple_module("yosai_intel_dashboard.src.core")
+    core_pkg.__path__ = []
+    sys.modules.setdefault("yosai_intel_dashboard.src.core", core_pkg)
 
     # Minimal stubs for optional security integrations
     # Only register when the real package is unavailable
@@ -524,3 +530,28 @@ def fake_unicode_processor():
     from .fake_unicode_processor import FakeUnicodeProcessor
 
     return FakeUnicodeProcessor()
+
+
+@pytest.fixture
+def stub_services_registry():
+    """Provide a lightweight stub for the optional service registry."""
+    import types
+    import sys
+
+    stub = types.ModuleType("core.registry")
+    stub.ServiceRegistry = type("ServiceRegistry", (), {})
+    stub.ServiceDiscovery = type(
+        "ServiceDiscovery", (), {"resolve": lambda self, name: None}
+    )
+    stub.registry = object()
+    stub.register_service = lambda *a, **k: None
+    stub.get_service = lambda *a, **k: None
+    stub.register_builtin_services = lambda: None
+    sys.modules["core.registry"] = stub
+    # Provide legacy alias for compatibility
+    sys.modules["services.registry"] = stub
+    try:
+        yield stub
+    finally:
+        sys.modules.pop("core.registry", None)
+        sys.modules.pop("services.registry", None)

@@ -7,7 +7,7 @@ from yosai_intel_dashboard.src.core.container import container
 # Lazy import to avoid circular dependencies during module import
 def get_service_registry():
     """Return the global optional service registry."""
-    from yosai_intel_dashboard.src.services.registry import registry
+    from yosai_intel_dashboard.src.core.registry import registry
 
     return registry
 
