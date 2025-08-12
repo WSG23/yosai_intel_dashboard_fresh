@@ -1,18 +1,42 @@
 #!/usr/bin/env bash
 set -euo pipefail
+IFS=$'\n\t'
 
-SCRIPTDIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-
-COMMON_SH="$SCRIPTDIR/../common.sh"
-if [[ -f "$COMMON_SH" ]]; then
-  # shellcheck disable=SC1090
-  source "$COMMON_SH"
-else
-  echo "Warning: common.sh not found at $COMMON_SH" >&2
+# Ensure yq is available. Attempt installation if missing.
+if ! command -v yq >/dev/null 2>&1; then
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get update >/dev/null
+    apt-get install -y yq >/dev/null
+  else
+    pip install --user yq >/dev/null
+    export PATH="$HOME/.local/bin:$PATH"
+  fi
 fi
 
-TARGET_DIR="${1:-$SCRIPTDIR/../../k8s}"
-if grep -R --line-number --exclude-dir='.git' -e ':latest' "$TARGET_DIR"; then
-  echo "Error: 'latest' tag found in Kubernetes manifests" >&2
+ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if [[ $# -gt 0 ]]; then
+  TARGET_DIRS=("$@")
+else
+  TARGET_DIRS=("$ROOT_DIR/k8s")
+fi
+
+error=0
+while IFS= read -r -d '' file; do
+  if ! images=$(yq -r '..|.image? // empty' "$file" 2>/dev/null); then
+    echo "Skipping non-YAML or templated file: $file" >&2
+    continue
+  fi
+  while IFS= read -r image; do
+    if [[ "$image" == *":latest"* ]]; then
+      echo "${file}: contains disallowed :latest tag -> ${image}" >&2
+      error=1
+    fi
+  done <<< "$images"
+done < <(find "${TARGET_DIRS[@]}" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0)
+
+if [[ "$error" -eq 1 ]]; then
+  echo "ERROR: Found image references with :latest tag" >&2
   exit 1
 fi
+
+echo "No :latest tags found in image fields."
