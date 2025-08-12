@@ -1,5 +1,10 @@
 FROM python:3.11-slim
 
+# Install curl for health checks
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir fastapi uvicorn kafka-python prometheus-fastapi-instrumentator opentelemetry-instrumentation-fastapi
 
 ARG UID=1000
@@ -18,5 +23,6 @@ RUN python scripts/create_symlinks.py && chown -R appuser:appuser /app
 ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 USER appuser
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8000/health || exit 1
+# Use curl to verify the service is up
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl --fail http://localhost:8000/health || exit 1
 CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
