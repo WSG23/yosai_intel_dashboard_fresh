@@ -53,12 +53,16 @@ def main(argv: List[str] | None = None) -> int:
         return 0
 
     if args.command == "activate":
-        registry.set_active_version(args.name, args.version)
-        print(f"Activated {args.name} version {args.version}")
+        try:
+            registry.set_active_version(args.name, args.version)
+            print(f"Activated {args.name} version {args.version}")
+        except ValueError as exc:
+            LOG.error(str(exc))
+            return 1
         return 0
 
     if args.command == "rollback":
-        rec = registry.rollback_to_previous(args.name)
+        rec = registry.rollback_model(args.name)
         if rec is None:
             print(f"No previous version found for {args.name}")
         else:
