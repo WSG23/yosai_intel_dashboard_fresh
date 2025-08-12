@@ -4,11 +4,14 @@ from __future__ import annotations
 """Base classes for data models used throughout the application."""
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any, Dict, Iterable, List, Protocol, runtime_checkable
 
 import pandas as pd
 from yosai_intel_dashboard.src.infrastructure.config import constants
+
+from ..value_objects.enums import AccessResult
+from .events import AccessEvent
 
 logger = logging.getLogger(__name__)
 
@@ -34,62 +37,55 @@ class BaseModel:
         return True
 
 
+@runtime_checkable
+class AccessEventCollection(Protocol):
+    """Iterable collection of :class:`AccessEvent` instances."""
+
+    def __iter__(self) -> Iterable[AccessEvent]:
+        ...
+
+
 @dataclass(slots=True)
 class AccessEventModel(BaseModel):
     """Model for access control events"""
 
-    events: pd.DataFrame = field(default_factory=pd.DataFrame)
+    events: List[AccessEvent] = field(default_factory=list)
 
-    def load_from_dataframe(self, df: pd.DataFrame) -> bool:
-        """Load events from pandas DataFrame"""
+    def load(self, events: AccessEventCollection) -> bool:
+        """Load access events from an iterable collection."""
         try:
-            if df is None or df.empty:
-                logger.warning("Empty DataFrame provided to AccessEventModel")
+            event_list = list(events)
+            if not event_list:
+                logger.warning("Empty events provided to AccessEventModel")
                 return False
-
-            self.events = df.copy()
+            self.events = event_list
             logger.info(f"Loaded {len(self.events)} access events")
             return True
-
-        except Exception as e:
-            logger.error(f"Error loading DataFrame into AccessEventModel: {e}")
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(f"Error loading events into AccessEventModel: {exc}")
             return False
 
     def get_user_activity(self) -> Dict[str, int]:
         """Get user activity summary"""
-        if self.events.empty:
+        if not self.events:
             return {}
-
-        try:
-            user_col = None
-            for col in ["user_id", "person_id"]:
-                if col in self.events.columns:
-                    user_col = col
-                    break
-            if user_col is None:
-                return {}
-            return self.events[user_col].value_counts().to_dict()
-        except Exception as e:
-            logger.error(f"Error calculating user activity: {e}")
-            return {}
+        counts: Dict[str, int] = {}
+        for event in self.events:
+            user_id = getattr(event, "person_id", None) or getattr(event, "user_id", None)
+            if user_id:
+                counts[user_id] = counts.get(user_id, 0) + 1
+        return counts
 
     def get_door_activity(self) -> Dict[str, int]:
         """Get door activity summary"""
-        if self.events.empty:
+        if not self.events:
             return {}
-
-        try:
-            door_col = None
-            for col in ["door_id", "location"]:
-                if col in self.events.columns:
-                    door_col = col
-                    break
-            if door_col is None:
-                return {}
-            return self.events[door_col].value_counts().to_dict()
-        except Exception as e:
-            logger.error(f"Error calculating door activity: {e}")
-            return {}
+        counts: Dict[str, int] = {}
+        for event in self.events:
+            door_id = getattr(event, "door_id", None) or getattr(event, "location", None)
+            if door_id:
+                counts[door_id] = counts.get(door_id, 0) + 1
+        return counts
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary with analytics"""
@@ -106,36 +102,32 @@ class AccessEventModel(BaseModel):
 
     def _get_access_patterns(self) -> Dict[str, Any]:
         """Analyze access patterns"""
-        if self.events.empty:
+        if not self.events:
             return {}
 
-        try:
-            df = self.events
-            patterns: Dict[str, Any] = {
-                "total_access_attempts": len(df),
-                "successful_attempts": 0,
-                "failed_attempts": 0,
-                "hourly_distribution": {},
-            }
+        patterns: Dict[str, Any] = {
+            "total_access_attempts": len(self.events),
+            "successful_attempts": 0,
+            "failed_attempts": 0,
+            "hourly_distribution": {},
+        }
 
-            if "access_result" in df.columns:
-                results = df["access_result"].astype(str).str.lower()
-                patterns["successful_attempts"] = results.str.contains(
-                    "grant|success", regex=True
-                ).sum()
-                patterns["failed_attempts"] = results.str.contains(
-                    "den|fail", regex=True
-                ).sum()
+        for event in self.events:
+            result = getattr(event, "access_result", None)
+            result_val = result.value if isinstance(result, AccessResult) else str(result)
+            result_val = str(result_val).lower()
+            if "grant" in result_val or "success" in result_val:
+                patterns["successful_attempts"] += 1
+            elif "den" in result_val or "fail" in result_val:
+                patterns["failed_attempts"] += 1
 
-            if "timestamp" in df.columns:
-                times = pd.to_datetime(df["timestamp"], errors="coerce")
-                hourly = times.dropna().dt.hour.value_counts().sort_index()
-                patterns["hourly_distribution"] = hourly.to_dict()
+            ts = getattr(event, "timestamp", None)
+            if isinstance(ts, datetime):
+                hour = ts.hour
+                hourly = patterns["hourly_distribution"]
+                hourly[hour] = hourly.get(hour, 0) + 1
 
-            return patterns
-        except Exception as e:
-            logger.error(f"Error analyzing access patterns: {e}")
-            return {}
+        return patterns
 
 
 @dataclass(slots=True)
@@ -237,24 +229,27 @@ class ModelFactory:
         models = {}
 
         try:
-            if df is None or df.empty:
+            from ....adapters.access_event_dataframe import dataframe_to_events
+
+            events = dataframe_to_events(df)
+            if not events:
                 logger.warning("Empty DataFrame provided to ModelFactory")
                 return {}
+
             # Create access model
-            access_model = ModelFactory.create_access_model(df)
-            if access_model.load_from_dataframe(df):
+            access_model = ModelFactory.create_access_model()
+            if access_model.load(events):
                 models["access"] = access_model
 
             # Create anomaly model
-            anomaly_model = ModelFactory.create_anomaly_model(df)
-            events = df.to_dict("records") if not df.empty else []
-            anomaly_model.detect_anomalies(events)
+            anomaly_model = ModelFactory.create_anomaly_model()
+            anomaly_model.detect_anomalies([e.to_dict() for e in events])
             models["anomaly"] = anomaly_model
 
             logger.info(f"Created {len(models)} models from DataFrame")
             return models
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - defensive
             logger.error(f"Error creating models from DataFrame: {e}")
             return {}
 
@@ -311,4 +306,10 @@ class ModelFactory:
             return {}
 
 
-__all__ = ["BaseModel", "AccessEventModel", "AnomalyDetectionModel", "ModelFactory"]
+__all__ = [
+    "BaseModel",
+    "AccessEventCollection",
+    "AccessEventModel",
+    "AnomalyDetectionModel",
+    "ModelFactory",
+]
