@@ -1,3 +1,11 @@
+"""Event bus utilities.
+
+Provides :class:`EventBus` and :class:`EventPublisher` for simple
+publish/subscribe communication with optional async support. Callbacks can be
+throttled and per-event metrics are collected. See
+``docs/callback_architecture.md`` for an architectural overview.
+"""
+
 from __future__ import annotations
 
 import asyncio
