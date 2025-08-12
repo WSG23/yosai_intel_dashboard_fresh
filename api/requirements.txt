@@ -10,7 +10,7 @@ Flask-Caching==2.0.2
 cachetools==6.1.0
 websockets==11.0.3
 plotly==5.15.0
-pandas==2.1.4
+pandas==2.0.3  # feast 0.30.2 compatible
 numpy>=1.23,<2.0  # Python 3.11 compatible
 Authlib==1.6.1
 python-jose==3.5.0

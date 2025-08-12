@@ -4,8 +4,9 @@ FROM python:3.11-slim AS builder
 WORKDIR /app
 
 # Install system packages
-RUN apt-get update \ 
-    && apt-get install -y --no-install-recommends build-essential curl \ 
+# hadolint ignore=DL3008
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -27,10 +28,12 @@ ARG GID=1000
 RUN set -eux; \
     if command -v addgroup >/dev/null 2>&1; then \
       addgroup -g "${GID}" appuser || true; \
+      # hadolint ignore=DL3046
       adduser -D -u "${UID}" -G appuser appuser 2>/dev/null || adduser --uid "${UID}" --gid "${GID}" --disabled-password --gecos "" appuser; \
     else \
       groupadd -g "${GID}" appuser || true; \
-      useradd -m -u "${UID}" -g "${GID}" appuser || true; \
+      # hadolint ignore=DL3046
+      useradd -l -m -u "${UID}" -g "${GID}" appuser || true; \
     fi
 WORKDIR /app
 COPY . /app

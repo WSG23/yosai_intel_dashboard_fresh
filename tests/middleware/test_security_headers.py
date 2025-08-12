@@ -36,3 +36,7 @@ async def test_security_headers_present():
     assert resp.headers["X-Frame-Options"] == "DENY"
     assert resp.headers["X-Content-Type-Options"] == "nosniff"
     assert resp.headers["Referrer-Policy"] == "no-referrer"
+    assert (
+        resp.headers["Permissions-Policy"]
+        == "geolocation=(), camera=(), microphone=(), fullscreen=()"
+    )
