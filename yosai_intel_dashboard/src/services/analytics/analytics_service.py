@@ -28,6 +28,7 @@ from typing import (
 )
 
 import requests
+from shared.events.names import EventName
 
 from yosai_intel_dashboard.src.core.error_handling import (
     ErrorCategory,
@@ -405,7 +406,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             return {"status": "error", "message": str(e)}
 
     def _publish_event(
-        self, payload: Dict[str, Any], event: str = "analytics_update"
+        self, payload: Dict[str, Any], event: str = EventName.ANALYTICS_UPDATE
     ) -> None:
         """Publish ``payload`` to the event bus if available."""
         self.publisher.publish(payload, event)

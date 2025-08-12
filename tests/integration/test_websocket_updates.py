@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 
 from src.common.config import ConfigService
+from shared.events.names import EventName
 
 
 def _load_provider():
@@ -73,4 +74,4 @@ def test_websocket_data_provider_integration():
     provider = Provider(bus, config=cfg)
     time.sleep(0.05)
     provider.stop()
-    assert any(e[0] == "analytics_update" for e in bus.events)
+    assert any(e[0] == EventName.ANALYTICS_UPDATE for e in bus.events)

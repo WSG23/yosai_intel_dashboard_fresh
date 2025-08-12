@@ -1,31 +1,18 @@
 """Database-backed analytics service with in-memory caching.
 
-This module provides a small façade around a :class:`DatabaseManager`.  The
+This module provides a façade around a :class:`DatabaseConnectionPool`. The
 service validates connectivity before executing any analytics queries and keeps
 results in a simple in-memory cache with an expiration TTL.  Individual queries
 are executed via private asynchronous helpers which each handle their own
 exceptions, returning fallback values instead of bubbling up errors.
-"""
+
 
 from __future__ import annotations
 
 import asyncio
 import time
 from collections.abc import Mapping
-from typing import Any, Dict, List, Protocol
-
-
-class DatabaseManagerProtocol(Protocol):
-    """Protocol describing the minimal database manager interface used."""
-
-    def health_check(self) -> bool:
-        """Return ``True`` when the database connection is healthy."""  # pragma: no cover - simple protocol
-
-    def get_connection(self) -> Any:
-        """Retrieve a database connection object."""  # pragma: no cover - simple protocol
-
-    def release_connection(self, connection: Any) -> None:
-        """Release a previously acquired connection."""  # pragma: no cover - simple protocol
+from typing import Any, Dict, List
 
 class AnalyticsService:
     """Retrieve analytics information from the database.
@@ -39,8 +26,15 @@ class AnalyticsService:
         Number of seconds analytics results remain cached.  Defaults to ``60``.
     """
 
-    def __init__(self, db_manager: DatabaseManagerProtocol, ttl: int = 60) -> None:
-        self._db_manager: DatabaseManagerProtocol = db_manager
+    def __init__(
+        self,
+        pool: DatabaseConnectionPool,
+        *,
+        ttl: int = 60,
+        acquire_timeout: float | None = None,
+        retry_config: RetryConfig | None = None,
+    ) -> None:
+        self._pool = pool
         self._ttl = ttl
         self._cache: Dict[str, Any] | None = None
         self._expiry: float = 0.0
@@ -108,8 +102,8 @@ class AnalyticsService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    async def aget_analytics(self) -> Dict[str, Any]:
-        """Asynchronously return analytics data, using the cache when possible."""
+    async def get_analytics(self) -> Dict[str, Any]:
+        """Return analytics data, using the cache when possible."""
 
         cached = self._get_cached()
         if cached is not None:
@@ -129,7 +123,8 @@ class AnalyticsService:
             result = {"status": "success", "data": data}
             self._set_cache(result)
             return result
-        except TimeoutError as exc:
+        except (TimeoutError, ConnectionRetryExhausted) as exc:
+
             return {
                 "status": "error",
                 "message": str(exc),
@@ -148,10 +143,9 @@ class AnalyticsService:
                 except Exception:
                     pass
 
-    def get_analytics(self) -> Dict[str, Any]:
-        """Synchronous wrapper for :meth:`aget_analytics`."""
-
-        return asyncio.run(self.aget_analytics())
+        result = {"status": "success", "data": data}
+        self._set_cache(result)
+        return result
 
 
 __all__ = ["AnalyticsService"]

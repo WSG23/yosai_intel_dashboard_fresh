@@ -54,6 +54,18 @@ on a stubbed database connection executing two simple queries:
 The direct `await` nearly halves total latency by avoiding redundant
 event loop setup.
 
+## Event bus publish performance
+
+Benchmark: 50 asynchronous subscribers each awaiting 10 ms.
+
+| Scenario                               | Duration |
+|----------------------------------------|----------|
+| Sequential publish (pre-gather)        | ~0.51 s  |
+| Concurrent publish with `asyncio.gather` | ~0.011 s |
+
+An optional `max_concurrency` parameter now enforces backpressure so slow
+handlers cannot overwhelm the bus.
+
 ## Tuning notes
 
 - Two-hop lookups utilise an LRU cache (`maxsize=100_000`).  Tune this

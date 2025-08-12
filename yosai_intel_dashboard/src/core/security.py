@@ -5,10 +5,14 @@ Implements Apple's security-by-design principles
 """
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import hashlib
 import logging
+import os
 import secrets
 import time
+import uuid
 # ``ProcessPoolExecutor`` may not be available in some minimal environments.
 try:  # pragma: no cover - best effort
     from concurrent.futures import ProcessPoolExecutor
@@ -22,6 +26,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from argon2 import PasswordHasher
 from argon2 import exceptions as argon2_exceptions
+import redis.asyncio as redis
 
 _executor = ProcessPoolExecutor() if callable(ProcessPoolExecutor) else None
 try:  # pragma: no cover - optional dependency
@@ -141,82 +146,148 @@ class SecurityEvent:
 
 
 class RateLimiter:
-    """Redis backed rate limiting with IP blocking support."""
+    """Redis backed sliding window limiter with IP blocking and memory fallback."""
 
     def __init__(
         self,
-        redis_client: aioredis.Redis,
-        max_requests: int = dynamic_config.security.rate_limit_requests,
-        window_minutes: int = dynamic_config.security.rate_limit_window_minutes,
+        redis_client: Optional[redis.Redis] = None,
+        tier_config: Optional[Dict[str, Dict[str, int]]] = None,
+        window: int = dynamic_config.security.rate_limit_window_minutes * 60,
+        limit: int = dynamic_config.security.rate_limit_requests,
+        burst: int = 0,
+        key_prefix: str = "rl:",
+        block_prefix: str = "rl:block:",
     ) -> None:
         self.redis = redis_client
-        self.max_requests = max_requests
-        self.window_seconds = window_minutes * 60
+        self.key_prefix = key_prefix
+        self.block_prefix = block_prefix
+        self.default_config = {"window": window, "limit": limit, "burst": burst}
+        self.tier_config = tier_config or {}
+        self._memory: Dict[str, List[float]] = {}
+        self._blocked_ips: Dict[str, float] = {}
         self.logger = logging.getLogger(__name__)
         self._cleanup_task: asyncio.Task | None = None
-        self._req_prefix = "rl:req:"
-        self._block_prefix = "rl:block:"
+        # Compatibility attributes used by existing code
+        self.max_requests = limit
+
+    def _get_config(self, tier: str) -> Dict[str, int]:
+        return self.tier_config.get(tier, self.default_config)
+
+    def _build_key(self, identifier: str, tier: str) -> str:
+        return f"{self.key_prefix}{tier}:{identifier}"
 
     async def is_allowed(
-        self, identifier: str, source_ip: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """Check if request is allowed using Redis storage."""
-        current_time = time.time()
+        self, identifier: Optional[str], ip: str | None = None, tier: str = "default"
+    ) -> Dict[str, float]:
+        """Check rate limit for ``identifier`` or ``ip`` within given ``tier``."""
 
-        if source_ip:
-            block_key = f"{self._block_prefix}{source_ip}"
-            ttl = await self.redis.ttl(block_key)
-            if ttl > 0:
-                return {
-                    "allowed": False,
-                    "reason": "IP temporarily blocked",
-                    "retry_after": ttl,
-                    "limit": self.max_requests,
-                    "remaining": 0,
-                    "reset": current_time + ttl,
+        ident = identifier or ip or "anonymous"
+        cfg = self._get_config(tier)
+        window = cfg["window"]
+        limit = cfg["limit"]
+        burst = cfg.get("burst", 0)
+        now = time.time()
+
+        if ip:
+            block_key = f"{self.block_prefix}{ip}"
+            if self.redis is not None:
+                ttl = await self.redis.ttl(block_key)
+                if ttl > 0:
+                    return {
+                        "allowed": False,
+                        "reason": "IP temporarily blocked",
+                        "retry_after": ttl,
+                        "limit": limit,
+                        "remaining": 0,
+                        "reset": now + ttl,
+                    }
+            else:
+                expiry = self._blocked_ips.get(ip)
+                if expiry and expiry > now:
+                    retry = int(expiry - now)
+                    return {
+                        "allowed": False,
+                        "reason": "IP temporarily blocked",
+                        "retry_after": retry,
+                        "limit": limit,
+                        "remaining": 0,
+                        "reset": now + retry,
+                    }
+
+        key = self._build_key(ident, tier)
+        if self.redis is not None:
+            member = f"{now}-{uuid.uuid4().hex}"
+            try:
+                pipe = self.redis.pipeline()
+                pipe.zadd(key, {member: now})
+                pipe.zremrangebyscore(key, 0, now - window)
+                pipe.zcard(key)
+                pipe.zrange(key, 0, 0, withscores=True)
+                pipe.expire(key, window)
+                _, _, count, oldest, _ = await pipe.execute()
+                count = int(count)
+                allowed = count <= limit + burst
+                if not allowed:
+                    await self.redis.zrem(key, member)
+                    if ip:
+                        await self.redis.set(block_key, 1, ex=window * 2)
+                        self.logger.warning(
+                            "Rate limit exceeded, blocking IP: %s", ip
+                        )
+                remaining = max(0, limit + burst - (count if allowed else count - 1))
+                if oldest:
+                    oldest_score = float(oldest[0][1])
+                    reset = max(0, window - (now - oldest_score))
+                else:
+                    reset = window
+                result = {
+                    "allowed": allowed,
+                    "remaining": remaining,
+                    "limit": limit,
+                    "reset": reset,
                 }
+                if not allowed:
+                    result["retry_after"] = reset
+                    result["reason"] = "Rate limit exceeded"
+                return result
+            except Exception as exc:  # pragma: no cover - best effort
+                self.logger.warning("Redis rate limit check failed for %s: %s", key, exc)
 
-        req_key = f"{self._req_prefix}{identifier}"
-        count = await self.redis.incr(req_key)
-        if count == 1:
-            await self.redis.expire(req_key, self.window_seconds)
-        ttl = await self.redis.ttl(req_key)
-        reset_time = current_time + (ttl if ttl > 0 else self.window_seconds)
-
-        if count > self.max_requests:
-            if source_ip:
-                block_key = f"{self._block_prefix}{source_ip}"
-                await self.redis.set(block_key, 1, ex=self.window_seconds * 2)
-                self.logger.warning(f"Rate limit exceeded, blocking IP: {source_ip}")
-            retry_after = reset_time - current_time
-            return {
-                "allowed": False,
-                "reason": "Rate limit exceeded",
-                "requests_in_window": count,
-                "max_requests": self.max_requests,
-                "window_seconds": self.window_seconds,
-                "limit": self.max_requests,
-                "remaining": 0,
-                "reset": reset_time,
-                "retry_after": retry_after,
-            }
-
-        remaining = self.max_requests - count
-        return {
-            "allowed": True,
-            "requests_in_window": count,
-            "remaining": remaining,
-            "limit": self.max_requests,
-            "reset": reset_time,
-        }
+        # Fallback to in-memory implementation
+        timestamps = self._memory.setdefault(key, [])
+        cutoff = now - window
+        timestamps[:] = [ts for ts in timestamps if ts > cutoff]
+        allowed = len(timestamps) < limit + burst
+        if allowed:
+            timestamps.append(now)
+        else:
+            if ip:
+                self._blocked_ips[ip] = now + window * 2
+                self.logger.warning("Rate limit exceeded, blocking IP: %s", ip)
+        remaining = max(0, limit + burst - len(timestamps))
+        if timestamps:
+            reset = max(0, window - (now - timestamps[0]))
+        else:
+            reset = window
+        result = {"allowed": allowed, "remaining": remaining, "limit": limit, "reset": reset}
+        if not allowed:
+            result["retry_after"] = reset
+            result["reason"] = "Rate limit exceeded"
+        return result
 
     async def _cleanup_blocked_ips(self) -> None:
         while True:
-            async for key in self.redis.scan_iter(match=f"{self._block_prefix}*"):
-                ttl = await self.redis.ttl(key)
-                if ttl <= 0:
-                    await self.redis.delete(key)
-            await asyncio.sleep(self.window_seconds)
+            if self.redis is not None:
+                async for key in self.redis.scan_iter(match=f"{self.block_prefix}*"):
+                    ttl = await self.redis.ttl(key)
+                    if ttl <= 0:
+                        await self.redis.delete(key)
+            else:
+                now = time.time()
+                self._blocked_ips = {
+                    ip: exp for ip, exp in self._blocked_ips.items() if exp > now
+                }
+            await asyncio.sleep(self.default_config["window"])
 
     def start_cleanup(self) -> None:
         if self._cleanup_task is None:
@@ -228,6 +299,27 @@ class RateLimiter:
             with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
             self._cleanup_task = None
+
+
+async def create_rate_limiter(
+    tier_config: Optional[Dict[str, Dict[str, int]]] = None,
+    window: int = dynamic_config.security.rate_limit_window_minutes * 60,
+    limit: int = dynamic_config.security.rate_limit_requests,
+    burst: int = 0,
+) -> RateLimiter:
+    """Factory to create :class:`RateLimiter` with Redis connection."""
+
+    redis_client: Optional[redis.Redis] = None
+    try:
+        redis_client = redis.Redis(
+            host=os.getenv("REDIS_HOST", "localhost"),
+            port=int(os.getenv("REDIS_PORT", "6379")),
+            db=int(os.getenv("REDIS_DB", "0")),
+        )
+        await redis_client.ping()
+    except Exception:  # pragma: no cover - best effort
+        redis_client = None
+    return RateLimiter(redis_client, tier_config, window, limit, burst)
 
 
 class SecurityAuditor(BaseModel):
@@ -457,9 +549,9 @@ def validate_input_decorator(field_mapping: Dict[str, str] = None):
     return decorator
 
 
-def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
+def rate_limit_decorator(limit: int = 100, window_minutes: int = 1):
     """Decorator to apply rate limiting with response headers."""
-    limiter = RateLimiter(max_requests, window_minutes)
+    limiter = RateLimiter(limit=limit, window=window_minutes * 60)
 
     def decorator(func):
         from functools import wraps
@@ -467,16 +559,16 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
         from flask import jsonify, make_response, request
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             auth = request.headers.get("Authorization", "")
             identifier = (
                 auth.split(" ", 1)[1]
                 if auth.startswith("Bearer ")
                 else request.remote_addr
             )
-            result = limiter.is_allowed(identifier or "anonymous", request.remote_addr)
+            result = await limiter.is_allowed(identifier or "anonymous", request.remote_addr)
             headers = {
-                "X-RateLimit-Limit": str(result.get("limit", max_requests)),
+                "X-RateLimit-Limit": str(result.get("limit", limit)),
                 "X-RateLimit-Remaining": str(result.get("remaining", 0)),
                 "X-RateLimit-Reset": str(int(result.get("reset", 0))),
             }
@@ -485,7 +577,7 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
                 security_auditor.log_security_event(
                     "rate_limit_exceeded",
                     SecurityLevel.MEDIUM,
-                    {"function": func.__name__, "reason": result["reason"]},
+                    {"function": func.__name__, "reason": result.get("reason", "rate limit exceeded")},
                     blocked=True,
                 )
                 retry = result.get("retry_after")
@@ -497,7 +589,11 @@ def rate_limit_decorator(max_requests: int = 100, window_minutes: int = 1):
                     response.headers[key] = value
                 return response
 
-            response = make_response(func(*args, **kwargs))
+            if asyncio.iscoroutinefunction(func):
+                resp = await func(*args, **kwargs)
+            else:
+                resp = func(*args, **kwargs)
+            response = make_response(resp)
             for key, value in headers.items():
                 response.headers[key] = value
             return response

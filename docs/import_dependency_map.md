@@ -9,7 +9,7 @@ start_api.py
  └─ utils
      └─ preview_utils
          └─ config
-             └─ services.registry
+             └─ core.registry
                  └─ services.analytics.upload_analytics
                      └─ services.chunked_analysis
                         └─ validation.security_validator

@@ -23,6 +23,7 @@ from yosai_intel_dashboard.src.infrastructure.callbacks.dispatcher import (
 from yosai_intel_dashboard.src.infrastructure.callbacks.events import (
     CallbackEvent as CallbackType,
 )
+from shared.events.names import EventName
 
 
 class WebSocketDataProvider(LoggingMixin, SerializationMixin, BaseComponent):
@@ -49,7 +50,7 @@ class WebSocketDataProvider(LoggingMixin, SerializationMixin, BaseComponent):
             payload: Dict[str, Any] = generate_sample_analytics()
             trigger_callback(CallbackType.ANALYTICS_UPDATE, payload)
 
-            self.log("analytics_update dispatched", logging.DEBUG)
+            self.log(f"{EventName.ANALYTICS_UPDATE} dispatched", logging.DEBUG)
             self._stop.wait(self.interval)
 
     def stop(self) -> None:

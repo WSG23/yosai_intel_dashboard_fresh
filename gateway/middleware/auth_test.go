@@ -1,13 +1,16 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +21,7 @@ import (
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
 	gwconfig "github.com/WSG23/yosai-gateway/internal/config"
+	"github.com/WSG23/yosai-gateway/internal/tracing"
 )
 
 // helper to start miniredis and client
@@ -52,20 +56,42 @@ func newMiddleware(t *testing.T, cache *TokenCache, rl *RateLimiter, cfg JWTConf
 	return am
 }
 
-func newToken(t *testing.T, priv *rsa.PrivateKey, sub, jti string, exp time.Time) string {
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &auth.EnhancedClaims{
+func newToken(t *testing.T, priv *rsa.PrivateKey, sub, jti, aud string, exp time.Time) string {
+	claims := auth.EnhancedClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   sub,
 			ID:        jti,
 			Issuer:    "test",
 			ExpiresAt: jwt.NewNumericDate(exp),
 		},
-	})
+	}
+	if aud != "" {
+		claims.Audience = jwt.ClaimStrings{aud}
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &claims)
 	s, err := token.SignedString(priv)
 	if err != nil {
 		t.Fatalf("sign: %v", err)
 	}
 	return s
+}
+
+func serve(t *testing.T, handler http.Handler, req *http.Request, tok string) (*httptest.ResponseRecorder, string) {
+	var buf bytes.Buffer
+	orig := tracing.Logger.Out
+	tracing.Logger.SetOutput(&buf)
+	resp := httptest.NewRecorder()
+	handler.ServeHTTP(resp, req)
+	tracing.Logger.SetOutput(orig)
+	logs := buf.String()
+	if tok != "" && strings.Contains(logs, tok) {
+		t.Fatalf("token leaked in logs")
+	}
+	return resp, logs
+}
+
+func logHasReason(logs, reason string) bool {
+	return strings.Contains(logs, "reason="+reason) || strings.Contains(logs, "\"reason\":\""+reason+"\"")
 }
 
 func TestAuthValidationAndCaching(t *testing.T) {
@@ -79,7 +105,7 @@ func TestAuthValidationAndCaching(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	tok := newToken(t, priv, "alice", "id1", time.Now().Add(time.Minute))
+	tok := newToken(t, priv, "alice", "id1", "", time.Now().Add(time.Minute))
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+tok)
 	resp := httptest.NewRecorder()
@@ -101,13 +127,22 @@ func TestAuthExpiredToken(t *testing.T) {
 	am := newMiddleware(t, NewTokenCache(client), nil, JWTConfig{PublicKeys: []string{pub}})
 	handler := am.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 
-	tok := newToken(t, priv, "bob", "id2", time.Now().Add(-time.Minute))
+	tok := newToken(t, priv, "bob", "id2", "", time.Now().Add(-time.Minute))
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+tok)
-	resp := httptest.NewRecorder()
-	handler.ServeHTTP(resp, req)
+	resp, logs := serve(t, handler, req, tok)
 	if resp.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 got %d", resp.Code)
+	}
+	var e struct {
+		Details map[string]string `json:"details"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&e)
+	if e.Details["reason"] != "expired" {
+		t.Fatalf("expected expired reason got %v", e.Details["reason"])
+	}
+	if !logHasReason(logs, "expired") {
+		t.Fatalf("expected log to contain reason, got %s", logs)
 	}
 }
 
@@ -118,20 +153,28 @@ func TestAuthInvalidSignature(t *testing.T) {
 	am := newMiddleware(t, NewTokenCache(client), nil, JWTConfig{PublicKeys: []string{pub1}})
 	handler := am.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 
-	tok := newToken(t, priv2, "bob", "id3", time.Now().Add(time.Minute))
+	tok := newToken(t, priv2, "bob", "id3", "", time.Now().Add(time.Minute))
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+tok)
-	resp := httptest.NewRecorder()
-	handler.ServeHTTP(resp, req)
+	resp, logs := serve(t, handler, req, tok)
 	if resp.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 got %d", resp.Code)
 	}
+	var e struct {
+		Details map[string]string `json:"details"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&e)
+	if e.Details["reason"] != "invalid_signature" {
+		t.Fatalf("expected invalid_signature reason got %v", e.Details["reason"])
+	}
+	if !logHasReason(logs, "invalid_signature") {
+		t.Fatalf("expected log to contain reason, got %s", logs)
+	}
 
 	// ensure valid token works
-	validTok := newToken(t, priv1, "bob", "id3", time.Now().Add(time.Minute))
+	validTok := newToken(t, priv1, "bob", "id3", "", time.Now().Add(time.Minute))
 	req.Header.Set("Authorization", "Bearer "+validTok)
-	resp = httptest.NewRecorder()
-	handler.ServeHTTP(resp, req)
+	resp, _ = serve(t, handler, req, validTok)
 	if resp.Code != http.StatusOK {
 		t.Fatalf("expected 200 got %d", resp.Code)
 	}
@@ -144,18 +187,52 @@ func TestAuthBlacklistedToken(t *testing.T) {
 	am := newMiddleware(t, cache, nil, JWTConfig{PublicKeys: []string{pub}})
 	handler := am.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 
-	tok := newToken(t, priv, "carol", "id4", time.Now().Add(time.Minute))
+	tok := newToken(t, priv, "carol", "id4", "", time.Now().Add(time.Minute))
 	cache.Blacklist(context.Background(), "id4", time.Hour)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+tok)
-	resp := httptest.NewRecorder()
-	handler.ServeHTTP(resp, req)
+	resp, logs := serve(t, handler, req, tok)
 	if resp.Code != http.StatusForbidden {
 		t.Fatalf("expected 403 got %d", resp.Code)
 	}
+	var e struct {
+		Details map[string]string `json:"details"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&e)
+	if e.Details["reason"] != "blacklisted" {
+		t.Fatalf("expected blacklisted reason got %v", e.Details["reason"])
+	}
+	if !logHasReason(logs, "blacklisted") {
+		t.Fatalf("expected log to contain reason, got %s", logs)
+	}
 	if srv.Exists("jwt:" + tok) {
 		t.Fatalf("token should not be cached when blacklisted")
+	}
+}
+
+func TestAuthInvalidAudience(t *testing.T) {
+	_, client := newRedis(t)
+	priv, pub := genKeys(t)
+	am := newMiddleware(t, NewTokenCache(client), nil, JWTConfig{PublicKeys: []string{pub}, Audience: "expected"})
+	handler := am.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
+
+	tok := newToken(t, priv, "mallory", "id7", "wrong", time.Now().Add(time.Minute))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+tok)
+	resp, logs := serve(t, handler, req, tok)
+	if resp.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 got %d", resp.Code)
+	}
+	var e struct {
+		Details map[string]string `json:"details"`
+	}
+	_ = json.NewDecoder(resp.Body).Decode(&e)
+	if e.Details["reason"] != "invalid_aud" {
+		t.Fatalf("expected invalid_aud reason got %v", e.Details["reason"])
+	}
+	if !logHasReason(logs, "invalid_aud") {
+		t.Fatalf("expected log to contain reason, got %s", logs)
 	}
 }
 
@@ -187,7 +264,7 @@ func TestAuthTokenRefresh(t *testing.T) {
 		if r.Header.Get("Authorization") != "Bearer "+oldTok {
 			t.Fatalf("bad refresh header")
 		}
-		newTokStr = newToken(t, priv, "dave", "id5", time.Now().Add(time.Minute))
+		newTokStr = newToken(t, priv, "dave", "id5", "", time.Now().Add(time.Minute))
 		w.Write([]byte(newTokStr))
 	}))
 	defer refreshSrv.Close()
@@ -200,7 +277,7 @@ func TestAuthTokenRefresh(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	oldTok = newToken(t, priv, "old", "id5", time.Now().Add(10*time.Second))
+	oldTok = newToken(t, priv, "old", "id5", "", time.Now().Add(10*time.Second))
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+oldTok)
 	resp := httptest.NewRecorder()
@@ -224,7 +301,7 @@ func TestAuthRateLimitPerUser(t *testing.T) {
 	am := newMiddleware(t, NewTokenCache(client), rl, JWTConfig{PublicKeys: []string{pub}})
 	handler := am.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 
-	tok := newToken(t, priv, "eve", "id6", time.Now().Add(time.Minute))
+	tok := newToken(t, priv, "eve", "id6", "", time.Now().Add(time.Minute))
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer "+tok)
 	resp := httptest.NewRecorder()
