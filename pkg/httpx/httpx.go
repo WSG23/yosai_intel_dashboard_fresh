@@ -1,25 +1,25 @@
 package httpx
 
 import (
-	"encoding/json"
-	"errors"
-	"io"
+    "context"
+    "encoding/json"
+    "net/http"
+    "time"
 )
 
-// DecodeJSON decodes JSON from r into dst and ensures the entire
-// input is consumed. If additional tokens remain after the JSON value,
-// an error is returned.
-func DecodeJSON(r io.Reader, dst any) error {
-	dec := json.NewDecoder(r)
-	if err := dec.Decode(dst); err != nil {
-		return err
-	}
-	// Ensure the decoder has reached EOF to avoid accepting trailing data.
-	if _, err := dec.Token(); err != io.EOF {
-		if err == nil {
-			err = errors.New("unexpected data after JSON value")
-		}
-		return err
-	}
-	return nil
+// DefaultClient is the client used by DoJSON. It has a
+// non-zero timeout to avoid hanging requests.
+var DefaultClient = &http.Client{Timeout: 10 * time.Second}
+
+// DoJSON executes the HTTP request using DefaultClient and decodes
+// the JSON response body into dst. The provided context controls the
+// request and will cancel the call if it is done.
+func DoJSON(ctx context.Context, req *http.Request, dst any) error {
+    req = req.WithContext(ctx)
+    resp, err := DefaultClient.Do(req)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+    return json.NewDecoder(resp.Body).Decode(dst)
 }
