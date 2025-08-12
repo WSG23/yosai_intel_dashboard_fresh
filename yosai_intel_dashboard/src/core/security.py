@@ -13,7 +13,7 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from argon2 import PasswordHasher
 from argon2 import exceptions as argon2_exceptions
@@ -40,6 +40,7 @@ from yosai_intel_dashboard.src.core.base_model import BaseModel
 from yosai_intel_dashboard.src.core.domain.entities.access_events import (
     AccessEventModel,
 )
+from yosai_intel_dashboard.src.core.secret_manager import SecretsManager
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
@@ -64,6 +65,57 @@ class ValidationResult(Enum):
     INVALID = "invalid"
     SUSPICIOUS = "suspicious"
     MALICIOUS = "malicious"
+
+
+@dataclass
+class SecurityConfig:
+    """Configuration helper for secret retrieval and rotation."""
+
+    secrets_manager: SecretsManager = SecretsManager()
+
+    def __post_init__(self) -> None:  # pragma: no cover - lazy import
+        try:
+            from yosai_intel_dashboard.src.services.common.secrets import (
+                get_secret as _vault_get,
+                invalidate_secret as _vault_invalidate,
+            )
+        except Exception:  # pragma: no cover - optional dependency
+            try:  # Fallback for tests using lightweight stubs
+                from services.common.secrets import (  # type: ignore
+                    get_secret as _vault_get,
+                    invalidate_secret as _vault_invalidate,
+                )
+            except Exception:  # pragma: no cover - vault not available
+                _vault_get = _vault_invalidate = None  # type: ignore
+        self._vault_get = _vault_get
+        self._vault_invalidate = _vault_invalidate
+
+    def get_secret(
+        self,
+        env_key: str,
+        *,
+        vault_key: str | None = None,
+        default: str | None = None,
+        rotate: bool = False,
+    ) -> str:
+        """Return secret value from environment or Vault.
+
+        When ``vault_key`` is provided and Vault access is configured it is
+        preferred. Passing ``rotate=True`` will invalidate any cached Vault
+        value before retrieving it.
+        """
+
+        if rotate and vault_key and self._vault_invalidate:
+            self._vault_invalidate(vault_key)
+        if vault_key and self._vault_get:
+            try:
+                return self._vault_get(vault_key)
+            except Exception:  # pragma: no cover - fall back to env
+                pass
+        value = self.secrets_manager.get(env_key, default)
+        if value is None:
+            raise RuntimeError(f"missing secret {env_key}")
+        return value
 
 
 @dataclass
@@ -352,6 +404,7 @@ def validate_user_input(value: str, field: str) -> str:
 
 rate_limiter = RateLimiter()
 security_auditor = SecurityAuditor()
+security_config = SecurityConfig()
 
 
 # Decorators for easy security integration
