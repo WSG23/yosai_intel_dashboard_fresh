@@ -247,23 +247,27 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
-    - name: Fork PR noop
-      if: ${{ github.event.pull_request.head.repo.fork }}
-      run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: npm
-    - run: npm ci
-    - name: Semantic release
-      uses: cycjimmy/semantic-release-action@v4
-      with:
-        semantic_version: 21
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fork PR noop
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        run: 'echo "Fork PR: secret-protected job skipped (noop)."'
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install Node deps (CI-safe)
+        env:
+          NPM_CONFIG_LEGACY_PEER_DEPS: "true"
+        run: |
+          npm ci --no-audit --prefer-offline
+      - name: Semantic release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          semantic_version: 21
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-dev:
     needs: release
