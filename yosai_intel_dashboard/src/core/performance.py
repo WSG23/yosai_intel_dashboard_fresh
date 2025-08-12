@@ -39,6 +39,8 @@ from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
 )
 
+from .registry import ServiceRegistry
+
 try:  # pragma: no cover - optional dependency
     from yosai_intel_dashboard.src.services.query_optimizer import QueryOptimizer
 except Exception:  # pragma: no cover - optional dependency
@@ -438,16 +440,16 @@ class PerformanceMonitor:
             self._monitor_thread.join(timeout=5)
 
 
-# Lazy-loaded global performance monitor instance
-_performance_monitor: Optional[PerformanceMonitor] = None
+# Lazy-loaded performance monitor stored in the service registry
 
 
 def get_performance_monitor() -> PerformanceMonitor:
     """Return the singleton performance monitor, creating it if necessary."""
-    global _performance_monitor
-    if _performance_monitor is None:
-        _performance_monitor = PerformanceMonitor()
-    return _performance_monitor
+    monitor = ServiceRegistry.get("performance_monitor")
+    if monitor is None:
+        monitor = PerformanceMonitor()
+        ServiceRegistry.register("performance_monitor", monitor)
+    return monitor
 
 
 def measure_performance(

@@ -1,41 +1,34 @@
+"""Lightweight service registry for application-wide singletons."""
+
 from __future__ import annotations
 
-"""Lightweight service registry used for global lookups."""
+from typing import Any, Dict, Optional, TypeVar
 
-from typing import Any, Dict
+T = TypeVar("T")
 
 
 class ServiceRegistry:
-    """Very small service registry.
+    """Minimal registry to manage shared service instances."""
 
-    Services are stored by a string key and can be retrieved or removed later.
-    The implementation is intentionally minimal for ease of use in tests and
-    runtime modules.
-    """
+    _services: Dict[str, Any] = {}
 
-    def __init__(self) -> None:
-        self._services: Dict[str, Any] = {}
+    @classmethod
+    def register(cls, name: str, service: Any) -> None:
+        """Register ``service`` under ``name`` overwriting existing entry."""
 
-    def register(self, name: str, service: Any) -> None:
-        """Register *service* under *name*."""
+        cls._services[name] = service
 
-        self._services[name] = service
+    @classmethod
+    def get(cls, name: str, default: Optional[T] = None) -> T:
+        """Return service registered under ``name`` or ``default`` if absent."""
 
-    def get(self, name: str) -> Any:
-        """Return the service registered under *name*.
+        return cls._services.get(name, default)  # type: ignore[return-value]
 
-        Raises ``KeyError`` if the service has not been registered.
-        """
+    @classmethod
+    def remove(cls, name: str) -> None:
+        """Remove ``name`` from registry if present."""
 
-        return self._services[name]
-
-    def remove(self, name: str) -> None:
-        """Remove the service registered under *name* if present."""
-
-        self._services.pop(name, None)
+        cls._services.pop(name, None)
 
 
-# Global registry instance used across the application
-registry = ServiceRegistry()
-
-__all__ = ["ServiceRegistry", "registry"]
+__all__ = ["ServiceRegistry"]

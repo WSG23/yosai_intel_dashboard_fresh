@@ -103,7 +103,6 @@ __all__ = [
     "circuit_breaker",
     "async_batch",
     "ServiceRegistry",
-    "registry",
 ]
 
 _ASYNC_EXPORTS = {
@@ -153,7 +152,7 @@ _LAZY_EXPORTS = {
     "inject": (".di_decorators", "inject"),
     "injectable": (".di_decorators", "injectable"),
     "validate_env": (".env_validation", "validate_env"),
-
+    "ServiceRegistry": (".registry", "ServiceRegistry"),
 }
 
 
