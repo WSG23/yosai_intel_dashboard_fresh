@@ -31,4 +31,8 @@ class ServiceRegistry:
         cls._services.pop(name, None)
 
 
-__all__ = ["ServiceRegistry"]
+# Shared registry instance used across the application.
+registry = ServiceRegistry()
+
+
+__all__ = ["ServiceRegistry", "registry"]
