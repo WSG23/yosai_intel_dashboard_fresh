@@ -4,6 +4,7 @@ import Navigation from './components/Navigation';
 import { Shield, Menu, Sun, Moon } from 'lucide-react';
 import useDarkMode from './hooks/useDarkMode';
 import CenteredSpinner from './components/shared/CenteredSpinner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Upload = React.lazy(() =>
   import('./components/upload').then((m) => ({ default: m.Upload })),
@@ -50,9 +51,11 @@ function App() {
         )}
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Suspense fallback={<CenteredSpinner className="py-10" />}>
-          <Upload />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<CenteredSpinner className="py-10" />}>
+            <Upload />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );
