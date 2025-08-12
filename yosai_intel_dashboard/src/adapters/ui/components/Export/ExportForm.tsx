@@ -1,130 +1,54 @@
 import React, { useState } from 'react';
-import type { ExportOptions } from '../../hooks/useExportData';
+import useExportData from '../../hooks/useExportData';
+import { Button } from '../shared/Button';
+import {
+  SUPPORTED_EXPORT_TYPES,
+  normalizeColumns,
+  validateFileType,
+} from '../../utils/exportTransforms';
 
-interface Props {
-  onExport: (options: ExportOptions) => void;
-  progress: number;
-  status: 'idle' | 'exporting' | 'completed' | 'error';
-  onCancel: () => void;
-}
+const ExportForm: React.FC = () => {
+  const [format, setFormat] = useState<string>('csv');
+  const [columns, setColumns] = useState<string>('');
+  const { mutateAsync } = useExportData();
 
-const ExportForm: React.FC<Props> = ({ onExport, progress, status, onCancel }) => {
-  const [fileType, setFileType] = useState('csv');
-  const [columns, setColumns] = useState('');
-  const [timezone, setTimezone] = useState('UTC');
-  const [locale, setLocale] = useState('en-US');
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const opts: ExportOptions = {
-      fileType,
-      columns: columns.split(',').map((c) => c.trim()).filter(Boolean),
-      timezone,
-      locale,
-    };
-    onExport(opts);
+    if (!validateFileType(format)) {
+      alert('Unsupported export format');
+      return;
+    }
+    const columnList = normalizeColumns(columns.split(','));
+    await mutateAsync({ format, columns: columnList });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="export-file-type" className="block mb-1">
-          File Type
-        </label>
+        <label className="block mb-1">Format</label>
         <select
-          id="export-file-type"
-          value={fileType}
-          onChange={(e) => setFileType(e.target.value)}
-          className="border p-1 rounded"
+          value={format}
+          onChange={(e) => setFormat(e.target.value)}
+          className="border rounded p-2 w-full"
         >
-          <option value="csv">CSV</option>
-          <option value="json">JSON</option>
+          {SUPPORTED_EXPORT_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t.toUpperCase()}
+            </option>
+          ))}
         </select>
       </div>
       <div>
-        <label htmlFor="export-columns" className="block mb-1">
-          Columns (comma separated)
-        </label>
+        <label className="block mb-1">Columns (comma separated)</label>
         <input
-          id="export-columns"
           type="text"
           value={columns}
           onChange={(e) => setColumns(e.target.value)}
-          className="border p-1 rounded w-full"
+          className="border rounded p-2 w-full"
+          placeholder="e.g. person_id,door_id,timestamp"
         />
       </div>
-      <div>
-        <label htmlFor="export-timezone" className="block mb-1">
-          Timezone
-        </label>
-        <input
-          id="export-timezone"
-          type="text"
-          value={timezone}
-          onChange={(e) => setTimezone(e.target.value)}
-          className="border p-1 rounded w-full"
-        />
-      </div>
-      <div>
-        <label htmlFor="export-locale" className="block mb-1">
-          Locale
-        </label>
-        <input
-          id="export-locale"
-          type="text"
-          value={locale}
-          onChange={(e) => setLocale(e.target.value)}
-          className="border p-1 rounded w-full"
-        />
-      </div>
-      <div className="flex items-center space-x-2">
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={status === 'exporting'}
-          aria-label="Export data"
-        >
-          Export
-        </button>
-        {status === 'exporting' && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onCancel}
-            aria-label="Cancel export"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
-      {status !== 'idle' && (
-        <div className="mt-4">
-          {status === 'exporting' && (
-            <div className="flex items-center space-x-2" role="status" aria-live="polite">
-              <progress
-                value={progress}
-                max="100"
-                className="flex-1"
-                role="progressbar"
-                aria-valuenow={progress}
-                aria-valuemin="0"
-                aria-valuemax="100"
-              />
-              <span>{progress}%</span>
-            </div>
-          )}
-          {status === 'completed' && (
-            <p role="status" aria-live="polite" className="text-green-600">
-              Export complete.
-            </p>
-          )}
-          {status === 'error' && (
-            <p role="alert" aria-live="assertive" className="text-red-600">
-              Export failed.
-            </p>
-          )}
-        </div>
-      )}
+      <Button type="submit">Export</Button>
     </form>
   );
 };
