@@ -36,7 +36,7 @@ from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.models.ml import ModelRegistry
-from yosai_intel_dashboard.src.core.security import RateLimiter
+from yosai_intel_dashboard.src.core.security import RateLimiter, security_config
 from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
@@ -135,11 +135,8 @@ register_health_check(app, "external_api", _external_api_check)
 
 def _jwt_secret() -> str:
     """Return the current JWT secret."""
-    secret = os.getenv("JWT_SECRET_KEY")
-    if not secret:
-        logger.error("JWT_SECRET_KEY not set")
-        raise RuntimeError("missing JWT secret")
-    return secret
+    secret_path = os.getenv("JWT_SECRET_PATH")
+    return security_config.get_secret("JWT_SECRET_KEY", vault_key=secret_path)
 
 
 def verify_token(authorization: str = Header("")) -> dict:
@@ -253,7 +250,7 @@ async def _startup() -> None:
     app.state.startup_complete = True
 
 
-@app.get("/health")
+@app.get("/api/v1/health")
 async def health() -> dict[str, str]:
     """Basic service health indicator.
 
@@ -262,7 +259,7 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/health/live")
+@app.get("/api/v1/health/live")
 async def health_live() -> dict[str, str]:
     """Liveness probe.
 
@@ -271,7 +268,7 @@ async def health_live() -> dict[str, str]:
     return {"status": "ok" if app.state.live else "shutdown"}
 
 
-@app.get("/health/startup")
+@app.get("/api/v1/health/startup")
 async def health_startup() -> dict[str, str]:
     """Startup probe.
 
@@ -287,7 +284,7 @@ async def health_startup() -> dict[str, str]:
     )
 
 
-@app.get("/health/ready")
+@app.get("/api/v1/health/ready")
 async def health_ready() -> dict[str, str]:
     """Readiness probe.
 
