@@ -1,5 +1,23 @@
 # API Service
 
+## Endpoints
+
+### `POST /v1/echo`
+
+Echo the provided message.
+
+**Request**
+
+```json
+{ "message": "hello" }
+```
+
+**Response**
+
+```json
+{ "message": "hello" }
+```
+
 ## Testing
 
 Install development dependencies and run the test suite:

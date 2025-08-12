@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from api.middleware.body_size_limit import BodySizeLimitMiddleware
 from api.middleware.security_headers import SecurityHeadersMiddleware
@@ -15,8 +16,14 @@ async def health(request: Request) -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
 
-@app.route("/echo", methods=["POST"])
+class EchoRequest(BaseModel):
+    message: str
 
-async def echo(request: Request) -> Response:
-    data = await request.body()
-    return Response(content=data, media_type="application/octet-stream")
+
+class EchoResponse(BaseModel):
+    message: str
+
+
+@app.post("/v1/echo", response_model=EchoResponse)
+async def echo(body: EchoRequest) -> EchoResponse:
+    return EchoResponse(message=body.message)
