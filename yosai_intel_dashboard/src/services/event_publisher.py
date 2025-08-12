@@ -1,5 +1,5 @@
 import logging
-from typing import Dict
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,14 @@ def publish_event(
     payload: Dict[str, Any],
     event: str = "analytics_update",
 ) -> None:
-    """Trigger a callback for ``event`` if registered."""
+    """Publish ``payload`` via the centralized :mod:`yosai_intel_dashboard.src.core.callbacks.event_bus`."""
+
+    if event_bus:
+        try:
+            event_bus.emit(event, payload)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.debug("Event bus publish failed: %s", exc)
+
     try:
         from yosai_intel_dashboard.src.infrastructure.callbacks import (
             CallbackType,
