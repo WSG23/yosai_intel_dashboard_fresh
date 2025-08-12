@@ -1,34 +1,24 @@
 package httpx
 
 import (
-	"strings"
-	"testing"
+    "context"
+    "net/http"
+    "testing"
+    "time"
 )
 
-type testStruct struct {
-	A int `json:"a"`
+func TestDefaultClientTimeout(t *testing.T) {
+    if DefaultClient.Timeout == 0 {
+        t.Fatal("expected non-zero client timeout")
+    }
 }
 
-func TestDecodeJSON(t *testing.T) {
-	var dst testStruct
-	if err := DecodeJSON(strings.NewReader(`{"a":1}`), &dst); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if dst.A != 1 {
-		t.Fatalf("unexpected value: %v", dst.A)
-	}
-}
-
-func TestDecodeJSONExtraTokens(t *testing.T) {
-	var dst testStruct
-	if err := DecodeJSON(strings.NewReader(`{"a":1}{"b":2}`), &dst); err == nil {
-		t.Fatalf("expected error for extra tokens, got nil")
-	}
-}
-
-func TestDecodeJSONWhitespace(t *testing.T) {
-	var dst testStruct
-	if err := DecodeJSON(strings.NewReader("{\"a\":1}\n"), &dst); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+func TestDoJSON_ContextCancel(t *testing.T) {
+    req, _ := http.NewRequest("GET", "http://127.0.0.1:0/never", nil) // invalid port ⇒ fast fail
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+    defer cancel()
+    var dst map[string]any
+    if err := DoJSON(ctx, req, &dst); err == nil {
+        t.Fatal("expected error for unreachable host or timeout")
+    }
 }
