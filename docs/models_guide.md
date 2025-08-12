@@ -295,3 +295,11 @@ def get_active_threats(db_connection, events):
     ]
     return high_severity
 ```
+
+#### Configuring after-hours detection
+
+The hours that trigger an `after_hours_access` anomaly are defined by
+the `AFTER_HOURS` list in
+`yosai_intel_dashboard.src.infrastructure.config.constants`.  Each entry
+is an hour prefix such as `"22:"` or `"05:"`.  Projects can override this
+list to match their own business hours.
