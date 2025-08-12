@@ -15,11 +15,11 @@ async def hourly_event_counts(pool: asyncpg.Pool, days: int) -> List[Dict[str, A
                facility_id,
                COUNT(*) AS event_count
         FROM access_events
-        WHERE time > NOW() - $1::interval
+        WHERE time > NOW() - make_interval(days => $1)
         GROUP BY bucket, facility_id
         ORDER BY bucket
         """,
-        f"{days} days",
+        days,
     )
     return [dict(r) for r in rows]
 
@@ -32,12 +32,12 @@ async def top_doors(
         """
         SELECT door_id, COUNT(*) AS event_count
         FROM access_events
-        WHERE time > NOW() - $1::interval
+        WHERE time > NOW() - make_interval(days => $1)
         GROUP BY door_id
         ORDER BY event_count DESC
         LIMIT $2
         """,
-        f"{days} days",
+        days,
         limit,
     )
     return [dict(r) for r in rows]
