@@ -14,32 +14,16 @@ import time
 from collections.abc import Mapping
 from typing import Any, Dict, List
 
-from yosai_intel_dashboard.src.infrastructure.config.connection_pool import (
-    DatabaseConnectionPool,
-    DEFAULT_POOL_ACQUIRE_TIMEOUT,
-    DEFAULT_RETRY_CONFIG,
-)
-from yosai_intel_dashboard.src.infrastructure.config.connection_retry import (
-    ConnectionRetryManager,
-    RetryConfig,
-)
-from yosai_intel_dashboard.src.infrastructure.config.database_exceptions import (
-    ConnectionRetryExhausted,
-)
-
-
 class AnalyticsService:
     """Retrieve analytics information from the database.
 
     Parameters
     ----------
-    pool:
-        :class:`DatabaseConnectionPool` used to obtain database connections.
+    db_manager:
+        Object implementing :class:`DatabaseManagerProtocol` used to obtain
+        database connections.
     ttl:
         Number of seconds analytics results remain cached.  Defaults to ``60``.
-    acquire_timeout:
-        Timeout when acquiring a connection from the pool.  Defaults to
-        ``DEFAULT_POOL_ACQUIRE_TIMEOUT``.
     """
 
     def __init__(
@@ -52,12 +36,6 @@ class AnalyticsService:
     ) -> None:
         self._pool = pool
         self._ttl = ttl
-        self._timeout = (
-            acquire_timeout
-            if acquire_timeout is not None
-            else DEFAULT_POOL_ACQUIRE_TIMEOUT
-        )
-        self._retry = ConnectionRetryManager(retry_config or DEFAULT_RETRY_CONFIG)
         self._cache: Dict[str, Any] | None = None
         self._expiry: float = 0.0
 
@@ -131,19 +109,17 @@ class AnalyticsService:
         if cached is not None:
             return cached
 
-        if not self._pool.health_check():
+        if not self._db_manager.health_check():
             return {
                 "status": "error",
                 "message": "database health check failed",
                 "error_code": "health_check_failed",
             }
 
-        def run() -> Dict[str, Any]:
-            with self._pool.acquire(timeout=self._timeout) as connection:
-                return asyncio.run(self._gather_analytics(connection))
-
+        connection = None
         try:
-            data = await asyncio.to_thread(self._retry.run_with_retry, run)
+            connection = self._db_manager.get_connection()
+            data = await self._gather_analytics(connection)
             result = {"status": "success", "data": data}
             self._set_cache(result)
             return result
@@ -160,6 +136,12 @@ class AnalyticsService:
                 "message": str(exc),
                 "error_code": "query_failed",
             }
+        finally:
+            if connection is not None:
+                try:
+                    self._db_manager.release_connection(connection)
+                except Exception:
+                    pass
 
         result = {"status": "success", "data": data}
         self._set_cache(result)

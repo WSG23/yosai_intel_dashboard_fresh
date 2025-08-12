@@ -42,16 +42,17 @@ The benchmarks were executed via `pytest` in
 ## Database analytics service
 
 Refactoring `AnalyticsService.get_analytics` to be fully asynchronous
-removed repeated event loop creation.  Measured on a stubbed database
-connection executing two simple queries:
+removed repeated event loop creation. A follow‑up change awaits
+`_gather_analytics` directly, eliminating the inner event loop. Measured
+on a stubbed database connection executing two simple queries:
 
-| Scenario                      | 5 calls total time |
-|-------------------------------|-------------------|
-| Previous synchronous wrapper  | ~0.0147 s          |
-| New async implementation      | ~0.0145 s          |
+| Scenario                             | 5 calls total time |
+|--------------------------------------|-------------------|
+| Nested event loop (previous design)  | ~0.0145 s          |
+| Direct await implementation          | ~0.0075 s          |
 
-The async version reuses the caller's event loop and exhibits lower
-latency per request.
+The direct `await` nearly halves total latency by avoiding redundant
+event loop setup.
 
 ## Event bus publish performance
 
