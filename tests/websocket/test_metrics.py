@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.websocket import metrics
+from shared.events.names import EventName
 
 
 class DummyBus:
@@ -24,7 +25,7 @@ def test_websocket_metrics_publish_updates():
     metrics.record_reconnect_attempt()
     metrics.record_ping_failure()
 
-    assert bus.events[0][0] == "metrics_update"
+    assert bus.events[0][0] == EventName.METRICS_UPDATE
     assert bus.events[0][1]["websocket_connections_total"] == 1
     assert bus.events[0][1]["websocket_reconnect_attempts_total"] == 0
     assert bus.events[1][1]["websocket_reconnect_attempts_total"] == 1

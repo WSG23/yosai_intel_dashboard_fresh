@@ -1,6 +1,7 @@
 from src.repository import InMemoryMetricsRepository
 from src.websocket.metrics_provider import MetricsProvider
 from src.common.config import ConfigService
+from shared.events.names import EventName
 
 
 class DummyBus:
@@ -18,4 +19,4 @@ def test_metrics_provider_publishes_snapshot() -> None:
     import time
     time.sleep(0.02)
     provider.stop()
-    assert ("metrics_update", repo.snapshot()) in bus.events
+    assert (EventName.METRICS_UPDATE, repo.snapshot()) in bus.events

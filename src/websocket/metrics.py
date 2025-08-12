@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Dict
 
 from shared.events.bus import EventBus
+from shared.events.names import EventName
 
 try:
     from prometheus_client import REGISTRY, Counter, start_http_server
@@ -84,7 +85,7 @@ def _publish_snapshot() -> None:
     if _event_bus is None:
         return
     payload = _snapshot()
-    _event_bus.publish("metrics_update", payload)
+    _event_bus.publish(EventName.METRICS_UPDATE, payload)
 
 
 def set_event_bus(bus: EventBus) -> None:

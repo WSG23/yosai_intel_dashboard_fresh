@@ -1,13 +1,15 @@
 import logging
 from typing import Any, Dict
 
+from shared.events.names import EventName
+
 logger = logging.getLogger(__name__)
 
 
 def publish_event(
     event_bus: Any | None,
     payload: Dict[str, Any],
-    event: str = "analytics_update",
+    event: str = EventName.ANALYTICS_UPDATE,
 ) -> None:
     """Publish ``payload`` via the centralized :mod:`yosai_intel_dashboard.src.core.callbacks.event_bus`."""
 

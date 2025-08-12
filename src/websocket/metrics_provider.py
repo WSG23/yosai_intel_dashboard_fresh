@@ -10,6 +10,7 @@ from src.common.base import BaseComponent
 from shared.events.bus import EventBus, EventPublisher
 from src.common.mixins import LoggingMixin, SerializationMixin
 from src.repository import InMemoryMetricsRepository
+from shared.events.names import EventName
 
 
 def generate_sample_metrics() -> Dict[str, Any]:
@@ -44,7 +45,7 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
     def _run(self) -> None:
         while not self._stop.is_set():
             payload = self.repo.snapshot()
-            self.publish_event("metrics_update", payload)
+            self.publish_event(EventName.METRICS_UPDATE, payload)
 
             self.log("Published metrics update")
 
