@@ -36,3 +36,19 @@ Run these checks locally with `act`:
 ```bash
 act pull_request -j security-scans
 ```
+
+## Updating GitHub Actions
+
+GitHub Actions in this repository are pinned to specific commit SHAs for
+security. To update an action to a newer release:
+
+1. Look up the latest commit for the desired tag, e.g.:
+
+   ```bash
+   git ls-remote https://github.com/actions/checkout refs/tags/v4
+   ```
+
+2. Replace the SHA in the workflow file.
+
+Dependabot and Renovate will automatically raise pull requests when newer
+action commits are available.
