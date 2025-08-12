@@ -52,18 +52,25 @@ def test_token_valid_when_issued(monkeypatch):
     monkeypatch.setattr(svc.time, "time", lambda: now)
     token = svc.generate_service_jwt("analytics", expires_in=30)
     claims = svc.verify_service_jwt(token)
-    assert claims == {"iss": "analytics", "iat": now, "exp": now + 30}
+    assert claims == {
+        "iss": "analytics",
+        "sub": "analytics",
+        "iat": now,
+        "exp": now + 30,
+    }
 
 
-def test_expired_token_returns_none(monkeypatch):
+def test_expired_token_raises_error(monkeypatch):
     svc = load_jwt_service(monkeypatch, os.urandom(16).hex())
     now = int(time.time()) - 100
     monkeypatch.setattr(svc.time, "time", lambda: now)
     token = svc.generate_service_jwt("svc", expires_in=1)
-    assert svc.verify_service_jwt(token) is None
+    with pytest.raises(svc.TokenValidationError) as exc:
+        svc.verify_service_jwt(token)
+    assert exc.value.code == "token_expired"
 
 
-def test_invalid_signature_returns_none(monkeypatch):
+def test_invalid_signature_raises_error(monkeypatch):
     svc = load_jwt_service(monkeypatch, os.urandom(16).hex())
     now = int(time.time())
     monkeypatch.setattr(svc.time, "time", lambda: now)
@@ -72,7 +79,19 @@ def test_invalid_signature_returns_none(monkeypatch):
     secrets_mod = sys.modules["services.common.secrets"]
     secrets_mod.get_secret = lambda key: "secret-two"
     svc.invalidate_jwt_secret_cache()
-    assert svc.verify_service_jwt(token) is None
+    with pytest.raises(svc.TokenValidationError) as exc:
+        svc.verify_service_jwt(token)
+    assert exc.value.code == "token_invalid"
+
+
+def test_mismatched_audience(monkeypatch):
+    svc = load_jwt_service(monkeypatch, os.urandom(16).hex())
+    now = int(time.time())
+    monkeypatch.setattr(svc.time, "time", lambda: now)
+    token = svc.generate_service_jwt("svc", expires_in=30, audience="expected")
+    with pytest.raises(svc.TokenValidationError) as exc:
+        svc.verify_service_jwt(token, audience="other")
+    assert exc.value.code == "invalid_audience"
 
 
 def test_refresh_token_flow(monkeypatch):
@@ -87,7 +106,8 @@ def test_refresh_token_flow(monkeypatch):
 
     # expire access token
     monkeypatch.setattr(svc.time, "time", lambda: now + 2)
-    assert svc.verify_service_jwt(access) is None
+    with pytest.raises(svc.TokenValidationError):
+        svc.verify_service_jwt(access)
 
     new_access = svc.refresh_access_token(refresh, expires_in=5)
     assert new_access is not None

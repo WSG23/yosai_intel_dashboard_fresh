@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from jose import jwt
+from jose import jwt, ExpiredSignatureError
 
 from yosai_intel_dashboard.src.infrastructure.config import get_app_config
 from yosai_intel_dashboard.src.services.common.secrets import (
@@ -14,6 +14,14 @@ _JWT_SECRET_TTL = 300  # seconds
 
 _cached_secret: str | None = None
 _cache_expires_at: float = 0.0
+
+
+class TokenValidationError(Exception):
+    """JWT validation failed with a specific error code."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
 
 
 def _read_jwt_secret() -> str:
@@ -44,10 +52,22 @@ def invalidate_jwt_secret_cache() -> None:
         invalidate_secret(secret_path)
 
 
-def generate_service_jwt(service_name: str, expires_in: int = 300) -> str:
+def generate_service_jwt(
+    service_name: str,
+    expires_in: int = 300,
+    subject: str | None = None,
+    audience: str | None = None,
+) -> str:
     """Return a signed JWT token identifying ``service_name``."""
     now = int(time.time())
-    payload = {"iss": service_name, "iat": now, "exp": now + expires_in}
+    payload = {
+        "iss": service_name,
+        "sub": subject or service_name,
+        "iat": now,
+        "exp": now + expires_in,
+    }
+    if audience:
+        payload["aud"] = audience
     return jwt.encode(payload, jwt_secret(), algorithm="HS256")
 
 
@@ -75,22 +95,39 @@ def generate_token_pair(
     )
 
 
-def verify_service_jwt(token: str) -> dict | None:
-    """Verify a service JWT and return claims or ``None`` if invalid."""
+def verify_service_jwt(
+    token: str,
+    *,
+    audience: str | None = None,
+    subject: str | None = None,
+) -> dict:
+    """Verify a service JWT and return its claims or raise ``TokenValidationError``."""
     try:
         claims = jwt.decode(token, jwt_secret(), algorithms=["HS256"])
-    except Exception:
-        return None
+    except ExpiredSignatureError as exc:
+        raise TokenValidationError("token_expired") from exc
+    except Exception as exc:  # pragma: no cover - generic failure
+        raise TokenValidationError("token_invalid") from exc
+
     exp = claims.get("exp")
     if exp is not None and exp < time.time():
-        return None
+        raise TokenValidationError("token_expired")
+    if subject is not None and claims.get("sub") != subject:
+        raise TokenValidationError("invalid_subject")
+    if "sub" not in claims:
+        raise TokenValidationError("missing_subject")
+    if audience is not None and claims.get("aud") != audience:
+        raise TokenValidationError("invalid_audience")
     return claims
 
 
 def verify_refresh_jwt(token: str) -> dict | None:
     """Verify a refresh JWT and return claims or ``None`` if invalid."""
-    claims = verify_service_jwt(token)
-    if not claims or claims.get("typ") != "refresh":
+    try:
+        claims = verify_service_jwt(token)
+    except TokenValidationError:
+        return None
+    if claims.get("typ") != "refresh":
         return None
     return claims
 
