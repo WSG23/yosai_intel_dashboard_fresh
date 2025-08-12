@@ -1,0 +1,6 @@
+ignored:
+  - DL3007
+  - DL3018
+  - DL3041
+  - DL4006
+failure-threshold: error

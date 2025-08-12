@@ -2,6 +2,8 @@ from pathlib import Path
 import sys
 import types
 
+import pytest
+
 # ensure repo root on path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
@@ -134,4 +136,19 @@ def test_dependency_checker_uses_repository(monkeypatch):
 
     checker.verify_requirements()
     assert captured["packages"] == ["flask_babel"]
+
+
+def test_verify_requirements_raises_on_high_vuln(monkeypatch, tmp_path):
+    req = tmp_path / "requirements.txt"
+    req.write_text("flask-babel==1.0")
+
+    monkeypatch.setattr(
+        dependency_checker, "check_dependencies", lambda packages: []
+    )
+    monkeypatch.setattr(
+        dependency_checker, "_scan_vulnerabilities", lambda: ["flask-babel 1.0: CVE-1"]
+    )
+
+    with pytest.raises(RuntimeError):
+        dependency_checker.verify_requirements(str(req))
 

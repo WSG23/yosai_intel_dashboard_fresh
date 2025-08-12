@@ -8,32 +8,16 @@ permissions:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
-  shellcheck:
+  devops-hygiene:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install ShellCheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - name: Run ShellCheck
+      - name: Install dependencies
         run: |
-          set -euo pipefail
-          mapfile -t files < <(git ls-files '*.sh')
-          if [ "${#files[@]}" -gt 0 ]; then shellcheck "${files[@]}"; else echo "No shell scripts found."; fi
-  hadolint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Hadolint (Dockerfiles)
-        run: |
-          set -euo pipefail
-          files=("Dockerfile" "Dockerfile.gateway" "api/Dockerfile" "dashboard/Dockerfile")
-          for f in "${files[@]}"; do
-            if [[ -f "$f" ]]; then
-              echo "Linting $f"
-              docker run --rm -v "$PWD":/work -w /work hadolint/hadolint \
-                hadolint --config .hadolint.yaml --failure-threshold=error "$f"
-            else
-              echo "Skip $f (not found)"
-            fi
-          done
+          sudo apt-get update && sudo apt-get install -y shellcheck curl
+          curl -sSL https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64 -o hadolint
+          sudo install hadolint /usr/local/bin/hadolint
+      - name: Run DevOps hygiene tests
+        run: scripts/ci/test_devops_hygiene.sh

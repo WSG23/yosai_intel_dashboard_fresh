@@ -1,5 +1,7 @@
 import importlib
+import json
 import logging
+import subprocess
 from pathlib import Path
 from typing import Dict, Iterable, List
 
@@ -72,7 +74,40 @@ def verify_requirements(path: str = "requirements.txt") -> None:
         )
 
     DependencyChecker(repo).verify_requirements()
-    # TODO: integrate CVE scanning (e.g. `pip-audit` or `safety`).
+    vulnerabilities = _scan_vulnerabilities()
+    if vulnerabilities:
+        raise RuntimeError(
+            "High severity vulnerabilities detected: " + ", ".join(vulnerabilities)
+        )
+
+
+def _scan_vulnerabilities() -> List[str]:
+    """Run ``pip-audit`` and return any high or critical findings."""
+
+    try:
+        result = subprocess.run(
+            ["pip-audit", "-f", "json"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        logger.warning("pip-audit not installed; skipping vulnerability scan")
+        return []
+
+    try:
+        data = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        logger.warning("Failed to parse pip-audit output: %s", result.stdout)
+        return []
+
+    findings = [
+        f"{entry.get('name')} {entry.get('version')}: {vuln.get('id')}"
+        for entry in data
+        for vuln in entry.get("vulns", [])
+        if (vuln.get("severity") or "").lower() in {"high", "critical"}
+    ]
+    return findings
 
 
 if __name__ == "__main__":
