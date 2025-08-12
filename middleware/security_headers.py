@@ -13,6 +13,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self.frame_options = "DENY"
         self.content_type_options = "nosniff"
         self.referrer_policy = "no-referrer"
+        self.permissions_policy = (
+            "geolocation=(), camera=(), microphone=(), fullscreen=()"
+        )
 
     async def dispatch(self, request, call_next):
         response = await call_next(request)
@@ -21,4 +24,5 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault("X-Frame-Options", self.frame_options)
         response.headers.setdefault("X-Content-Type-Options", self.content_type_options)
         response.headers.setdefault("Referrer-Policy", self.referrer_policy)
+        response.headers.setdefault("Permissions-Policy", self.permissions_policy)
         return response
