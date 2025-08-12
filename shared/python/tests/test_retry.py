@@ -20,6 +20,7 @@ def test_custom_backoff_respected(monkeypatch):
     attempts = {"count": 0}
 
     def flakey():
+
         attempts["count"] += 1
         if attempts["count"] < 3:
             raise ValueError("boom")

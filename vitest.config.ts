@@ -9,6 +9,7 @@ export default defineConfig({
     include: [
       'components/**/*.vitest.test.{ts,tsx}',
       'pages/**/*.vitest.test.{ts,tsx}',
+      'libs/**/*.vitest.test.{ts,tsx}',
     ],
     exclude: ['yosai_intel_dashboard/**'],
   },
