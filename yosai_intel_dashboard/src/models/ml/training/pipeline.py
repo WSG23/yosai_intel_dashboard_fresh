@@ -14,6 +14,7 @@ from yosai_intel_dashboard.src.utils.hashing import hash_dataframe
 from yosai_intel_dashboard.src.utils.sklearn_compat import optional_import
 from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.models.ml.feature_store import FeastFeatureStore
+from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 
 # Optional heavy dependencies
 KFold = optional_import("sklearn.model_selection.KFold")
@@ -139,6 +140,8 @@ class TrainingPipeline:
             df = feature_store.get_training_dataframe(feature_service, entity_df)
         else:
             df = entity_df
+
+        df = preprocess_events(df)
 
         if target_column not in df:
             raise ValueError(f"target column '{target_column}' missing")

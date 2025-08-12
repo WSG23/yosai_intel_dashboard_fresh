@@ -1,3 +1,5 @@
+import asyncio
+
 from yosai_intel_dashboard.src.infrastructure.config.connection_pool import (
     DatabaseConnectionPool,
 )
@@ -27,7 +29,7 @@ def test_pool_exhaustion_returns_error():
     )
 
     with pool.acquire():
-        result = service.get_analytics()
+        result = asyncio.run(service.get_analytics())
 
     assert result["status"] == "error"
     assert result["error_code"] == "pool_timeout"

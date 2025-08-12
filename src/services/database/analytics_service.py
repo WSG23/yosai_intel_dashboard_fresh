@@ -5,7 +5,7 @@ service validates connectivity before executing any analytics queries and keeps
 results in a simple in-memory cache with an expiration TTL.  Individual queries
 are executed via private asynchronous helpers which each handle their own
 exceptions, returning fallback values instead of bubbling up errors.
-"""
+
 
 from __future__ import annotations
 
@@ -53,7 +53,9 @@ class AnalyticsService:
         self._pool = pool
         self._ttl = ttl
         self._timeout = (
-            acquire_timeout if acquire_timeout is not None else DEFAULT_POOL_ACQUIRE_TIMEOUT
+            acquire_timeout
+            if acquire_timeout is not None
+            else DEFAULT_POOL_ACQUIRE_TIMEOUT
         )
         self._retry = ConnectionRetryManager(retry_config or DEFAULT_RETRY_CONFIG)
         self._cache: Dict[str, Any] | None = None
@@ -122,8 +124,8 @@ class AnalyticsService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    async def aget_analytics(self) -> Dict[str, Any]:
-        """Asynchronously return analytics data, using the cache when possible."""
+    async def get_analytics(self) -> Dict[str, Any]:
+        """Return analytics data, using the cache when possible."""
 
         cached = self._get_cached()
         if cached is not None:
@@ -146,6 +148,7 @@ class AnalyticsService:
             self._set_cache(result)
             return result
         except (TimeoutError, ConnectionRetryExhausted) as exc:
+
             return {
                 "status": "error",
                 "message": str(exc),
@@ -158,10 +161,9 @@ class AnalyticsService:
                 "error_code": "query_failed",
             }
 
-    def get_analytics(self) -> Dict[str, Any]:
-        """Synchronous wrapper for :meth:`aget_analytics`."""
-
-        return asyncio.run(self.aget_analytics())
+        result = {"status": "success", "data": data}
+        self._set_cache(result)
+        return result
 
 
 __all__ = ["AnalyticsService"]

@@ -41,6 +41,9 @@ generation while controllers manage UI callbacks.
   `ServiceBuilder` instance which attaches logging, metrics and health checks
   before the service starts. `BaseService` still exists for compatibility but
   new services should prefer the builder API.
+- **Single Service Registry** – Optional services and service discovery live
+  under `core.registry`. The old `services.registry` module is a thin
+  compatibility shim and will be removed in a future release.
 
 The deprecated `DataLoader` and `DataLoadingService` modules have been
 **removed**. Migrate any remaining code to use
@@ -88,6 +91,14 @@ Additional interfaces such as `ExportServiceProtocol`, `UploadValidatorProtocol`
 and `DoorMappingServiceProtocol` are defined in `services/interfaces.py`. When a
 component does not receive a concrete instance it falls back to the global
 `ServiceContainer` exposed on the Dash app.
+
+## Service Registry
+
+Optional services and microservice endpoints are centralized in
+`core.registry`. Use `register_service` and `get_service` to expose or retrieve
+services lazily, and `ServiceDiscovery` for best-effort resolution of external
+microservices. The previous `services.registry` module simply re-exports these
+objects and should no longer be imported directly.
 
 ## Service Builder Pattern
 

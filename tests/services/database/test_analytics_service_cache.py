@@ -1,4 +1,6 @@
 import asyncio
+from contextlib import asynccontextmanager
+
 from src.services.database.analytics_service import AnalyticsService
 
 
@@ -14,10 +16,10 @@ class StubConnection:
         return [{"event_type": "access", "status": "ok", "timestamp": "now"}]
 
 
-class StubManager:
+class StubPool:
     def __init__(self):
         self.health_checks = 0
-        self.gets = 0
+        self.acquires = 0
         self.releases = 0
         self.connection = StubConnection()
 
@@ -25,30 +27,31 @@ class StubManager:
         self.health_checks += 1
         return True
 
-    def get_connection(self):
-        self.gets += 1
-        return self.connection
+    @asynccontextmanager
+    async def acquire_async(self, *, timeout=None):
+        self.acquires += 1
+        try:
+            yield self.connection
+        finally:
+            self.releases += 1
 
-    def release_connection(self, conn):
-        self.releases += 1
 
-
-def test_aget_analytics_cache_miss():
-    manager = StubManager()
-    service = AnalyticsService(manager, ttl=60)
-    result = asyncio.run(service.aget_analytics())
+def test_get_analytics_cache_miss():
+    pool = StubPool()
+    service = AnalyticsService(pool, ttl=60)
+    result = asyncio.run(service.get_analytics())
     assert result["status"] == "success"
-    assert manager.health_checks == 1
-    assert manager.gets == 1
-    assert manager.releases == 1
+    assert pool.health_checks == 1
+    assert pool.acquires == 1
+    assert pool.releases == 1
 
 
 def test_get_analytics_cache_hit():
-    manager = StubManager()
-    service = AnalyticsService(manager, ttl=60)
-    first = service.get_analytics()
-    second = service.get_analytics()
+    pool = StubPool()
+    service = AnalyticsService(pool, ttl=60)
+    first = asyncio.run(service.get_analytics())
+    second = asyncio.run(service.get_analytics())
     assert first == second
-    assert manager.health_checks == 1
-    assert manager.gets == 1
-    assert manager.releases == 1
+    assert pool.health_checks == 1
+    assert pool.acquires == 1
+    assert pool.releases == 1
