@@ -19,7 +19,9 @@ These guidelines outline practices for writing secure code and reviewing contrib
 ## Required Security Tests
 
 - Static analysis tools and linters for security issues.
-- Dependency vulnerability scans (e.g., `pip-audit`, `npm audit`).
+- Dependency vulnerability scans (e.g., `pip-audit`, `npm audit`). The
+  project's `dependency_checker` runs `pip-audit` after verifying pinned
+  requirements and fails when high or critical vulnerabilities are detected.
 - Unit tests covering authentication, authorization, and validation logic.
 - Dynamic tests such as fuzzing or API security tests where applicable.
 
