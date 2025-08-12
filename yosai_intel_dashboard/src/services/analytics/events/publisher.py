@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from src.common.events import EventBus
+from shared.events.bus import EventBus
 from yosai_intel_dashboard.src.services.event_publisher import publish_event
 
 

@@ -4,10 +4,11 @@ from __future__ import annotations
 """Base classes for data models used throughout the application."""
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import pandas as pd
+from yosai_intel_dashboard.src.infrastructure.config import constants
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,9 @@ class BaseModel:
     """Base class for all models"""
 
     data_source: Any | None = None
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(tz=timezone.utc)
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert model to dictionary"""
@@ -152,10 +155,7 @@ class AnomalyDetectionModel(BaseModel):
             for event in events:
                 # After hours access (simple check)
                 timestamp = str(event.get("timestamp", ""))
-                if any(
-                    hour in timestamp
-                    for hour in ["22:", "23:", "00:", "01:", "02:", "03:", "04:", "05:"]
-                ):
+                if any(hour in timestamp for hour in constants.AFTER_HOURS):
                     anomalies.append(
                         {
                             "type": "after_hours_access",

@@ -6,6 +6,8 @@ import logging
 import warnings
 from typing import Any, Optional
 
+from ..registry import ServiceRegistry
+
 
 class _LocatorMeta(type):
     """Intercept deprecated attribute access on the locator."""
@@ -32,17 +34,14 @@ logger = logging.getLogger(__name__)
 class PluginServiceLocator(metaclass=_LocatorMeta):
     """Provide access to optional plugin services with lazy loading."""
 
-    _ai_plugin: Optional[Any] = None
-    _json_plugin: Optional[Any] = None
-
     # ------------------------------------------------------------------
     @classmethod
     def set_ai_classification_plugin(cls, plugin: Any) -> None:
-        cls._ai_plugin = plugin
+        ServiceRegistry.register("ai_classification_plugin", plugin)
 
     @classmethod
     def reset_ai_classification_plugin(cls) -> None:
-        cls._ai_plugin = None
+        ServiceRegistry.remove("ai_classification_plugin")
 
     # Internal loaders -------------------------------------------------
     @classmethod
@@ -84,41 +83,39 @@ class PluginServiceLocator(metaclass=_LocatorMeta):
     @classmethod
     def get_ai_classification_service(cls) -> Optional[Any]:
         """Return the AI classification plugin instance if available."""
-        if cls._ai_plugin is None:
-            cls._ai_plugin = cls._load_ai_plugin()
-        return cls._ai_plugin
+        plugin = ServiceRegistry.get("ai_classification_plugin")
+        if plugin is None:
+            plugin = cls._load_ai_plugin()
+            if plugin is not None:
+                ServiceRegistry.register("ai_classification_plugin", plugin)
+        return plugin
 
     @classmethod
     def get_json_serialization_service(cls) -> Optional[Any]:
         """Return the JSON serialization service if available."""
-        if cls._json_plugin is None:
-            cls._json_plugin = cls._load_json_plugin()
-        if cls._json_plugin is not None:
-            return cls._json_plugin.serialization_service
-        return None
+        service = ServiceRegistry.get("json_serialization_service")
+        if service is None:
+            plugin = cls._load_json_plugin()
+            if plugin is not None:
+                service = plugin.serialization_service
+                ServiceRegistry.register("json_serialization_service", service)
+        return service
 
 
 # Convenience module level functions for backward compatibility ------
 
-_ai_plugin: Optional[Any] = None
-
 
 def get_ai_classification_service() -> Optional[Any]:
     """Module-level helper used by legacy code and tests."""
-    global _ai_plugin
-    if _ai_plugin is None:
-        _ai_plugin = _load_ai_plugin()
-    return _ai_plugin
+    return PluginServiceLocator.get_ai_classification_service()
 
 
 def set_ai_classification_plugin(plugin: Any) -> None:
-    global _ai_plugin
-    _ai_plugin = plugin
+    PluginServiceLocator.set_ai_classification_plugin(plugin)
 
 
 def reset_ai_classification_plugin() -> None:
-    global _ai_plugin
-    _ai_plugin = None
+    PluginServiceLocator.reset_ai_classification_plugin()
 
 
 def get_json_serialization_service() -> Optional[Any]:

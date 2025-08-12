@@ -577,11 +577,15 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         dest = dest / name / record.version
         dest.mkdir(parents=True, exist_ok=True)
         local_path = dest / os.path.basename(record.storage_uri)
+        local_version = self.model_registry.get_version_metadata(name)
+        if local_version == record.version and local_path.exists():
+            return str(local_path)
         try:
             self.model_registry.download_artifact(
                 record.storage_uri,
                 str(local_path),
             )
+            self.model_registry.store_version_metadata(name, record.version)
             return str(local_path)
         except (
             OSError,

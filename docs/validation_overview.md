@@ -37,7 +37,8 @@ if not result['valid']:
 
 SecurityValidator provides comprehensive validation including:
 - **SQL injection prevention** - Detects and blocks SQL injection attempts
-- **XSS attack prevention** - Sanitizes cross-site scripting attempts
+- **XSS attack prevention** - Sanitizes cross-site scripting attempts using
+  `bleach.clean` with allow-listed tags and attributes
 - **Path traversal prevention** - Blocks directory traversal attacks
 - **Unicode security** - Handles surrogate characters and encoding issues
 - **File validation** - Checks file types, sizes, and malicious content

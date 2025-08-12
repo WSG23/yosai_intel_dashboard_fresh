@@ -4,7 +4,44 @@
     "title": "Yosai API",
     "version": "1.0.0"
   },
-  "paths": {},
+  "paths": {
+    "/echo": {
+      "post": {
+        "summary": "Echo a message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {"type": "string"}
+                },
+                "required": ["message"]
+              },
+              "example": {"message": "Hello world"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Echoed message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"}
+                  }
+                },
+                "example": {"message": "Hello world"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "openapi": "3.0.2",
   "components": {
     "responses": {

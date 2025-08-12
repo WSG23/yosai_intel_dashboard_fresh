@@ -10,6 +10,7 @@ import os
 import time
 import weakref
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
@@ -29,6 +30,7 @@ class CacheConfig:
     db: int = int(os.getenv("CACHE_DB", "0"))
     key_prefix: str = os.getenv("CACHE_PREFIX", "yosai:")
     timeout_seconds: int = 300
+    max_items: int = int(os.getenv("CACHE_L1_SIZE", "1024"))
 
 
 class CacheManager(ABC):
@@ -82,7 +84,7 @@ class InMemoryCacheManager(CacheManager):
 
     def __init__(self, config: CacheConfig) -> None:
         super().__init__(config)
-        self._cache: Dict[str, tuple[Any, Optional[float]]] = {}
+        self._cache: OrderedDict[str, tuple[Any, Optional[float]]] = OrderedDict()
         self._locks: Dict[str, asyncio.Lock] = {}
 
     async def start(self) -> None:  # pragma: no cover - nothing to do
@@ -105,6 +107,7 @@ class InMemoryCacheManager(CacheManager):
             if value is None:
                 self._cache.pop(key, None)
                 return None
+        self._cache.move_to_end(key)
         return value
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
@@ -114,7 +117,12 @@ class InMemoryCacheManager(CacheManager):
             stored: Any = ref
         except TypeError:
             stored = value
+        if key in self._cache:
+            self._cache.pop(key, None)
         self._cache[key] = (stored, expiry)
+        self._cache.move_to_end(key)
+        if len(self._cache) > self.config.max_items:
+            self._cache.popitem(last=False)
 
     async def delete(self, key: str) -> bool:
         return self._cache.pop(key, None) is not None

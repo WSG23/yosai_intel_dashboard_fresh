@@ -2,7 +2,7 @@ import asyncio
 import enum
 import importlib
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
@@ -140,7 +140,7 @@ async def test_create_event_prevents_injection():
     repo = AccessEventRepository(conn)
     event = AccessEvent(
         event_id="E1'; DROP TABLE x;--",
-        timestamp=datetime.now(),
+        timestamp=datetime.now(timezone.utc),
         person_id="P1",
         door_id="D1",
         badge_id=None,

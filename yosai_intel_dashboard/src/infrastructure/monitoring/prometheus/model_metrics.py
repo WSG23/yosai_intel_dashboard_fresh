@@ -8,6 +8,7 @@ from prometheus_client import REGISTRY, Gauge, start_http_server
 from prometheus_client.core import CollectorRegistry
 
 from yosai_intel_dashboard.src.core.events import EventBus
+from yosai_intel_dashboard.src.core import registry
 from yosai_intel_dashboard.src.services.model_monitoring_service import (
     ModelMonitoringService,
 )
@@ -53,8 +54,8 @@ else:  # pragma: no cover - defensive in tests
     )
 
 _metrics_started = False
-_monitoring_service = ModelMonitoringService()
-_publisher = PublishingService(EventBus())
+registry.register("model_monitoring_service", ModelMonitoringService())
+registry.register("publishing_service", PublishingService(EventBus()))
 
 
 def start_model_metrics_server(port: int = 8005) -> None:
@@ -95,7 +96,7 @@ def update_model_metrics(
         if hasattr(metrics, name):
             value = getattr(metrics, name)
             asyncio.run(
-                _monitoring_service.log_evaluation(
+                registry.get("model_monitoring_service").log_evaluation(
                     model_name,
                     version,
                     name,
@@ -108,7 +109,7 @@ def update_model_metrics(
     # Broadcast update over event bus / websockets
     payload = {name: getattr(metrics, name) for name in metrics.__dict__}
     payload.update({"model_name": model_name, "version": version})
-    _publisher.publish(payload)
+    registry.get("publishing_service").publish(payload)
 
 
 __all__ = [

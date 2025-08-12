@@ -73,6 +73,7 @@ class ModelRegistry:
         s3_client: Any | None = None,
         mlflow_uri: str | None = None,
         metric_thresholds: Dict[str, float] | None = None,
+        drift_thresholds: Dict[str, float] | None = None,
     ) -> None:
         self.engine = create_engine(database_url)
         Base.metadata.create_all(self.engine)
@@ -89,8 +90,10 @@ class ModelRegistry:
         elif mlflow_uri:
             raise RuntimeError("mlflow is required for tracking")
         self.metric_thresholds = metric_thresholds or {}
+        self.drift_thresholds = drift_thresholds or {}
         self._baseline_features: Dict[str, pd.DataFrame] = {}
         self._latest_features: Dict[str, pd.DataFrame] = {}
+        self._previous_active: Dict[str, List[str]] = {}
 
     # --------------------------------------------------------------
     def _metrics_improved(self, new: Dict[str, float], old: Dict[str, float]) -> bool:
@@ -225,6 +228,29 @@ class ModelRegistry:
     def set_active_version(self, name: str, version: str) -> None:
         session = self._session()
         try:
+            new_rec = session.execute(
+                select(ModelRecord)
+                .where(ModelRecord.name == name, ModelRecord.version == version)
+            ).scalar_one_or_none()
+            if new_rec is None:
+                raise ValueError(f"Model {name} version {version} not found")
+            current = session.execute(
+                select(ModelRecord)
+                .where(ModelRecord.name == name, ModelRecord.is_active.is_(True))
+            ).scalar_one_or_none()
+            if current:
+                for m, threshold in self.drift_thresholds.items():
+                    old_val = (current.metrics or {}).get(m)
+                    new_val = (new_rec.metrics or {}).get(m)
+                    if (
+                        old_val is not None
+                        and new_val is not None
+                        and abs(new_val - old_val) > threshold
+                    ):
+                        raise ValueError(
+                            f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds {threshold}"
+                        )
+                self._previous_active.setdefault(name, []).append(current.version)
             session.execute(
                 update(ModelRecord)
                 .where(ModelRecord.name == name)
@@ -239,18 +265,19 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def rollback_to_previous(self, name: str) -> ModelRecord | None:
+    def rollback_model(self, name: str) -> ModelRecord | None:
         session = self._session()
         try:
-            stmt = (
-                select(ModelRecord)
-                .where(ModelRecord.name == name)
-                .order_by(ModelRecord.version.desc())
-            )
-            records = session.execute(stmt).scalars().all()
-            target = next((r for r in records if not r.is_active), None)
-            if target is None:
+            history = self._previous_active.get(name)
+            if not history:
                 return None
+            target_version = history.pop()
+            current = session.execute(
+                select(ModelRecord)
+                .where(ModelRecord.name == name, ModelRecord.is_active.is_(True))
+            ).scalar_one_or_none()
+            if current:
+                self._previous_active.setdefault(name, []).append(current.version)
             session.execute(
                 update(ModelRecord)
                 .where(ModelRecord.name == name)
@@ -258,14 +285,35 @@ class ModelRegistry:
             )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.id == target.id)
+                .where(ModelRecord.name == name, ModelRecord.version == target_version)
                 .values(is_active=True)
             )
             session.commit()
-            session.refresh(target)
-            return target
+            rec = session.execute(
+                select(ModelRecord)
+                .where(ModelRecord.name == name, ModelRecord.version == target_version)
+            ).scalar_one_or_none()
+            return rec
         finally:
             session.close()
+
+    # Backwards compatibility alias
+    def rollback_to_previous(self, name: str) -> ModelRecord | None:
+        return self.rollback_model(name)
+
+    # --------------------------------------------------------------
+    def store_version_metadata(self, name: str, version: str) -> None:
+        """Persist the active version for *name* to the local models directory."""
+        path = Path("models") / name
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "VERSION").write_text(version)
+
+    def get_version_metadata(self, name: str) -> str | None:
+        """Return the stored local version for *name*, if available."""
+        path = Path("models") / name / "VERSION"
+        if path.exists():
+            return path.read_text().strip()
+        return None
 
     # --------------------------------------------------------------
     def download_artifact(self, storage_uri: str, destination: str) -> None:

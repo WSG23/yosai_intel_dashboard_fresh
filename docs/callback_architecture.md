@@ -59,6 +59,10 @@ def on_complete(info: dict) -> None:
 events.register_callback(CallbackEvent.ANALYSIS_COMPLETE, on_complete)
 ```
 
+When a component needs to broadcast an update without directly invoking callbacks,
+use the :func:`~yosai_intel_dashboard.src.services.event_publisher.publish_event` helper.
+It relays payloads to listeners through the shared :class:`~src.common.events.EventBus`.
+
 ## Grouped Operations
 
 `TrulyUnifiedCallbacks` can execute a series of operations sequentially. This is

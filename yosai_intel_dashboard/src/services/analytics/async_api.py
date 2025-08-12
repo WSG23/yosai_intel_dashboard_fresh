@@ -24,6 +24,7 @@ from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCa
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.services.analytics.analytics_service import get_analytics_service
 from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
+from yosai_intel_dashboard.src.core import registry
 from yosai_intel_dashboard.src.services.common.async_db import get_pool
 from yosai_intel_dashboard.src.services.security import require_permission
 from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
@@ -57,7 +58,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 cache_manager = InMemoryCacheManager(CacheConfig(timeout_seconds=300))
-analytics_service = CachedAnalyticsService(cache_manager)
+registry.register("cached_analytics_service", CachedAnalyticsService(cache_manager))
 ws_server: AnalyticsWebSocketServer | None = None
 
 app = FastAPI(dependencies=[Depends(require_permission("analytics.read"))])
@@ -96,7 +97,7 @@ ERROR_RESPONSES = {
 
 async def get_service() -> CachedAnalyticsService:
     """Return the analytics service instance."""
-    return analytics_service
+    return registry.get("cached_analytics_service")
 
 
 @app.on_event("startup")

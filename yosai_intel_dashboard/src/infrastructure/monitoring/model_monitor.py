@@ -129,7 +129,7 @@ class ModelMonitor:
                 or metrics.precision < self.performance_threshold
                 or metrics.recall < self.performance_threshold
             ):
-                self.registry.rollback_to_previous(rec.name)
+                self.registry.rollback_model(rec.name)
                 continue
             drift = self.monitor.detect_drift(metrics)
             status = "drift" if drift else "ok"

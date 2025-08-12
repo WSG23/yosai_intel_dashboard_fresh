@@ -6,6 +6,7 @@ Complete Integration Tests for Analytics System
 """
 import pandas as pd
 import pytest
+from datetime import timezone
 
 from yosai_intel_dashboard.src.core.domain.entities import ModelFactory
 from yosai_intel_dashboard.src.services import (
@@ -46,6 +47,7 @@ def test_model_factory():
     assert "anomaly" in models
     access_model = models["access"]
     assert isinstance(access_model.events, pd.DataFrame)
+    assert access_model.created_at.tzinfo == timezone.utc
     assert access_model.get_user_activity() == {"user1": 1, "user2": 1}
     assert access_model.get_door_activity() == {"door1": 1, "door2": 1}
 
