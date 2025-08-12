@@ -31,4 +31,7 @@ class ServiceRegistry:
         cls._services.pop(name, None)
 
 
-__all__ = ["ServiceRegistry"]
+registry = ServiceRegistry()
+
+
+__all__ = ["ServiceRegistry", "registry"]

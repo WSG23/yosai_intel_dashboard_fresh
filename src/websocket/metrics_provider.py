@@ -3,18 +3,24 @@
 from __future__ import annotations
 
 import threading
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 
 
 from src.common.base import BaseComponent
 from shared.events.bus import EventBus, EventPublisher
 from src.common.mixins import LoggingMixin, SerializationMixin
-from src.repository import InMemoryMetricsRepository
+from yosai_intel_dashboard.src.core.registry import ServiceRegistry
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from yosai_intel_dashboard.src.core.protocols.metrics import MetricsRepositoryProtocol
 
 
 def generate_sample_metrics() -> Dict[str, Any]:
     """Return static metric payload for demonstration."""
-    return InMemoryMetricsRepository().snapshot()
+    repo = ServiceRegistry.get("metrics_repository")
+    if repo is None:  # pragma: no cover - demonstration fallback
+        raise RuntimeError("Metrics repository not configured")
+    return repo.snapshot()
 
 
 class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComponent):
@@ -24,14 +30,18 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
     def __init__(
         self,
         event_bus: EventBus,
-        repo: Any | None = None,
+        repo: "MetricsRepositoryProtocol" | None = None,
         interval: float = 1.0,
     ) -> None:
+        repo = repo or ServiceRegistry.get("metrics_repository")
+        if repo is None:  # pragma: no cover - misconfiguration
+            raise RuntimeError("Metrics repository not configured")
+
         BaseComponent.__init__(
             self,
             component_id="metrics_provider",
             event_bus=event_bus,
-            repo=repo or InMemoryMetricsRepository(),
+            repo=repo,
             interval=interval,
         )
 
