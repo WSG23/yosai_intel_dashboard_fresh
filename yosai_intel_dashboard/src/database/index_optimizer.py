@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, List, Sequence
 
+from infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.database.types import DBRows
 
 # Importing create_database_connection at module level pulls in heavy
@@ -61,7 +62,12 @@ class IndexOptimizer:
         try:
             conn = self.connection
             conn_name = conn.__class__.__name__
-            index_name = f"idx_{table}_{'_'.join(columns)}"
+            builder = SecureQueryBuilder(
+                allowed_tables={table}, allowed_columns=set(columns)
+            )
+            table_q = builder.table(table)
+            column_qs = [builder.column(c) for c in columns]
+            index_name = f"idx_{table_q}_{'_'.join(column_qs)}"
             if conn_name == "SQLiteConnection":
                 rows: DBRows = execute_query(conn, "PRAGMA index_list(?)", (table,))
                 existing: Iterable[str] = (row.get("name") for row in rows)
@@ -75,8 +81,12 @@ class IndexOptimizer:
             else:
                 return []
             if index_name not in existing:
-                cols = ", ".join(columns)
-                return [f"CREATE INDEX {index_name} ON {table} ({cols})"]
+                cols = ", ".join(column_qs)
+                stmt, _ = builder.build(
+                    f"CREATE INDEX {index_name} ON {table_q} ({cols})",
+                    logger=logger,
+                )
+                return [stmt]
         except Exception as exc:  # pragma: no cover - best effort
             logger.warning("Failed to recommend indexes: %s", exc)
         return []

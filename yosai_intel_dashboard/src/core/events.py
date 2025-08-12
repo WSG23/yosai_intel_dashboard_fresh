@@ -1,6 +1,5 @@
-"""Re-export shared event bus utilities."""
+"""Re-export shared asynchronous event bus utilities."""
 
-from src.common.events import EventBus, EventPublisher
+from shared.events.bus import EventBus, EventPublisher
 
 __all__ = ["EventBus", "EventPublisher"]
-

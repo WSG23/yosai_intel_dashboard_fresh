@@ -51,7 +51,16 @@ class QueryOptimizer:
         statements: List[str] = []
         for col in columns:
             if self._needs_index(table, col, plan):
-                statements.append(f"CREATE INDEX idx_{table}_{col} ON {table} ({col})")
+                builder = SecureQueryBuilder(
+                    allowed_tables={table}, allowed_columns={col}
+                )
+                table_q = builder.table(table)
+                col_q = builder.column(col)
+                index_name = f"idx_{table_q}_{col_q}"
+                stmt, _ = builder.build(
+                    f"CREATE INDEX {index_name} ON {table_q} ({col_q})"
+                )
+                statements.append(stmt)
         return statements
 
     # ------------------------------------------------------------------

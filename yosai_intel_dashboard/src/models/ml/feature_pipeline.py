@@ -12,7 +12,7 @@ from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.inspection import permutation_importance
 
-from analytics.feature_extraction import extract_event_features
+from .pipeline_contract import preprocess_events
 from yosai_intel_dashboard.models.ml.feature_store import FeastFeatureStore
 from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
 
@@ -65,7 +65,7 @@ class FeaturePipeline(BaseEstimator, TransformerMixin):
 
     # ------------------------------------------------------------------
     def fit(self, X: pd.DataFrame, y: Any | None = None) -> "FeaturePipeline":
-        df = extract_event_features(X)
+        df = preprocess_events(X)
         if not self.feature_list:
             self.feature_list = df.columns.tolist()
         Parallel(n_jobs=self.n_jobs)(
@@ -76,7 +76,7 @@ class FeaturePipeline(BaseEstimator, TransformerMixin):
 
     # ------------------------------------------------------------------
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        df = extract_event_features(X)
+        df = preprocess_events(X)
         for entry in self.transformers.values():
             transformed = entry.transformer.transform(df[entry.columns])
             if isinstance(transformed, pd.DataFrame):

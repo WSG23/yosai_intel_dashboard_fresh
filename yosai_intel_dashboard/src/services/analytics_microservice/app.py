@@ -11,7 +11,6 @@ from typing import Any, Dict
 
 import joblib
 import pandas as pd
-import redis
 import redis.asyncio as aioredis
 from fastapi import (
     APIRouter,
@@ -29,14 +28,15 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, ConfigDict
 
-from analytics import anomaly_detection, feature_extraction, security_patterns
+from analytics import anomaly_detection, security_patterns
+from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 from shared.errors.types import ErrorCode, ErrorResponse
 from jose import jwt
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
 from yosai_intel_dashboard.models.ml import ModelRegistry
-from yosai_intel_dashboard.src.core.security import RateLimiter
+from yosai_intel_dashboard.src.core.security import RateLimiter, security_config
 from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.error_handling import http_error
 from yosai_intel_dashboard.src.error_handling.middleware import ErrorHandlingMiddleware
@@ -62,7 +62,6 @@ from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
 from fastapi.responses import JSONResponse
-from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -77,9 +76,18 @@ app.add_middleware(UnicodeSanitizationMiddleware)
 service_cfg = ConfigurationLoader().get_service_config()
 
 # Configure a Redis backed rate limiter
-redis_client = redis.Redis.from_url(service_cfg.redis_url)
-rate_limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
-app.add_middleware(RateLimitMiddleware, limiter=rate_limiter)
+redis_client = aioredis.from_url(service_cfg.redis_url)
+rate_limiter = RateLimiter(redis_client, max_requests=100, window_minutes=1)
+
+
+@app.on_event("startup")
+async def _start_rate_limiter() -> None:
+    rate_limiter.start_cleanup()
+
+
+@app.on_event("shutdown")
+async def _stop_rate_limiter() -> None:
+    await rate_limiter.stop_cleanup()
 
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse, "description": "Bad Request"},
@@ -95,7 +103,7 @@ async def rate_limit(request: Request, call_next):
     identifier = (
         auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
     )
-    result = rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    result = await rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
     headers = {
         "X-RateLimit-Limit": str(result.get("limit", rate_limiter.max_requests)),
         "X-RateLimit-Remaining": str(result.get("remaining", 0)),
@@ -127,11 +135,8 @@ register_health_check(app, "external_api", _external_api_check)
 
 def _jwt_secret() -> str:
     """Return the current JWT secret."""
-    secret = os.getenv("JWT_SECRET_KEY")
-    if not secret:
-        logger.error("JWT_SECRET_KEY not set")
-        raise RuntimeError("missing JWT secret")
-    return secret
+    secret_path = os.getenv("JWT_SECRET_PATH")
+    return security_config.get_secret("JWT_SECRET_KEY", vault_key=secret_path)
 
 
 def verify_token(authorization: str = Header("")) -> dict:
@@ -245,7 +250,7 @@ async def _startup() -> None:
     app.state.startup_complete = True
 
 
-@app.get("/health")
+@app.get("/api/v1/health")
 async def health() -> dict[str, str]:
     """Basic service health indicator.
 
@@ -254,7 +259,7 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/health/live")
+@app.get("/api/v1/health/live")
 async def health_live() -> dict[str, str]:
     """Liveness probe.
 
@@ -263,7 +268,7 @@ async def health_live() -> dict[str, str]:
     return {"status": "ok" if app.state.live else "shutdown"}
 
 
-@app.get("/health/startup")
+@app.get("/api/v1/health/startup")
 async def health_startup() -> dict[str, str]:
     """Startup probe.
 
@@ -279,7 +284,7 @@ async def health_startup() -> dict[str, str]:
     )
 
 
-@app.get("/health/ready")
+@app.get("/api/v1/health/ready")
 async def health_ready() -> dict[str, str]:
     """Readiness probe.
 
@@ -374,7 +379,7 @@ async def threat_assessment(
     else:
         df = pd.DataFrame(payload)
 
-    features = feature_extraction.extract_event_features(df)
+    features = preprocess_events(df)
     anomaly = anomaly_detection.AnomalyDetector().analyze_anomalies(features)
     patterns = security_patterns.SecurityPatternsAnalyzer().analyze_security_patterns(
         features
