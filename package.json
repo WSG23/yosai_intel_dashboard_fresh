@@ -84,7 +84,9 @@
     "typescript": "^5.9.2",
     "vite": "^5.4.0",
     "vitest": "^3.2.4",
-    "webpack-bundle-analyzer": "^4.10.2"
+    "webpack-bundle-analyzer": "^4.10.2",
+    "stylelint": "^16.8.0",
+    "stylelint-config-standard": "^36.0.0"
   },
   "scripts": {
     "start": "cd yosai_intel_dashboard/src/adapters/ui && vite --config ../../../../vite.config.ts",
@@ -102,7 +104,8 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "playwright:test": "playwright test",
-    "graphql": "node graphql/index.js"
+    "graphql": "node graphql/index.js",
+    "lint:css": "stylelint '**/*.{css,scss}'"
   },
   "eslintConfig": {
     "extends": [
