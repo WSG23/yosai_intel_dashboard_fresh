@@ -8,6 +8,14 @@
     {
       "matchManagers": ["github-actions"],
       "groupName": "github-actions"
+    },
+    {
+      "matchManagers": ["gomod"],
+      "groupName": "go-modules"
+    },
+    {
+      "matchManagers": ["npm"],
+      "groupName": "npm-packages"
     }
   ]
 }
