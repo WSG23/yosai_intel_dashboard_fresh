@@ -73,7 +73,7 @@ from yosai_intel_dashboard.src.services.analytics.protocols import (
     ReportGeneratorProtocol,
     UploadAnalyticsProtocol,
 )
-from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
+from yosai_intel_dashboard.src.services.publishing_service import PublishingService
 from yosai_intel_dashboard.src.services.analytics_summary import (
     generate_sample_analytics,
 )
@@ -652,7 +652,7 @@ def create_analytics_service(
     loader = get_analytics_data_loader(upload_controller, processor)
     report_generator = SummaryReportGenerator()
     calculator = Calculator(report_generator)
-    publisher = Publisher(None)
+    publisher = PublishingService()
     return AnalyticsService(
         data_processor=processor,
         config=config_provider,

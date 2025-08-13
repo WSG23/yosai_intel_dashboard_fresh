@@ -2,23 +2,22 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from src.common import BaseComponent, EventDispatchMixin, handle_deprecated
+from src.common.base import BaseComponent
+from shared.events.bus import EventPublisher
+from shared.events.names import EventName
 from yosai_intel_dashboard.src.core.interfaces.protocols import EventBusProtocol
 from yosai_intel_dashboard.src.services.analytics.protocols import PublishingProtocol
-from yosai_intel_dashboard.src.services.analytics.publisher import Publisher
-from shared.events.names import EventName
 
 
-class PublishingService(EventDispatchMixin, BaseComponent, PublishingProtocol):
-    """Service wrapping :class:`Publisher` for event dispatch."""
+class PublishingService(EventPublisher, BaseComponent, PublishingProtocol):
+    """Publish analytics events via the shared :class:`EventBus`."""
 
-    @handle_deprecated("event_bus")
-    def __init__(self, *, event_bus: EventBusProtocol | None = None) -> None:
-        super().__init__(event_bus=event_bus)
-        self._publisher = Publisher(event_bus)
+    def __init__(self, event_bus: EventBusProtocol | None = None) -> None:
+        EventPublisher.__init__(self, event_bus)
+        BaseComponent.__init__(self, event_bus=event_bus)
 
     def publish(self, payload: Dict[str, Any], event: str = EventName.ANALYTICS_UPDATE) -> None:
-        self._publisher.publish(payload, event)
+        self.publish_event(event, payload)
 
 
 __all__ = ["PublishingService"]
