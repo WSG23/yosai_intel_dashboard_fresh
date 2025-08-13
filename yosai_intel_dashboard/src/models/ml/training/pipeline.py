@@ -139,6 +139,28 @@ class TrainingPipeline:
         bias_report: Path | None = None,
     ) -> ExperimentResult:
         """Run hyperparameter tuning and register the best performing model."""
+        X, y, df, dataset_hash = self._prepare_data(
+            entity_df,
+            target_column,
+            feature_store=feature_store,
+            feature_service=feature_service,
+        )
+
+        best_res = self._train_models(models, X, y, dataset_hash)
+        self._register_best_model(best_res, dataset_hash)
+        self._handle_bias(best_res, df, X, y, bias_column, bias_report)
+        return best_res
+
+    # ------------------------------------------------------------------
+    def _prepare_data(
+        self,
+        entity_df: pd.DataFrame,
+        target_column: str,
+        *,
+        feature_store: FeastFeatureStore | None = None,
+        feature_service: Any | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame, str]:
+        """Return feature matrix, target vector, processed dataframe and hash."""
         if feature_store:
             if feature_service is None:
                 raise ValueError("feature_service required when using feature_store")
@@ -160,7 +182,17 @@ class TrainingPipeline:
             .fillna(0)
             .values
         )
+        return X, y, df, dataset_hash
 
+    # ------------------------------------------------------------------
+    def _train_models(
+        self,
+        models: Dict[str, Tuple[Any, Dict[str, Any]]],
+        X: np.ndarray,
+        y: np.ndarray,
+        dataset_hash: str,
+    ) -> ExperimentResult:
+        """Train each candidate model and return the best result."""
         best_res: ExperimentResult | None = None
         for name, (estimator, param_space) in models.items():
             logger.info("Training %s", name)
@@ -170,9 +202,12 @@ class TrainingPipeline:
                 or res.metrics[self.scoring] > best_res.metrics[self.scoring]
             ):
                 best_res = res
-
         assert best_res is not None
+        return best_res
 
+    # ------------------------------------------------------------------
+    def _register_best_model(self, best_res: ExperimentResult, dataset_hash: str) -> None:
+        """Register the winning model and optionally activate it."""
         active = self.registry.get_model(best_res.name, active_only=True)
         improved = active is None or self.registry._metrics_improved(
             best_res.metrics, active.metrics or {}
@@ -186,6 +221,16 @@ class TrainingPipeline:
         if improved:
             self.registry.set_active_version(best_res.name, record.version)
 
+    # ------------------------------------------------------------------
+    def _handle_bias(
+        self,
+        best_res: ExperimentResult,
+        df: pd.DataFrame,
+        X: np.ndarray,
+        y: np.ndarray,
+        bias_column: str | None,
+        bias_report: Path | None,
+    ) -> None:
         if bias_column and bias_column in df.columns:
             model = optional_import("joblib").load(best_res.model_path)
             y_pred = model.predict(X)
@@ -193,8 +238,6 @@ class TrainingPipeline:
             best_res.bias_metrics = bias_metrics
             if bias_report:
                 bias_report.write_text(json.dumps(bias_metrics, indent=2))
-
-        return best_res
 
 
 __all__ = ["TrainingPipeline", "ExperimentResult"]

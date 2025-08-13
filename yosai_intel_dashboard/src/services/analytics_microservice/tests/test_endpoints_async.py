@@ -1,30 +1,23 @@
 from __future__ import annotations
 
-import importlib.util
-import os
-import pathlib
-import sys
 import time
 import types
 from dataclasses import dataclass
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import httpx
 import joblib
 import pytest
-from fastapi import FastAPI
 from jose import jwt
 from yosai_intel_dashboard.src.services.analytics_microservice.model_loader import (
     preload_active_models,
 )
 
-SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
-
 
 class Dummy:
     def predict(self, data):
         return [len(data)]
-
 
 # stub out the heavy 'services' package before pytest imports it
 services_stub = types.ModuleType("services")
@@ -417,10 +410,9 @@ def load_app(jwt_secret: str | None = "secret") -> tuple:
 
     return module, queries_stub, dummy_service
 
-
 @pytest.mark.asyncio
-async def test_health_endpoints():
-    module, _, _ = load_app()
+async def test_health_endpoints(app_factory):
+    module, _, _ = app_factory()
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/v1/health")
@@ -443,12 +435,15 @@ async def test_health_endpoints():
 @pytest.mark.asyncio
 async def test_dashboard_summary_endpoint():
     module, queries_stub, dummy_service = load_app()
+    from services.auth import verify_jwt_token
 
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
         "secret",
         algorithm="HS256",
     )
+    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+
     assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -463,8 +458,8 @@ async def test_dashboard_summary_endpoint():
 
 
 @pytest.mark.asyncio
-async def test_unauthorized_request():
-    module, _, _ = load_app()
+async def test_unauthorized_request(app_factory):
+    module, _, _ = app_factory()
     transport = httpx.ASGITransport(app=module.app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/v1/analytics/dashboard-summary")
@@ -477,7 +472,8 @@ async def test_unauthorized_request():
 @pytest.mark.asyncio
 async def test_internal_error_response():
     module, queries_stub, _ = load_app()
-    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+    from services.auth import verify_jwt_token
+
 
     queries_stub.fetch_dashboard_summary.side_effect = RuntimeError("boom")
     token = jwt.encode(
@@ -501,6 +497,8 @@ async def test_internal_error_response():
 @pytest.mark.asyncio
 async def test_model_registry_endpoints(tmp_path):
     module, _, svc = load_app()
+    from services.auth import verify_jwt_token
+
     svc.model_dir = tmp_path
     from yosai_intel_dashboard.models.ml import ModelRegistry
 
@@ -511,6 +509,8 @@ async def test_model_registry_endpoints(tmp_path):
         "secret",
         algorithm="HS256",
     )
+    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+
     assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -540,6 +540,8 @@ async def test_model_registry_endpoints(tmp_path):
 @pytest.mark.asyncio
 async def test_predict_endpoint(tmp_path):
     module, _, svc = load_app()
+    from services.auth import verify_jwt_token
+
     svc.model_dir = tmp_path
 
     model = Dummy()
@@ -559,6 +561,8 @@ async def test_predict_endpoint(tmp_path):
         "secret",
         algorithm="HS256",
     )
+    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+
     assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -575,9 +579,9 @@ async def test_predict_endpoint(tmp_path):
 
 @pytest.mark.asyncio
 async def test_batch_predict_endpoint(tmp_path):
-    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
-
     module, _, svc = load_app()
+    from services.auth import verify_jwt_token
+
     svc.model_dir = tmp_path
 
     model = Dummy()
@@ -588,6 +592,8 @@ async def test_batch_predict_endpoint(tmp_path):
         "secret",
         algorithm="HS256",
     )
+    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+
     assert verify_jwt_token(token)["iss"] == "gateway"
     headers = {"Authorization": f"Bearer {token}"}
 

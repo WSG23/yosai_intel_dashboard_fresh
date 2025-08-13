@@ -13,6 +13,7 @@ from shared.events.names import EventName
 from yosai_intel_dashboard.src.core.registry import ServiceRegistry
 from yosai_intel_dashboard.src.core.protocols.metrics import MetricsRepositoryProtocol
 
+
 def generate_sample_metrics() -> Dict[str, Any]:
     """Return static metric payload for demonstration."""
     repo = ServiceRegistry.get("metrics_repository")
@@ -42,7 +43,6 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
             repo=repo,
             interval=interval,
         )
-
 
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)

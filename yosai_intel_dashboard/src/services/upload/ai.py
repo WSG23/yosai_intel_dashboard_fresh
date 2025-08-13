@@ -20,12 +20,12 @@ class AISuggestionService:
             if mapping:
                 src = mapping.get("source", "cached")
                 if src == "user_confirmed":
-                    logger.info("🔐 Using USER CONFIRMED mapping for '%s'", device_name)
+                    logger.info(f"🔐 Using USER CONFIRMED mapping for '{device_name}'")
                 else:
-                    logger.info("📦 Using cached mapping for '%s'", device_name)
+                    logger.info(f"📦 Using cached mapping for '{device_name}'")
                 return mapping
 
-            logger.info("🤖 Generating AI analysis for '%s'", device_name)
+            logger.info(f"🤖 Generating AI analysis for '{device_name}'")
             from yosai_intel_dashboard.src.services.ai_device_generator import AIDeviceGenerator
 
             ai_generator = AIDeviceGenerator()
@@ -44,7 +44,7 @@ class AISuggestionService:
             ai_mapping_store.set(device_name, mapping)
             return mapping
         except Exception as exc:
-            logger.info("❌ Error in device analysis: %s", exc)
+            logger.info(f"❌ Error in device analysis: {exc}")
             return {
                 "floor_number": 1,
                 "security_level": 5,
@@ -59,7 +59,7 @@ class AISuggestionService:
         ai_suggestions = file_info.get("ai_suggestions", {})
         columns: List[str] = file_info.get("columns", [])
 
-        logger.info("🤖 Applying AI suggestions for %s columns", len(columns))
+        logger.info(f"🤖 Applying AI suggestions for {len(columns)} columns")
         suggested_values: List[Any] = []
         for column in columns:
             suggestion = ai_suggestions.get(column, {})
@@ -67,13 +67,13 @@ class AISuggestionService:
             field = suggestion.get("field", "")
             if confidence > 0.3 and field:
                 suggested_values.append(field)
-                logger.info("   ✅ %s -> %s (%.0f%%)", column, field, confidence * 100)
+                logger.info(
+                    f"   ✅ {column} -> {field} ({confidence * 100:.0f}%)"
+                )
             else:
                 suggested_values.append(None)
                 logger.info(
-                    "   ❓ %s -> No confident suggestion (%.0f%%)",
-                    column,
-                    confidence * 100,
+                    f"   ❓ {column} -> No confident suggestion ({confidence * 100:.0f}%)"
                 )
         return [suggested_values]
 

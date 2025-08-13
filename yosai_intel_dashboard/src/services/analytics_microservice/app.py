@@ -34,8 +34,6 @@ from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 from shared.errors.types import ErrorCode, ErrorResponse
 from jose import jwt
 from yosai_framework import ServiceBuilder
-from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
 from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter, security_config
 from yosai_intel_dashboard.src.database.utils import parse_connection_string
@@ -60,8 +58,7 @@ from yosai_intel_dashboard.src.services.analytics_microservice.model_loader impo
 from yosai_intel_dashboard.src.services.analytics_microservice.unicode_middleware import (
     UnicodeSanitizationMiddleware,
 )
-from yosai_intel_dashboard.src.services.auth import verify_jwt_token
-from yosai_intel_dashboard.src.services.common.async_db import close_pool, create_pool
+from yosai_intel_dashboard.src.services.common.async_db import create_pool
 from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
@@ -93,6 +90,7 @@ async def _start_rate_limiter() -> None:
 async def _stop_rate_limiter() -> None:
     await rate_limiter.stop_cleanup()
 
+
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse, "description": "Bad Request"},
     401: {"model": ErrorResponse, "description": "Unauthorized"},
@@ -107,7 +105,9 @@ async def rate_limit(request: Request, call_next):
     identifier = (
         auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
     )
-    result = await rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    result = await rate_limiter.is_allowed(
+        identifier or "anonymous", request.client.host
+    )
     headers = {
         "X-RateLimit-Limit": str(result.get("limit", rate_limiter.max_requests)),
         "X-RateLimit-Remaining": str(result.get("remaining", 0)),
@@ -126,6 +126,15 @@ async def rate_limit(request: Request, call_next):
     for key, value in headers.items():
         response.headers[key] = value
     return response
+
+
+def rate_limit_decorator(*_: Any, **__: Any):
+    """Placeholder rate limit decorator."""
+
+    def decorator(func):
+        return func
+
+    return decorator
 
 
 async def _external_api_check(_: FastAPI) -> Dict[str, Any]:
@@ -173,8 +182,6 @@ def verify_token(authorization: str = Header("")) -> dict:
             "unauthorized",
             status.HTTP_401_UNAUTHORIZED,
         )
-
-
 
 class PatternsRequest(BaseModel):
     days: int = 7
@@ -398,8 +405,8 @@ async def batch_predict(
 
     features = preprocess_events(df)
 
-    model_obj = svc.models.get(model) if model else next(
-        iter(svc.models.values()), None
+    model_obj = (
+        svc.models.get(model) if model else next(iter(svc.models.values()), None)
     )
     if model_obj is None:
         raise http_error(ErrorCode.NOT_FOUND, "model not found", 404)
@@ -518,31 +525,52 @@ async def predict(
     local_dir = app.state.model_dir / name / record.version
 
     local_dir.mkdir(parents=True, exist_ok=True)
-    local_path = local_dir / os.path.basename(record.storage_uri)
+    local_path = local_dir / Path(record.storage_uri).name
     if not local_path.exists():
         try:
             svc.model_registry.download_artifact(record.storage_uri, str(local_path))
         except Exception as exc:
             raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
 
+def _load_model(svc: AnalyticsService, name: str, local_path: Path) -> Any:
+    """Load a model from memory or disk."""
     model_obj = svc.models.get(name)
-    if model_obj is None:
-        try:
-            model_obj = joblib.load(local_path)
-            svc.models[name] = model_obj
-        except Exception as exc:
-            raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    if model_obj is not None:
+        return model_obj
     try:
-        result = model_obj.predict(req.data)
+        model_obj = joblib.load(local_path)
+    except Exception as exc:
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    svc.models[name] = model_obj
+    return model_obj
+
+
+def _run_prediction(model_obj: Any, data: Any) -> Any:
+    """Execute model inference on ``data``."""
+    try:
+        return model_obj.predict(data)
     except Exception as exc:
         raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
 
-    prediction_id = str(uuid.uuid4())
+
+def _log_explainability(
+    svc: AnalyticsService,
+    name: str,
+    model_obj: Any,
+    data: Any,
+    record: ModelRecord,
+    prediction_id: str,
+) -> None:
+    """Log feature data and SHAP explanations if possible."""
     try:
-        df = pd.DataFrame(req.data)
+        df = pd.DataFrame(data)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.debug("DataFrame creation failed: %s", exc)
+        return
+    try:
         svc.model_registry.log_features(name, df)
-    except Exception:
-        df = pd.DataFrame(req.data)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.debug("Feature logging failed: %s", exc)
     try:
         explainer = ExplainabilityService()
         explainer.register_model(name, model_obj, background_data=df)
@@ -554,8 +582,40 @@ async def predict(
                 record.version,
                 {"shap_values": shap_vals.tolist()},
             )
-    except Exception:
-        pass
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.debug("Explainability logging failed: %s", exc)
+
+
+@models_router.post("/{name}/predict", responses=ERROR_RESPONSES)
+@rate_limit_decorator()
+async def predict(
+    name: str,
+    req: PredictRequest,
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
+):
+    """Generate predictions using an active model.
+
+    Downloads the model artifact if necessary and logs input features before
+    returning the model's predictions.
+    """
+    record = svc.model_registry.get_model(name, active_only=True)
+    if record is None:
+        raise http_error(ErrorCode.NOT_FOUND, "no active version", 404)
+
+    local_path = _download_artifact(svc, name, record)
+    model_obj = _load_model(svc, name, local_path)
+    result = _run_prediction(model_obj, req.data)
+
+    prediction_id = str(uuid.uuid4())
+    _log_explainability(
+        svc,
+        name,
+        model_obj,
+        req.data,
+        record,
+        prediction_id,
+    )
     return {"prediction_id": prediction_id, "predictions": result}
 
 
