@@ -1,5 +1,4 @@
 import React, { Suspense, useState } from 'react';
-import './styles/upload.css';
 import Navigation from './components/Navigation';
 import { Shield, Menu, Sun, Moon } from 'lucide-react';
 import useDarkMode from './hooks/useDarkMode';

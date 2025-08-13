@@ -1,15 +1,16 @@
 /* AI Mapping Modal Consistent Styling */
-@import "../css/01-foundation/_variables.css";
+@import url("../css/01-foundation/_variables.css");
+
 .modal-overlay {
+    align-items: center;
+    background-color: rgb(0 0 0 / 50%);
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    left: 0;
     position: fixed;
     top: 0;
-    left: 0;
     width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
     z-index: 1000;
 }
 
@@ -17,61 +18,66 @@
     background: var(--surface-primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
+    margin: var(--modal-padding);
     max-height: 90vh;
     overflow-y: auto;
-    margin: var(--space-5);
 }
 
 .modal--xl {
-    width: 90%;
     max-width: 800px;
+    width: 90%;
 }
 
 .modal__header {
+    align-items: center;
+    background-color: var(--surface-secondary);
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: var(--space-5);
-    border-bottom: 1px solid var(--color-border);
-    background-color: var(--surface-secondary);
+    padding: var(--modal-padding);
 }
 
 .modal__title {
-    margin: 0;
+    color: var(--text-primary);
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text-primary);
+    margin: 0;
 }
 
 .modal__close {
+    align-items: center;
     background: none;
     border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
     color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    font-size: 1.5rem;
+    height: 30px;
+    justify-content: center;
     padding: 0;
     width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .modal__close:hover {
     color: var(--text-primary);
 }
 
+.modal__close:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: var(--focus-outline-offset);
+}
+
 .modal__body {
-    padding: var(--space-5);
+    padding: var(--modal-padding);
 }
 
 .modal__footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-3);
-    padding: var(--space-5);
-    border-top: 1px solid var(--color-border);
     background-color: var(--surface-secondary);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    padding: var(--modal-padding);
 }
 
 .form-section {
@@ -79,39 +85,39 @@
 }
 
 .form-section-title {
+    border-bottom: 2px solid var(--color-border);
+    color: var(--text-primary);
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--text-primary);
     margin-bottom: var(--space-4);
-    border-bottom: 2px solid var(--color-border);
     padding-bottom: var(--space-2);
 }
 
 .form-instructions {
     background-color: var(--surface-tertiary);
-    padding: var(--space-3);
     border-radius: var(--radius-md);
     margin-bottom: var(--space-5);
+    padding: var(--space-3);
 }
 
 .form-instructions-text {
-    margin: 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
+    margin: 0;
 }
 
 .form-separator {
+    background-color: var(--color-border);
     border: none;
     height: 1px;
-    background-color: var(--color-border);
     margin: var(--space-6) 0;
 }
 
 .form-help-text {
     color: var(--text-secondary);
+    display: block;
     font-size: 0.8rem;
     margin-top: var(--space-1);
-    display: block;
 }
 
 /* Column mapping enhancements */
@@ -121,21 +127,21 @@
 }
 
 .confidence-indicator {
-    display: flex;
     align-items: center;
+    display: flex;
     gap: var(--space-1);
 }
 
 .column-preview {
-    max-height: 8rem;
-    overflow-y: auto;
     background: var(--surface-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
+    max-height: 8rem;
+    overflow-y: auto;
     padding: var(--space-3);
 }
 
 /* Dark theme adjustments */
 .dark-mode .modal-overlay {
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgb(0 0 0 / 70%);
 }
