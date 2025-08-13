@@ -31,6 +31,7 @@ __all__ = [
     "ABTest",
     "circuit_breaker_state",
     "start_metrics_server",
+    "ModelRegistryAlerting",
 
 ]
 
@@ -118,6 +119,10 @@ def __getattr__(name: str):
         from .inference_drift_job import InferenceDriftJob
 
         return InferenceDriftJob
+    if name == "ModelRegistryAlerting":
+        from .model_registry_alerting import ModelRegistryAlerting
+
+        return ModelRegistryAlerting
     if name == "request_duration":
         from .request_metrics import request_duration
 
