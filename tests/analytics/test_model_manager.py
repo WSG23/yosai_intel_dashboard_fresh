@@ -1,5 +1,8 @@
 from types import SimpleNamespace
 from pathlib import Path
+import os
+
+os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 
 from yosai_intel_dashboard.src.services.helpers.model_manager import ModelManager
 
