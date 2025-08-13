@@ -1,0 +1,12 @@
+# Configuration for mTLS certificates issued via SPIRE and Vault PKI
+spire:
+  spiffe_id: spiffe://example.org/services/dashboard
+  selector:
+    matchLabels:
+      app: dashboard
+  ttl: 24h
+pki:
+  issuer: vault-pki
+  ca_cert_path: /run/secrets/tls/ca.crt
+  cert_path: /run/secrets/tls/tls.crt
+  key_path: /run/secrets/tls/tls.key
