@@ -1,9 +1,9 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Navigation from './components/Navigation';
 import { Shield, Menu, Sun, Moon } from 'lucide-react';
-import useDarkMode from './hooks/useDarkMode';
 import CenteredSpinner from './components/shared/CenteredSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useThemeStore } from './store';
 
 const Upload = React.lazy(() =>
   import('./components/upload').then((m) => ({ default: m.Upload })),
@@ -11,7 +11,26 @@ const Upload = React.lazy(() =>
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isDark, toggle } = useDarkMode();
+  const { isDark, toggle } = useThemeStore((state) => ({
+    isDark: state.isDark,
+    toggle: state.toggle,
+  }));
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+      window.localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      window.localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const themeIcon = useMemo(
+    () => (isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />),
+    [isDark],
+  );
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -39,7 +58,7 @@ function App() {
               onClick={toggle}
               aria-label="Toggle dark mode"
             >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {themeIcon}
             </button>
           </div>
         </div>
