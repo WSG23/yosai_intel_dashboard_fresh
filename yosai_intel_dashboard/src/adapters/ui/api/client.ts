@@ -236,6 +236,12 @@ export async function apiRequest<T = any>(
           toast.error(
             'You are offline. Request will be retried when connection is restored.',
           );
+          if (requestQueue.length >= 50) {
+            requestQueue.shift();
+            console.warn(
+              'Request queue limit reached. Dropping oldest request.',
+            );
+          }
           requestQueue.push(() => apiRequest(config));
           return Promise.reject(error);
         }
