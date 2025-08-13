@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import threading
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict
 
 
 from src.common.base import BaseComponent
 from shared.events.bus import EventBus, EventPublisher
 from src.common.mixins import LoggingMixin, SerializationMixin
-from src.repository import InMemoryMetricsRepository
 from shared.events.names import EventName
+from yosai_intel_dashboard.src.core.registry import ServiceRegistry
+from yosai_intel_dashboard.src.core.protocols.metrics import MetricsRepositoryProtocol
 
 def generate_sample_metrics() -> Dict[str, Any]:
     """Return static metric payload for demonstration."""
@@ -27,7 +28,7 @@ class MetricsProvider(EventPublisher, LoggingMixin, SerializationMixin, BaseComp
     def __init__(
         self,
         event_bus: EventBus,
-        repo: "MetricsRepositoryProtocol" | None = None,
+        repo: MetricsRepositoryProtocol | None = None,
         interval: float = 1.0,
     ) -> None:
         repo = repo or ServiceRegistry.get("metrics_repository")
