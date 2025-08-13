@@ -60,3 +60,20 @@ def test_resolves_aws_reference(monkeypatch):
     validator = SecretsValidator(environment="production")
     secrets = validator.validate_production_secrets(src)
     assert secrets["DB_PASSWORD"] == "a" * 32
+
+
+def test_resolves_file_reference(tmp_path):
+    secret_path = tmp_path / "secret"
+    secret_path.write_text("f" * 32, encoding="utf-8")
+
+    src = MappingSource(
+        {
+            "SECRET_KEY": f"file:{secret_path}",
+            "DB_PASSWORD": os.urandom(32).hex(),
+            "AUTH0_CLIENT_SECRET": os.urandom(32).hex(),
+        }
+    )
+
+    validator = SecretsValidator(environment="production")
+    secrets = validator.validate_production_secrets(src)
+    assert secrets["SECRET_KEY"] == "f" * 32
