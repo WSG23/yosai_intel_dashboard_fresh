@@ -14,7 +14,7 @@ token = login_user("alice", "p@ssw0rd")
 ## New Usage
 
 ```python
-from services.auth_service import AuthService
+from yosai_intel_dashboard.src.services.auth_service import AuthService
 
 auth = AuthService()
 token = auth.login("alice", "p@ssw0rd")

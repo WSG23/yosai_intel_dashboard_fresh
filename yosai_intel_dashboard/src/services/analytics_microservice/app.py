@@ -13,7 +13,9 @@ from typing import Dict
 
 from fastapi import Depends, FastAPI
 
-from services.analytics_service import create_analytics_service
+from yosai_intel_dashboard.src.services.analytics_service import (
+    create_analytics_service,
+)
 from tracing import init_tracing
 
 try:  # pragma: no cover - optional dependency in tests

@@ -2,11 +2,7 @@ import logging
 import pandas as pd
 import pytest
 
-# Robust import of DriftMonitor
-try:  # pragma: no cover - attempt package import
-    from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
-except Exception:  # pragma: no cover - fallback for alternate layouts
-    from services.monitoring.drift_monitor import DriftMonitor
+from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
 
 
 def test_run_logs_baseline_error(caplog):

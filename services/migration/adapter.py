@@ -9,7 +9,10 @@ behaviour when an external dependency is unavailable.
 
 from typing import Any, Dict
 
-from services.resilience import CircuitBreaker, CircuitBreakerOpen
+from yosai_intel_dashboard.src.services.resilience import (
+    CircuitBreaker,
+    CircuitBreakerOpen,
+)
 
 
 class EventServiceAdapter:

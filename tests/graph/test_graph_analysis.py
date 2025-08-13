@@ -5,13 +5,13 @@ import pytest
 pytest.importorskip("networkx")
 pytest.importorskip("sklearn")
 
-from services.analytics.graph_analysis import (
+from yosai_intel_dashboard.src.services.analytics.graph_analysis import (
     GraphModel,
     Node,
     NodeType,
     build_graph_from_logs,
 )
-from services.analytics.graph_analysis.algorithms import (
+from yosai_intel_dashboard.src.services.analytics.graph_analysis.algorithms import (
     betweenness_centrality,
     graph_lof,
     louvain_communities,

@@ -2,7 +2,10 @@
 
 import pytest
 
-from services.common.healthcheck import check_with_timeout, aggregate
+from yosai_intel_dashboard.src.services.common.healthcheck import (
+    aggregate,
+    check_with_timeout,
+)
 
 
 async def ok_probe():
