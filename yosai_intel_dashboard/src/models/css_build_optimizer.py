@@ -14,9 +14,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Union
 
-from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
-    dynamic_config,
-)
+from types import SimpleNamespace
+
+try:  # pragma: no cover - configuration may not be available in tests
+    from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
+        dynamic_config,
+    )
+except Exception:  # pragma: no cover - fallback stub
+    dynamic_config = SimpleNamespace(
+        css=SimpleNamespace(
+            bundle_threshold_kb=0,
+            bundle_excellent_kb=0,
+            bundle_good_kb=0,
+            bundle_warning_kb=0,
+        )
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -417,6 +429,7 @@ class CSSOptimizer:
             # Remove whitespace
             content = re.sub(r"\s+", " ", content)
             content = re.sub(r";\s*}", "}", content)
+            content = re.sub(r"\s*{", "{", content)
             content = re.sub(r"{\s*", "{", content)
             content = re.sub(r"}\s*", "}", content)
             content = re.sub(r":\s*", ":", content)
@@ -439,63 +452,76 @@ class CSSOptimizer:
         except Exception as e:
             logger.info(f"❌ Error minifying {input_file}: {e}")
 
+    def _find_main_css(self) -> Path | None:
+        """Return the path to ``main.css`` if it exists."""
+        main_css = self.css_dir / "main.css"
+        if not main_css.exists():
+            logger.info("❌ main.css not found")
+            return None
+        return main_css
+
+    def _aggregate_css(self, main_css: Path) -> str:
+        """Return a combined CSS string including imported files."""
+        imports: List[str] = []
+        remaining_lines: List[str] = []
+
+        for line in main_css.read_text(encoding="utf-8").splitlines(True):
+            match = re.match(r"\s*@import\s+[\'\"]([^\'\"]+)[\'\"]", line)
+            if match:
+                imports.append(match.group(1))
+            else:
+                remaining_lines.append(line)
+
+        segments: List[str] = ["".join(remaining_lines)]
+        for rel in imports:
+            try:
+                path = main_css.parent / rel
+                segments.append(path.read_text(encoding="utf-8"))
+            except Exception as exc:  # pragma: no cover - I/O errors
+                logger.error(f"❌ Error reading {path}: {exc}")
+        return "".join(segments)
+
+    def _minify_bundle(self, bundle: str, out: Path) -> None:
+        """Write *bundle* to *out* after minifying and creating compressed copies."""
+        tmp = out.with_suffix(".tmp.css")
+        tmp.write_text(bundle, encoding="utf-8")
+
+        self.minify_css(tmp, out)
+        tmp.unlink(missing_ok=True)
+
+        import gzip
+
+        with open(out, "rb") as f_in:
+            with gzip.open(f"{out}.gz", "wb") as f_out:
+                f_out.write(f_in.read())
+
+        try:
+            import brotli  # type: ignore
+
+            with open(out, "rb") as f_in:
+                compressed = brotli.compress(f_in.read())
+                with open(f"{out}.br", "wb") as f_out:
+                    f_out.write(compressed)
+            logger.info(f"✅ Brotli version: {out}.br")
+        except Exception:  # pragma: no cover - optional dependency
+            logger.info("ℹ️ Brotli compression skipped")
+
     def build_production_css(self) -> None:
-        """Bundle, minify and compress main CSS file for production."""
+        """Bundle, minify and compress ``main.css`` for production."""
         logger.info("🏗️ Building production CSS...")
 
         try:
-            main_css = self.css_dir / "main.css"
-            if not main_css.exists():
-                logger.info("❌ main.css not found")
+            main_css = self._find_main_css()
+            if main_css is None:
                 return
 
-            imports: List[str] = []
-            remaining_lines: List[str] = []
-
-            for line in main_css.read_text(encoding="utf-8").splitlines(True):
-                m = re.match(r"\s*@import\s+[\'\"]([^\'\"]+)[\'\"]", line)
-                if m:
-                    imports.append(m.group(1))
-                else:
-                    remaining_lines.append(line)
-
-            segments: List[str] = []
-            segments.append("".join(remaining_lines))
-            for rel in imports:
-                try:
-                    path = main_css.parent / rel
-                    segments.append(path.read_text(encoding="utf-8"))
-                except Exception as exc:
-                    logger.error(f"❌ Error reading {path}: {exc}")
-            bundle = "".join(segments)
+            bundle = self._aggregate_css(main_css)
 
             out = self.output_dir / "main.min.css"
-            tmp = out.with_suffix(".tmp.css")
-            tmp.write_text(bundle, encoding="utf-8")
-
-            self.minify_css(tmp, out)
-            tmp.unlink(missing_ok=True)
-
-            import gzip
-
-            with open(out, "rb") as f_in:
-                with gzip.open(f"{out}.gz", "wb") as f_out:
-                    f_out.write(f_in.read())
-
-            try:
-                import brotli  # type: ignore
-
-                with open(out, "rb") as f_in:
-                    compressed = brotli.compress(f_in.read())
-                    with open(f"{out}.br", "wb") as f_out:
-                        f_out.write(compressed)
-                logger.info(f"✅ Brotli version: {out}.br")
-            except Exception:
-                logger.info("ℹ️ Brotli compression skipped")
+            self._minify_bundle(bundle, out)
 
             logger.info(f"✅ Production CSS created: {out}")
             logger.info(f"✅ Gzipped version: {out}.gz")
-
         except Exception as e:
             logger.info(f"❌ Error building production CSS: {e}")
 
