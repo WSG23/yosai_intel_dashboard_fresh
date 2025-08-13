@@ -1,31 +1,11 @@
 from types import SimpleNamespace
 
-from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
-from yosai_intel_dashboard.src.core.interfaces import ConfigProviderProtocol
 from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import (
     ConfigurationMixin,
 )
 
 
-try:
-    from yosai_intel_dashboard.src.core.interfaces.protocols import ConfigurationServiceProtocol
-except Exception:  # pragma: no cover - optional deps
-    from typing import Protocol
-
-    class ConfigurationServiceProtocol(Protocol):
-        ai_confidence_threshold: float
-        max_upload_size_mb: int
-        upload_chunk_size: int
-        def get_max_upload_size_bytes(self) -> int: ...
-        def validate_large_file_support(self) -> bool: ...
-        def get_max_parallel_uploads(self) -> int: ...
-        def get_validator_rules(self) -> dict: ...
-        def get_db_pool_size(self) -> int: ...
-
-
-class FakeConfiguration(
-    ConfigurationMixin, ConfigurationProtocol, ConfigurationServiceProtocol, ConfigProviderProtocol
-):
+class FakeConfiguration(ConfigurationMixin):
     """Simple config for unit tests."""
 
     def __init__(self) -> None:

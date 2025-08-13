@@ -2,7 +2,7 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -46,6 +46,7 @@ class ModelRecord(Base):
     dataset_hash = Column(String(64))
     storage_uri = Column(String(255))
     mlflow_run_id = Column(String(64))
+    experiment_id = Column(String(64), nullable=False, default="default")
     is_active = Column(Boolean, default=False)
 
 
@@ -93,7 +94,7 @@ class ModelRegistry:
         self.drift_thresholds = drift_thresholds or {}
         self._baseline_features: Dict[str, pd.DataFrame] = {}
         self._latest_features: Dict[str, pd.DataFrame] = {}
-        self._previous_active: Dict[str, List[str]] = {}
+        self._previous_active: Dict[Tuple[str, str], List[str]] = {}
 
     # --------------------------------------------------------------
     def _metrics_improved(self, new: Dict[str, float], old: Dict[str, float]) -> bool:
@@ -125,10 +126,11 @@ class ModelRegistry:
         *,
         version: str | None = None,
         training_date: datetime | None = None,
+        experiment_id: str = "default",
     ) -> ModelRecord:
         session = self._session()
         try:
-            active = self.get_model(name, active_only=True)
+            active = self.get_model(name, active_only=True, experiment_id=experiment_id)
             if version is None:
                 if active:
                     improved = self._metrics_improved(metrics, active.metrics or {})
@@ -157,6 +159,7 @@ class ModelRegistry:
                     dataset_hash=dataset_hash,
                     storage_uri=storage_uri,
                     mlflow_run_id=run_id,
+                    experiment_id=experiment_id,
                     is_active=False,
                 )
                 session.add(record)
@@ -186,10 +189,13 @@ class ModelRegistry:
         version: str | None = None,
         *,
         active_only: bool = False,
+        experiment_id: str | None = "default",
     ) -> ModelRecord | None:
         session = self._session()
         try:
             stmt = select(ModelRecord).where(ModelRecord.name == name)
+            if experiment_id is not None:
+                stmt = stmt.where(ModelRecord.experiment_id == experiment_id)
             if active_only:
                 stmt = stmt.where(ModelRecord.is_active.is_(True))
             if version:
@@ -200,20 +206,28 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def list_models(self, name: str | None = None) -> List[ModelRecord]:
+    def get_model_for_experiment(self, name: str, experiment_id: str) -> ModelRecord | None:
+        """Return the active model for *name* within *experiment_id*."""
+        return self.get_model(name, active_only=True, experiment_id=experiment_id)
+
+    def list_models(
+        self, name: str | None = None, experiment_id: str | None = None
+    ) -> List[ModelRecord]:
         session = self._session()
         try:
             stmt = select(ModelRecord)
             if name:
                 stmt = stmt.where(ModelRecord.name == name)
+            if experiment_id is not None:
+                stmt = stmt.where(ModelRecord.experiment_id == experiment_id)
             stmt = stmt.order_by(ModelRecord.name, ModelRecord.version)
             return list(session.execute(stmt).scalars().all())
         finally:
             session.close()
 
-    def list_versions(self, name: str) -> List[ModelRecord]:
+    def list_versions(self, name: str, experiment_id: str | None = None) -> List[ModelRecord]:
         """Return all versions for a given model name."""
-        return self.list_models(name)
+        return self.list_models(name, experiment_id)
 
     def delete_model(self, model_id: int) -> None:
         session = self._session()
@@ -225,18 +239,28 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def set_active_version(self, name: str, version: str) -> None:
+    def set_active_version(
+        self, name: str, version: str, *, experiment_id: str = "default"
+    ) -> None:
         session = self._session()
         try:
             new_rec = session.execute(
                 select(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.version == version)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.version == version,
+                    ModelRecord.experiment_id == experiment_id,
+                )
             ).scalar_one_or_none()
             if new_rec is None:
                 raise ValueError(f"Model {name} version {version} not found")
             current = session.execute(
                 select(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.is_active.is_(True))
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.experiment_id == experiment_id,
+                    ModelRecord.is_active.is_(True),
+                )
             ).scalar_one_or_none()
             if current:
                 for m, threshold in self.drift_thresholds.items():
@@ -250,56 +274,78 @@ class ModelRegistry:
                         raise ValueError(
                             f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds {threshold}"
                         )
-                self._previous_active.setdefault(name, []).append(current.version)
+                self._previous_active.setdefault((name, experiment_id), []).append(
+                    current.version
+                )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name)
+                .where(ModelRecord.name == name, ModelRecord.experiment_id == experiment_id)
                 .values(is_active=False)
             )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.version == version)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.version == version,
+                    ModelRecord.experiment_id == experiment_id,
+                )
                 .values(is_active=True)
             )
             session.commit()
         finally:
             session.close()
 
-    def rollback_model(self, name: str) -> ModelRecord | None:
+    def rollback_model(self, name: str, experiment_id: str = "default") -> ModelRecord | None:
         session = self._session()
         try:
-            history = self._previous_active.get(name)
+            history = self._previous_active.get((name, experiment_id))
             if not history:
                 return None
             target_version = history.pop()
             current = session.execute(
                 select(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.is_active.is_(True))
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.experiment_id == experiment_id,
+                    ModelRecord.is_active.is_(True),
+                )
             ).scalar_one_or_none()
             if current:
-                self._previous_active.setdefault(name, []).append(current.version)
+                self._previous_active.setdefault((name, experiment_id), []).append(
+                    current.version
+                )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name)
+                .where(ModelRecord.name == name, ModelRecord.experiment_id == experiment_id)
                 .values(is_active=False)
             )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.version == target_version)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.version == target_version,
+                    ModelRecord.experiment_id == experiment_id,
+                )
                 .values(is_active=True)
             )
             session.commit()
             rec = session.execute(
                 select(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.version == target_version)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.version == target_version,
+                    ModelRecord.experiment_id == experiment_id,
+                )
             ).scalar_one_or_none()
             return rec
         finally:
             session.close()
 
     # Backwards compatibility alias
-    def rollback_to_previous(self, name: str) -> ModelRecord | None:
-        return self.rollback_model(name)
+    def rollback_to_previous(
+        self, name: str, experiment_id: str = "default"
+    ) -> ModelRecord | None:
+        return self.rollback_model(name, experiment_id)
 
     # --------------------------------------------------------------
     def store_version_metadata(self, name: str, version: str) -> None:
