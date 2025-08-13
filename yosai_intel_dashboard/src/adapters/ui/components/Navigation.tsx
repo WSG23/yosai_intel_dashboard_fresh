@@ -17,7 +17,9 @@ import { useProficiencyStore } from '../state/store';
 interface NavItem {
   name: string;
   href?: string;
+
   icon?: React.ComponentType<{ className?: string }>;
+
   description?: string;
   level: number;
   children?: NavItem[];
