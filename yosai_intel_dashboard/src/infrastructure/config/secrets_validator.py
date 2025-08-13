@@ -182,7 +182,9 @@ class SecretsValidator:
         for key in self.REQUIRED_PRODUCTION_SECRETS:
             value = source.get_secret(key)
             if isinstance(value, str) and (
-                value.startswith("vault:") or value.startswith("aws-secrets:")
+                value.startswith("vault:")
+                or value.startswith("aws-secrets:")
+                or value.startswith("file:")
             ):
                 if manager is None:
                     manager = SecureConfigManager.__new__(SecureConfigManager)

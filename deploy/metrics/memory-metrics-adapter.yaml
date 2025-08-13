@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: memory-metrics-adapter
+  namespace: monitoring
+data:
+  config.yaml: |
+    rules:
+      - seriesQuery: 'container_memory_working_set_bytes{container!="",pod!=""}'
+        resources:
+          overrides:
+            namespace:
+              resource: namespace
+            pod:
+              resource: pod
+        name:
+          matches: "^(.*)_bytes$"
+          as: "${1}"
+        metricsQuery: 'sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'

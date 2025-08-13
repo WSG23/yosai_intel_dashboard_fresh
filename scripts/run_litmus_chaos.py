@@ -5,7 +5,10 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-CHAOS_DIR = Path(__file__).resolve().parent.parent / "k8s" / "chaos"
+ROOT = Path(__file__).resolve().parent.parent
+CHAOS_DIR = ROOT / "deploy" / "chaos"
+if not CHAOS_DIR.exists():  # Backward compatibility with old location
+    CHAOS_DIR = ROOT / "k8s" / "chaos"
 
 
 def run(cmd: list[str]) -> None:

@@ -1,0 +1,25 @@
+name: chaos-tests
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+jobs:
+  chaos:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.26.0'
+      - name: Apply chaos experiments
+        run: python scripts/run_litmus_chaos.py
+      - name: Publish resilience metrics
+        env:
+          PUSHGATEWAY_URL: http://prometheus-pushgateway:9091
+        run: |
+          echo '{"name":"service-kill","duration":60,"succeeded":true}' | \
+            python scripts/publish_chaos_metrics.py

@@ -132,6 +132,16 @@ class SecureConfigManager(ConfigManager):
             if obj.startswith("aws-secrets:"):
                 name = obj[len("aws-secrets:") :]
                 return self._read_aws_secret(name)
+            if obj.startswith("file:"):
+                file_path = obj[5:]
+                try:
+                    with open(file_path, encoding="utf-8") as fh:
+                        return fh.read().strip()
+                except Exception as exc:
+                    self.log.error("Failed to read secret file %s: %s", file_path, exc)
+                    raise ConfigurationError(
+                        f"Failed to read secret file {file_path}"
+                    ) from exc
             return obj
         if isinstance(obj, list):
             return [self._resolve_secret_values(v) for v in obj]
