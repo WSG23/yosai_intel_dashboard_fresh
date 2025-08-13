@@ -217,6 +217,7 @@ class TrainingPipeline:
             str(best_res.model_path),
             best_res.metrics,
             dataset_hash,
+            feature_defs_version=None,
         )
         if improved:
             self.registry.set_active_version(best_res.name, record.version)

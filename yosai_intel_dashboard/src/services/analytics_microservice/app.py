@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Dict
 
+import logging
+from time import perf_counter
+
 from analytics import anomaly_detection, security_patterns
 from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 from shared.errors.types import ErrorCode, ErrorResponse
@@ -43,10 +46,16 @@ from fastapi import APIRouter, Depends, FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 from monitoring.ab_testing import ABTest
 
+try:  # pragma: no cover - optional dependency
+    from prometheus_client import Histogram  # type: ignore
+except Exception:  # pragma: no cover
+    Histogram = None  # type: ignore
+
 
 from .analytics_service import AnalyticsService, get_analytics_service
 
 logger = logging.getLogger(__name__)
+
 app = FastAPI()
 
 
@@ -137,6 +146,7 @@ async def register_model(
             {},
             "",
             version=version,
+            feature_defs_version=None,
         )
         svc.model_registry.set_active_version(name, record.version)
         try:
@@ -221,12 +231,19 @@ def _load_model(svc: AnalyticsService, name: str, local_path: Path) -> Any:
     return model_obj
 
 
-def _run_prediction(model_obj: Any, data: Any) -> Any:
-    """Execute model inference on ``data``."""
+def _run_prediction(model_obj: Any, data: Any) -> tuple[Any, float]:
+    """Execute model inference on ``data`` and record latency."""
+    start = perf_counter()
     try:
-        return model_obj.predict(data)
+        result = model_obj.predict(data)
     except Exception as exc:
         raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    latency = perf_counter() - start
+    model_label = getattr(getattr(model_obj, "metadata", None), "name", model_obj.__class__.__name__)
+    if _INFERENCE_LATENCY:
+        _INFERENCE_LATENCY.labels(model_label).observe(latency)
+    logger.debug("Model %s inference took %.6f seconds", model_label, latency)
+    return result, latency
 
 
 def _log_explainability(

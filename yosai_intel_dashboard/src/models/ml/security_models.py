@@ -270,7 +270,13 @@ def _register_model(
     with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as fh:
         joblib.dump(model_obj, fh)
         tmp_path = Path(fh.name)
-    record = registry.register_model(name, str(tmp_path), metrics, dataset_hash)
+    record = registry.register_model(
+        name,
+        str(tmp_path),
+        metrics,
+        dataset_hash,
+        feature_defs_version=None,
+    )
     dest_dir = Path("models") / name / record.version
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / f"{name}.joblib"

@@ -1,45 +1,44 @@
-from types import ModuleType, SimpleNamespace
+import ast
+import time
+from pathlib import Path
+from types import SimpleNamespace
 
-from yosai_intel_dashboard.src.core.imports.resolver import safe_import
-
-
-# Stub resilience metrics to avoid optional dependency errors
-metrics_mod = ModuleType("services.resilience.metrics")
-metrics_mod.circuit_breaker_state = SimpleNamespace(
-    labels=lambda *a, **k: SimpleNamespace(inc=lambda: None)
-)
-resilience_pkg = ModuleType("services.resilience")
-resilience_pkg.metrics = metrics_mod
-services_pkg = ModuleType("services")
-safe_import("services", services_pkg)
-safe_import("services.resilience", resilience_pkg)
-safe_import("services.resilience.metrics", metrics_mod)
-
-from yosai_intel_dashboard.models.ml.base_model import BaseModel, ModelMetadata
-
-
-class DummyModel(BaseModel):
-    def __init__(self):
-        super().__init__(metadata=ModelMetadata(name="dummy"))
-
-    def _predict(self, data):
-        return data
-
-
-def test_inference_latency_recorded(monkeypatch):
-    calls = []
-    perf = SimpleNamespace(
-        record_metric=lambda *args, **kwargs: calls.append((args, kwargs))
+def test_run_prediction_emits_latency():
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "yosai_intel_dashboard"
+        / "src"
+        / "services"
+        / "analytics_microservice"
+        / "app.py"
     )
-    monkeypatch.setattr(
-        "yosai_intel_dashboard.models.ml.base_model.get_performance_monitor",
-        lambda: perf,
+    source = path.read_text()
+    module_ast = ast.parse(source)
+    run_node = next(
+        n for n in module_ast.body if isinstance(n, ast.FunctionDef) and n.name == "_run_prediction"
     )
+    ast.fix_missing_locations(run_node)
+    mod = ast.Module(body=[run_node], type_ignores=[])
+    code = compile(mod, str(path), "exec")
+    calls: list[tuple[str, float]] = []
+    env = {
+        "perf_counter": time.perf_counter,
+        "http_error": lambda *a, **k: None,
+        "ErrorCode": SimpleNamespace(INTERNAL="INTERNAL"),
+        "_INFERENCE_LATENCY": SimpleNamespace(
+            labels=lambda m: SimpleNamespace(observe=lambda v: calls.append((m, v)))
+        ),
+        "logger": SimpleNamespace(debug=lambda *a, **k: None),
+        "Any": object,
+    }
+    exec(code, env)
+    run_prediction = env["_run_prediction"]
 
-    model = DummyModel()
-    model.predict("foo", log_prediction=False)
+    class Model:
+        def predict(self, data):
+            return data
 
-    assert any(args[0] == "model.inference_latency" for args, _ in calls)
-    latency = next(args[1] for args, _ in calls if args[0] == "model.inference_latency")
+    result, latency = run_prediction(Model(), [1])
+    assert result == [1]
     assert latency >= 0
-
+    assert calls and calls[0][1] == latency
