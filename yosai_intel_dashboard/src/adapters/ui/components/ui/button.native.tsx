@@ -1,14 +1,6 @@
 import React from 'react';
 import { Pressable, Text } from 'react-native';
-
-export interface ButtonProps {
-  children: React.ReactNode;
-  onPress?: () => void;
-  disabled?: boolean;
-  variant?: 'default' | 'outline';
-  className?: string;
-  size?: 'sm' | 'default';
-}
+import type { ButtonProps } from './button.types';
 
 export const Button: React.FC<ButtonProps> = ({
   children,
@@ -16,10 +8,12 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   variant = 'default',
   className = '',
-  size = 'default'
+  size = 'default',
 }) => {
   const baseClass =
-    size === 'sm' ? 'px-3 py-1 text-sm rounded font-medium' : 'px-4 py-2 rounded-lg font-medium';
+    size === 'sm'
+      ? 'px-3 py-1 text-sm rounded font-medium'
+      : 'px-4 py-2 rounded-lg font-medium';
   const variantClass =
     variant === 'outline'
       ? 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'

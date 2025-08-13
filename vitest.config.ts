@@ -10,8 +10,8 @@ export default defineConfig({
       'components/**/*.vitest.test.{ts,tsx}',
       'pages/**/*.vitest.test.{ts,tsx}',
       'libs/**/*.vitest.test.{ts,tsx}',
+      'yosai_intel_dashboard/**/*.vitest.test.{ts,tsx}',
     ],
-    exclude: ['yosai_intel_dashboard/**'],
   },
   resolve: {
     alias: {
