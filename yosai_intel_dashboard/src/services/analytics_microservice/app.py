@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Dict
 
+import logging
+from time import perf_counter
+
 from analytics import anomaly_detection, security_patterns
 from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 from shared.errors.types import ErrorCode, ErrorResponse
@@ -37,25 +40,45 @@ from yosai_intel_dashboard.src.services.common.async_db import create_pool
 from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
+import logging
+import uuid
+from fastapi import APIRouter, Depends, FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
+from monitoring.ab_testing import ABTest
+
+try:  # pragma: no cover - optional dependency
+    from prometheus_client import Histogram  # type: ignore
+except Exception:  # pragma: no cover
+    Histogram = None  # type: ignore
 
 
 from .analytics_service import AnalyticsService, get_analytics_service
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
 
 @app.on_event("startup")  # type: ignore[misc]
-
 async def _startup() -> None:
-    """Placeholder startup hook."""
-    return None
+    """Initialize A/B test experiment."""
+    app.state.ab_test = ABTest({"control": 1, "treatment": 1})
+    app.state.ab_test.set_rollout_strategy(
+        lambda winner: logger.info("Rolling out variant %s", winner)
+    )
 
 
 @app.get("/api/v1/health")  # type: ignore[misc]
 async def health() -> Dict[str, str]:
     """Basic service health endpoint."""
     return {"status": "ok"}
+
+
+@app.post("/api/v1/abtest/evaluate")  # type: ignore[misc]
+async def evaluate_ab_test() -> Dict[str, str | None]:
+    """Evaluate the current experiment and return the winner."""
+    winner = app.state.ab_test.evaluate()
+    return {"winner": winner}
 
 
 @app.get("/api/v1/analytics/dashboard-summary")  # type: ignore[misc]
@@ -123,6 +146,7 @@ async def register_model(
             {},
             "",
             version=version,
+            feature_defs_version=None,
         )
         svc.model_registry.set_active_version(name, record.version)
         try:
@@ -207,12 +231,19 @@ def _load_model(svc: AnalyticsService, name: str, local_path: Path) -> Any:
     return model_obj
 
 
-def _run_prediction(model_obj: Any, data: Any) -> Any:
-    """Execute model inference on ``data``."""
+def _run_prediction(model_obj: Any, data: Any) -> tuple[Any, float]:
+    """Execute model inference on ``data`` and record latency."""
+    start = perf_counter()
     try:
-        return model_obj.predict(data)
+        result = model_obj.predict(data)
     except Exception as exc:
         raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    latency = perf_counter() - start
+    model_label = getattr(getattr(model_obj, "metadata", None), "name", model_obj.__class__.__name__)
+    if _INFERENCE_LATENCY:
+        _INFERENCE_LATENCY.labels(model_label).observe(latency)
+    logger.debug("Model %s inference took %.6f seconds", model_label, latency)
+    return result, latency
 
 
 def _log_explainability(
@@ -267,9 +298,9 @@ async def predict(
 
     local_path = _download_artifact(svc, name, record)
     model_obj = _load_model(svc, name, local_path)
-    result = _run_prediction(model_obj, req.data)
-
     prediction_id = str(uuid.uuid4())
+    variant = app.state.ab_test.assign(prediction_id)
+    result = _run_prediction(model_obj, req.data)
     _log_explainability(
         svc,
         name,
@@ -278,7 +309,12 @@ async def predict(
         record,
         prediction_id,
     )
-    return {"prediction_id": prediction_id, "predictions": result}
+    app.state.ab_test.log_metric(variant, 1.0)
+    return {
+        "prediction_id": prediction_id,
+        "predictions": result,
+        "variant": variant,
+    }
 
 
 @models_router.get("/{name}/drift", responses=ERROR_RESPONSES)
