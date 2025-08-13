@@ -21,9 +21,15 @@ def _resolve_cfg(cfg: Any | None) -> Any:
     if cfg is not None:
         return cfg
     try:
-        return registry.get("config_service")
-    except KeyError:
-        return ConfigService()
+        get = getattr(registry, "get", None)
+        if callable(get):
+            result = get("config_service")
+            if result is not None:
+                return result
+    except Exception:
+        # If the registry is absent or misconfigured fall back to defaults
+        pass
+    return ConfigService()
 
 
 def get_ai_confidence_threshold(cfg: Any | None = None) -> float:

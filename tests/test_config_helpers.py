@@ -1,8 +1,9 @@
 from types import SimpleNamespace
 import importlib.util
+import sys
 from pathlib import Path
 
-# Dynamically import the new helpers module
+# Dynamically import the helpers module under its package name for coverage
 helpers_path = (
     Path(__file__).resolve().parents[1]
     / "yosai_intel_dashboard"
@@ -11,8 +12,10 @@ helpers_path = (
     / "utils"
     / "config_helpers.py"
 )
-_spec = importlib.util.spec_from_file_location("config_helpers", helpers_path)
+module_name = "yosai_intel_dashboard.src.core.utils.config_helpers"
+_spec = importlib.util.spec_from_file_location(module_name, helpers_path)
 config_helpers = importlib.util.module_from_spec(_spec)
+sys.modules[module_name] = config_helpers
 _spec.loader.exec_module(config_helpers)  # type: ignore
 
 
