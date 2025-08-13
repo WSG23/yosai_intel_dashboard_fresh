@@ -23,6 +23,7 @@ func TestZapLoggerJSON(t *testing.T) {
 	}
 	lg.Info("hello")
 	if err := lg.Sync(); err != nil && !errors.Is(err, syscall.ENOTTY) && !errors.Is(err, syscall.EINVAL) {
+
 		t.Fatal(err)
 	}
 	if err := w.Close(); err != nil {

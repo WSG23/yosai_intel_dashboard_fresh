@@ -6,10 +6,11 @@ Handles Unicode surrogate characters safely"""
 
 import io
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Iterable
 
 import pandas as pd
 
+from unicode_toolkit import safe_encode_text
 from yosai_intel_dashboard.src.core.performance import get_performance_monitor
 from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 
@@ -24,6 +25,9 @@ from yosai_intel_dashboard.src.infrastructure.config.constants import (
 )
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
+)
+from yosai_intel_dashboard.src.infrastructure.config.unicode_handler import (
+    UnicodeHandler,
 )
 from yosai_intel_dashboard.src.services.data_processing.file_processor import (
     dataframe_from_bytes,
@@ -69,10 +73,16 @@ def process_uploaded_file(
     Process uploaded file content safely
     Returns: Dict with 'data', 'filename', 'status', 'error'
     """
+    filename = UnicodeHandler.sanitize(filename)
+
     try:
         decoded, decode_err = decode_contents(contents)
         if decoded is None:
-            logger.error("Base64 decode failed for %s: %s", filename, decode_err)
+            logger.error(
+                "Base64 decode failed for %s: %s",
+                safe_encode_text(filename),
+                decode_err,
+            )
 
             return {
                 "status": "error",
@@ -100,7 +110,12 @@ def process_uploaded_file(
                 "filename": sanitized,
             }
 
-        return {"status": "success", "data": df, "filename": sanitized, "error": None}
+        return {
+            "status": "success",
+            "data": df,
+            "filename": sanitized,
+            "error": None,
+        }
 
     except Exception as e:
         logger.error(

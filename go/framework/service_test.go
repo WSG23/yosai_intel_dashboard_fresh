@@ -19,7 +19,7 @@ func TestServiceBuilder(t *testing.T) {
 	}
 	hm := health.NewManager()
 	b.WithHealth(hm)
-	b.WithMetrics(metrics.NewPrometheusCollector("127.0.0.1:0", hm, &logging.ZapLogger{Logger: zap.NewNop()}))
+	b.WithMetrics(metrics.NewPrometheusCollector("", hm, &logging.ZapLogger{Logger: zap.NewNop()}))
 	svc, err := b.Build()
 	if err != nil {
 		t.Fatal(err)

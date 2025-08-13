@@ -17,7 +17,9 @@ func TestPrometheusCollector(t *testing.T) {
 	hm := health.NewManager()
 	logger := &logging.ZapLogger{Logger: zap.NewNop()}
 	c := NewPrometheusCollector("127.0.0.1:0", hm, logger)
-	if err := c.Start(); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := c.Start(ctx); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
@@ -34,6 +36,7 @@ func TestPrometheusCollector(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)

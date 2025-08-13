@@ -56,6 +56,7 @@ func (b *ServiceBuilder) Build() (*BaseService, error) {
 	}
 	if b.tracer == nil {
 		b.tracer = tracing.NewTracer(nil)
+
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -35,6 +35,7 @@ func (t *OTLPTracer) Start(ctx context.Context, serviceName, endpoint string) (f
 		t.client = otlptracehttp.NewClient(opts...)
 	}
 	exp, err := otlptrace.New(ctx, t.client)
+
 	if err != nil {
 		return nil, fmt.Errorf("create exporter: %w", err)
 	}

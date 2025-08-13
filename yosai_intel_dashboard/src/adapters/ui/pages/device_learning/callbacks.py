@@ -1,74 +1,7 @@
-from __future__ import annotations
+"""Backward compatible wrapper for device learning callbacks."""
 
-"""Device learning feature callbacks."""
-
-import pandas as pd
-from dash import callback_context, html
-from dash.dependencies import Input, Output
-
-from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
-    get_device_learning_service,
-)
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
-    TrulyUnifiedCallbacks,
+from yosai_intel_dashboard.src.callbacks.controller import (
+    register_device_learning_callbacks as register_callbacks,
 )
 
-
-def register_callbacks(app, container) -> None:
-    """Register device learning callbacks."""
-    callbacks = TrulyUnifiedCallbacks(app)
-
-    @callbacks.callback(
-        Output("device-learning-status", "children"),
-        [
-            Input("file-upload-store", "data"),
-            Input("device-mappings-confirmed", "data"),
-        ],
-        prevent_initial_call=True,
-        callback_id="device_learning",
-        component_name="device_learning_service",
-    )
-    def handle_device_learning(upload_data, confirmed_mappings):
-        """Handle learning using consolidated service."""
-        ctx = callback_context
-
-        if not ctx.triggered:
-            return ""
-
-        trigger_id = ctx.triggered[0]["prop_id"]
-
-        learning_service = get_device_learning_service(container)
-
-        if "file-upload-store" in trigger_id and upload_data:
-            df = pd.DataFrame(upload_data["data"])
-            filename = upload_data["filename"]
-
-            if learning_service.apply_to_global_store(df, filename):
-                return html.Div(
-                    [
-                        html.I(
-                            className="fas fa-brain me-2", **{"aria-hidden": "true"}
-                        ),
-                        "Learned device mappings applied!",
-                    ],
-                    className="text-success",
-                )
-
-        elif "device-mappings-confirmed" in trigger_id and confirmed_mappings:
-            df = pd.DataFrame(confirmed_mappings["original_data"])
-            filename = confirmed_mappings["filename"]
-            mappings = confirmed_mappings["mappings"]
-
-            fingerprint = learning_service.save_complete_mapping(df, filename, mappings)
-
-            return html.Div(
-                [
-                    html.I(className="fas fa-save me-2", **{"aria-hidden": "true"}),
-                    f"Mappings saved! ID: {fingerprint[:8]}",
-                ],
-                className="text-success",
-            )
-
-        return ""
-
-    return None
+__all__ = ["register_callbacks"]

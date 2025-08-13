@@ -8,6 +8,7 @@ import (
 func TestTracer(t *testing.T) {
 	tr := NewTracer(nil)
 	shutdown, err := tr.Start(context.Background(), "test", "")
+
 	if err != nil {
 		t.Fatal(err)
 	}

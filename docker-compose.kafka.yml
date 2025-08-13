@@ -108,7 +108,7 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: provectuslabs/kafka-ui:${KAFKA_UI_TAG:-0.7.2}
     container_name: yosai-kafka-ui
     depends_on:
       - kafka1

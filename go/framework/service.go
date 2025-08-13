@@ -39,7 +39,7 @@ func NewBaseService(name, cfgPath string) (*BaseService, error) {
 // Start runs the configured components and waits for termination signals.
 func (s *BaseService) Start() {
 	if s.Metrics != nil {
-		_ = s.Metrics.Start()
+		_ = s.Metrics.Start(s.ctx)
 	}
 	if s.tracer != nil {
 		shutdown, err := s.tracer.Start(s.ctx, s.Config.ServiceName, s.Config.TracingEndpoint)
@@ -86,6 +86,7 @@ func (s *BaseService) handleSignals() {
 			return
 		case <-sigCtx.Done():
 		}
+
 		if s.traceShutdown != nil {
 			_ = s.traceShutdown(context.Background())
 		}

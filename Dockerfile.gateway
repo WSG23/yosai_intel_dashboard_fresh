@@ -1,5 +1,5 @@
 # Stage 1: build
-FROM golang:1.22-alpine AS build
+FROM golang:1.22-alpine@sha256:1699c10032ca2582ec89a24a1312d986a3f094aed3d5c1147b19880afe40e052 AS build
 WORKDIR /src
 
 # If a go.work exists, copy it (optional) to stitch multiple modules under /go/*
@@ -16,7 +16,7 @@ RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway
 
 # Stage 2: minimal runtime, non-root
-FROM gcr.io/distroless/base-debian12
+FROM gcr.io/distroless/base-debian12@sha256:4f6e739881403e7d50f52a4e574c4e3c88266031fd555303ee2f1ba262523d6a
 WORKDIR /home/app
 COPY --from=build /out/gateway /usr/local/bin/gateway
 USER 1000:1000

@@ -81,6 +81,21 @@ for _mod, _stub in [
     ("opentelemetry.instrumentation.fastapi", None),
     ("structlog", None),
     ("sklearn", None),
+    ("sklearn.ensemble", SimpleNamespace(IsolationForest=object())),
+    (
+        "yosai_intel_dashboard.src.infrastructure.security.query_builder",
+        SimpleNamespace(log_sanitized_query=lambda *a, **k: None),
+    ),
+    (
+        "yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator",
+        SimpleNamespace(
+            UnicodeSecurityValidator=type(
+                "UnicodeSecurityValidator",
+                (),
+                {"validate_and_sanitize": lambda self, text: text},
+            )
+        ),
+    ),
 ]:
     if _mod == "prometheus_client":
 
