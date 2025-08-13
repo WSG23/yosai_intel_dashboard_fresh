@@ -1,7 +1,6 @@
 import importlib.util
 import os
 import pathlib
-import sys
 import time
 import types
 
@@ -79,15 +78,16 @@ def app_fixture(monkeypatch):
         def invalidate(self, key=None):
             pass
 
-    common_stub = types.ModuleType("services.common")
-    secrets_stub = types.ModuleType("services.common.secrets")
     vault = DummyVault()
+    secrets_stub = types.ModuleType(
+        "yosai_intel_dashboard.src.services.common.secrets"
+    )
     secrets_stub._init_client = lambda: vault
     secrets_stub.get_secret = lambda key: vault.secret
     secrets_stub.invalidate_secret = lambda key=None: None
-    common_stub.secrets = secrets_stub
-    safe_import('services.common', common_stub)
-    safe_import('services.common.secrets', secrets_stub)
+    safe_import(
+        'yosai_intel_dashboard.src.services.common.secrets', secrets_stub
+    )
     module, dummy = load_app()
     client = TestClient(module.app)
     return client, dummy, vault.secret
