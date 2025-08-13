@@ -113,7 +113,7 @@ Use the new import paths:
 ```python
 # Old (deprecated)
 from models.user import User
-from services.analytics import AnalyticsService
+from yosai_intel_dashboard.src.services.analytics import AnalyticsService
 from yosai_intel_dashboard.src.infrastructure.config.settings import Settings
 
 # New (correct)

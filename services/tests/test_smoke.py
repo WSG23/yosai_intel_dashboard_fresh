@@ -3,6 +3,6 @@
 
 def test_package_import():
     """Import the services package and ensure it has documentation."""
-    import services
+    import yosai_intel_dashboard.src.services as services
 
     assert services.__doc__

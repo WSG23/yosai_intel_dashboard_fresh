@@ -16,5 +16,5 @@ This document describes the system components, trust boundaries, and data flows.
 ## Data Flows
 - Clients interact with the API Gateway over HTTPS.
 - Services communicate via authenticated internal network channels.
-- Data from services flows to data stores with encryption at rest and in transit.
+- Data from service layers flows to data stores with encryption at rest and in transit.
 - Analytics pipeline consumes sanitized data and outputs reports to authorized users.

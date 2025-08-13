@@ -5,7 +5,7 @@ from typing import AsyncIterator, Awaitable, Callable, List
 
 import asyncpg
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.infrastructure.config.constants import (
     MIGRATION_CHUNK_SIZE,
 )

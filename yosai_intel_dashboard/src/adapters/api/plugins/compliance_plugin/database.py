@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.database.secure_exec import (
     execute_command,
     execute_query,

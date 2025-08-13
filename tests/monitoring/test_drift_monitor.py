@@ -5,7 +5,7 @@ import pandas as pd
 
 os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 
-from services.monitoring.drift_monitor import DriftMonitor
+from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
 
 
 def test_alert_triggered_and_metrics_persisted():

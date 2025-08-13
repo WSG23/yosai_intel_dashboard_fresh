@@ -1,11 +1,6 @@
 from __future__ import annotations
 
-import pathlib
-import sys
-
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from core.graph_etl_pipeline import GraphETLPipeline  # noqa: E402
+from yosai_intel_dashboard.src.core.graph_etl_pipeline import GraphETLPipeline
 
 
 def test_pipeline_generates_versioned_snapshot():

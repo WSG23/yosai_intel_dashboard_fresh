@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncpg
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 
 
 class IntegrityChecker:

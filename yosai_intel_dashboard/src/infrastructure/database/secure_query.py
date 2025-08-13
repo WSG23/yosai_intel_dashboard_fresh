@@ -22,7 +22,7 @@ def _validate_identifier(name: str, allowed: Set[str]) -> str:
 
 
 # The SecureQueryBuilder implementation has moved to
-# ``infrastructure.security.query_builder``. Importing from this module is
+# ``yosai_intel_dashboard.src.infrastructure.security.query_builder``. Importing from this module is
 # deprecated and will be removed in a future release.
 
 

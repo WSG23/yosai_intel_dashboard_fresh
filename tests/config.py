@@ -254,7 +254,7 @@ def register_dependency_stubs() -> None:
         execute_command=lambda *a, **k: None,
     )
     query_builder_stub = _simple_module(
-        "infrastructure.security.query_builder",
+        "yosai_intel_dashboard.src.infrastructure.security.query_builder",
         SecureQueryBuilder=lambda *a, **k: types.SimpleNamespace(
             table=lambda x: x, column=lambda x: x, build=lambda q, logger=None: (q, [])
         ),
@@ -262,11 +262,11 @@ def register_dependency_stubs() -> None:
     register_fallback("database", database_pkg)
     register_fallback("database.connection", connection_stub)
     register_fallback("database.secure_exec", secure_exec_stub)
-    register_fallback("infrastructure.security.query_builder", query_builder_stub)
+    register_fallback("yosai_intel_dashboard.src.infrastructure.security.query_builder", query_builder_stub)
     sys.modules.setdefault("database", database_pkg)
     sys.modules.setdefault("database.connection", connection_stub)
     sys.modules.setdefault("database.secure_exec", secure_exec_stub)
-    sys.modules.setdefault("infrastructure.security.query_builder", query_builder_stub)
+    sys.modules.setdefault("yosai_intel_dashboard.src.infrastructure.security.query_builder", query_builder_stub)
 
     config_manager_stub = _simple_module(
         "yosai_intel_dashboard.src.infrastructure.config.config_manager",
