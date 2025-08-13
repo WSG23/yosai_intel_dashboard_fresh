@@ -62,7 +62,7 @@ def test_configure_app_adds_middlewares():
     mws = _middleware_names(service.app)
     assert "TimingMiddleware" in mws
     assert "RateLimitMiddleware" in mws
-    assert build_dir.endswith("build")
+    assert build_dir.name == "build"
 
 
 def test_setup_security_sets_secret(monkeypatch):
