@@ -33,8 +33,6 @@
   box-shadow: 0 0 0 2px var(--color-accent);
 }
 
-/* General hover effect for all buttons */
-
 /* Button Sizes */
 .btn--xs {
   padding: var(--space-1) var(--space-2);
@@ -151,27 +149,6 @@
 .btn:active {
   transform: translateY(0);
   box-shadow: var(--shadow-sm);
-}
-
-/* Legacy button utility classes */
-.btn-primary {
-  background-color: var(--accent-primary);
-  color: var(--text-on-accent);
-}
-
-.btn-primary:hover {
-  background-color: var(--accent-primary-hover);
-
-}
-
-.btn-secondary {
-  background-color: var(--surface-secondary);
-  color: var(--text-primary);
-}
-
-.btn-secondary:hover {
-  background-color: var(--surface-tertiary);
-
 }
 
 /* Button States */

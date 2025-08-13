@@ -165,6 +165,7 @@
   /* Component Specific */
   --accent-primary: #007bff;
   --accent-primary-hover: #0056b3;
+  --navbar-height: 60px;
 }
 
 /* Dark Mode Overrides */
