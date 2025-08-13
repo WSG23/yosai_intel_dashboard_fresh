@@ -1,23 +1,15 @@
-"""Callback registration helpers."""
+"""Central callback registration for dashboard pages."""
 
 from .controller import (
-    CallbackIds,
-    DeviceLearningIds,
-    GreetingIds,
-    UploadIds,
     register_callbacks,
-    register_device_learning_callbacks,
-    register_greeting_callbacks,
+    register_greetings_callbacks,
     register_upload_callbacks,
+    register_device_learning_callbacks,
 )
 
 __all__ = [
-    "CallbackIds",
-    "DeviceLearningIds",
-    "GreetingIds",
-    "UploadIds",
     "register_callbacks",
-    "register_device_learning_callbacks",
-    "register_greeting_callbacks",
+    "register_greetings_callbacks",
     "register_upload_callbacks",
+    "register_device_learning_callbacks",
 ]
