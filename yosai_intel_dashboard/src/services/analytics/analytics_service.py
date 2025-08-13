@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-"""Analytics Service - Enhanced with Unique Patterns Analysis.
-
-Uploaded files are validated with
-``services.data_processing.file_handler.FileHandler`` before
-processing to ensure they are present, non-empty and within the configured size
-limits.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -148,37 +139,14 @@ class EventBus(Protocol):
     def publish(self, event: str, payload: Dict[str, Any]) -> None:
         """Publish ``payload`` under ``event`` name."""
 
+from typing import Any, Dict
 
-class Template(Protocol):
-    """Minimal template interface used for report rendering."""
+class AnalyticsService:
+    """Minimal service returning placeholder analytics data."""
 
-    def render(self, context: Dict[str, Any]) -> str:
-        """Render template using ``context``."""
+    def __init__(self) -> None:
+        self._metrics: Dict[str, Any] = {}
 
-
-class Storage(Protocol):
-    """Storage dependency interface."""
-
-    def save(self, name: str, data: Union[DataFrame, Series, Iterable[bytes]]) -> None:
-        """Persist ``data`` under ``name``."""
-
-    def load(self, name: str) -> Union[DataFrame, Series, bytes, Template]:
-        """Load object previously saved under ``name``."""
-
-
-logger = logging.getLogger(__name__)
-
-
-class DataSourceRouter:
-    """Helper to route analytics requests based on source."""
-
-    def __init__(self, orchestrator: AnalyticsOrchestrator) -> None:
-        self.orchestrator: AnalyticsOrchestrator = orchestrator
-
-    @with_error_handling(
-        category=ErrorCategory.ANALYTICS,
-        severity=ErrorSeverity.MEDIUM,
-    )
     def get_analytics(self, source: str) -> Dict[str, Any]:
         """Return analytics data for ``source``."""
         uploaded_data = self.orchestrator.loader.load_uploaded_data()
@@ -544,6 +512,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         return self.summarize_dataframe(cleaned)
 
     @override
+
     def get_metrics(self) -> Dict[str, Any]:
         """Return current analytics metrics."""
         return self.get_analytics_status()
@@ -581,11 +550,10 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
 
     # ------------------------------------------------------------------
     def load_model_from_registry(
-        self, name: str, *, destination_dir: str | None = None
-    ) -> str | None:
+        self, name: str, *, destination_dir: Path | None = None
+    ) -> Path | None:
         """Download the active model from the registry."""
         return self.model_manager.load_model(name, destination_dir=destination_dir)
-
 
 # Global service instance
 _analytics_service: AnalyticsService | None = None
@@ -684,10 +652,7 @@ def calculate_risk_score(
     return RiskScoreResult(score=score, level=_risk_level(score))
 
 
-__all__ = [
-    "AnalyticsService",
-    "get_analytics_service",
-    "create_analytics_service",
-    "RiskScoreResult",
-    "calculate_risk_score",
-]
+
+def get_analytics_service() -> AnalyticsService:
+    """Provide a default :class:`AnalyticsService` instance."""
+    return AnalyticsService()

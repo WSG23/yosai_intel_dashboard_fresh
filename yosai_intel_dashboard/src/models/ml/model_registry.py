@@ -25,6 +25,8 @@ from sqlalchemy.orm import (  # type: ignore[import-not-found]
     sessionmaker,
 )
 
+from types import SimpleNamespace
+
 from optional_dependencies import import_optional
 
 boto3 = import_optional("boto3")
@@ -36,7 +38,6 @@ logger = logging.getLogger(__name__)
 class Base(DeclarativeBase):  # type: ignore[misc]
     """Base class for SQLAlchemy models."""
     pass
-
 
 class ModelRecord(Base):
     """ORM model for storing ML models."""
@@ -124,6 +125,148 @@ class ModelRegistry:
         return self.Session()
 
     # --------------------------------------------------------------
+    def _validate_registration(
+        self,
+        name: str,
+        metrics: Dict[str, float],
+        version: str | None,
+        experiment_id: str,
+    ) -> str:
+        """Determine the model version after validating existing records."""
+        active = self.get_model(name, active_only=True, experiment_id=experiment_id)
+        if version is None:
+            if active:
+                improved = self._metrics_improved(metrics, active.metrics or {})
+                version = self._bump_version(active.version, improved)
+            else:
+                version = "0.1.0"
+        return version
+
+    def _update_storage_with_model(
+        self,
+        session: Session,
+        name: str,
+        version: str,
+        model_path: str,
+        metrics: Dict[str, float],
+        dataset_hash: str,
+        training_date: datetime | None,
+        experiment_id: str,
+    ) -> ModelRecord:
+        """Upload the model artifact, log metrics and persist the registry record."""
+        key = f"{name}/{version}/{Path(model_path).name}"
+        self.s3.upload_file(model_path, self.bucket, key)
+        storage_uri = f"s3://{self.bucket}/{key}"
+
+        if not mlflow:
+            raise RuntimeError("mlflow is required to register models")
+        with mlflow.start_run() as run:
+            for k, v in metrics.items():
+                mlflow.log_metric(k, v)
+            mlflow.log_artifact(model_path)
+            run_id = run.info.run_id
+
+        record = ModelRecord(
+            name=name,
+            version=version,
+            training_date=training_date or datetime.utcnow(),
+            metrics=metrics,
+            accuracy=metrics.get("accuracy"),
+            dataset_hash=dataset_hash,
+            feature_defs_version=feature_defs_version,
+            storage_uri=storage_uri,
+            mlflow_run_id=run_id,
+            experiment_id=experiment_id,
+            is_active=False,
+        )
+        session.add(record)
+        session.commit()
+        session.refresh(record)
+
+        # Keep only the five most recent versions per model
+        stmt = (
+            select(ModelRecord)
+            .where(ModelRecord.name == name)
+            .order_by(ModelRecord.training_date.desc())
+        )
+        versions = session.execute(stmt).scalars().all()
+        for old in versions[5:]:
+            session.delete(old)
+        if len(versions) > 5:
+            session.commit()
+
+        return record
+
+    def _log_registration_event(self, record: ModelRecord) -> None:
+        """Log information about a newly registered model."""
+        logger.info(f"Registered model {record.name} version {record.version}")
+
+    def _validate_activation(
+        self, session: Session, name: str, version: str, experiment_id: str
+    ) -> None:
+        """Ensure the requested version exists and passes drift checks."""
+        new_rec = session.execute(
+            select(ModelRecord)
+            .where(
+                ModelRecord.name == name,
+                ModelRecord.version == version,
+                ModelRecord.experiment_id == experiment_id,
+            )
+        ).scalar_one_or_none()
+        if new_rec is None:
+            raise ValueError(f"Model {name} version {version} not found")
+
+        current = session.execute(
+            select(ModelRecord)
+            .where(
+                ModelRecord.name == name,
+                ModelRecord.experiment_id == experiment_id,
+                ModelRecord.is_active.is_(True),
+            )
+        ).scalar_one_or_none()
+        if current:
+            for m, threshold in self.drift_thresholds.items():
+                old_val = (current.metrics or {}).get(m)
+                new_val = (new_rec.metrics or {}).get(m)
+                if (
+                    old_val is not None
+                    and new_val is not None
+                    and abs(new_val - old_val) > threshold
+                ):
+                    raise ValueError(
+                        f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds {threshold}"
+                    )
+            self._previous_active.setdefault((name, experiment_id), []).append(
+                current.version
+            )
+
+    def _update_active_storage(
+        self, session: Session, name: str, version: str, experiment_id: str
+    ) -> None:
+        """Persist active version changes to the database."""
+        session.execute(
+            update(ModelRecord)
+            .where(ModelRecord.name == name, ModelRecord.experiment_id == experiment_id)
+            .values(is_active=False)
+        )
+        session.execute(
+            update(ModelRecord)
+            .where(
+                ModelRecord.name == name,
+                ModelRecord.version == version,
+                ModelRecord.experiment_id == experiment_id,
+            )
+            .values(is_active=True)
+        )
+        session.commit()
+
+    def _log_activation(self, name: str, version: str, experiment_id: str) -> None:
+        """Log information about activating a model version."""
+        logger.info(
+            f"Activated model {name} version {version} for experiment {experiment_id}"
+        )
+
+    # --------------------------------------------------------------
     def register_model(
         self,
         name: str,
@@ -165,7 +308,7 @@ class ModelRegistry:
                     metrics=metrics,
                     accuracy=metrics.get("accuracy"),
                     dataset_hash=dataset_hash,
-                    feature_defs_version=feature_defs_version,
+                    feature_defs_version=None,
                     storage_uri=storage_uri,
                     mlflow_run_id=run_id,
                     experiment_id=experiment_id,
@@ -215,7 +358,9 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def get_model_for_experiment(self, name: str, experiment_id: str) -> ModelRecord | None:
+    def get_model_for_experiment(
+        self, name: str, experiment_id: str
+    ) -> ModelRecord | None:
         """Return the active model for *name* within *experiment_id*."""
         return self.get_model(name, active_only=True, experiment_id=experiment_id)
 
@@ -234,7 +379,9 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def list_versions(self, name: str, experiment_id: str | None = None) -> List[ModelRecord]:
+    def list_versions(
+        self, name: str, experiment_id: str | None = None
+    ) -> List[ModelRecord]:
         """Return all versions for a given model name."""
         return self.list_models(name, experiment_id)
 
@@ -281,14 +428,20 @@ class ModelRegistry:
                         and abs(new_val - old_val) > threshold
                     ):
                         raise ValueError(
-                            f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds {threshold}"
+                            (
+                                f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds"
+                                f" {threshold}"
+                            )
                         )
                 self._previous_active.setdefault((name, experiment_id), []).append(
                     current.version
                 )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.experiment_id == experiment_id)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.experiment_id == experiment_id,
+                )
                 .values(is_active=False)
             )
             session.execute(
@@ -301,10 +454,13 @@ class ModelRegistry:
                 .values(is_active=True)
             )
             session.commit()
+
         finally:
             session.close()
 
-    def rollback_model(self, name: str, experiment_id: str = "default") -> ModelRecord | None:
+    def rollback_model(
+        self, name: str, experiment_id: str = "default"
+    ) -> ModelRecord | None:
         session = self._session()
         try:
             history = self._previous_active.get((name, experiment_id))
@@ -325,7 +481,10 @@ class ModelRegistry:
                 )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.experiment_id == experiment_id)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.experiment_id == experiment_id,
+                )
                 .values(is_active=False)
             )
             session.execute(
@@ -371,23 +530,24 @@ class ModelRegistry:
         return None
 
     # --------------------------------------------------------------
-    def download_artifact(self, storage_uri: str, destination: str) -> None:
+    def download_artifact(self, storage_uri: str, destination: Path) -> None:
         parsed = urlparse(storage_uri)
         scheme = parsed.scheme
+        dest_path = Path(destination)
 
         if scheme == "s3":
             bucket = parsed.netloc
             key = parsed.path.lstrip("/")
-            self.s3.download_file(bucket, key, destination)
+            self.s3.download_file(bucket, key, str(dest_path))
         elif scheme in ("file", ""):
             src = parsed.path if scheme == "file" else storage_uri
-            shutil.copy(src, destination)
+            shutil.copy(src, dest_path)
         elif scheme in ("http", "https"):
             if not requests:
                 raise RuntimeError("requests is required for HTTP downloads")
             resp = requests.get(storage_uri, stream=True)
             resp.raise_for_status()
-            with open(destination, "wb") as fh:
+            with dest_path.open("wb") as fh:
                 for chunk in resp.iter_content(chunk_size=8192):
                     if chunk:
                         fh.write(chunk)
