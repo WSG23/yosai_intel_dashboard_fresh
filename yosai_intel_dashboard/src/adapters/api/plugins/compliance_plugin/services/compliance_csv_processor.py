@@ -292,6 +292,7 @@ class ComplianceCSVProcessor:
             try:
                 pd.to_datetime(sample_values.iloc[0])
             except (ValueError, TypeError, pd.errors.ParserError):
+
                 pass
             else:
                 detected_types.add("access_logs")

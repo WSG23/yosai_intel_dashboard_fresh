@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 from base64 import b64decode
-from typing import Any, Iterable, Optional, Tuple
+from typing import Any, Iterable, Mapping, Optional, Tuple
 
-from yosai_intel_dashboard.src.core.unicode import (
-    UnicodeSQLProcessor,
-)
+from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
 from yosai_intel_dashboard.src.core.unicode import clean_unicode_surrogates as _clean_unicode_surrogates
 from yosai_intel_dashboard.src.core.base_utils import safe_encode_text as _safe_encode_text
-from yosai_intel_dashboard.src.core.unicode import (
-    sanitize_dataframe,
-)
+from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
 
 
 def clean_unicode_text(text: Any) -> str:
@@ -60,6 +56,20 @@ def decode_upload_content(content: str, filename: str) -> Tuple[bytes, str]:
     return data, ext
 
 
+class UnicodeHandler:
+    """Lightweight sanitization helper mirroring project ``UnicodeHandler``."""
+
+    @staticmethod
+    def sanitize(obj: Any) -> Any:
+        if isinstance(obj, (str, bytes, bytearray)):
+            return _safe_encode_text(obj)
+        if isinstance(obj, Mapping):
+            return {k: UnicodeHandler.sanitize(v) for k, v in obj.items()}
+        if isinstance(obj, Iterable) and not isinstance(obj, (bytes, bytearray)):
+            return type(obj)(UnicodeHandler.sanitize(v) for v in obj)
+        return obj
+
+
 __all__ = [
     "clean_unicode_surrogates",
     "clean_unicode_text",
@@ -67,4 +77,5 @@ __all__ = [
     "UnicodeQueryHandler",
     "decode_upload_content",
     "sanitize_dataframe",
+    "UnicodeHandler",
 ]

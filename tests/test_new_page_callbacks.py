@@ -1,19 +1,17 @@
 import pytest
+from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
-pytestmark = pytest.mark.usefixtures("fake_dash")
 
-try:  # pragma: no cover
-    from yosai_intel_dashboard.src.pages.greetings.callbacks import register_callbacks
-    from yosai_intel_dashboard.src.services.greeting import GreetingService
-    from yosai_intel_dashboard.src.simple_di import ServiceContainer
-except Exception:  # pragma: no cover
-    register_callbacks = None  # type: ignore
-    GreetingService = ServiceContainer = None  # type: ignore
-    pytestmark = pytest.mark.skip("pages module not available")
+class GreetingService:
+    def greet(self, name: str) -> str:
+        return f"Hello, {name}!"
 
 
 def test_register_callbacks_injects_service(monkeypatch):
     import dash
+    from yosai_intel_dashboard.src.callbacks import controller as controller_module
+
+    register_greetings_callbacks = controller_module.register_greetings_callbacks
 
     app = dash.Dash(__name__)
     container = ServiceContainer()
@@ -22,16 +20,20 @@ def test_register_callbacks_injects_service(monkeypatch):
 
     captured = {}
 
-    def fake_callback(*args, **kwargs):
-        def decorator(func):
-            captured["func"] = func
-            return func
+    class DummyCallbacks:
+        def __init__(self, app):
+            self.app = app
 
-        return decorator
+        def callback(self, *args, **kwargs):
+            def decorator(func):
+                captured["func"] = func
+                return func
 
-    monkeypatch.setattr(app, "callback", fake_callback)
+            return decorator
 
-    register_callbacks(app, container)
+    monkeypatch.setattr(controller_module, "TrulyUnifiedCallbacks", DummyCallbacks)
+
+    register_greetings_callbacks(app, container)
 
     assert "func" in captured
     cb = captured["func"]
@@ -39,23 +41,28 @@ def test_register_callbacks_injects_service(monkeypatch):
 
 
 def test_app_factory_builds_container(monkeypatch):
-    try:  # pragma: no cover
-        import app as app_module  # type: ignore
-    except Exception:  # pragma: no cover
-        from yosai_intel_dashboard.src import app as app_module
+    from yosai_intel_dashboard.src import app as app_module
+    from yosai_intel_dashboard.src.callbacks import controller as controller_module
 
     captured = {}
 
-    def fake_callback(*args, **kwargs):
-        def decorator(func):
-            captured["func"] = func
-            return func
+    class DummyCallbacks:
+        def __init__(self, app):
+            self.app = app
 
-        return decorator
+        def callback(self, *args, **kwargs):
+            def decorator(func):
+                captured["func"] = func
+                return func
 
-    monkeypatch.setattr(app_module.Dash, "callback", fake_callback, raising=False)
+            return decorator
+
+    monkeypatch.setattr(controller_module, "TrulyUnifiedCallbacks", DummyCallbacks)
+    monkeypatch.setattr(controller_module, "register_upload_callbacks", lambda *a, **k: None)
+    monkeypatch.setattr(controller_module, "register_device_learning_callbacks", lambda *a, **k: None)
 
     dash_app = app_module.create_app()
-    assert isinstance(dash_app._container.get("greeting_service"), GreetingService)
+    svc = dash_app._container.get("greeting_service")
+    assert svc.greet("Alice") == "Hello, Alice!"
     cb = captured["func"]
     assert cb("Alice") == "Hello, Alice!"
