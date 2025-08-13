@@ -4,10 +4,14 @@ import base64
 import io
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Protocol
 
 # External libraries used only for demonstration; they are optional at runtime.
-import matplotlib.pyplot as plt  # type: ignore[import]
+import matplotlib.pyplot as plt
+
+
+class FigureProtocol(Protocol):
+    def savefig(self, buf: io.BytesIO, format: str) -> None: ...
 
 
 @dataclass
@@ -34,18 +38,18 @@ class ExportService:
     # ------------------------------------------------------------------
     # Export helpers
     # ------------------------------------------------------------------
-    def _save_image(self, fig: plt.Figure, fmt: str) -> bytes:
+    def _save_image(self, fig: FigureProtocol, fmt: str) -> bytes:
         buf = io.BytesIO()
         fig.savefig(buf, format=fmt)
         buf.seek(0)
         return buf.read()
 
-    def _save_html(self, fig: plt.Figure) -> str:
+    def _save_html(self, fig: FigureProtocol) -> str:
         image = self._save_image(fig, "png")
         b64 = base64.b64encode(image).decode("ascii")
         return f"<html><body><img src='data:image/png;base64,{b64}'/></body></html>"
 
-    def export(self, fig: plt.Figure, fmt: str) -> bytes | str:
+    def export(self, fig: FigureProtocol, fmt: str) -> bytes | str:
         fmt = fmt.lower()
         if fmt in {"svg", "png", "jpeg", "jpg", "pdf"}:
             return self._save_image(fig, fmt)
@@ -56,7 +60,7 @@ class ExportService:
     # ------------------------------------------------------------------
     # Shareable links and annotations
     # ------------------------------------------------------------------
-    def create_shareable(self, fig: plt.Figure, fmt: str) -> tuple[str, str, str]:
+    def create_shareable(self, fig: FigureProtocol, fmt: str) -> tuple[str, str, str]:
         """Export ``fig`` and return (id, link, embed code)."""
 
         content = self.export(fig, fmt)

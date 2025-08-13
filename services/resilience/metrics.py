@@ -2,20 +2,23 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
-try:  # pragma: no cover - metrics are optional during tests
-    from prometheus_client import Counter  # type: ignore[import-not-found]
-except Exception:  # pragma: no cover - fallback when Prometheus unavailable
+if TYPE_CHECKING:
+    from prometheus_client import Counter
+else:  # pragma: no cover - metrics are optional during tests
+    try:
+        from prometheus_client import Counter
+    except Exception:  # pragma: no cover - fallback when Prometheus unavailable
 
-    class Counter:  # type: ignore[misc, no-redef]
-        def __init__(self, *a: Any, **k: Any) -> None: ...
+        class Counter:  # type: ignore[no-redef]
+            def __init__(self, *a: object, **k: object) -> None: ...
 
-        def labels(self, *a: Any, **k: Any) -> "Counter":
-            return self
+            def labels(self, *a: object, **k: object) -> "Counter":
+                return self
 
-        def inc(self, *a: Any, **k: Any) -> None:
-            return None
+            def inc(self, *a: object, **k: object) -> None:
+                return None
 
 
 circuit_breaker_state = Counter(
@@ -23,3 +26,5 @@ circuit_breaker_state = Counter(
     "Count of circuit breaker state transitions",
     ["name", "state"],
 )
+
+__all__ = ["Counter", "circuit_breaker_state"]

@@ -1,11 +1,9 @@
 """Tests for the healthcheck utilities."""
 
+import asyncio
 import pytest
 
-from yosai_intel_dashboard.src.services.common.healthcheck import (
-    aggregate,
-    check_with_timeout,
-)
+from services.common.healthcheck import aggregate, check_with_timeout
 
 
 async def ok_probe():
@@ -18,6 +16,11 @@ async def failing_probe():
     raise RuntimeError("boom")
 
 
+async def hanging_probe():
+    """A probe that never completes."""
+    await asyncio.sleep(10)
+
+
 @pytest.mark.asyncio
 async def test_check_with_timeout_ok():
     result = await check_with_timeout("ok", ok_probe)
@@ -28,6 +31,12 @@ async def test_check_with_timeout_ok():
 async def test_check_with_timeout_failure():
     result = await check_with_timeout("bad", failing_probe)
     assert result == {"bad": "fail:RuntimeError"}
+
+
+@pytest.mark.asyncio
+async def test_check_with_timeout_timeout():
+    result = await check_with_timeout("slow", hanging_probe, timeout_s=0.01)
+    assert result == {"slow": "fail:TimeoutError"}
 
 
 @pytest.mark.asyncio

@@ -12,23 +12,29 @@ has recovered.
 
 import asyncio
 import time
-from typing import Any, Awaitable, Callable, Optional, TypeVar
+from types import TracebackType
+from typing import Awaitable, Callable, ParamSpec, TypeVar
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 try:  # pragma: no cover - optional during tests
     from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
-        record_error,  # type: ignore
+        record_error,
     )
 except Exception:  # pragma: no cover - if monitoring deps missing
 
-    def record_error(_name: str) -> None:  # type: ignore
+    def record_error(service: str) -> None:
         """Fallback ``record_error`` when monitoring is optional."""
         return None
 
 
-_circuit_breaker_state = None
+from .metrics import Counter
+
+_circuit_breaker_state: Counter | None = None
 
 
-def _get_circuit_breaker_state():
+def _get_circuit_breaker_state() -> Counter:
     """Lazily import the Prometheus metric for circuit breaker state."""
     global _circuit_breaker_state
     if _circuit_breaker_state is None:
@@ -62,7 +68,7 @@ class CircuitBreaker:
         self.recovery_timeout = recovery_timeout
         self._name = name or "circuit"
         self._failures = 0
-        self._opened_at: Optional[float] = None
+        self._opened_at: float | None = None
         self._state = "closed"
         self._lock = asyncio.Lock()
 
@@ -104,16 +110,21 @@ class CircuitBreaker:
             raise CircuitBreakerOpen("circuit breaker is open")
         return self
 
-    async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
         if exc is None:
             await self.record_success()
         else:
             await self.record_failure()
 
-    def __call__(self, func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+    def __call__(self, func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         cb = self
 
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             if not await cb.allows_request():
                 raise CircuitBreakerOpen("circuit breaker is open")
             try:
@@ -128,17 +139,14 @@ class CircuitBreaker:
         return wrapper
 
 
-F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
-
-
 def circuit_breaker(
     failure_threshold: int, recovery_timeout: int, name: str | None = None
-) -> Callable[[F], F]:
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """Decorator factory creating a :class:`CircuitBreaker` per function."""
     cb = CircuitBreaker(failure_threshold, recovery_timeout, name)
 
-    def decorator(func: F) -> F:
-        return cb(func)  # type: ignore[return-value]
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        return cb(func)
 
     return decorator
 
