@@ -200,14 +200,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             upload_controller=upload_controller,
             report_generator=report_generator,
         )
-        (
-            self.database_manager,
-            self.db_helper,
-            self.summary_reporter,
-            self.database_retriever,
-        ) = self.db_initializer.setup(self.database, db_retriever)
-        if loader is None or calculator is None or publisher is None:
-            raise ValueError("loader, calculator and publisher are required")
+        self._setup_database(db_retriever)
         self._create_orchestrator(loader, calculator, publisher)
         self.event_publisher = EventPublisher(self.publisher)
         self.router = DataSourceRouter(self.orchestrator)
@@ -261,13 +254,26 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self.orchestrator: AnalyticsOrchestrator
         self.router: DataSourceRouter
 
+    def _setup_database(
+        self, db_retriever: DatabaseAnalyticsRetrieverProtocol | None
+    ) -> None:
+        """Configure database helpers via the initializer."""
+        (
+            self.database_manager,
+            self.db_helper,
+            self.summary_reporter,
+            self.database_retriever,
+        ) = self.db_initializer.setup(self.database, db_retriever)
+
     def _create_orchestrator(
         self,
-        loader: AnalyticsDataLoaderProtocol,
-        calculator: CalculatorProtocol,
-        publisher: PublishingProtocol,
+        loader: AnalyticsDataLoaderProtocol | None,
+        calculator: CalculatorProtocol | None,
+        publisher: PublishingProtocol | None,
     ) -> None:
-        """Build orchestrator from loader, calculator and publisher."""
+        """Build the orchestrator from loader, calculator and publisher."""
+        if loader is None or calculator is None or publisher is None:
+            raise ValueError("loader, calculator and publisher are required")
         self.data_loader = loader
         self.calculator = calculator
         self.publisher = publisher
