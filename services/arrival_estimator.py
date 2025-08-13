@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from importlib import import_module
-from typing import Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 
 class _TransportEvents(Protocol):
@@ -18,10 +18,13 @@ class _TransportEvents(Protocol):
 # Dynamically import the real implementation to avoid pulling in the entire
 # application during type checking.  ``mypy`` treats the result as ``Any`` so we
 # cast it to our protocol for type safety.
-_transport_events = cast(
-    _TransportEvents,
-    import_module("yosai_intel_dashboard.src.database.transport_events"),
-)
+if TYPE_CHECKING:
+    _transport_events = cast(_TransportEvents, object())
+else:  # pragma: no cover - runtime import only
+    _transport_events = cast(
+        _TransportEvents,
+        import_module("yosai_intel_dashboard.src.database.transport_events"),
+    )
 
 
 class ArrivalEstimator:

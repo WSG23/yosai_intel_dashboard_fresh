@@ -3,16 +3,21 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Awaitable, Callable, Dict, Iterable, Tuple
+from typing import Awaitable, Callable, Iterable, Tuple, TypedDict
 
 # A probe is a tuple containing the name of the check and an asynchronous
 # callable that performs the actual probe.
-Probe = Tuple[str, Callable[[], Awaitable[Any]]]
+Probe = Tuple[str, Callable[[], Awaitable[object]]]
+
+
+class HealthStatus(TypedDict):
+    status: str
+    checks: dict[str, str]
 
 
 async def check_with_timeout(
-    name: str, probe: Callable[[], Awaitable[Any]], timeout_s: float = 1.5
-) -> Dict[str, str]:
+    name: str, probe: Callable[[], Awaitable[object]], timeout_s: float = 1.5
+) -> dict[str, str]:
     """Run ``probe`` enforcing ``timeout_s`` and return a result mapping."""
     try:
         await asyncio.wait_for(probe(), timeout=timeout_s)
@@ -21,10 +26,10 @@ async def check_with_timeout(
         return {name: f"fail:{type(e).__name__}"}
 
 
-async def aggregate(entries: Iterable[Probe]) -> Dict[str, Any]:
+async def aggregate(entries: Iterable[Probe]) -> HealthStatus:
     """Execute *entries* and aggregate their results into a status dict."""
-    status: Dict[str, Any] = {"status": "ok", "checks": {}}
-    checks: Dict[str, str] = status["checks"]
+    status: HealthStatus = {"status": "ok", "checks": {}}
+    checks = status["checks"]
     for name, probe in entries:
         res = await check_with_timeout(name, probe)
         checks.update(res)

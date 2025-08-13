@@ -10,11 +10,15 @@ imports when running the stricter ``mypy`` checks.
 from importlib import import_module
 import sys
 from types import ModuleType
-from typing import List, cast
+from typing import List, TYPE_CHECKING, cast
 
 # Load the real core package dynamically so mypy treats it as an opaque module.
-_core: ModuleType = import_module("yosai_intel_dashboard.src.core")
-integrations: ModuleType = import_module("yosai_intel_dashboard.src.core.integrations")
+if TYPE_CHECKING:
+    _core: ModuleType
+    integrations: ModuleType
+else:  # pragma: no cover - runtime import only
+    _core = import_module("yosai_intel_dashboard.src.core")
+    integrations = import_module("yosai_intel_dashboard.src.core.integrations")
 
 # Expose submodules for ``import core.integrations``
 sys.modules[__name__ + ".integrations"] = integrations

@@ -3,12 +3,22 @@ Mypy Type Check Coverage Summary
 
 Script: index
 
-+----------------------------+-------------------+--------+
-| Module                     | Imprecision       | Lines  |
-+----------------------------+-------------------+--------+
-| core                       |   5.88% imprecise | 34 LOC |
-| services.arrival_estimator |   0.00% imprecise | 50 LOC |
-| services.interfaces        |   9.09% imprecise | 11 LOC |
-+----------------------------+-------------------+--------+
-| Total                      |   3.16% imprecise | 95 LOC |
-+----------------------------+-------------------+--------+
++-------------------------------------+-------------------+---------+
+| Module                              | Imprecision       | Lines   |
++-------------------------------------+-------------------+---------+
+| core                                |   6.25% imprecise |  32 LOC |
+| core.types                          |   0.00% imprecise |  11 LOC |
+| services                            |   0.00% imprecise |   6 LOC |
+| services.analytics_microservice.app |   3.12% imprecise |  32 LOC |
+| services.arrival_estimator          |   0.00% imprecise |  53 LOC |
+| services.common.healthcheck         |   0.00% imprecise |  38 LOC |
+| services.export                     |   0.00% imprecise |   5 LOC |
+| services.export.service             |   0.00% imprecise |  80 LOC |
+| services.interfaces                 |   0.00% imprecise |  11 LOC |
+| services.migration.adapter          |   0.00% imprecise |  53 LOC |
+| services.resilience                 |   0.00% imprecise |   3 LOC |
+| services.resilience.circuit_breaker |   3.90% imprecise | 154 LOC |
+| services.resilience.metrics         |  10.00% imprecise |  30 LOC |
++-------------------------------------+-------------------+---------+
+| Total                               |   2.36% imprecise | 508 LOC |
++-------------------------------------+-------------------+---------+

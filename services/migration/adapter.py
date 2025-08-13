@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Minimal event service adapter for tests.
 
 The real project contains a feature rich implementation.  For the purposes of
@@ -7,12 +5,24 @@ unit tests we only need a small subset that exercises the circuit breaker
 behaviour when an external dependency is unavailable.
 """
 
-from typing import Any, Dict
+from __future__ import annotations
 
-from yosai_intel_dashboard.src.services.resilience import (
-    CircuitBreaker,
-    CircuitBreakerOpen,
-)
+from typing import Mapping, Protocol, TypedDict
+
+from services.resilience import CircuitBreaker, CircuitBreakerOpen
+
+
+class _KafkaProducer(Protocol):
+    def produce(self, topic: str, key: object, value: Mapping[str, object]) -> None:
+        ...
+
+    def flush(self, timeout: float) -> None:
+        ...
+
+
+class ProcessedEvent(TypedDict):
+    event_id: object | None
+    status: str
 
 
 class EventServiceAdapter:
@@ -20,10 +30,10 @@ class EventServiceAdapter:
 
     def __init__(self, base_url: str | None = None) -> None:
         self.base_url = base_url or "http://localhost"
-        self.kafka_producer = None
+        self.kafka_producer: _KafkaProducer | None = None
         self.circuit_breaker = CircuitBreaker(5, 60, name="event_service")
 
-    async def _process_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_event(self, event: Mapping[str, object]) -> ProcessedEvent:
         """Process a single event, falling back when the circuit is open."""
         try:
             async with self.circuit_breaker:
@@ -34,7 +44,10 @@ class EventServiceAdapter:
                         "access-events", key=event.get("event_id"), value=event
                     )
                     self.kafka_producer.flush(0)
-                    return {"event_id": event.get("event_id"), "status": "accepted"}
+                    return {
+                        "event_id": event.get("event_id"),
+                        "status": "accepted",
+                    }
                 return {"event_id": event.get("event_id"), "status": "sent"}
         except CircuitBreakerOpen:
             return {"event_id": event.get("event_id"), "status": "unavailable"}
