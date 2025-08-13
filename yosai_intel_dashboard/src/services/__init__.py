@@ -38,7 +38,6 @@ else:
     from .data_processing_service import DataProcessingService
     from .database_retriever import DatabaseAnalyticsRetriever
     from .db_analytics_helper import DatabaseAnalyticsHelper
-    from .event_publisher import publish_event
     from .explainability_service import ExplainabilityService
     from .helpers.database_initializer import initialize_database
     from .microservices_architect import MicroservicesArchitect, ServiceBoundary
@@ -123,7 +122,6 @@ else:
         "UploadAnalyticsProcessor",
         "UploadProcessingController",
         "initialize_database",
-        "publish_event",
         "AsyncFileProcessor",
         "DatabaseAnalyticsHelper",
         "SummaryReporter",
