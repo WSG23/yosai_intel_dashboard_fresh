@@ -455,7 +455,7 @@ def app_factory(mock_services):
 
 @pytest.fixture
 def token_factory():
-    from services.auth import verify_jwt_token
+    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
 
     def factory(**claims):
         payload = {

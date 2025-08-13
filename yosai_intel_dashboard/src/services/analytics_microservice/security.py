@@ -14,7 +14,7 @@ from typing import Any, Callable
 from fastapi import Header, HTTPException
 from jose import jwt
 
-from services.common import secrets
+from yosai_intel_dashboard.src.services.common import secrets
 
 
 def rate_limit_decorator(

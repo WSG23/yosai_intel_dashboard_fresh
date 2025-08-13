@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from services.analytics.security_patterns import (
+from yosai_intel_dashboard.src.services.analytics.security_patterns import (
     SecurityEvent,
     _dispatch_security_events,
     setup_isolated_security_testing,
 )
-from services.analytics.security_patterns.pattern_detection import Threat
+from yosai_intel_dashboard.src.services.analytics.security_patterns.pattern_detection import (
+    Threat,
+)
 
 
 def test_dispatch_security_events_with_threat():

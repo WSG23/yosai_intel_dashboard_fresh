@@ -33,10 +33,7 @@ if not hasattr(pd, "date_range"):
 
 from intel_analysis_service.ml import AnomalyDetector, RiskScorer
 
-try:  # pragma: no cover - support both package layouts
-    from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
-except Exception:  # pragma: no cover
-    from services.monitoring.drift_monitor import DriftMonitor
+from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
 
 
 class DummyDriftDetector:

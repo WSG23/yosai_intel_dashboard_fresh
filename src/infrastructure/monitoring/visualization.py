@@ -7,7 +7,7 @@ from typing import Iterable, List, Sequence
 
 import matplotlib
 
-from services.export import ExportService
+from yosai_intel_dashboard.src.services.export import ExportService
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402

@@ -37,7 +37,7 @@ Key migration outcome: a unified callback system using **TrulyUnifiedCallbacks**
 | Old Import | New Import | Notes |
 |------------|------------|-------|
 | `from models.user import User` | `from yosai_intel_dashboard.src.core.domain.entities.user import User` | Symlink available |
-| `from services.analytics import AnalyticsService` | `from yosai_intel_dashboard.src.services.analytics import AnalyticsService` | Symlink available |
+| `from yosai_intel_dashboard.src.services.analytics import AnalyticsService` | Use direct import | Symlink removed |
 | `from yosai_intel_dashboard.src.infrastructure.config.settings import SETTINGS` | `from yosai_intel_dashboard.src.infrastructure.config.settings import SETTINGS` | Symlink available |
 | `from yosai_intel_dashboard.src.infrastructure.monitoring.metrics import record_metric` | `from yosai_intel_dashboard.src.infrastructure.monitoring.metrics import record_metric` | Symlink available |
 | `from yosai_intel_dashboard.src.infrastructure.security.auth import AuthManager` | `from yosai_intel_dashboard.src.infrastructure.security.auth import AuthManager` | Symlink available |
@@ -53,7 +53,7 @@ Key migration outcome: a unified callback system using **TrulyUnifiedCallbacks**
 Before:
 ```python
 # analytics/user_stats.py
-from services.user_service import fetch_users
+from yosai_intel_dashboard.src.services.user_service import fetch_users
 
 def top_users():
     data = fetch_users()
@@ -105,7 +105,7 @@ Pro tip: mirror the `src/` hierarchy under `tests/` for clarity and coverage.
 ### Dependency Injection
 Before:
 ```python
-from services.user_service import UserService
+from yosai_intel_dashboard.src.services.user_service import UserService
 
 svc = UserService()
 ```
@@ -134,7 +134,7 @@ Pro tip: inject dependencies explicitly—use constructors or lightweight contai
 
 ## 6. Common Pitfalls
 - **Circular dependencies**: keep interfaces in `core.interfaces` and inject implementations from outer layers.
-- **Wrong layer calls**: infrastructure must never import from services; core must not depend on adapters.
+- **Wrong layer calls**: infrastructure must never import from service packages; core must not depend on adapters.
 - **Anti‑patterns**: avoid global singletons and direct database calls inside use cases.
 
 ## 7. Gradual Migration Strategy
