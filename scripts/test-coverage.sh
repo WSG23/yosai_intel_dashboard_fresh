@@ -8,7 +8,8 @@ cd "$ROOT_DIR/gateway"
 # Ensure gocovmerge is available
 if ! command -v gocovmerge > /dev/null 2>&1; then
     echo "Installing gocovmerge..."
-    go install github.com/wadey/gocovmerge@latest
+    GOCOVMERGE_VERSION="${GOCOVMERGE_VERSION:-b5bfa59ec0adc420475f97f89b58045c721d761c}"
+    go install "github.com/wadey/gocovmerge@${GOCOVMERGE_VERSION}"
 fi
 
 TMP_DIR=$(mktemp -d)
