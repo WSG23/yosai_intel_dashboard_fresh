@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING
 from yosai_intel_dashboard.src.core.registry import ServiceRegistry
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from yosai_intel_dashboard.src.core.protocols.metrics import MetricsRepositoryProtocol
+    from yosai_intel_dashboard.src.core.protocols.metrics import (
+        MetricsRepositoryProtocol,
+    )
 
 metrics_bp = Blueprint("metrics", __name__, url_prefix="/v1/metrics")
 

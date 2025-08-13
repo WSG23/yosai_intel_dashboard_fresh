@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
@@ -13,8 +13,12 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { AccessibleVisualization } from '../components/accessibility';
-import { NetworkGraph, FacilityLayout } from './visualizations';
 import useGraphsData from '../hooks/useGraphsData';
+
+const NetworkGraph = React.lazy(() => import('./visualizations/NetworkGraph'));
+const FacilityLayout = React.lazy(
+  () => import('./visualizations/FacilityLayout'),
+);
 
 interface ChartData {
   hourly_distribution?: Record<string, number | string>;
@@ -71,7 +75,11 @@ const Graphs: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedChart === 'network' || selectedChart === 'facility' || !selectedChart) {
+    if (
+      selectedChart === 'network' ||
+      selectedChart === 'facility' ||
+      !selectedChart
+    ) {
       return;
     }
     const fetchData = async () => {
@@ -106,7 +114,9 @@ const Graphs: React.FC = () => {
             rows: links.map((l) => [l.source, l.target]),
           }}
         >
-          <NetworkGraph />
+          <Suspense fallback={<div>Loading visualization...</div>}>
+            <NetworkGraph />
+          </Suspense>
         </AccessibleVisualization>
       );
     }
@@ -119,7 +129,9 @@ const Graphs: React.FC = () => {
           summary="Rotating 3D model of facility layout."
           tableData={{ headers: ['Room'], rows: rooms.map((r) => [r]) }}
         >
-          <FacilityLayout />
+          <Suspense fallback={<div>Loading visualization...</div>}>
+            <FacilityLayout />
+          </Suspense>
         </AccessibleVisualization>
       );
     }
@@ -233,9 +245,7 @@ const Graphs: React.FC = () => {
           Failed to load graphs.
         </div>
       )}
-      {!isLoading && !isError && (
-        <div role="presentation">{renderChart()}</div>
-      )}
+      {!isLoading && !isError && <div role="presentation">{renderChart()}</div>}
       {!isLoading && !isError && showDetails && chartData && (
         <pre
           aria-label="chart-details"

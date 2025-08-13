@@ -1,11 +1,11 @@
 """Database-backed analytics service with in-memory caching.
 
-This module provides a façade around a :class:`DatabaseConnectionPool`. The
-service validates connectivity before executing any analytics queries and keeps
-results in a simple in-memory cache with an expiration TTL.  Individual queries
-are executed via private asynchronous helpers which each handle their own
+This module provides a façade around a :class:`DatabaseManager`. The service
+validates connectivity before executing any analytics queries and keeps results
+in a simple in-memory cache with an expiration TTL. Individual queries are
+executed via private asynchronous helpers which each handle their own
 exceptions, returning fallback values instead of bubbling up errors.
-
+"""
 
 from __future__ import annotations
 
@@ -13,6 +13,13 @@ import asyncio
 import time
 from collections.abc import Mapping
 from typing import Any, Dict, List
+
+from src.infrastructure.database.manager import DatabaseManager
+
+
+class ConnectionRetryExhausted(Exception):
+    """Raised when connection retry attempts are exhausted."""
+
 
 class AnalyticsService:
     """Retrieve analytics information from the database.
@@ -28,13 +35,11 @@ class AnalyticsService:
 
     def __init__(
         self,
-        pool: DatabaseConnectionPool,
+        db_manager: DatabaseManager,
         *,
         ttl: int = 60,
-        acquire_timeout: float | None = None,
-        retry_config: RetryConfig | None = None,
     ) -> None:
-        self._pool = pool
+        self._db_manager = db_manager
         self._ttl = ttl
         self._cache: Dict[str, Any] | None = None
         self._expiry: float = 0.0

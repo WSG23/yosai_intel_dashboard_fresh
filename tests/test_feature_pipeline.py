@@ -19,7 +19,10 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-FEATURE_DEF = {"features": ["hour", "day_of_week", "user_event_count"]}
+FEATURE_DEF = {
+    "version": "1.0.0",
+    "features": ["hour", "day_of_week", "user_event_count"],
+}
 
 
 class DummyStore:
@@ -46,6 +49,7 @@ def test_load_definitions(tmp_path):
     pipe = FeaturePipeline(path)
     pipe.load_definitions()
     assert pipe.feature_list == FEATURE_DEF["features"]
+    assert pipe.defs_version == FEATURE_DEF["version"]
 
 
 def test_fit_transform(tmp_path):
@@ -120,3 +124,5 @@ def test_versioning_and_rollback(tmp_path):
     assert ver
     pipe.rollback("m", ver)
     assert pipe.version == ver
+    rec = registry.get_model("m", ver)
+    assert rec.feature_defs_version == FEATURE_DEF["version"]

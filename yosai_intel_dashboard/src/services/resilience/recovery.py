@@ -69,6 +69,6 @@ async def monitor_dependency(
             await _reset(circuit)
             if on_recover is not None:
                 await on_recover()
-            log.info("%s recovered", name)
+            log.info(f"{name} recovered")
         else:
-            log.warning("Recovery attempt for %s failed", name)
+            log.warning(f"Recovery attempt for {name} failed")

@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
 
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 from packaging.version import Version
-from sqlalchemy import (
+from sqlalchemy import (  # type: ignore[import-not-found]
     JSON,
     Boolean,
     Column,
@@ -19,7 +19,11 @@ from sqlalchemy import (
     select,
     update,
 )
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import (  # type: ignore[import-not-found]
+    Session,
+    DeclarativeBase,
+    sessionmaker,
+)
 
 from optional_dependencies import import_optional
 
@@ -29,7 +33,9 @@ requests = import_optional("requests")
 
 logger = logging.getLogger(__name__)
 
-Base = declarative_base()
+class Base(DeclarativeBase):  # type: ignore[misc]
+    """Base class for SQLAlchemy models."""
+    pass
 
 
 class ModelRecord(Base):
@@ -44,6 +50,7 @@ class ModelRecord(Base):
     metrics = Column(JSON)
     accuracy = Column(Float)
     dataset_hash = Column(String(64))
+    feature_defs_version = Column(String(20))
     storage_uri = Column(String(255))
     mlflow_run_id = Column(String(64))
     experiment_id = Column(String(64), nullable=False, default="default")
@@ -113,7 +120,7 @@ class ModelRegistry:
             patch += 1
         return f"{major}.{minor}.{patch}"
 
-    def _session(self):
+    def _session(self) -> Session:
         return self.Session()
 
     # --------------------------------------------------------------
@@ -127,6 +134,7 @@ class ModelRegistry:
         version: str | None = None,
         training_date: datetime | None = None,
         experiment_id: str = "default",
+
     ) -> ModelRecord:
         session = self._session()
         try:
@@ -157,6 +165,7 @@ class ModelRegistry:
                     metrics=metrics,
                     accuracy=metrics.get("accuracy"),
                     dataset_hash=dataset_hash,
+                    feature_defs_version=feature_defs_version,
                     storage_uri=storage_uri,
                     mlflow_run_id=run_id,
                     experiment_id=experiment_id,

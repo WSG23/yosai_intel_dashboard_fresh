@@ -12,7 +12,7 @@ has recovered.
 
 import asyncio
 import time
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable, Optional, TypeVar
 
 try:  # pragma: no cover - optional during tests
     from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
@@ -110,7 +110,7 @@ class CircuitBreaker:
         else:
             await self.record_failure()
 
-    def __call__(self, func: Callable[..., Awaitable[Any]]):
+    def __call__(self, func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         cb = self
 
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -128,14 +128,17 @@ class CircuitBreaker:
         return wrapper
 
 
+F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
+
+
 def circuit_breaker(
     failure_threshold: int, recovery_timeout: int, name: str | None = None
-):
+) -> Callable[[F], F]:
     """Decorator factory creating a :class:`CircuitBreaker` per function."""
     cb = CircuitBreaker(failure_threshold, recovery_timeout, name)
 
-    def decorator(func: Callable[..., Awaitable[Any]]):
-        return cb(func)
+    def decorator(func: F) -> F:
+        return cb(func)  # type: ignore[return-value]
 
     return decorator
 

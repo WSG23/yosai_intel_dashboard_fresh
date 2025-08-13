@@ -189,10 +189,17 @@ def get_settings() -> Mapping[str, Any]:
             "metrics_interval": float(os.getenv("METRICS_INTERVAL", "1.0")),
             "ping_interval": float(os.getenv("PING_INTERVAL", "30.0")),
             "ping_timeout": float(os.getenv("PING_TIMEOUT", "10.0")),
-            "ai_confidence_threshold": float(os.getenv("AI_CONFIDENCE_THRESHOLD", "0.8")),
+            "ai_confidence_threshold": float(
+                os.getenv("AI_CONFIDENCE_THRESHOLD", "0.8")
+            ),
             "max_upload_size_mb": int(os.getenv("MAX_UPLOAD_SIZE_MB", "100")),
             "upload_chunk_size": int(os.getenv("UPLOAD_CHUNK_SIZE", "50000")),
         }
 
 
-__all__ = ["ConfigService", "ConfigProvider", "ConfigurationMixin", "get_settings"]
+__all__ = [
+    "ConfigService",
+    "ConfigProvider",
+    "ConfigurationMixin",
+    "get_settings",
+]

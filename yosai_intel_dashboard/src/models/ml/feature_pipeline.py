@@ -43,6 +43,7 @@ class FeaturePipeline(BaseEstimator, TransformerMixin):
         self.transformers: Dict[str, TransformerEntry] = {}
         self.feature_list: List[str] = []
         self.version: str | None = None
+        self.defs_version: str | None = None
 
     # ------------------------------------------------------------------
     def load_definitions(self) -> None:
@@ -54,7 +55,12 @@ class FeaturePipeline(BaseEstimator, TransformerMixin):
         else:
             data = json.loads(self.defs_path.read_text())
         self.feature_list = list(data.get("features", []))
-        logger.info("Loaded %d feature definitions", len(self.feature_list))
+        self.defs_version = data.get("version")
+        logger.info(
+            "Loaded %d feature definitions (version %s)",
+            len(self.feature_list),
+            self.defs_version,
+        )
 
     # ------------------------------------------------------------------
     def register_transformer(
@@ -145,6 +151,7 @@ class FeaturePipeline(BaseEstimator, TransformerMixin):
             model_path,
             metrics,
             dataset_hash,
+            feature_defs_version=self.defs_version,
         )
         self.registry.set_active_version(name, record.version)
         self.version = record.version

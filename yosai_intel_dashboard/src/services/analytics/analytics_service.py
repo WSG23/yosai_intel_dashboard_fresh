@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import threading
 from pathlib import Path
 from typing import (
@@ -185,7 +184,7 @@ class DataSourceRouter:
         """Return analytics data for ``source``."""
         uploaded_data = self.orchestrator.loader.load_uploaded_data()
         if uploaded_data and source in ["uploaded", "sample"]:
-            logger.info("Forcing uploaded data usage (source was: %s)", source)
+            logger.info(f"Forcing uploaded data usage (source was: {source})")
             return self.orchestrator.process_uploaded_data_directly(uploaded_data)
 
         if source == "sample":
@@ -220,30 +219,59 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         upload_controller: UploadProcessingControllerProtocol | None = None,
         upload_processor: UploadAnalyticsProtocol | None = None,
     ) -> None:
-        self.database: Database | None = database
+        self._inject_dependencies(
+            database=database,
+            data_processor=data_processor,
+            config=config,
+            event_bus=event_bus,
+            storage=storage,
+            upload_data_service=upload_data_service,
+            model_registry=model_registry,
+            upload_processor=upload_processor,
+            upload_controller=upload_controller,
+            report_generator=report_generator,
+        )
+        self._setup_database(db_retriever)
+        if loader is None or calculator is None or publisher is None:
+            raise ValueError("loader, calculator and publisher are required")
+        self._create_orchestrator(loader, calculator, publisher)
+        self.router = DataSourceRouter(self.orchestrator)
+
+    def _inject_dependencies(
+        self,
+        *,
+        database: Database | None,
+        data_processor: DataProcessor | None,
+        config: Config | None,
+        event_bus: EventBus | None,
+        storage: Storage | None,
+        upload_data_service: UploadDataServiceProtocol | None,
+        model_registry: ModelRegistry | None,
+        upload_processor: UploadAnalyticsProtocol | None,
+        upload_controller: UploadProcessingControllerProtocol | None,
+        report_generator: ReportGeneratorProtocol | None,
+    ) -> None:
+        """Store injected dependencies and initialize helpers."""
+        self.database = database
         if data_processor is None:
             raise ValueError("data_processor is required")
-        self.data_processor: DataProcessor = data_processor
-        self.config: Config | None = config
-        self.event_bus: EventBus | None = event_bus
-        self.storage: Storage | None = storage
-        self.upload_data_service: UploadDataServiceProtocol | None = upload_data_service
-        self.model_registry: ModelRegistry | None = model_registry
-        self.validation_service: SecurityValidator = SecurityValidator()
-        self.processor: DataProcessor = data_processor
-        # Legacy attribute aliases
-        self.data_loading_service: DataProcessor = self.processor
+        self.data_processor = data_processor
+        self.config = config
+        self.event_bus = event_bus
+        self.storage = storage
+        self.upload_data_service = upload_data_service
+        self.model_registry = model_registry
+        self.validation_service = SecurityValidator()
+        self.processor = data_processor
+        self.data_loading_service = self.processor  # Legacy alias
         from yosai_intel_dashboard.src.services.data_processing.file_handler import (
             FileHandler,
         )
 
-        self.file_handler: FileHandler = FileHandler()
-
-        self.upload_processor: UploadAnalyticsProtocol | None = upload_processor
-        self.upload_controller: UploadProcessingControllerProtocol | None = (
-            upload_controller
-        )
-        self.report_generator: ReportGeneratorProtocol | None = report_generator
+        self.file_handler = FileHandler()
+        self.upload_processor = upload_processor
+        self.upload_controller = upload_controller
+        self.report_generator = report_generator
         self.database_manager: Any
         self.db_helper: Any
         self.summary_reporter: Any
@@ -253,15 +281,6 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self.publisher: PublishingProtocol
         self.orchestrator: AnalyticsOrchestrator
         self.router: DataSourceRouter
-
-        self._setup_database(db_retriever)
-        if loader is None or calculator is None or publisher is None:
-            raise ValueError("loader, calculator and publisher are required")
-        self.data_loader = loader
-        self.calculator = calculator
-        self.publisher = publisher
-        self._create_orchestrator(loader, calculator, publisher)
-        self.router = DataSourceRouter(self.orchestrator)
 
     def _setup_database(
         self, db_retriever: DatabaseAnalyticsRetrieverProtocol | None = None
@@ -282,7 +301,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         calculator: CalculatorProtocol,
         publisher: PublishingProtocol,
     ) -> None:
-        """Set up loader, calculator, publisher and orchestrator."""
+        """Build orchestrator from loader, calculator and publisher."""
         self.data_loader = loader
         self.calculator = calculator
         self.publisher = publisher
@@ -304,7 +323,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             query = AnalyticsQueryV1.model_validate({"source": source})
         except ValidationError:
             sanitized = normalize_text(source).strip().lower()
-            logger.error("Invalid analytics source: %s", sanitized)
+            logger.error(f"Invalid analytics source: {sanitized}")
             raise ValueError(f"Invalid analytics source: {sanitized}")
 
         normalized = normalize_text(query.source)
@@ -577,7 +596,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         dest = Path(destination_dir or str(models_path))
         dest = dest / name / record.version
         dest.mkdir(parents=True, exist_ok=True)
-        local_path = dest / os.path.basename(record.storage_uri)
+        local_path = dest / Path(record.storage_uri).name
         local_version = self.model_registry.get_version_metadata(name)
         if local_version == record.version and local_path.exists():
             return str(local_path)
@@ -595,10 +614,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             ValueError,
         ) as exc:  # pragma: no cover - best effort
             logger.error(
-                "Failed to download model %s (%s): %s",
-                name,
-                type(exc).__name__,
-                exc,
+                f"Failed to download model {name} ({type(exc).__name__}): {exc}"
             )
             return None
 

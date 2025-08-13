@@ -13,14 +13,14 @@ class DataProcessor(DataProcessorProtocol):
     """Minimal concrete implementation for the analytics pipeline."""
 
     def process_access_events(self, events: pd.DataFrame) -> pd.DataFrame:
-        """Return events unchanged."""
-        return events
+        """Apply preprocessing to ``events`` and return the result."""
+        return self._standardize_missing(events)
 
     def clean_data(
         self, data: pd.DataFrame, rules: Dict[str, Any] | None = None
     ) -> pd.DataFrame:
-        """Return data unchanged. ``rules`` are ignored."""
-        return data
+        """Apply preprocessing to ``data``. ``rules`` are ignored."""
+        return self._standardize_missing(data)
 
     def aggregate_data(
         self, data: pd.DataFrame, groupby: List[str], metrics: List[str]
@@ -37,6 +37,25 @@ class DataProcessor(DataProcessorProtocol):
     ) -> pd.DataFrame:
         """Return data unchanged."""
         return data
+
+    # ------------------------------------------------------------------
+    # Preprocessing
+    # ------------------------------------------------------------------
+    def _standardize_missing(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Fill missing values for numeric and categorical columns.
+
+        Numeric columns are filled with ``0`` while categorical columns are
+        filled with the string ``"missing"``. A copy of ``df`` is returned to
+        avoid mutating the caller's DataFrame.
+        """
+        df = df.copy()
+        numeric_cols = df.select_dtypes(include="number").columns
+        categorical_cols = df.select_dtypes(include=["object", "category"]).columns
+        if len(numeric_cols):
+            df[numeric_cols] = df[numeric_cols].fillna(0)
+        if len(categorical_cols):
+            df[categorical_cols] = df[categorical_cols].fillna("missing")
+        return df
 
     # ------------------------------------------------------------------
     # Extra helper used by legacy tests
