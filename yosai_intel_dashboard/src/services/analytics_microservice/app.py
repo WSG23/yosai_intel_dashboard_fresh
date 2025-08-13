@@ -47,21 +47,19 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
-from yosai_intel_dashboard.src.services.analytics_microservice import async_queries
-from yosai_intel_dashboard.src.services.analytics_microservice.analytics_service import (
-    AnalyticsService,
-    get_analytics_service,
+from yosai_intel_dashboard.src.services.analytics.async_api import (
+    _database_health as _db_check,
+    _broker_health as _broker_check,
 )
-from yosai_intel_dashboard.src.services.analytics_microservice.model_loader import (
-    preload_active_models,
-)
-from yosai_intel_dashboard.src.services.analytics_microservice.unicode_middleware import (
-    UnicodeSanitizationMiddleware,
-)
+from . import async_queries
+from .analytics_service import AnalyticsService, get_analytics_service
+from .model_loader import preload_active_models
+from .unicode_middleware import UnicodeSanitizationMiddleware
 from yosai_intel_dashboard.src.services.common.async_db import create_pool
 from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
+from yosai_intel_dashboard.models.ml.model_registry import ModelRecord
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
@@ -182,6 +180,7 @@ def verify_token(authorization: str = Header("")) -> dict:
             "unauthorized",
             status.HTTP_401_UNAUTHORIZED,
         )
+
 
 class PatternsRequest(BaseModel):
     days: int = 7
@@ -506,31 +505,20 @@ async def rollback(
     return {"name": name, "active_version": version}
 
 
-@models_router.post("/{name}/predict", responses=ERROR_RESPONSES)
-@rate_limit_decorator()
-async def predict(
-    name: str,
-    req: PredictRequest,
-    _: None = Depends(verify_token),
-    svc: AnalyticsService = Depends(get_analytics_service),
-):
-    """Generate predictions using an active model.
-
-    Downloads the model artifact if necessary and logs input features before
-    returning the model's predictions.
-    """
-    record = svc.model_registry.get_model(name, active_only=True)
-    if record is None:
-        raise http_error(ErrorCode.NOT_FOUND, "no active version", 404)
+def _download_artifact(
+    svc: AnalyticsService, name: str, record: ModelRecord
+) -> Path:
+    """Ensure the model artifact is available locally."""
     local_dir = app.state.model_dir / name / record.version
-
     local_dir.mkdir(parents=True, exist_ok=True)
     local_path = local_dir / Path(record.storage_uri).name
     if not local_path.exists():
         try:
             svc.model_registry.download_artifact(record.storage_uri, str(local_path))
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover - best effort
             raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    return local_path
+
 
 def _load_model(svc: AnalyticsService, name: str, local_path: Path) -> Any:
     """Load a model from memory or disk."""
