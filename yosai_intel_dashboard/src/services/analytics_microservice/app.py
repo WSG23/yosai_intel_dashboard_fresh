@@ -12,6 +12,7 @@ app = FastAPI()
 
 
 @app.on_event("startup")  # type: ignore[misc]
+
 async def _startup() -> None:
     """Placeholder startup hook."""
     return None
@@ -25,6 +26,7 @@ async def health() -> Dict[str, str]:
 
 @app.get("/api/v1/analytics/dashboard-summary")  # type: ignore[misc]
 async def dashboard_summary(
+
     svc: AnalyticsService = Depends(get_analytics_service),
 ) -> Dict[str, str]:
     """Return placeholder dashboard summary."""
