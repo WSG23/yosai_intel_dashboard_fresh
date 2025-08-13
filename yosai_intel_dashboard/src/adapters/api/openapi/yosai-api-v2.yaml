@@ -1,271 +1,201 @@
 openapi: 3.0.3
 info:
   title: Yōsai Intel Dashboard API
-  version: 2.0.0
+  version: 1.0.0
   description: |
     Physical security intelligence and access control API.
-
-    # Authentication
-    Use Bearer token (JWT) for inter-service communication and require an
-    `X-CSRF-Token` header on state-changing requests.
-
-    # Versioning
-    API version is included in the URL path (e.g., /v2/events).
-  termsOfService: https://yosai.com/terms
-  contact:
-    email: api-support@yosai.com
-  license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
-
 servers:
-  - url: https://api.yosai.com/v2
+  - url: https://api.yosai.com/v1
     description: Production
-  - url: https://staging-api.yosai.com/v2
+  - url: https://staging-api.yosai.com/v1
     description: Staging
-  - url: http://localhost:8080/v2
+  - url: http://localhost:8080/v1
     description: Development
-
 security:
   - jwtAuth: []
   - csrfToken: []
-
-tags:
-  - name: Events
-    description: Access control events
-  - name: Analytics
-    description: Analytics and reporting
-  - name: ModelMonitoring
-    description: Model performance and drift metrics
-
 paths:
-  /events:
+  /csrf-token:
     get:
-      summary: List access events
-      operationId: listAccessEvents
-      tags: [Events]
+      summary: Get CSRF token
+      operationId: getCsrfToken
       responses:
         '200':
-          description: Successful response
+          description: CSRF token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /ai/suggest-devices:
+                type: object
+                properties:
+                  csrf_token:
+                    type: string
+  /upload:
     post:
-      summary: Suggest device mappings
-      tags: [Analytics]
+      summary: Upload a file
+      operationId: uploadFile
       responses:
         '200':
-          description: Successful response
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-  /mappings/columns:
-    post:
-      summary: Save column mappings
-      tags: [Analytics]
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/ServerError'
-  /mappings/devices:
-    post:
-      summary: Save device mappings
-      tags: [Analytics]
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/ServerError'
-  /mappings/save:
-    post:
-      summary: Save mappings
-      tags: [Analytics]
-      responses:
-        '200':
-          description: Successful response
-        '500':
-          $ref: '#/components/responses/ServerError'
-  /process-enhanced:
-    post:
-      summary: Process data with mappings
-      tags: [Analytics]
-      responses:
-        '200':
-          description: Successful response
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
+          description: Upload result
   /settings:
     get:
       summary: Get user settings
-      tags: [Analytics]
+      operationId: getSettings
       responses:
         '200':
           description: Successful response
     post:
       summary: Update user settings
-      tags: [Analytics]
-      responses:
-        '200':
-          description: Successful response
-        '500':
-          $ref: '#/components/responses/ServerError'
-  /model-monitoring/{model_name}:
-    get:
-      summary: Get model monitoring events
-      tags: [ModelMonitoring]
-      parameters:
-        - in: path
-          name: model_name
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: start
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - in: query
-          name: end
-          required: false
-          schema:
-            type: string
-            format: date-time
+      operationId: updateSettings
       responses:
         '200':
           description: Successful response
   /token/refresh:
     post:
       summary: Refresh access token
-      tags: [Analytics]
+      operationId: refreshToken
       responses:
         '200':
-          description: Successful response
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-  /upload:
-    post:
-      summary: Upload a file
-      tags: [Analytics]
-      responses:
-        '202':
-          $ref: '#/components/responses/Accepted'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/ServerError'
-  /upload/status/{job_id}:
+          description: New access token
+  /analytics/patterns:
     get:
-      summary: Get upload status
+      summary: Summarize access patterns
+      operationId: getPatterns
+      responses:
+        '200':
+          description: Analytics summary
+  /analytics/sources:
+    get:
+      summary: List data sources
+      operationId: getSources
+      responses:
+        '200':
+          description: Data sources
+  /analytics/health:
+    get:
+      summary: Analytics service health
+      operationId: analyticsHealth
+      responses:
+        '200':
+          description: Health status
+  /analytics/chart/{chart_type}:
+    get:
+      summary: Retrieve chart data
+      operationId: getChartData
       parameters:
-        - name: job_id
-          in: path
-          required: true
+        - in: path
+          name: chart_type
           schema:
             type: string
-      tags: [Analytics]
+          required: true
       responses:
         '200':
-          description: Successful response
-
+          description: Chart data
+  /model-monitoring/{model_name}:
+    get:
+      summary: Get model monitoring events
+      operationId: getModelMonitoringEvents
+      parameters:
+        - in: path
+          name: model_name
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: start
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: end
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Monitoring events
+  /explanations/{prediction_id}:
+    get:
+      summary: Get prediction explanation
+      operationId: getExplanation
+      parameters:
+        - in: path
+          name: prediction_id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Explanation payload
+  /feature-flags:
+    get:
+      summary: List feature flags
+      operationId: listFeatureFlags
+      responses:
+        '200':
+          description: Flags
+    post:
+      summary: Create feature flag
+      operationId: createFeatureFlag
+      responses:
+        '201':
+          description: Created
+  /feature-flags/{name}:
+    get:
+      summary: Get feature flag
+      operationId: getFeatureFlag
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Flag
+    put:
+      summary: Update feature flag
+      operationId: updateFeatureFlag
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Updated flag
+    delete:
+      summary: Delete feature flag
+      operationId: deleteFeatureFlag
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: Deleted
+  /feature-flags/{name}/audit:
+    get:
+      summary: Get feature flag audit history
+      operationId: getFeatureFlagAudit
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Audit history
 components:
   securitySchemes:
     jwtAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Signed JWT present in the Authorization header
     csrfToken:
       type: apiKey
       in: header
       name: X-CSRF-Token
-      description: Anti-CSRF token required for mutating operations
-  schemas:
-    Error:
-      type: object
-      required: [code, message]
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        details:
-          type: object
-          additionalProperties: true
-    AccessEvent:
-      type: object
-      properties:
-        event_id:
-          type: string
-        person_id:
-          type: string
-        door_id:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-        result:
-          type: string
-          enum: [granted, denied, tailgating, forced]
-      required: [person_id, door_id, timestamp]
-    EventListResponse:
-      type: object
-      properties:
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccessEvent'
-      
-    WebhookAlertPayload:
-      type: object
-      required: [message]
-      properties:
-        message:
-          type: string
-
-    AnalyticsUpdate:
-      type: object
-      description: Generic analytics update broadcast over WebSocket.
-      additionalProperties: true
-
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Accepted:
-      description: Accepted
