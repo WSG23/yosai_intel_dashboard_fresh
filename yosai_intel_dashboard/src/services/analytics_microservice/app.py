@@ -52,6 +52,9 @@ from yosai_intel_dashboard.src.services.analytics_microservice.analytics_service
     AnalyticsService,
     get_analytics_service,
 )
+from yosai_intel_dashboard.src.services.analytics_microservice.model_loader import (
+    preload_active_models,
+)
 from yosai_intel_dashboard.src.services.analytics_microservice.unicode_middleware import (
     UnicodeSanitizationMiddleware,
 )
@@ -180,36 +183,6 @@ def verify_token(authorization: str = Header("")) -> dict:
             status.HTTP_401_UNAUTHORIZED,
         )
 
-
-def preload_active_models(service: AnalyticsService) -> None:
-    """Load active models from the registry into memory."""
-    service.models = {}
-    registry: ModelRegistry = service.model_registry
-    try:
-        records = registry.list_models()
-    except Exception:  # pragma: no cover - registry unavailable
-        return
-    names = {r.name for r in records}
-    for name in names:
-        record = registry.get_model(name, active_only=True)
-        if record is None:
-            continue
-        local_dir = service.model_dir / name / record.version
-        local_dir.mkdir(parents=True, exist_ok=True)
-        filename = Path(record.storage_uri).name
-        local_path = local_dir / filename
-        if not local_path.exists():
-            try:
-                registry.download_artifact(record.storage_uri, str(local_path))
-            except Exception:  # pragma: no cover - best effort
-                continue
-        try:
-            model_obj = joblib.load(local_path)
-            service.models[name] = model_obj
-        except Exception:  # pragma: no cover - invalid model
-            continue
-
-
 class PatternsRequest(BaseModel):
     days: int = 7
 
@@ -253,7 +226,7 @@ async def _startup() -> None:
         registry,
         service_cfg,
     )
-    service_obj.preload_active_models()
+    preload_active_models(service_obj)
     app.state.analytics_service = service_obj
 
     app.state.ready = True
