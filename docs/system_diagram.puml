@@ -1,0 +1,28 @@
+@startuml
+skinparam componentStyle rectangle
+actor Browser
+
+package "Frontend" {
+  [Web UI] as UI
+}
+
+package "Service Layer" {
+  [API Gateway] as API
+  [Business Services] as Services
+  [Plugin Manager] as PluginManager
+  [Background Worker] as Worker
+}
+
+package "Data Stores" {
+  database DB
+  queue MQ
+}
+
+Browser --> UI
+UI --> API
+API --> Services
+Services --> DB
+Services --> MQ
+Services --> PluginManager
+MQ --> Worker
+@enduml
