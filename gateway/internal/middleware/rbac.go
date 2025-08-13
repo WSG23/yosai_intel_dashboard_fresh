@@ -30,3 +30,23 @@ func RequirePermission(s *rbac.RBACService, perm string) func(http.Handler) http
 		})
 	}
 }
+
+// RequireRole checks that the request's claims include the given role.
+func RequireRole(role string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := auth.FromContext(r.Context())
+			if !ok {
+				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+				return
+			}
+			for _, rle := range claims.Roles {
+				if rle == role {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+		})
+	}
+}
