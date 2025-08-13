@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog } from '@headlessui/react';
 import {
   Building2,
@@ -124,6 +124,39 @@ export const DeviceMappingModal: React.FC<Props> = ({
     onConfirm(mappingDict);
   };
 
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      focusable[0]?.focus();
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable || focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement as HTMLElement;
+    if (e.shiftKey) {
+      if (active === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
+
   return (
     <Dialog
       open={isOpen}
@@ -131,8 +164,11 @@ export const DeviceMappingModal: React.FC<Props> = ({
       className="fixed inset-0 z-50 overflow-y-auto"
     >
       <div className="flex min-h-screen items-center justify-center p-4">
-        
-        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+        <Dialog.Panel
+          ref={modalRef}
+          onKeyDown={handleKeyDown}
+          className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
+        >
           <Dialog.Title className="text-xl font-semibold p-6 border-b border-gray-200 dark:border-gray-700">
             AI Device Classification - {filename}
           </Dialog.Title>
@@ -270,7 +306,7 @@ export const DeviceMappingModal: React.FC<Props> = ({
               </Button>
             </div>
           </div>
-        </div>
+        </Dialog.Panel>
       </div>
     </Dialog>
   );
