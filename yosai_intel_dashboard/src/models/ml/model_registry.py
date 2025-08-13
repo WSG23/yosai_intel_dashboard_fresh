@@ -33,6 +33,7 @@ requests = import_optional("requests")
 
 logger = logging.getLogger(__name__)
 
+
 class Base(DeclarativeBase):  # type: ignore[misc]
     """Base class for SQLAlchemy models."""
     pass
@@ -165,7 +166,7 @@ class ModelRegistry:
                     metrics=metrics,
                     accuracy=metrics.get("accuracy"),
                     dataset_hash=dataset_hash,
-                    feature_defs_version=feature_defs_version,
+                    feature_defs_version=None,
                     storage_uri=storage_uri,
                     mlflow_run_id=run_id,
                     experiment_id=experiment_id,
@@ -215,7 +216,9 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def get_model_for_experiment(self, name: str, experiment_id: str) -> ModelRecord | None:
+    def get_model_for_experiment(
+        self, name: str, experiment_id: str
+    ) -> ModelRecord | None:
         """Return the active model for *name* within *experiment_id*."""
         return self.get_model(name, active_only=True, experiment_id=experiment_id)
 
@@ -234,7 +237,9 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def list_versions(self, name: str, experiment_id: str | None = None) -> List[ModelRecord]:
+    def list_versions(
+        self, name: str, experiment_id: str | None = None
+    ) -> List[ModelRecord]:
         """Return all versions for a given model name."""
         return self.list_models(name, experiment_id)
 
@@ -281,14 +286,20 @@ class ModelRegistry:
                         and abs(new_val - old_val) > threshold
                     ):
                         raise ValueError(
-                            f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds {threshold}"
+                            (
+                                f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds"
+                                f" {threshold}"
+                            )
                         )
                 self._previous_active.setdefault((name, experiment_id), []).append(
                     current.version
                 )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.experiment_id == experiment_id)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.experiment_id == experiment_id,
+                )
                 .values(is_active=False)
             )
             session.execute(
@@ -304,7 +315,9 @@ class ModelRegistry:
         finally:
             session.close()
 
-    def rollback_model(self, name: str, experiment_id: str = "default") -> ModelRecord | None:
+    def rollback_model(
+        self, name: str, experiment_id: str = "default"
+    ) -> ModelRecord | None:
         session = self._session()
         try:
             history = self._previous_active.get((name, experiment_id))
@@ -325,7 +338,10 @@ class ModelRegistry:
                 )
             session.execute(
                 update(ModelRecord)
-                .where(ModelRecord.name == name, ModelRecord.experiment_id == experiment_id)
+                .where(
+                    ModelRecord.name == name,
+                    ModelRecord.experiment_id == experiment_id,
+                )
                 .values(is_active=False)
             )
             session.execute(
@@ -371,23 +387,24 @@ class ModelRegistry:
         return None
 
     # --------------------------------------------------------------
-    def download_artifact(self, storage_uri: str, destination: str) -> None:
+    def download_artifact(self, storage_uri: str, destination: Path) -> None:
         parsed = urlparse(storage_uri)
         scheme = parsed.scheme
+        dest_path = Path(destination)
 
         if scheme == "s3":
             bucket = parsed.netloc
             key = parsed.path.lstrip("/")
-            self.s3.download_file(bucket, key, destination)
+            self.s3.download_file(bucket, key, str(dest_path))
         elif scheme in ("file", ""):
             src = parsed.path if scheme == "file" else storage_uri
-            shutil.copy(src, destination)
+            shutil.copy(src, dest_path)
         elif scheme in ("http", "https"):
             if not requests:
                 raise RuntimeError("requests is required for HTTP downloads")
             resp = requests.get(storage_uri, stream=True)
             resp.raise_for_status()
-            with open(destination, "wb") as fh:
+            with dest_path.open("wb") as fh:
                 for chunk in resp.iter_content(chunk_size=8192):
                     if chunk:
                         fh.write(chunk)

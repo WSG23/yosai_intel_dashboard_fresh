@@ -583,8 +583,8 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
 
     # ------------------------------------------------------------------
     def load_model_from_registry(
-        self, name: str, *, destination_dir: str | None = None
-    ) -> str | None:
+        self, name: str, *, destination_dir: Path | None = None
+    ) -> Path | None:
         """Download the active model from the registry."""
         if self.model_registry is None:
             return None
@@ -592,21 +592,22 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         if record is None:
             return None
         models_path = getattr(self.config, "analytics", None)
-        models_path = getattr(models_path, "ml_models_path", "models/ml")
-        dest = Path(destination_dir or str(models_path))
-        dest = dest / name / record.version
+        base_dir: Path = destination_dir or Path(
+            getattr(models_path, "ml_models_path", "models/ml")
+        )
+        dest = base_dir / name / record.version
         dest.mkdir(parents=True, exist_ok=True)
         local_path = dest / Path(record.storage_uri).name
         local_version = self.model_registry.get_version_metadata(name)
         if local_version == record.version and local_path.exists():
-            return str(local_path)
+            return local_path
         try:
             self.model_registry.download_artifact(
                 record.storage_uri,
-                str(local_path),
+                local_path,
             )
             self.model_registry.store_version_metadata(name, record.version)
-            return str(local_path)
+            return local_path
         except (
             OSError,
             RuntimeError,
