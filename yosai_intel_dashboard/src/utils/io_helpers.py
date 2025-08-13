@@ -17,7 +17,7 @@ def read_text(path: Path) -> str:
     """Read text from ``path`` and sanitize the result."""
     data = path.read_text(encoding="utf-8")
     cleaned = UnicodeHandler.sanitize(data)
-    logger.info("Sanitized read from %s", safe_encode_text(str(path)))
+    logger.info("Sanitized read from %s", UnicodeHandler.sanitize(str(path)))
     return cleaned
 
 
@@ -25,8 +25,7 @@ def write_text(path: Path, data: str) -> None:
     """Sanitize ``data`` and write it to ``path``."""
     cleaned = UnicodeHandler.sanitize(data)
     path.write_text(cleaned, encoding="utf-8")
-    logger.info("Sanitized write to %s", safe_encode_text(str(path)))
-
+    logger.info("Sanitized write to %s", UnicodeHandler.sanitize(str(path)))
 
 def read_json(path: Path) -> Any:
     """Read JSON from ``path`` applying sanitization."""
@@ -41,7 +40,6 @@ def write_json(path: Path, data: Any) -> None:
         json.dumps(cleaned, indent=2, ensure_ascii=False, default=str),
         encoding="utf-8",
     )
-    logger.info("Sanitized write to %s", safe_encode_text(str(path)))
-
+    logger.info("Sanitized write to %s", UnicodeHandler.sanitize(str(path)))
 
 __all__ = ["read_text", "write_text", "read_json", "write_json"]
