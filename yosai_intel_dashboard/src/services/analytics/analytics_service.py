@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import threading
 from pathlib import Path
 from typing import (
@@ -185,7 +184,7 @@ class DataSourceRouter:
         """Return analytics data for ``source``."""
         uploaded_data = self.orchestrator.loader.load_uploaded_data()
         if uploaded_data and source in ["uploaded", "sample"]:
-            logger.info("Forcing uploaded data usage (source was: %s)", source)
+            logger.info(f"Forcing uploaded data usage (source was: {source})")
             return self.orchestrator.process_uploaded_data_directly(uploaded_data)
 
         if source == "sample":
@@ -324,7 +323,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             query = AnalyticsQueryV1.model_validate({"source": source})
         except ValidationError:
             sanitized = normalize_text(source).strip().lower()
-            logger.error("Invalid analytics source: %s", sanitized)
+            logger.error(f"Invalid analytics source: {sanitized}")
             raise ValueError(f"Invalid analytics source: {sanitized}")
 
         normalized = normalize_text(query.source)
@@ -597,7 +596,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         dest = Path(destination_dir or str(models_path))
         dest = dest / name / record.version
         dest.mkdir(parents=True, exist_ok=True)
-        local_path = dest / os.path.basename(record.storage_uri)
+        local_path = dest / Path(record.storage_uri).name
         local_version = self.model_registry.get_version_metadata(name)
         if local_version == record.version and local_path.exists():
             return str(local_path)
@@ -615,10 +614,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             ValueError,
         ) as exc:  # pragma: no cover - best effort
             logger.error(
-                "Failed to download model %s (%s): %s",
-                name,
-                type(exc).__name__,
-                exc,
+                f"Failed to download model {name} ({type(exc).__name__}): {exc}"
             )
             return None
 

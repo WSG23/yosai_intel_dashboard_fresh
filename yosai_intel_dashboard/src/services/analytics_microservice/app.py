@@ -190,7 +190,7 @@ def preload_active_models(service: AnalyticsService) -> None:
             continue
         local_dir = service.model_dir / name / record.version
         local_dir.mkdir(parents=True, exist_ok=True)
-        filename = os.path.basename(record.storage_uri)
+        filename = Path(record.storage_uri).name
         local_path = local_dir / filename
         if not local_path.exists():
             try:
@@ -527,22 +527,31 @@ async def rollback(
     return {"name": name, "active_version": version}
 
 
-def _download_artifact(svc: AnalyticsService, name: str, record: ModelRecord) -> Path:
-    """Ensure the model artifact is available locally and return its path."""
-    local_dir = svc.model_dir / name / record.version
-    try:
-        local_dir.mkdir(parents=True, exist_ok=True)
-    except Exception as exc:
-        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
-    local_path = local_dir / os.path.basename(record.storage_uri)
-    if local_path.exists():
-        return local_path
-    try:
-        svc.model_registry.download_artifact(record.storage_uri, str(local_path))
-    except Exception as exc:
-        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
-    return local_path
+@models_router.post("/{name}/predict", responses=ERROR_RESPONSES)
+@rate_limit_decorator()
+async def predict(
+    name: str,
+    req: PredictRequest,
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
+):
+    """Generate predictions using an active model.
 
+    Downloads the model artifact if necessary and logs input features before
+    returning the model's predictions.
+    """
+    record = svc.model_registry.get_model(name, active_only=True)
+    if record is None:
+        raise http_error(ErrorCode.NOT_FOUND, "no active version", 404)
+    local_dir = app.state.model_dir / name / record.version
+
+    local_dir.mkdir(parents=True, exist_ok=True)
+    local_path = local_dir / Path(record.storage_uri).name
+    if not local_path.exists():
+        try:
+            svc.model_registry.download_artifact(record.storage_uri, str(local_path))
+        except Exception as exc:
+            raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
 
 def _load_model(svc: AnalyticsService, name: str, local_path: Path) -> Any:
     """Load a model from memory or disk."""
