@@ -217,5 +217,9 @@ register_fallback("redis", _redis_stub)
 register_fallback("redis.asyncio", lambda: _redis_stub.asyncio)
 
 
+# feast ---------------------------------------------------------------------
+register_fallback("feast", lambda: _simple_module("feast"))
+
+
 # requests ------------------------------------------------------------------
 register_fallback("requests", lambda: _simple_module("requests"))

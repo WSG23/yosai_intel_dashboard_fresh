@@ -1,10 +1,18 @@
 from datetime import timedelta
 
-from feast import Entity, FeatureService, FeatureView, Field
-from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
-    PostgreSQLSource,
-)
-from feast.types import Float32, Int64
+from yosai_intel_dashboard.optional_dependencies import import_optional
+
+feast = import_optional("feast")
+if feast:
+    from feast import Entity, FeatureService, FeatureView, Field
+    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
+        PostgreSQLSource,
+    )
+    from feast.types import Float32, Int64
+else:  # pragma: no cover - fallback when Feast is unavailable
+    Entity = FeatureService = FeatureView = Field = object
+    PostgreSQLSource = object
+    Float32 = Int64 = object
 
 # Entities
 person = Entity(name="person_id", join_keys=["person_id"])

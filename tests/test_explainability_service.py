@@ -22,7 +22,7 @@ def test_shap_values():
     svc = ExplainabilityService()
     svc.register_model("demo", model, background_data=X)
     values = svc.shap_values("demo", X)
-    assert values.shape == X.shape  # nosec B101
+    assert values.shape == X.shape  # nosec B101 - verifying expected SHAP output
 
 
 def test_lime_explanation():
@@ -31,5 +31,5 @@ def test_lime_explanation():
     svc = ExplainabilityService()
     svc.register_model("demo", model, background_data=X)
     explanation = svc.lime_explanation("demo", X, 0)
-    assert isinstance(explanation, dict)  # nosec B101
-    assert explanation  # nosec B101
+    assert isinstance(explanation, dict)  # nosec B101 - test ensures dictionary result
+    assert explanation  # nosec B101 - ensures explanation data is not empty
