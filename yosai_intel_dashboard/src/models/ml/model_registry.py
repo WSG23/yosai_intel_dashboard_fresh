@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
 
+import os
+import tempfile
+
 import pandas as pd  # type: ignore[import-untyped]
 from packaging.version import Version
 from sqlalchemy import (  # type: ignore[import-not-found]
@@ -56,6 +59,8 @@ class ModelRecord(Base):
     mlflow_run_id = Column(String(64))
     experiment_id = Column(String(64), nullable=False, default="default")
     is_active = Column(Boolean, default=False)
+    baseline_stats = Column(JSON)
+    baseline_uri = Column(String(255))
 
 
 class PredictionExplanationRecord(Base):
@@ -103,6 +108,63 @@ class ModelRegistry:
         self._baseline_features: Dict[str, pd.DataFrame] = {}
         self._latest_features: Dict[str, pd.DataFrame] = {}
         self._previous_active: Dict[Tuple[str, str], List[str]] = {}
+        self._load_baselines()
+
+    # --------------------------------------------------------------
+    def _load_baselines(self) -> None:
+        """Load persisted baseline feature sets for active models."""
+        session = self._session()
+        try:
+            stmt = select(ModelRecord).where(
+                ModelRecord.baseline_uri.is_not(None),
+                ModelRecord.is_active.is_(True),
+            )
+            for rec in session.execute(stmt).scalars():
+                try:
+                    df = self._download_baseline(rec.baseline_uri)
+                    if df is not None:
+                        self._baseline_features[rec.name] = df
+                except Exception:  # pragma: no cover - defensive
+                    logger.exception("Failed to load baseline for %s", rec.name)
+        finally:
+            session.close()
+
+    def _download_baseline(self, uri: str) -> pd.DataFrame | None:
+        parsed = urlparse(uri)
+        if parsed.scheme != "s3":
+            return None
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/")
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            self.s3.download_file(bucket, key, tmp.name)
+            path = tmp.name
+        try:
+            return pd.read_csv(path)
+        finally:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
+    def _ensure_baseline(self, name: str) -> pd.DataFrame | None:
+        base = self._baseline_features.get(name)
+        if base is not None:
+            return base
+        session = self._session()
+        try:
+            stmt = (
+                select(ModelRecord)
+                .where(ModelRecord.name == name)
+                .where(ModelRecord.is_active.is_(True))
+            )
+            rec = session.execute(stmt).scalar_one_or_none()
+            if rec and rec.baseline_uri:
+                base = self._download_baseline(rec.baseline_uri)
+                if base is not None:
+                    self._baseline_features[name] = base
+            return base
+        finally:
+            session.close()
 
     # --------------------------------------------------------------
     def _metrics_improved(self, new: Dict[str, float], old: Dict[str, float]) -> bool:
@@ -277,6 +339,7 @@ class ModelRegistry:
         version: str | None = None,
         training_date: datetime | None = None,
         experiment_id: str = "default",
+        baseline: pd.DataFrame | None = None,
 
     ) -> ModelRecord:
         session = self._session()
@@ -293,6 +356,21 @@ class ModelRegistry:
             self.s3.upload_file(model_path, self.bucket, key)
             storage_uri = f"s3://{self.bucket}/{key}"
 
+            baseline_uri = None
+            baseline_stats = None
+            if baseline is not None:
+                with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+                    baseline.to_csv(tmp.name, index=False)
+                    bkey = f"{name}/{version}/baseline.csv"
+                    self.s3.upload_file(tmp.name, self.bucket, bkey)
+                    baseline_uri = f"s3://{self.bucket}/{bkey}"
+                    baseline_stats = baseline.describe().to_dict()
+                try:
+                    os.remove(tmp.name)
+                except OSError:
+                    pass
+                self._baseline_features[name] = baseline
+
             if not mlflow:
                 raise RuntimeError("mlflow is required to register models")
             with mlflow.start_run() as run:
@@ -300,7 +378,6 @@ class ModelRegistry:
                     mlflow.log_metric(k, v)
                 mlflow.log_artifact(model_path)
                 run_id = run.info.run_id
-
                 record = ModelRecord(
                     name=name,
                     version=version,
@@ -313,6 +390,8 @@ class ModelRegistry:
                     mlflow_run_id=run_id,
                     experiment_id=experiment_id,
                     is_active=False,
+                    baseline_stats=baseline_stats,
+                    baseline_uri=baseline_uri,
                 )
                 session.add(record)
                 session.commit()
@@ -561,9 +640,22 @@ class ModelRegistry:
             self._baseline_features[name] = features
         self._latest_features[name] = features
 
+    def detect_drift(
+        self, name: str, current: pd.DataFrame, bins: int = 10
+    ) -> Dict[str, Dict[str, float]]:
+        """Return drift metrics comparing ``current`` to stored baseline."""
+        base = self._ensure_baseline(name)
+        if base is None:
+            return {}
+        from yosai_intel_dashboard.src.services.monitoring.drift import (
+            detect_drift as _detect_drift,
+        )
+
+        return _detect_drift(base, current, bins=bins)
+
     def get_drift_metrics(self, name: str, bins: int = 10) -> Dict[str, float]:
         """Return Population Stability Index metrics for *name*."""
-        base = self._baseline_features.get(name)
+        base = self._ensure_baseline(name)
         current = self._latest_features.get(name)
         if base is None or current is None:
             return {}
