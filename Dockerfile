@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee AS builder
+ARG PYTHON_IMAGE="python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee"
+# hadolint ignore=DL3006
+FROM ${PYTHON_IMAGE} AS builder
 WORKDIR /app
 
 # Install system packages
@@ -15,7 +17,8 @@ RUN python -m venv /opt/venv \
     && grep -v '^apache-flink' requirements.txt > requirements.filtered \
     && /opt/venv/bin/pip install --no-cache-dir -r requirements.filtered
 
-FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee
+# hadolint ignore=DL3006
+FROM ${PYTHON_IMAGE}
 
 # Install runtime packages
 # hadolint ignore=DL3008
