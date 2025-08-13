@@ -80,6 +80,7 @@ else:  # pragma: no cover - defensive for test imports
         registry=registry,
     )
 
+
 def _counter_value(counter: Counter) -> float:
     try:
         return counter._value.get()  # type: ignore[attr-defined]
