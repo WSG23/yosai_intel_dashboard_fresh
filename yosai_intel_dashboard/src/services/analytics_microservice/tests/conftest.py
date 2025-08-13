@@ -7,9 +7,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 from fastapi import FastAPI
 from jose import jwt
+import time
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
 
@@ -447,5 +449,32 @@ def app_factory(mock_services):
     def factory(secret: str | None = "secret"):
         module = _load_app(dummy_service, secret)
         return module, queries_stub, dummy_service
+
+    return factory
+
+
+@pytest.fixture
+def token_factory():
+    from services.auth import verify_jwt_token
+
+    def factory(**claims):
+        payload = {
+            "sub": "svc",
+            "iss": "gateway",
+            "exp": int(time.time()) + 60,
+        }
+        payload.update(claims)
+        token = jwt.encode(payload, "secret", algorithm="HS256")
+        assert verify_jwt_token(token)["iss"] == payload["iss"]
+        return token
+
+    return factory
+
+
+@pytest.fixture
+def client():
+    def factory(app):
+        transport = httpx.ASGITransport(app=app)
+        return httpx.AsyncClient(transport=transport, base_url="http://test")
 
     return factory
