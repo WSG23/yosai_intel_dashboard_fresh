@@ -7,11 +7,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/WSG23/yosai-gateway/internal/handlers"
+	ilog "github.com/WSG23/yosai-gateway/internal/logging"
 	imw "github.com/WSG23/yosai-gateway/internal/middleware"
 	"github.com/WSG23/yosai-gateway/internal/proxy"
 	"github.com/WSG23/yosai-gateway/internal/rbac"
 	"github.com/WSG23/yosai-gateway/middleware"
 	"github.com/WSG23/yosai-gateway/plugins"
+	adminsvc "github.com/WSG23/yosai-gateway/services/admin"
 )
 
 // Gateway represents the HTTP gateway service.
@@ -46,7 +48,9 @@ func New() (*Gateway, error) {
 	events.PathPrefix("/").Handler(p)
 
 	admin := r.PathPrefix("/admin").Subrouter()
-	admin.Use(imw.RequireRole("admin"))
+	admin.Use(imw.RequireRoleHeader("admin"))
+	admin.Use(adminsvc.AuditMiddleware(ilog.NewAuditLogger()))
+
 	admin.PathPrefix("/").Handler(p)
 
 	r.PathPrefix("/").Handler(p)
