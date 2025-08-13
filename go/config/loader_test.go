@@ -1,15 +1,13 @@
 package config
 
 import (
-	"os"
 	"testing"
 )
 
 func TestEnvOverrides(t *testing.T) {
-	os.Setenv("YOSAI_CONFIG_JSON", `{"app":{"title":"t"},"database":{"name":"db"},"security":{"secret_key":"x"}}`)
-	os.Setenv("YOSAI_APP_TITLE", "override")
-	os.Setenv("YOSAI_DATABASE_HOST", "db.example")
-	defer os.Clearenv()
+	t.Setenv("YOSAI_CONFIG_JSON", `{"app":{"title":"t"},"database":{"name":"db"},"security":{"secret_key":"x"}}`)
+	t.Setenv("YOSAI_APP_TITLE", "override")
+	t.Setenv("YOSAI_DATABASE_HOST", "db.example")
 
 	cfg, err := Load("")
 	if err != nil {
@@ -24,8 +22,7 @@ func TestEnvOverrides(t *testing.T) {
 }
 
 func TestValidation(t *testing.T) {
-	os.Setenv("YOSAI_CONFIG_JSON", `{}`)
-	defer os.Clearenv()
+	t.Setenv("YOSAI_CONFIG_JSON", `{}`)
 
 	if _, err := Load(""); err == nil {
 		t.Fatal("expected error")

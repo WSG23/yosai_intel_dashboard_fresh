@@ -2,9 +2,11 @@ package tracing
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -15,17 +17,18 @@ type Tracer interface {
 	Start(serviceName, endpoint string) (func(context.Context) error, error)
 }
 
-type JaegerTracer struct{}
+type OTLPTracer struct{}
 
-func NewJaegerTracer() *JaegerTracer { return &JaegerTracer{} }
+func NewOTLPTracer() *OTLPTracer { return &OTLPTracer{} }
 
-func (JaegerTracer) Start(serviceName, endpoint string) (func(context.Context) error, error) {
+func (OTLPTracer) Start(serviceName, endpoint string) (func(context.Context) error, error) {
 	if endpoint == "" {
-		endpoint = "http://localhost:14268/api/traces"
+		endpoint = "localhost:4318"
 	}
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(endpoint)))
+	endpoint = strings.TrimPrefix(strings.TrimPrefix(endpoint, "http://"), "https://")
+	exp, err := otlptracehttp.New(context.Background(), otlptracehttp.WithEndpoint(endpoint), otlptracehttp.WithInsecure())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create exporter: %w", err)
 	}
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exp),
