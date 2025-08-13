@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import time
 
-from jose import jwt, ExpiredSignatureError
+import jwt
+from jwt import ExpiredSignatureError
 
 from yosai_intel_dashboard.src.infrastructure.config import get_app_config
 from yosai_intel_dashboard.src.services.common.secrets import (

@@ -23,7 +23,7 @@ PACKAGE_MODULE_MAP: Dict[str, str] = {
     "flask-wtf": "flask_wtf",
     "psycopg2-binary": "psycopg2",
     "python-dotenv": "dotenv",
-    "python-jose": "jose",
+    "pyjwt": "jwt",
     "scikit-learn": "sklearn",
     "pyyaml": "yaml",
 }

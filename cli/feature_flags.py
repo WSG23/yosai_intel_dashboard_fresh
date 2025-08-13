@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from urllib.parse import urlparse
 from typing import Any, Sequence
 
 import requests
@@ -26,6 +27,14 @@ def _headers(token: str | None, roles: str | None) -> dict[str, str]:
     if roles:
         headers["X-Roles"] = roles
     return headers
+
+
+def _validate_url(url: str) -> str:
+    """Validate that ``url`` has an http or https scheme and netloc."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError(f"Invalid URL: {url}")
+    return url
 
 
 def list_flags(api_url: str, token: str | None, roles: str | None) -> list[dict[str, Any]]:
@@ -152,12 +161,18 @@ def main(argv: Sequence[str] | None = None) -> None:
     sub = parser.add_subparsers(dest="command")
 
     sp = sub.add_parser("list", help="List all feature flags")
-    sp.set_defaults(func=lambda args: list_flags(args.api_url, args.token, args.roles))
+    sp.set_defaults(
+        func=lambda args: list_flags(
+            _validate_url(args.api_url), args.token, args.roles
+        )
+    )
 
     sp = sub.add_parser("get", help="Get a flag")
     sp.add_argument("name")
     sp.set_defaults(
-        func=lambda args: get_flag(args.api_url, args.name, args.token, args.roles)
+        func=lambda args: get_flag(
+            _validate_url(args.api_url), args.name, args.token, args.roles
+        )
     )
 
     sp = sub.add_parser("create", help="Create a flag")
@@ -165,7 +180,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     sp.add_argument("--enabled", action="store_true", help="Enable the flag")
     sp.set_defaults(
         func=lambda args: create_flag(
-            args.api_url, args.name, args.enabled, args.token, args.roles
+            _validate_url(args.api_url),
+            args.name,
+            args.enabled,
+            args.token,
+            args.roles,
         )
     )
 
@@ -174,14 +193,20 @@ def main(argv: Sequence[str] | None = None) -> None:
     sp.add_argument("--enabled", action="store_true", help="Enable the flag")
     sp.set_defaults(
         func=lambda args: update_flag(
-            args.api_url, args.name, args.enabled, args.token, args.roles
+            _validate_url(args.api_url),
+            args.name,
+            args.enabled,
+            args.token,
+            args.roles,
         )
     )
 
     sp = sub.add_parser("delete", help="Delete a flag")
     sp.add_argument("name")
     sp.set_defaults(
-        func=lambda args: delete_flag(args.api_url, args.name, args.token, args.roles)
+        func=lambda args: delete_flag(
+            _validate_url(args.api_url), args.name, args.token, args.roles
+        )
     )
 
     args = parser.parse_args(argv)

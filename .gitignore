@@ -111,6 +111,7 @@ temp_*
 .env.staging
 *.key
 *.pem
+*.token
 # Certificates and locally generated K8s secrets
 *.crt
 k8s/config/db-cert-secret.yaml
