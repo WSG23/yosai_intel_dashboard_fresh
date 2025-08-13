@@ -19,18 +19,24 @@ class FunctionInfo:
     name: str
 
 
-def _collect_functions(file_path: Path) -> list[tuple[str, FunctionInfo]]:
+def _parse_python_file(file_path: Path) -> ast.Module | None:
+    """Parse ``file_path`` and return an AST module or ``None`` on syntax error."""
     source = file_path.read_text(encoding="utf-8")
     try:
-        tree = ast.parse(source, filename=str(file_path), type_comments=True)
+        return ast.parse(source, filename=str(file_path), type_comments=True)
     except SyntaxError:
-        return []
+        return None
 
+
+def _extract_functions(
+    tree: ast.AST, file_path: Path
+) -> list[tuple[str, FunctionInfo]]:
+    """Walk ``tree`` collecting function signatures and metadata."""
     functions: list[tuple[str, FunctionInfo]] = []
     stack: list[ast.AST] = []
 
     class Visitor(ast.NodeVisitor):
-        def generic_visit(self, node: ast.AST) -> None:
+        def generic_visit(self, node: ast.AST) -> None:  # pragma: no cover - ast API
             stack.append(node)
             super().generic_visit(node)
             stack.pop()
@@ -84,6 +90,13 @@ def _collect_functions(file_path: Path) -> list[tuple[str, FunctionInfo]]:
     return functions
 
 
+def _collect_functions(file_path: Path) -> list[tuple[str, FunctionInfo]]:
+    tree = _parse_python_file(file_path)
+    if tree is None:
+        return []
+    return _extract_functions(tree, file_path)
+
+
 def _module_from_path(path: Path, root: Path) -> str:
     rel = path.with_suffix("").relative_to(root)
     return ".".join(rel.parts)
@@ -121,7 +134,7 @@ def _replace_with_import(info: FunctionInfo, target_module: str, root: Path) -> 
     del lines[start:end]
 
     import_stmt = f"from {target_module} import {info.name}"
-    if not any(l.strip() == import_stmt for l in lines):
+    if not any(line.strip() == import_stmt for line in lines):
         insert_pos = 0
         while insert_pos < len(lines) and (
             lines[insert_pos].startswith("#")

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-from __future__ import annotations
-
 """Unified entry point for starting the Yosai Intel Dashboard API.
 
 This script validates required environment variables, warms the cache based on
 usage statistics and configured warm keys, then starts the FastAPI server.
 """
+
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -18,6 +18,33 @@ logger = logging.getLogger(__name__)
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+
+def _noop_loader(key: str) -> None:
+    """Default cache loader used during warmup."""
+    return None
+
+
+def _warm_cache(cache_manager, cache_cfg, warmer_cls, load_fn) -> None:
+    """Warm cache from usage stats and configured warm keys."""
+    usage_path = getattr(cache_cfg, "usage_stats_path", os.getenv("CACHE_USAGE_FILE"))
+    if usage_path and hasattr(cache_manager, "get"):
+        warmer = warmer_cls(cache_manager, load_fn)
+        asyncio.run(warmer.warm_from_file(usage_path))
+
+    warm_keys = getattr(cache_cfg, "warm_keys", [])
+    if warm_keys and hasattr(cache_manager, "warm"):
+        asyncio.run(cache_manager.warm(warm_keys, load_fn))
+
+
+def _ensure_health_endpoint(app) -> None:
+    """Add a /health route to ``app`` if missing."""
+    if any(getattr(r, "path", "") == "/health" for r in app.routes):
+        return
+
+    @app.get("/health")
+    async def _health() -> dict[str, str]:
+        return {"status": "ok"}
 
 
 def main() -> None:
@@ -51,27 +78,12 @@ def main() -> None:
     cache_cfg = get_cache_config()
     cache_manager = container.get("cache_manager")
 
-    def _load(key: str) -> None:
-        return None
-
-    usage_path = getattr(cache_cfg, "usage_stats_path", os.getenv("CACHE_USAGE_FILE"))
-    if usage_path and hasattr(cache_manager, "get"):
-        warmer = IntelligentCacheWarmer(cache_manager, _load)
-        asyncio.run(warmer.warm_from_file(usage_path))
-
-    warm_keys = getattr(cache_cfg, "warm_keys", [])
-    if warm_keys and hasattr(cache_manager, "warm"):
-        asyncio.run(cache_manager.warm(warm_keys, _load))
+    _warm_cache(cache_manager, cache_cfg, IntelligentCacheWarmer, _noop_loader)
 
     app = create_api_app()
     app.state.container = container
 
-    # Ensure a /health endpoint is available for container checks
-    if not any(getattr(r, "path", "") == "/health" for r in app.routes):
-
-        @app.get("/health")
-        async def _health() -> dict[str, str]:
-            return {"status": "ok"}
+    _ensure_health_endpoint(app)
 
     logger.info("\n🚀 Starting Yosai Intel Dashboard API...")
     logger.info(f"   Available at: http://localhost:{API_PORT}")
