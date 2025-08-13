@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ButtonProps } from './button.web';
+import type { ButtonProps } from './button.types';
 import { Button as WebButton } from './button.web';
 import { Button as NativeButton } from './button.native';
 
@@ -10,6 +10,5 @@ export const Button: React.FC<ButtonProps> = (props) => {
   if (isWeb) {
     return <WebButton {...props} />;
   }
-  const { onClick, ...rest } = props as any;
-  return <NativeButton {...rest} onPress={onClick} />;
+  return <NativeButton {...props} />;
 };
