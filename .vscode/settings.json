@@ -6,7 +6,7 @@
     "editor.rulers": [88],
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-        "source.organizeImports": true
+        "source.organizeImports": "explicit"
     },
     "python.sortImports.args": ["--profile=black"],
     "python.analysis.extraPaths": ["./tests/stubs"],
