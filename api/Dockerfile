@@ -14,9 +14,8 @@ RUN apt-get update \
 COPY requirements.txt ./
 # hadolint ignore=SC1091
 RUN python -m venv /opt/venv \
-    && . /opt/venv/bin/activate \
     && grep -v '^apache-flink' requirements.txt > requirements.filtered \
-    && pip install --no-cache-dir -r requirements.filtered
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.filtered
 
 FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee
 

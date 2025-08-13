@@ -9,7 +9,7 @@ Key parameters in `values.yaml`:
 |-----------|-------------|---------|
 | `environment` | Environment name (`dev`, `staging`, `prod`) | `dev` |
 | `image.repository` | Container image repository | `yosai-intel-dashboard` |
-| `image.tag` | Container image tag | `latest` |
+| `image.tag` | Container image tag | `0.1.0` |
 | `replicaCount` | Number of pod replicas | `2` |
 | `postgresql.enabled` | Deploy Bitnami PostgreSQL chart | `false` |
 | `redis.enabled` | Deploy Bitnami Redis chart | `false` |

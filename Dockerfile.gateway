@@ -3,7 +3,8 @@ FROM golang:1.22-alpine@sha256:1699c10032ca2582ec89a24a1312d986a3f094aed3d5c1147
 WORKDIR /src
 
 # If a go.work exists, copy it (optional) to stitch multiple modules under /go/*
-COPY go.work* .  # ok if missing
+# hadolint ignore=DL3021
+COPY go.work* ./  # ok if missing
 COPY go/ go/
 
 # If go.work exists, sync; otherwise continue
@@ -11,12 +12,14 @@ RUN go work sync || true
 
 # Build the gateway binary from the hard-wired path
 WORKDIR /src/go/cmd/gateway
-RUN [ -f go.mod ] || (go mod init example.com/gateway && go mod tidy)
-RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway
+RUN if [ ! -f go.mod ]; then \
+      go mod init example.com/gateway && go mod tidy; \
+    fi && \
+    go mod download && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/gateway
 
 # Stage 2: minimal runtime, non-root
-FROM gcr.io/distroless/base-debian12@sha256:4f6e739881403e7d50f52a4e574c4e3c88266031fd555303ee2f1ba262523d6a
+FROM gcr.io/distroless/base-debian12:nonroot
 WORKDIR /home/app
 COPY --from=build /out/gateway /usr/local/bin/gateway
 USER 1000:1000
