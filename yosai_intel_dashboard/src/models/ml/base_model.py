@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+from time import perf_counter
 import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -16,6 +17,10 @@ from packaging.version import Version
 
 from yosai_intel_dashboard.src.core.base_utils import clean_unicode_text
 from yosai_intel_dashboard.src.core.unicode import contains_surrogates
+from yosai_intel_dashboard.src.core.performance import (
+    MetricType,
+    get_performance_monitor,
+)
 from yosai_intel_dashboard.src.infrastructure.monitoring.model_performance_monitor import (
     ModelMetrics,
     get_model_performance_monitor,
@@ -123,7 +128,12 @@ class BaseModel(ABC):
         with self._predict_lock:
             if torch is not None and hasattr(self.model, "to"):
                 self.model.to(self.device)
+            start = perf_counter()
             result = self._predict(prepared)
+        latency = perf_counter() - start
+        get_performance_monitor().record_metric(
+            "model.inference_latency", latency, MetricType.EXECUTION_TIME
+        )
 
         if log_prediction is None:
             flag = os.getenv("MODEL_PREDICTION_LOGGING", "0").lower()
