@@ -1,4 +1,6 @@
 gateway:
+  allowed_origins:
+    - "https://dashboard.example.com"
   plugins:
     - name: advanced-ratelimit
       enabled: true

@@ -53,3 +53,22 @@ groups:
           summary: Optional dependency missing
           channels: performance-alerts
 
+  - name: backups
+    rules:
+      - alert: BackupJobStale
+        expr: time() - backup_last_success_timestamp > 86400
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: No successful backup in the last 24 hours
+          channels: ops-alerts
+      - alert: BackupJobFailed
+        expr: increase(backup_failures_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: Backup job failure detected
+          channels: ops-alerts
+

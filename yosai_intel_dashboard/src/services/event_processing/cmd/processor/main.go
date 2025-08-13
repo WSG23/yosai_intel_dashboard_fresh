@@ -1,20 +1,33 @@
 package main
 
 import (
-	"context"
-	"log"
+        "context"
+        "log"
+        "net/http"
 
-	framework "github.com/WSG23/yosai-framework"
-	"github.com/sony/gobreaker"
+        framework "github.com/WSG23/yosai-framework"
+        "github.com/sony/gobreaker"
 
-	"github.com/WSG23/yosai-event-processing/internal/config"
-	"github.com/WSG23/yosai-event-processing/internal/handlers"
-	"github.com/WSG23/yosai-event-processing/internal/kafka"
-	"github.com/WSG23/yosai-event-processing/internal/repository"
+        "github.com/WSG23/yosai-event-processing/internal/config"
+        "github.com/WSG23/yosai-event-processing/internal/handlers"
+        "github.com/WSG23/yosai-event-processing/internal/kafka"
+        "github.com/WSG23/yosai-event-processing/internal/observability"
+        "github.com/WSG23/yosai-event-processing/internal/repository"
 )
 
 func main() {
-	b, err := framework.NewServiceBuilder("event-processing", "config/service.yaml")
+        ctx := context.Background()
+        tp, err := observability.InitTracer(ctx, "event-processing")
+        if err != nil {
+                log.Fatalf("tracing init: %v", err)
+        }
+        defer observability.Shutdown(ctx, tp)
+
+        mux := http.NewServeMux()
+        observability.RegisterMetrics(mux)
+        go http.ListenAndServe(":9090", mux)
+
+        b, err := framework.NewServiceBuilder("event-processing", "config/service.yaml")
 	if err != nil {
 		log.Fatalf("failed to init service builder: %v", err)
 	}

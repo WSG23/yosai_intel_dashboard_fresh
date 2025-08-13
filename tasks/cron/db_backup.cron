@@ -1,0 +1,4 @@
+# Cron job for daily TimescaleDB backup with retention policy
+# Retention policy is configured via RETENTION_DAYS in deploy/db/backup/backup.conf
+# Runs at 2:00 AM UTC every day
+0 2 * * * /workspace/yosai_intel_dashboard_fresh/deploy/db/backup/backup.sh >> /var/log/db_backup.log 2>&1

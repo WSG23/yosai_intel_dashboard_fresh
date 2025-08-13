@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import {
@@ -92,15 +92,31 @@ interface NavigationProps {
   orientation?: 'horizontal' | 'vertical';
 }
 
+const filterByLevel = (items: NavItem[], lvl: number): NavItem[] =>
+  items
+    .filter((item) => item.level <= lvl)
+    .map((item) =>
+      item.children
+        ? { ...item, children: filterByLevel(item.children, lvl) }
+        : item,
+    );
+
 const Navigation: React.FC<NavigationProps> = ({
   className = '',
   orientation = 'horizontal',
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { level: userLevel, logFeatureUsage } = useProficiencyStore();
+  const { level: userLevel, logFeatureUsage } = useProficiencyStore((s) => ({
+    level: s.level,
+    logFeatureUsage: s.logFeatureUsage,
+  }));
 
   const isActive = (href?: string) => href && location.pathname === href;
+  const items = useMemo(
+    () => filterByLevel(navigationItems, userLevel),
+    [userLevel],
+  );
 
   const renderItems = (items: NavItem[], depth = 0): React.ReactNode => (
     <ul
@@ -111,69 +127,68 @@ const Navigation: React.FC<NavigationProps> = ({
         depth > 0 ? 'ml-4' : '',
       )}
     >
-      {items
-        .filter((item) => item.level <= userLevel)
-        .map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.href);
-          const hasChildren = item.children && item.children.length > 0;
-          const content = item.href ? (
-            <Link
-              to={item.href}
-              onClick={() => {
-                logFeatureUsage(item.name);
-                navigate(item.href!);
-              }}
-              className={cn(
-                'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                active
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
-              )}
-              title={item.description}
-              aria-current={active ? 'page' : undefined}
-            >
-              {Icon && (
-                <Icon
-                  className={
-                    orientation === 'horizontal' && depth === 0
-                      ? 'h-4 w-4'
-                      : 'h-5 w-5'
-                  }
-                />
-              )}
-              <span
+      {items.map((item) => {
+        const Icon = item.icon;
+        const active = isActive(item.href);
+        const hasChildren = item.children && item.children.length > 0;
+        const content = item.href ? (
+          <Link
+            to={item.href}
+            onClick={() => {
+              logFeatureUsage(item.name);
+              navigate(item.href!);
+            }}
+            className={cn(
+              'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+              active
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+            )}
+            title={item.description}
+            aria-current={active ? 'page' : undefined}
+          >
+            {Icon && (
+              <Icon
                 className={
                   orientation === 'horizontal' && depth === 0
-                    ? 'hidden sm:inline'
-                    : undefined
+                    ? 'h-4 w-4'
+                    : 'h-5 w-5'
                 }
-              >
-                {item.name}
-              </span>
-            </Link>
-          ) : (
-            <span className="px-3 py-2 text-sm font-medium text-gray-500">
+              />
+            )}
+            <span
+              className={
+                orientation === 'horizontal' && depth === 0
+                  ? 'hidden sm:inline'
+                  : undefined
+              }
+            >
               {item.name}
             </span>
-          );
+          </Link>
+        ) : (
+          <span className="px-3 py-2 text-sm font-medium text-gray-500">
+            {item.name}
+          </span>
+        );
 
-          return (
-            <li key={item.name}>
-              {content}
-              {hasChildren && renderItems(item.children!, depth + 1)}
-            </li>
-          );
-        })}
+        return (
+          <li key={item.name}>
+            {content}
+            {hasChildren && renderItems(item.children!, depth + 1)}
+          </li>
+        );
+      })}
     </ul>
   );
 
   return (
     <nav className={cn(className)} aria-label="Main navigation">
-      {renderItems(navigationItems)}
+      {renderItems(items)}
     </nav>
   );
 };
+
 
 // Header component with navigation
 export const Header: React.FC = () => {
@@ -238,4 +253,4 @@ export const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
   );
 };
 
-export default Navigation;
+export default memo(Navigation);

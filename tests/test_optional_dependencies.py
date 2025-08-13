@@ -85,3 +85,16 @@ def test_import_optional_logs_internal_error(monkeypatch, caplog):
         for record in caplog.records
     )
 
+
+def test_is_available(monkeypatch):
+    """``is_available`` reports module importability correctly."""
+
+    def fake_import(name):
+        if name == "existing":
+            return object()
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import)
+    assert optional_dependencies.is_available("existing")
+    assert not optional_dependencies.is_available("missing")
+
