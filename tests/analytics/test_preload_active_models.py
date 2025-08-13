@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from pathlib import Path
 import sys
 import os
+from typing import Any
 
 os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
 
@@ -41,3 +42,35 @@ def test_preload_active_models_loads(tmp_path):
     preload_active_models(service)
     assert service.models["demo"] == {"x": 1}
     assert (tmp_path / "demo" / "1" / "model.bin").exists()
+
+
+class MicroService:
+    def __init__(self, tmp_path: Path) -> None:
+        self.model_registry = DummyRegistry(tmp_path)
+        self.model_dir = tmp_path
+        self.models: dict[str, Any] = {}
+
+    def preload_active_models(self) -> None:
+        preload_active_models(self)
+
+
+class SyncService:
+    def __init__(self, tmp_path: Path) -> None:
+        self.model_registry = DummyRegistry(tmp_path)
+        self.model_dir = tmp_path
+        self.models: dict[str, Any] = {}
+
+    def preload_active_models(self) -> None:
+        preload_active_models(self)
+
+
+def test_microservice_preload_active_models(tmp_path):
+    svc = MicroService(tmp_path)
+    svc.preload_active_models()
+    assert svc.models["demo"] == {"x": 1}
+
+
+def test_service_preload_active_models(tmp_path):
+    svc = SyncService(tmp_path)
+    svc.preload_active_models()
+    assert svc.models["demo"] == {"x": 1}

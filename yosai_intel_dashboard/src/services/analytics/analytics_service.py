@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -76,6 +77,9 @@ from yosai_intel_dashboard.src.services.helpers.database_initializer import (
 )
 from yosai_intel_dashboard.src.services.helpers.event_publisher import EventPublisher
 from yosai_intel_dashboard.src.services.helpers.model_manager import ModelManager
+from yosai_intel_dashboard.src.services.common.analytics_utils import (
+    preload_active_models,
+)
 from yosai_intel_dashboard.src.services.protocols import UploadDataServiceProtocol
 from yosai_intel_dashboard.src.services.summary_report_generator import (
     SummaryReportGenerator,
@@ -204,6 +208,10 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self._create_orchestrator(loader, calculator, publisher)
         self.event_publisher = EventPublisher(self.publisher)
         self.router = DataSourceRouter(self.orchestrator)
+        analytics_cfg = getattr(config, "analytics", None)
+        model_dir = getattr(analytics_cfg, "ml_models_path", "models/ml")
+        self.model_dir = Path(model_dir)
+        self.models: Dict[str, Any] = {}
 
     def _inject_dependencies(
         self,
@@ -555,11 +563,9 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         return {"report_type": report_type, "params": params}
 
     # ------------------------------------------------------------------
-    def load_model_from_registry(
-        self, name: str, *, destination_dir: Path | None = None
-    ) -> Path | None:
-        """Download the active model from the registry."""
-        return self.model_manager.load_model(name, destination_dir=destination_dir)
+    def preload_active_models(self) -> None:
+        """Load all active models from the registry into memory."""
+        preload_active_models(self)
 
 # Global service instance
 _analytics_service: AnalyticsService | None = None
