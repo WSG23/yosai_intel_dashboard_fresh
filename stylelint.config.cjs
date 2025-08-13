@@ -1,6 +1,9 @@
 module.exports = {
-  extends: ['stylelint-config-standard'],
+  extends: ['stylelint-config-standard', 'stylelint-config-prettier'],
+  plugins: ['stylelint-order'],
   rules: {
-    'selector-max-specificity': '0,3,0'
+    'order/properties-alphabetical-order': true,
+    'at-rule-no-unknown': [true, { ignoreAtRules: ['tailwind', 'apply', 'variants', 'responsive', 'screen'] }],
+    'no-descending-specificity': null
   }
 };
