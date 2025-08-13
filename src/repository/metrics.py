@@ -9,7 +9,9 @@ import warnings
 from src.common.base import BaseComponent
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from yosai_intel_dashboard.src.core.protocols.metrics import MetricsRepositoryProtocol
+    from yosai_intel_dashboard.src.core.protocols.metrics import (
+        MetricsRepositoryProtocol,
+    )
 
 
 class InMemoryMetricsRepository(BaseComponent):
@@ -35,14 +37,18 @@ class InMemoryMetricsRepository(BaseComponent):
     @property
     def _performance(self) -> Dict[str, Any]:  # pragma: no cover - shim
         warnings.warn(
-            "_performance is deprecated, use 'performance'", DeprecationWarning, stacklevel=2
+            "_performance is deprecated, use 'performance'",
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self.performance
 
     @property
     def _drift(self) -> Dict[str, Any]:  # pragma: no cover - shim
         warnings.warn(
-            "_drift is deprecated, use 'drift'", DeprecationWarning, stacklevel=2
+            "_drift is deprecated, use 'drift'",
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self.drift
 
@@ -87,7 +93,11 @@ class CachedMetricsRepository(BaseComponent):
     # Backward compatibility for ``_repo`` attribute
     @property
     def _repo(self) -> MetricsRepositoryProtocol:  # pragma: no cover - shim
-        warnings.warn("_repo is deprecated, use 'repo'", DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "_repo is deprecated, use 'repo'",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.repo
 
     def _get_or_set(self, key: str, fn: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:

@@ -1,2 +1,1 @@
 """Analytics-related application components."""
-

@@ -45,4 +45,3 @@ async def analytics_endpoint(websocket: WebSocket) -> None:
             await websocket.send_json(event.model_dump(mode="json"))
     except WebSocketDisconnect:
         pass
-
