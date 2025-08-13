@@ -152,7 +152,7 @@ class ModelABTester:
             local_path = self.model_dir / f"{self.model_name}_{version}.bin"
             if not local_path.exists():
                 try:
-                    self.registry.download_artifact(record.storage_uri, str(local_path))
+                    self.registry.download_artifact(record.storage_uri, local_path)
                 except Exception as exc:  # pragma: no cover - network failures
                     self.logger.error(
                         "Failed to download model %s:%s - %s",
