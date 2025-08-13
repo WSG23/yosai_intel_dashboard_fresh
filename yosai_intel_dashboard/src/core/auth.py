@@ -38,6 +38,7 @@ from yosai_intel_dashboard.src.infrastructure.config import (
 )
 from yosai_intel_dashboard.src.security.roles import get_permissions_for_roles
 
+from src.exceptions import AuthError, ExternalServiceError
 from .secret_manager import SecretsManager
 from .session_store import InMemorySessionStore, MemcachedSessionStore
 
@@ -45,6 +46,12 @@ auth_bp = Blueprint("auth", __name__)
 login_manager = LoginManager()
 oauth = OAuth()
 logger = logging.getLogger(__name__)
+
+
+@auth_bp.errorhandler(AuthError)
+def handle_auth_error(err: AuthError):
+    logger.warning("Authentication error", extra={"error": str(err)})
+    return "Forbidden", 403
 
 
 class User(UserMixin):
@@ -122,10 +129,13 @@ def _get_jwks(domain: str) -> dict:
         with urlopen(jwks_url, timeout=timeout) as resp:
             jwks = json.load(resp)
     except (URLError, socket.timeout) as exc:
-        logger.warning(f"Failed to fetch JWKS from {jwks_url}: {exc}")
+        logger.error(
+            "Failed to fetch JWKS",
+            extra={"url": jwks_url, "error": str(exc)},
+        )
         if cached:
             return cached[0]
-        raise
+        raise ExternalServiceError("jwks_fetch_failed") from exc
     _jwks_cache[domain] = (jwks, now)
     return jwks
 
@@ -277,10 +287,11 @@ def refresh():
     refresh_token = session.get("refresh_token")
     try:
         data = jwt.decode(refresh_token, secret, algorithms=["HS256"])
-    except Exception:
-        return "Forbidden", 403
+    except jwt.JWTError as err:
+        logger.warning("Invalid refresh token", extra={"error": str(err)})
+        raise AuthError("invalid_refresh_token") from err
     if data.get("type") != "refresh":
-        return "Forbidden", 403
+        raise AuthError("invalid_token_type")
     now = datetime.utcnow()
     new_access = jwt.encode(
         {
@@ -350,7 +361,7 @@ def role_required(role: str):
                     from dash.exceptions import PreventUpdate
 
                     raise PreventUpdate
-                except Exception:
+                except ImportError:
                     return "Forbidden", 403
             return func(*args, **kwargs)
 
