@@ -28,11 +28,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
       - name: Black
-        run: black --check . | tee black-report.txt
+        run: |
+          set -o pipefail
+          black --check . | tee black-report.txt
       - name: Ruff
-        run: ruff check . | tee ruff-report.txt
+        run: |
+          set -o pipefail
+          ruff check . | tee ruff-report.txt
       - name: Mypy
-        run: mypy . --strict | tee mypy-report.txt
+        run: |
+          set -o pipefail
+          mypy . --strict | tee mypy-report.txt
       - name: Upload lint reports
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -61,7 +67,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
       - name: Run pytest
-        run: pytest -W error --cov=. --cov-report=xml --cov-report=term | tee pytest-report.txt
+        run: |
+          set -o pipefail
+          pytest -W error --cov=. --cov-report=xml --cov-report=term | tee pytest-report.txt
       - name: Upload coverage
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -86,13 +94,21 @@ jobs:
       - name: Install stylelint
         run: npm install --no-save stylelint stylelint-config-standard
       - name: ESLint
-        run: npm run lint -- --max-warnings=0 | tee eslint-report.txt
+        run: |
+          set -o pipefail
+          npm run lint -- --max-warnings=0 | tee eslint-report.txt
       - name: Prettier
-        run: npx prettier --check . | tee prettier-report.txt
+        run: |
+          set -o pipefail
+          npx prettier --check . | tee prettier-report.txt
       - name: Stylelint
-        run: npx stylelint "**/*.{css,scss}" --max-warnings=0 | tee stylelint-report.txt
+        run: |
+          set -o pipefail
+          npx stylelint "**/*.{css,scss}" --max-warnings=0 | tee stylelint-report.txt
       - name: Run frontend tests
-        run: npm test -- --coverage | tee frontend-test.log
+        run: |
+          set -o pipefail
+          npm test -- --coverage | tee frontend-test.log
       - name: Upload frontend artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -135,6 +151,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
       - name: Run ShellCheck
         run: |
+          set -o pipefail
           files=$(git ls-files '*.sh')
           if [ -n "$files" ]; then
             shellcheck --severity=warning -x $files | tee shellcheck-report.txt
@@ -161,6 +178,7 @@ jobs:
           sudo mv hadolint /usr/local/bin/hadolint
       - name: Run hadolint
         run: |
+          set -o pipefail
           for file in $(git ls-files '*Dockerfile*'); do
             echo "Linting $file" | tee -a hadolint-report.txt
             hadolint --config infra/.hadolint.yaml --failure-threshold warning "$file" | tee -a hadolint-report.txt
@@ -235,6 +253,7 @@ jobs:
           python-version: '3.11'
       - name: pip-audit
         run: |
+          set -o pipefail
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt pip-audit
           pip-audit | tee pip-audit.txt
@@ -244,6 +263,7 @@ jobs:
           node-version: 20
       - name: npm audit
         run: |
+          set -o pipefail
           npm ci --no-audit
           npm audit --audit-level=high | tee npm-audit.txt
 
