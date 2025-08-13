@@ -1,0 +1,26 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosExperiment
+metadata:
+  name: latency-injection
+  namespace: litmus
+spec:
+  definition:
+    scope: Namespaced
+    permissions:
+      - apiGroups: ['']
+        resources: ['pods']
+        verbs: ['create','delete','list','patch']
+    image: litmuschaos/go-runner:2.14.0
+    args:
+      - -c
+      - |
+        ./experiments -name pod-network-latency
+    env:
+      - name: TARGET_APP_LABEL
+        value: 'app=dashboard'
+      - name: NETWORK_LATENCY
+        value: '200'
+      - name: TOTAL_CHAOS_DURATION
+        value: '60'
+      - name: CHAOS_INTERVAL
+        value: '10'

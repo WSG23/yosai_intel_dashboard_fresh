@@ -32,7 +32,7 @@ func New() (*Gateway, error) {
 	r := mux.NewRouter()
 	r.HandleFunc("/health", handlers.HealthCheck).Methods(http.MethodGet)
 	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
-	r.HandleFunc("/breaker", handlers.BreakerMetrics).Methods(http.MethodGet)
+	r.Handle("/breaker", imw.RequireRole("admin")(http.HandlerFunc(handlers.BreakerMetrics))).Methods(http.MethodGet)
 
 	// Sensitive endpoint subrouters with access control
 	doors := r.PathPrefix("/api/v1/doors").Subrouter()
@@ -50,6 +50,7 @@ func New() (*Gateway, error) {
 	admin := r.PathPrefix("/admin").Subrouter()
 	admin.Use(imw.RequireRoleHeader("admin"))
 	admin.Use(adminsvc.AuditMiddleware(ilog.NewAuditLogger()))
+
 	admin.PathPrefix("/").Handler(p)
 
 	r.PathPrefix("/").Handler(p)

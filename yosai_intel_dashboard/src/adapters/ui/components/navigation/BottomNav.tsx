@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useSwipe } from '../../lib/gestures';
 import { navItems } from './navItems';
 
-const BottomNav: React.FC = () => {
+const BottomNavComponent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(
@@ -61,5 +61,5 @@ const BottomNav: React.FC = () => {
   );
 };
 
-export default BottomNav;
+export default memo(BottomNavComponent);
 

@@ -1,0 +1,26 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosExperiment
+metadata:
+  name: service-kill
+  namespace: litmus
+spec:
+  definition:
+    scope: Namespaced
+    permissions:
+      - apiGroups: ['']
+        resources: ['pods']
+        verbs: ['create','delete','list','patch']
+    image: litmuschaos/go-runner:2.14.0
+    args:
+      - -c
+      - |
+        ./experiments -name pod-delete
+    env:
+      - name: TARGET_APP_LABEL
+        value: 'app=dashboard'
+      - name: TOTAL_CHAOS_DURATION
+        value: '60'
+      - name: CHAOS_INTERVAL
+        value: '10'
+      - name: FORCE
+        value: 'false'

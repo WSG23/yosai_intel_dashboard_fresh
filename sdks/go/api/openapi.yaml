@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  description: |
+    Physical security intelligence and access control API.
+  title: Yōsai Intel Dashboard API
+  version: 1.0.0
+servers:
+- description: Production
+  url: https://api.yosai.com/v1
+- description: Staging
+  url: https://staging-api.yosai.com/v1
+- description: Development
+  url: http://localhost:8080/v1
+security:
+- jwtAuth: []
+- csrfToken: []
+paths:
+  /csrf-token:
+    get:
+      operationId: getCsrfToken
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getCsrfToken_200_response"
+          description: CSRF token
+      summary: Get CSRF token
+  /upload:
+    post:
+      operationId: uploadFile
+      responses:
+        "200":
+          description: Upload result
+      summary: Upload a file
+  /settings:
+    get:
+      operationId: getSettings
+      responses:
+        "200":
+          description: Successful response
+      summary: Get user settings
+    post:
+      operationId: updateSettings
+      responses:
+        "200":
+          description: Successful response
+      summary: Update user settings
+  /token/refresh:
+    post:
+      operationId: refreshToken
+      responses:
+        "200":
+          description: New access token
+      summary: Refresh access token
+  /analytics/patterns:
+    get:
+      operationId: getPatterns
+      responses:
+        "200":
+          description: Analytics summary
+      summary: Summarize access patterns
+  /analytics/sources:
+    get:
+      operationId: getSources
+      responses:
+        "200":
+          description: Data sources
+      summary: List data sources
+  /analytics/health:
+    get:
+      operationId: analyticsHealth
+      responses:
+        "200":
+          description: Health status
+      summary: Analytics service health
+  /analytics/chart/{chart_type}:
+    get:
+      operationId: getChartData
+      parameters:
+      - explode: false
+        in: path
+        name: chart_type
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Chart data
+      summary: Retrieve chart data
+  /model-monitoring/{model_name}:
+    get:
+      operationId: getModelMonitoringEvents
+      parameters:
+      - explode: false
+        in: path
+        name: model_name
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: start
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: end
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: form
+      responses:
+        "200":
+          description: Monitoring events
+      summary: Get model monitoring events
+  /explanations/{prediction_id}:
+    get:
+      operationId: getExplanation
+      parameters:
+      - explode: false
+        in: path
+        name: prediction_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Explanation payload
+      summary: Get prediction explanation
+  /feature-flags:
+    get:
+      operationId: listFeatureFlags
+      responses:
+        "200":
+          description: Flags
+      summary: List feature flags
+    post:
+      operationId: createFeatureFlag
+      responses:
+        "201":
+          description: Created
+      summary: Create feature flag
+  /feature-flags/{name}:
+    delete:
+      operationId: deleteFeatureFlag
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Deleted
+      summary: Delete feature flag
+    get:
+      operationId: getFeatureFlag
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Flag
+      summary: Get feature flag
+    put:
+      operationId: updateFeatureFlag
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Updated flag
+      summary: Update feature flag
+  /feature-flags/{name}/audit:
+    get:
+      operationId: getFeatureFlagAudit
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Audit history
+      summary: Get feature flag audit history
+components:
+  schemas:
+    getCsrfToken_200_response:
+      example:
+        csrf_token: csrf_token
+      properties:
+        csrf_token:
+          type: string
+      type: object
+  securitySchemes:
+    jwtAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+    csrfToken:
+      in: header
+      name: X-CSRF-Token
+      type: apiKey

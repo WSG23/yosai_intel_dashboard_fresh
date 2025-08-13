@@ -1,24 +1,35 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-	"time"
+        "context"
+        "fmt"
+        "log"
+        "net/http"
+        "time"
 
-	"golang.org/x/sync/errgroup"
+        "golang.org/x/sync/errgroup"
 
-	"yourmodule/pkg/shutdown"
+        "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
+        "yourmodule/internal/observability"
+        "yourmodule/pkg/shutdown"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
-	srv := &http.Server{Addr: ":8080", Handler: mux}
+        mux := http.NewServeMux()
+        mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+        observability.RegisterMetrics(mux)
+        srv := &http.Server{Addr: ":8080", Handler: otelhttp.NewHandler(mux, "http")}
 
-	root := context.Background()
-	ctx, stop := shutdown.Notify(root)
-	defer stop()
+        root := context.Background()
+        ctx, stop := shutdown.Notify(root)
+        defer stop()
+
+        tp, err := observability.InitTracer(ctx, "app")
+        if err != nil {
+                log.Fatalf("tracing init: %v", err)
+        }
+        defer observability.Shutdown(context.Background(), tp)
 
 	eg, ctx := errgroup.WithContext(ctx)
 

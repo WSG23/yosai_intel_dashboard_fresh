@@ -12,7 +12,7 @@ import dash_bootstrap_components as dbc
 from dash import html, no_update
 
 from yosai_intel_dashboard.src.core.interfaces.service_protocols import get_device_learning_service
-from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
+from yosai_intel_dashboard.src.services.kafka_client import KafkaClient
 from yosai_intel_dashboard.src.services.task_queue import (
     TaskQueue,
     TaskQueueProtocol,
@@ -62,12 +62,12 @@ class UploadCore:
         self.chunked = ChunkedUploadManager()
         self.queue = UploadQueueManager()
         self.task_queue = task_queue or TaskQueue()
-        self.rabbitmq: RabbitMQClient | None = None
+        self.kafka: KafkaClient | None = None
         if task_queue_url:
             try:
-                self.rabbitmq = RabbitMQClient(task_queue_url)
+                self.kafka = KafkaClient(task_queue_url)
             except Exception as exc:  # pragma: no cover - optional queue
-                logger.error("RabbitMQ connection failed: %s", exc)
+                logger.error("Kafka connection failed: %s", exc)
 
     def highlight_upload_area(self, n_clicks):
         if n_clicks:
@@ -142,9 +142,9 @@ class UploadCore:
             filenames_list = [filenames_list]
         filenames_list = [sanitize_filename(str(f)) for f in filenames_list]
         async_coro = self.processing.process_files(contents_list, filenames_list)
-        if self.rabbitmq:
+        if self.kafka:
             payload = {"contents": contents_list, "filenames": filenames_list}
-            return self.rabbitmq.publish(
+            return self.kafka.publish(
                 "tasks", "upload_process", payload, priority=0, delay_ms=0
             )
         task_id = self.task_queue.create_task(async_coro)
@@ -159,7 +159,7 @@ class UploadCore:
 
     def update_progress_bar(self, _n: int, task_id: str) -> Tuple[int, str, Any]:
         task_id = validate_user_input(str(task_id), "task_id")
-        if self.rabbitmq:
+        if self.kafka:
             progress = 0
         else:
             status = self.task_queue.get_status(task_id)
@@ -182,7 +182,7 @@ class UploadCore:
         self, _n: int, task_id: str
     ) -> Tuple[Any, Any, Any, Any, Any, Any, Any, bool]:
         task_id = validate_user_input(str(task_id), "task_id")
-        if self.rabbitmq:
+        if self.kafka:
             return (
                 no_update,
                 no_update,
