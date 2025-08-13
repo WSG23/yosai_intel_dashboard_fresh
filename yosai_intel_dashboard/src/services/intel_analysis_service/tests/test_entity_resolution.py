@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-import pathlib
-import sys
-
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from core.graph_entity_resolution import EntityResolver  # noqa: E402
-from core.graph_models import NodeMutation  # noqa: E402
+from yosai_intel_dashboard.src.core.graph_entity_resolution import EntityResolver
+from yosai_intel_dashboard.src.core.graph_models import NodeMutation
 
 
 def test_entity_resolution_merges_nodes():
