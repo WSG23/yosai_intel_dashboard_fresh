@@ -93,6 +93,7 @@
     "test": "vitest",
     "test:ui": "vitest --dir src",
     "test:watch": "vitest --watch",
+    "test:a11y": "cypress run --config-file cypress.a11y.config.ts --spec 'cypress/e2e/a11y.cy.ts'",
     "eject": "react-scripts eject",
     "build-css": "sh scripts/build_css.sh",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
