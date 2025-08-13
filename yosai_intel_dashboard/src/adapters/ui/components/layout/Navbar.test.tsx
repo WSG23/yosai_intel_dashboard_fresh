@@ -1,17 +1,22 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-jest.mock('react-router-dom', () => ({
-  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
-  useLocation: () => ({ pathname: '/' }),
-  useNavigate: () => jest.fn(),
-  MemoryRouter: ({ children }: any) => <div>{children}</div>,
-}), { virtual: true });
+import {
+  MockLink,
+  MockMemoryRouter as MemoryRouter,
+} from '../../test-utils/router';
+
+jest.mock(
+  'react-router-dom',
+  () => ({
+    Link: MockLink,
+    useLocation: () => ({ pathname: '/' }),
+    useNavigate: () => jest.fn(),
+    MemoryRouter,
+  }),
+  { virtual: true },
+);
 import Navbar from './Navbar';
 import { NavbarTitleProvider } from './NavbarTitleContext';
-
-const MemoryRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div>{children}</div>
-);
 
 test('shows brand text and toggles menu', () => {
   (window as any).innerWidth = 500;
@@ -20,7 +25,7 @@ test('shows brand text and toggles menu', () => {
       <NavbarTitleProvider>
         <Navbar />
       </NavbarTitleProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
   expect(screen.getByText('YOSAI Intelligence')).toBeInTheDocument();
   const toggle = screen.getByLabelText('Toggle menu');

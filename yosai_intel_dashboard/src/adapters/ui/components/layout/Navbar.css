@@ -14,7 +14,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
+  height: var(--navbar-height);
 }
 
 .navbar-brand {
@@ -61,11 +61,8 @@
   position: relative;
 }
 
-.navbar-item:hover {
-  color: var(--color-primary);
-  background-color: rgba(var(--color-primary-rgb), 0.1);
-}
-
+.navbar-item:hover,
+.navbar-item:focus-visible,
 .navbar-item.is-active {
   color: var(--color-primary);
   background-color: rgba(var(--color-primary-rgb), 0.1);
@@ -93,7 +90,7 @@
 
   .navbar-menu {
     position: absolute;
-    top: 60px;
+    top: var(--navbar-height);
     left: 0;
     right: 0;
     background-color: var(--color-background-secondary);

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 log() {
-  echo "[docker-entrypoint] $*"
+  printf '[docker-entrypoint] %s\n' "$*"
 }
 
 start_fallback() {

@@ -12,7 +12,7 @@ import {
 import { usePreferencesStore } from '../state';
 import { useNetworkStatus } from '../lib/network';
 
-export interface TimelineDatum {
+interface TimelineDatum {
   time: string | number;
   value: number;
 }
@@ -26,13 +26,20 @@ const Timeline: React.FC<TimelineProps> = ({ data, onRangeChange }) => {
   const { saveData } = usePreferencesStore();
   const network = useNetworkStatus();
   const dataSaver =
-    saveData || network.saveData || ['slow-2g', '2g'].includes(network.effectiveType ?? '');
+    saveData ||
+    network.saveData ||
+    ['slow-2g', '2g'].includes(network.effectiveType ?? '');
   const [range, setRange] = useState<{ startIndex: number; endIndex: number }>({
     startIndex: 0,
     endIndex: data.length - 1,
   });
 
-  const handleBrushChange = (r: any) => {
+  interface BrushRange {
+    startIndex?: number;
+    endIndex?: number;
+  }
+
+  const handleBrushChange = (r?: BrushRange) => {
     if (!r) return;
     const { startIndex, endIndex } = r;
     setRange({ startIndex, endIndex });

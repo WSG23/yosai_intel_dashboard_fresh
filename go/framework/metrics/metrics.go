@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -10,18 +11,24 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/WSG23/yosai-framework/health"
 	"github.com/WSG23/yosai-framework/logging"
 )
 
 // MetricsCollector represents metrics functionality for a service.
 type MetricsCollector interface {
-	Start() error
+	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 	ListenerAddr() string
 	Requests() *prometheus.CounterVec
 	Durations() *prometheus.HistogramVec
 	Errors() *prometheus.CounterVec
+}
+
+type healthHandlers interface {
+	Handler(http.ResponseWriter, *http.Request)
+	LiveHandler(http.ResponseWriter, *http.Request)
+	ReadyHandler(http.ResponseWriter, *http.Request)
+	StartupHandler(http.ResponseWriter, *http.Request)
 }
 
 type PrometheusCollector struct {
@@ -32,12 +39,12 @@ type PrometheusCollector struct {
 	reqErr    *prometheus.CounterVec
 	srv       *http.Server
 	ln        net.Listener
-	healthMgr *health.HealthManager
+	healthMgr healthHandlers
 	logger    logging.Logger
 }
 
 // NewPrometheusCollector creates a Prometheus metrics collector bound to addr.
-func NewPrometheusCollector(addr string, hm *health.HealthManager, lg logging.Logger) *PrometheusCollector {
+func NewPrometheusCollector(addr string, hm healthHandlers, lg logging.Logger) *PrometheusCollector {
 	return &PrometheusCollector{Addr: addr, healthMgr: hm, logger: lg}
 }
 
@@ -74,7 +81,7 @@ func (p *PrometheusCollector) init() error {
 	return nil
 }
 
-func (p *PrometheusCollector) Start() error {
+func (p *PrometheusCollector) Start(ctx context.Context) error {
 	if p.Addr == "" {
 		return nil
 	}
@@ -82,7 +89,7 @@ func (p *PrometheusCollector) Start() error {
 		if p.logger != nil {
 			p.logger.Error("metrics listener error", zap.Error(err))
 		}
-		return err
+		return fmt.Errorf("init metrics: %w", err)
 	}
 	go func() {
 		if err := p.srv.Serve(p.ln); err != nil && err != http.ErrServerClosed {
@@ -90,6 +97,10 @@ func (p *PrometheusCollector) Start() error {
 				p.logger.Error("metrics server error", zap.Error(err))
 			}
 		}
+	}()
+	go func() {
+		<-ctx.Done()
+		_ = p.srv.Shutdown(context.Background())
 	}()
 	return nil
 }

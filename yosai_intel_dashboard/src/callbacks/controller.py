@@ -25,6 +25,7 @@ def register_greetings_callbacks(app, container) -> None:
         svc = container.get("greeting_service") if container else None
         if svc is None:  # pragma: no cover - defensive
             raise PreventUpdate
+
         return svc.greet(name)
 
 
@@ -34,6 +35,7 @@ def register_upload_callbacks(
     upload_controller: "UnifiedUploadController" | None = None,
 ) -> None:
     """Register upload page callbacks."""
+
     from yosai_intel_dashboard.src.services.upload.controllers.upload_controller import (
         UnifiedUploadController,
     )
@@ -44,6 +46,7 @@ def register_upload_callbacks(
     @callbacks.callback(
         [Output("to-column-map-btn", "disabled"), Output("uploaded-df-store", "data")],
         [Input("drag-drop-upload", "contents"), Input("drag-drop-upload", "filename")],
+
         callback_id="file_upload_handle",
         component_name="file_upload",
         prevent_initial_call=True,
@@ -59,6 +62,7 @@ def register_device_learning_callbacks(app, container) -> None:
     """Register device learning callbacks."""
     # Import heavy dependencies lazily to keep controller lightweight
     import pandas as pd
+
     from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
         get_device_learning_service,
     )
@@ -71,6 +75,7 @@ def register_device_learning_callbacks(app, container) -> None:
             Input("file-upload-store", "data"),
             Input("device-mappings-confirmed", "data"),
         ],
+
         prevent_initial_call=True,
         callback_id="device_learning",
         component_name="device_learning_service",
@@ -82,12 +87,14 @@ def register_device_learning_callbacks(app, container) -> None:
         trigger_id = ctx.triggered[0]["prop_id"]
         learning_service = get_device_learning_service(container)
         if "file-upload-store" in trigger_id and upload_data:
+
             df = pd.DataFrame(upload_data["data"])
             filename = upload_data["filename"]
             if learning_service.apply_to_global_store(df, filename):
                 return html.Div(
                     [
                         html.I(className="fas fa-brain me-2", **{"aria-hidden": "true"}),
+
                         "Learned device mappings applied!",
                     ],
                     className="text-success",
@@ -97,6 +104,7 @@ def register_device_learning_callbacks(app, container) -> None:
             filename = confirmed_mappings["filename"]
             mappings = confirmed_mappings["mappings"]
             fingerprint = learning_service.save_complete_mapping(df, filename, mappings)
+
             return html.Div(
                 [
                     html.I(className="fas fa-save me-2", **{"aria-hidden": "true"}),

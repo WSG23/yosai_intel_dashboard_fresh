@@ -37,7 +37,7 @@ services:
       - infra
 
   kafka:
-    image: redpandadata/redpanda:latest
+    image: redpandadata/redpanda:${REDPANDA_TAG:-24.1.2}
     command:
       - redpanda
       - start

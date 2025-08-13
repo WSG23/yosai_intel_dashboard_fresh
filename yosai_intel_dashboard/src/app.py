@@ -4,6 +4,7 @@ from dash import Dash, html
 
 from yosai_intel_dashboard.src.adapters.ui.pages import greetings
 from yosai_intel_dashboard.src.callbacks import register_callbacks
+
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
 try:  # pragma: no cover - allow running without full services package

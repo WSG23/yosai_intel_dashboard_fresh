@@ -1,6 +1,5 @@
 """Page callback registry and helper for registering all callbacks."""
 
-from importlib import import_module
 from typing import Iterable
 
 from yosai_intel_dashboard.src.callbacks.controller import register_callbacks
