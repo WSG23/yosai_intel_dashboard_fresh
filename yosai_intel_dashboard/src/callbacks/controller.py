@@ -9,9 +9,24 @@ from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import
 )
 
 
-def register_greetings_callbacks(app, container) -> None:
-    """Register callbacks for the greetings page."""
-    callbacks = TrulyUnifiedCallbacks(app)
+def register_greetings_callbacks(
+    callbacks: TrulyUnifiedCallbacks,
+    container=None,
+    *,
+    service_name: str = "greeting_service",
+) -> None:
+    """Register callbacks for the greetings page.
+
+    Parameters
+    ----------
+    callbacks:
+        Callback registry instance to attach callbacks to.
+    container:
+        Dependency injection container used to resolve services.
+    service_name:
+        Name of the greeting service within ``container``. Injected to avoid
+        hard-coding constants and ease testing.
+    """
 
     @callbacks.callback(
         Output("greet-output", "children"),
@@ -22,7 +37,7 @@ def register_greetings_callbacks(app, container) -> None:
     def _update_greeting(name: str):
         if not name:
             raise PreventUpdate
-        svc = container.get("greeting_service") if container else None
+        svc = container.get(service_name) if container else None
         if svc is None:  # pragma: no cover - defensive
             raise PreventUpdate
 
@@ -30,7 +45,7 @@ def register_greetings_callbacks(app, container) -> None:
 
 
 def register_upload_callbacks(
-    app,
+    callbacks: TrulyUnifiedCallbacks,
     *,
     upload_controller: "UnifiedUploadController" | None = None,
 ) -> None:
@@ -40,7 +55,6 @@ def register_upload_callbacks(
         UnifiedUploadController,
     )
 
-    callbacks = TrulyUnifiedCallbacks(app)
     controller = upload_controller or UnifiedUploadController()
 
     @callbacks.callback(
@@ -58,7 +72,9 @@ def register_upload_callbacks(
         return False, df.to_json(date_format="iso", orient="split")
 
 
-def register_device_learning_callbacks(app, container) -> None:
+def register_device_learning_callbacks(
+    callbacks: TrulyUnifiedCallbacks, container=None
+) -> None:
     """Register device learning callbacks."""
     # Import heavy dependencies lazily to keep controller lightweight
     import pandas as pd
@@ -66,8 +82,6 @@ def register_device_learning_callbacks(app, container) -> None:
     from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
         get_device_learning_service,
     )
-
-    callbacks = TrulyUnifiedCallbacks(app)
 
     @callbacks.callback(
         Output("device-learning-status", "children"),
@@ -117,6 +131,7 @@ def register_device_learning_callbacks(app, container) -> None:
 
 def register_callbacks(app, container) -> None:
     """Register callbacks for all core pages."""
-    register_greetings_callbacks(app, container)
-    register_upload_callbacks(app)
-    register_device_learning_callbacks(app, container)
+    callbacks = TrulyUnifiedCallbacks(app)
+    register_greetings_callbacks(callbacks, container)
+    register_upload_callbacks(callbacks)
+    register_device_learning_callbacks(callbacks, container)

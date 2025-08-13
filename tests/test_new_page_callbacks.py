@@ -7,7 +7,7 @@ class GreetingService:
         return f"Hello, {name}!"
 
 
-def test_register_callbacks_injects_service(monkeypatch):
+def test_register_callbacks_injects_service():
     import dash
     from yosai_intel_dashboard.src.callbacks import controller as controller_module
 
@@ -31,9 +31,9 @@ def test_register_callbacks_injects_service(monkeypatch):
 
             return decorator
 
-    monkeypatch.setattr(controller_module, "TrulyUnifiedCallbacks", DummyCallbacks)
+    callbacks = DummyCallbacks(app)
 
-    register_greetings_callbacks(app, container)
+    register_greetings_callbacks(callbacks, container)
 
     assert "func" in captured
     cb = captured["func"]
@@ -58,8 +58,14 @@ def test_app_factory_builds_container(monkeypatch):
             return decorator
 
     monkeypatch.setattr(controller_module, "TrulyUnifiedCallbacks", DummyCallbacks)
-    monkeypatch.setattr(controller_module, "register_upload_callbacks", lambda *a, **k: None)
-    monkeypatch.setattr(controller_module, "register_device_learning_callbacks", lambda *a, **k: None)
+    monkeypatch.setattr(
+        controller_module, "register_upload_callbacks", lambda *a, **k: None
+    )
+    monkeypatch.setattr(
+        controller_module,
+        "register_device_learning_callbacks",
+        lambda *a, **k: None,
+    )
 
     dash_app = app_module.create_app()
     svc = dash_app._container.get("greeting_service")
