@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+  labels:
+    app: analytics-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8001"
+spec:
+  selector:
+    app: analytics-service
+    color: blue
+  ports:
+    - port: 80
+      targetPort: 8001
+

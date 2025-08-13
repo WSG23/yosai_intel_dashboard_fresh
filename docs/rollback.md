@@ -17,3 +17,19 @@ The script accepts the service name and namespace as optional arguments:
 ```
 
 By default it operates on the `yosai-dashboard` service in the `default` namespace.
+
+## Analytics Service
+
+Blue/green rollbacks for the analytics microservice use the same script with a
+different service name:
+
+```bash
+./scripts/rollback.sh analytics-service <namespace>
+```
+
+If a canary deployment was launched for the service, remove it to roll back:
+
+```bash
+kubectl delete deployment analytics-service-canary
+```
+
