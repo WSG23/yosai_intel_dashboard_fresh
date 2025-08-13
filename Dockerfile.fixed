@@ -2,6 +2,7 @@ FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d
 WORKDIR /app
 
 # Install system packages
+# hadolint ignore=DL3008
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential curl git && \
     rm -rf /var/lib/apt/lists/*
@@ -11,28 +12,27 @@ COPY requirements.txt ./
 
 # Create a filtered requirements file that removes conflicting packages
 RUN python -m venv /opt/venv && \
-    . /opt/venv/bin/activate && \
     grep -v -E '^(apache-flink|feast|opentelemetry-exporter-jaeger|opentelemetry-exporter-zipkin)' requirements.txt > requirements.filtered && \
-    # Try to install, allowing pip to resolve conflicts
-    pip install --no-cache-dir -r requirements.filtered || \
-    # If that fails, install essential packages only
-    (echo "Flask==2.3.3" > requirements.essential.txt && \
-     echo "dash==2.14.1" >> requirements.essential.txt && \
-     echo "pandas==2.1.4" >> requirements.essential.txt && \
-     echo "plotly==5.15.0" >> requirements.essential.txt && \
-     echo "gunicorn==23.0.0" >> requirements.essential.txt && \
-     echo "python-dotenv==1.0.0" >> requirements.essential.txt && \
-     echo "redis>=6.2.0" >> requirements.essential.txt && \
-     echo "asyncpg>=0.30.0" >> requirements.essential.txt && \
-     echo "requests==2.32.4" >> requirements.essential.txt && \
-     echo "dash-bootstrap-components" >> requirements.essential.txt && \
-     pip install --no-cache-dir -r requirements.essential.txt)
+    if ! /opt/venv/bin/pip install --no-cache-dir -r requirements.filtered; then \
+      echo "Flask==2.3.3" > requirements.essential.txt && \
+      echo "dash==2.14.1" >> requirements.essential.txt && \
+      echo "pandas==2.1.4" >> requirements.essential.txt && \
+      echo "plotly==5.15.0" >> requirements.essential.txt && \
+      echo "gunicorn==23.0.0" >> requirements.essential.txt && \
+      echo "python-dotenv==1.0.0" >> requirements.essential.txt && \
+      echo "redis>=6.2.0" >> requirements.essential.txt && \
+      echo "asyncpg>=0.30.0" >> requirements.essential.txt && \
+      echo "requests==2.32.4" >> requirements.essential.txt && \
+      echo "dash-bootstrap-components" >> requirements.essential.txt && \
+      /opt/venv/bin/pip install --no-cache-dir -r requirements.essential.txt; \
+    fi
 
 FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
 # Install runtime dependencies
+# hadolint ignore=DL3008
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
@@ -48,7 +48,7 @@ RUN set -eux; \
       adduser -D -u "${UID}" -G appuser appuser 2>/dev/null || adduser --uid "${UID}" --gid "${GID}" --disabled-password --gecos "" appuser; \
     else \
       groupadd -g "${GID}" appuser || true; \
-      useradd -m -u "${UID}" -g "${GID}" appuser || true; \
+      useradd -l -m -u "${UID}" -g "${GID}" appuser || true; \
     fi
 WORKDIR /app
 COPY --chown=appuser:appuser . /app

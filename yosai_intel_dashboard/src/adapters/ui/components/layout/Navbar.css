@@ -16,7 +16,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
+  height: var(--navbar-height);
 }
 
 .navbar-brand {
@@ -64,6 +64,7 @@
 }
 
 .navbar-item:is(:hover, .is-active) {
+
   color: var(--color-primary);
   background-color: var(--interactive-hover-bg);
 }
@@ -95,7 +96,7 @@
 
   .navbar-menu {
     position: absolute;
-    top: 60px;
+    top: var(--navbar-height);
     left: 0;
     right: 0;
     background-color: var(--color-background-secondary);

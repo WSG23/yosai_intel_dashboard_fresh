@@ -13,11 +13,14 @@ from yosai_intel_dashboard.src.core.base_utils import (
     clean_unicode_text,
     safe_encode_text,
 )
-from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
-    UnicodeSecurityValidator as UnicodeValidator,
-)
+try:  # pragma: no cover - optional dependency
+    from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
+        UnicodeSecurityValidator as UnicodeValidator,
+    )
+except Exception:  # pragma: no cover - fallback when security extras missing
+    UnicodeValidator = None  # type: ignore
 
-from .helpers import UnicodeQueryHandler, decode_upload_content
+from .helpers import UnicodeHandler, UnicodeQueryHandler, decode_upload_content
 
 __all__ = [
     "UnicodeProcessor",
@@ -30,4 +33,5 @@ __all__ = [
     "safe_encode_text",
     "sanitize_dataframe",
     "sanitize_unicode_input",
+    "UnicodeHandler",
 ]

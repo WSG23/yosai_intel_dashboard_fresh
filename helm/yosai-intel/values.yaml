@@ -5,7 +5,7 @@ environment: dev
 
 image:
   repository: yosai-intel-dashboard
-  tag: latest
+  tag: "0.1.0"
   pullPolicy: IfNotPresent
 
 service:
