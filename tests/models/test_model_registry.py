@@ -122,6 +122,28 @@ def test_set_active_version_closes_session(tmp_path, registry, track_session_clo
     assert len(track_session_closes) >= 1
 
 
+def test_multiple_active_variants(tmp_path, registry):
+    p1 = tmp_path / "v1.bin"
+    p1.write_text("a")
+    r1 = registry.register_model(
+        "exp", str(p1), {"acc": 1.0}, "h1", version="0.1.0", experiment_id="A"
+    )
+    registry.set_active_version("exp", r1.version, experiment_id="A")
+
+    p2 = tmp_path / "v2.bin"
+    p2.write_text("b")
+    r2 = registry.register_model(
+        "exp", str(p2), {"acc": 1.0}, "h2", version="0.1.0", experiment_id="B"
+    )
+    registry.set_active_version("exp", r2.version, experiment_id="B")
+
+    a = registry.get_model_for_experiment("exp", "A")
+    b = registry.get_model_for_experiment("exp", "B")
+    assert a.version == "0.1.0"
+    assert b.version == "0.1.0"
+    assert a.id != b.id
+
+
 def test_rollback_model_closes_session(tmp_path, registry, track_session_closes):
     p1 = tmp_path / "m1.bin"
     p1.write_text("a")
