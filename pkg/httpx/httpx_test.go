@@ -1,24 +1,53 @@
 package httpx
 
 import (
-    "context"
-    "net/http"
-    "testing"
-    "time"
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
 )
 
 func TestDefaultClientTimeout(t *testing.T) {
-    if DefaultClient.Timeout == 0 {
-        t.Fatal("expected non-zero client timeout")
-    }
+	if hc, ok := Default.httpClient.(*http.Client); !ok || hc.Timeout == 0 {
+		t.Fatalf("expected non-zero client timeout")
+	}
+}
+
+func TestDoJSON_Success(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]string{"ok": "true"})
+	}))
+	defer srv.Close()
+
+	req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	var dst map[string]string
+	if err := DoJSON(context.Background(), req, &dst); err != nil {
+		t.Fatalf("do json: %v", err)
+	}
+	if dst["ok"] != "true" {
+		t.Fatalf("unexpected response: %#v", dst)
+	}
 }
 
 func TestDoJSON_ContextCancel(t *testing.T) {
-    req, _ := http.NewRequest("GET", "http://127.0.0.1:0/never", nil) // invalid port ⇒ fast fail
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
-    defer cancel()
-    var dst map[string]any
-    if err := DoJSON(ctx, req, &dst); err == nil {
-        t.Fatal("expected error for unreachable host or timeout")
-    }
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+
+	req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	var dst map[string]any
+	if err := DoJSON(ctx, req, &dst); err == nil {
+		t.Fatal("expected error for context cancellation")
+	}
 }
