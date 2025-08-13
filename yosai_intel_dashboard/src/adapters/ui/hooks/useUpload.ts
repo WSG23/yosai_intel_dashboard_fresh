@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { api } from '../api/client';
 import {
@@ -19,6 +19,15 @@ export const useUpload = () => {
 
   const controllers = useRef<Map<string, AbortController>>(new Map());
   const polls = useRef<Record<string, NodeJS.Timeout>>({});
+
+  useEffect(() => {
+    return () => {
+      controllers.current.forEach((controller) => controller.abort());
+      controllers.current.clear();
+      Object.values(polls.current).forEach((poll) => clearInterval(poll));
+      polls.current = {};
+    };
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
