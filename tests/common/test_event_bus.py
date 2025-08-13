@@ -14,16 +14,7 @@ services_stub.__path__ = [
     str(repo_root / "yosai_intel_dashboard" / "src" / "services")
 ]
 safe_import("yosai_intel_dashboard.src.services", services_stub)
-
-analytics_stub = types.ModuleType("yosai_intel_dashboard.src.services.analytics")
-analytics_stub.__path__ = [
-    str(repo_root / "yosai_intel_dashboard" / "src" / "services" / "analytics")
-]
-safe_import("yosai_intel_dashboard.src.services.analytics", analytics_stub)
-
-from yosai_intel_dashboard.src.services.analytics.publisher import (
-    Publisher as AnalyticsPublisher,
-)
+from yosai_intel_dashboard.src.services.publishing_service import PublishingService
 
 
 def test_publish_and_unsubscribe():
@@ -57,17 +48,17 @@ def test_event_publisher_mixin():
     assert received == {"c": 3}
 
 
-def test_analytics_publisher():
+def test_publishing_service():
     bus = EventBus()
     received = []
     bus.subscribe("evt", lambda payload: received.append(payload))
-    publisher = AnalyticsPublisher(bus)
+    publisher = PublishingService(bus)
     publisher.publish({"d": 4}, event="evt")
     assert received == [{"d": 4}]
 
 
-def test_analytics_publisher_without_bus():
-    publisher = AnalyticsPublisher()
+def test_publishing_service_without_bus():
+    publisher = PublishingService()
     received = []
     publisher.event_bus.subscribe("evt", lambda payload: received.append(payload))
     publisher.publish({"e": 5}, event="evt")

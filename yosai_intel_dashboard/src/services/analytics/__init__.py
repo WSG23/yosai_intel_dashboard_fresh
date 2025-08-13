@@ -14,7 +14,6 @@ from .protocols import (
     MetricsCalculatorProtocol,
     ReportGeneratorProtocol,
 )
-from .publisher import Publisher
 from .timescale_queries import (
     build_sliding_window_query,
     build_time_bucket_query,
@@ -40,8 +39,6 @@ __all__ = [
     "DataLoader",
     "Calculator",
     "create_calculator",
-    "Publisher",
-    "create_publisher",
     "build_time_bucket_query",
     "build_sliding_window_query",
     "fetch_time_buckets",

@@ -12,8 +12,7 @@ import pandas as pd
 from validation.security_validator import SecurityValidator
 
 from .data.loader import DataLoader
-from .protocols import DataProcessorProtocol
-from .publisher import Publisher
+from .protocols import DataProcessorProtocol, PublishingProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class AnalyticsOrchestrator:
         validator: SecurityValidator,
         processor: DataProcessorProtocol,
         repository: AnalyticsRepositoryProtocol | None,
-        publisher: Publisher,
+        publisher: PublishingProtocol,
     ) -> None:
         self.loader = loader
         self.validator = validator

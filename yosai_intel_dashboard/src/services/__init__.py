@@ -28,7 +28,6 @@ else:
     from .analytics.data.loader import DataLoader
     from .analytics.generator import AnalyticsGenerator
     from .analytics.processor import AnalyticsProcessor
-    from .analytics.publisher import Publisher
     from .async_file_processor import AsyncFileProcessor
     from .chunked_analysis import analyze_with_chunking
     from .controllers.upload_controller import UploadProcessingController
@@ -129,7 +128,6 @@ else:
         "SummaryReportGenerator",
         "DataLoader",
         "Calculator",
-        "Publisher",
         "DataLoadingService",
         "DataProcessingService",
         "ReportGenerationService",
