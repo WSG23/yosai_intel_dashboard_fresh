@@ -187,7 +187,7 @@ def preload_active_models(service: AnalyticsService) -> None:
             continue
         local_dir = service.model_dir / name / record.version
         local_dir.mkdir(parents=True, exist_ok=True)
-        filename = os.path.basename(record.storage_uri)
+        filename = Path(record.storage_uri).name
         local_path = local_dir / filename
         if not local_path.exists():
             try:
@@ -543,7 +543,7 @@ async def predict(
     local_dir = app.state.model_dir / name / record.version
 
     local_dir.mkdir(parents=True, exist_ok=True)
-    local_path = local_dir / os.path.basename(record.storage_uri)
+    local_path = local_dir / Path(record.storage_uri).name
     if not local_path.exists():
         try:
             svc.model_registry.download_artifact(record.storage_uri, str(local_path))

@@ -24,11 +24,11 @@ def ensure_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
         ):
             if df[col].dtype == "object":
                 try:
-                    logger.info("Converting column '%s' to datetime", col)
+                    logger.info(f"Converting column '{col}' to datetime")
                     df[col] = pd.to_datetime(df[col], errors="coerce")
-                    logger.info("✅ Successfully converted '%s' to datetime", col)
+                    logger.info(f"✅ Successfully converted '{col}' to datetime")
                 except Exception as exc:  # pragma: no cover - best effort
-                    logger.warning("⚠️ Could not convert '%s' to datetime: %s", col, exc)
+                    logger.warning(f"⚠️ Could not convert '{col}' to datetime: {exc}")
     return df
 
 
@@ -36,11 +36,11 @@ def safe_datetime_operation(df: pd.DataFrame, column: str, operation: str) -> An
     """Safely perform a datetime ``operation`` on ``df[column]``."""
 
     if column not in df.columns:
-        logger.warning("Column '%s' not found in DataFrame", column)
+        logger.warning(f"Column '{column}' not found in DataFrame")
         return None
 
     if df[column].dtype == "object":
-        logger.info("Converting '%s' to datetime for operation '%s'", column, operation)
+        logger.info(f"Converting '{column}' to datetime for operation '{operation}'")
         df[column] = pd.to_datetime(df[column], errors="coerce")
 
     try:
@@ -58,14 +58,11 @@ def safe_datetime_operation(df: pd.DataFrame, column: str, operation: str) -> An
             return df[column].dt.dayofweek
         if operation == "weekday":
             return df[column].dt.day_name()
-        logger.warning("Unknown datetime operation: %s", operation)
+        logger.warning(f"Unknown datetime operation: {operation}")
     except Exception as exc:  # pragma: no cover - best effort
-        logger.error(
-            "Error performing datetime operation '%s' on column '%s': %s",
-            operation,
-            column,
-            exc,
-        )
+            logger.error(
+                f"Error performing datetime operation '{operation}' on column '{column}': {exc}"
+            )
     return None
 
 
