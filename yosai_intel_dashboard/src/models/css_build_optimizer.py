@@ -12,7 +12,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Iterable, List, Union
 
 from yosai_intel_dashboard.src.infrastructure.config.dynamic_config import (
     dynamic_config,
@@ -115,11 +115,47 @@ class CSSQualityAnalyzer:
         self.metrics: List[CSSMetric] = []
         self.violations: List[str] = []
         self.components: List[str] = []
+        self.components: List[str] = []
 
+    # ------------------------------------------------------------------
+    def _iter_css_files(self, include_main: bool = False) -> Iterable[Path]:
+        """Yield CSS files for analysis, optionally including ``main.css``."""
+        for css_file in self.css_dir.rglob("*.css"):
+            if css_file.name.startswith("_"):
+                continue
+            if not include_main and css_file.name == "main.css":
+                continue
+            yield css_file
+
+    # ------------------------------------------------------------------
+    def _calculate_bundle_size(self, main_css: Path) -> float:
+        """Return total bundle size in KB including imports."""
+        total_size = 0
+        processed_files: set[Path] = set()
+
+        def calculate_size(css_file: Path) -> None:
+            nonlocal total_size
+            if css_file in processed_files:
+                return
+            processed_files.add(css_file)
+            if css_file.exists():
+                try:
+                    content = css_file.read_text(encoding="utf-8")
+                    total_size += len(content.encode("utf-8"))
+                    for import_path in re.findall(
+                        r"@import\s+['\"]([^'\"]+)['\"]", content
+                    ):
+                        calculate_size(css_file.parent / import_path)
+                except Exception as exc:
+                    logging.warning(f"Error reading CSS file {css_file}: {exc}")
+
+        calculate_size(main_css)
+        return total_size / 1024
+
+    # ------------------------------------------------------------------
     def analyze_bundle_size(self) -> CSSMetric:
-        """Analyze CSS bundle size and compression"""
+        """Analyze CSS bundle size and compression."""
         main_css = self.css_dir / "main.css"
-
         if not main_css.exists():
             return CSSMetric(
                 "bundle_size",
@@ -130,42 +166,14 @@ class CSSQualityAnalyzer:
                 "Main CSS file not found",
             )
 
-        # Calculate total size including imports
-        total_size = 0
-        processed_files = set()
+        size_kb = self._calculate_bundle_size(main_css)
 
-        def calculate_size(css_file: Path) -> None:
-            nonlocal total_size
-
-            if css_file in processed_files:
-                return
-            processed_files.add(css_file)
-
-            if css_file.exists():
-                try:
-                    content = css_file.read_text(encoding="utf-8")
-                    total_size += len(content.encode("utf-8"))
-
-                    # Find @import statements
-                    imports = re.findall(r"@import\s+['\"]([^'\"]+)['\"]", content)
-                    for import_path in imports:
-                        import_file = css_file.parent / import_path
-                        if import_file.exists():
-                            calculate_size(import_file)
-                except Exception as e:
-                    logging.warning(f"Error reading CSS file {css_file}: {e}")
-
-        calculate_size(main_css)
-        size_kb = total_size / 1024
-
-        # Determine status
         match size_kb:
             case _ if size_kb <= dynamic_config.css.bundle_excellent_kb:
                 status = "excellent"
             case _ if size_kb <= dynamic_config.css.bundle_good_kb:
                 status = "good"
             case _ if size_kb <= dynamic_config.css.bundle_warning_kb:
-
                 status = "warning"
             case _:
                 status = "critical"
@@ -179,9 +187,18 @@ class CSSQualityAnalyzer:
             "Total CSS bundle size including all imports",
         )
 
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _count_design_tokens(content: str, patterns: List[str]) -> tuple[int, int]:
+        """Return total values and hardcoded values for a CSS string."""
+        hardcoded = sum(len(re.findall(p, content)) for p in patterns)
+        var_usage = len(re.findall(r"var\(--[^)]+\)", content))
+        return var_usage + hardcoded, hardcoded
+
+    # ------------------------------------------------------------------
     def analyze_design_token_usage(self) -> CSSMetric:
-        """Analyze design token usage vs hardcoded values"""
-        hardcoded_patterns = [
+        """Analyze design token usage vs hardcoded values."""
+        patterns = [
             r"color:\s*#[0-9a-fA-F]{6}",
             r"background:\s*#[0-9a-fA-F]{6}",
             r"border-color:\s*#[0-9a-fA-F]{6}",
@@ -194,29 +211,21 @@ class CSSQualityAnalyzer:
         total_values = 0
         hardcoded_values = 0
 
-        for css_file in self.css_dir.rglob("*.css"):
-            if css_file.name.startswith("_") or css_file.name == "main.css":
-                continue
-
+        for css_file in self._iter_css_files():
             try:
                 content = css_file.read_text(encoding="utf-8")
+            except Exception as exc:
+                logging.warning(f"Error analyzing file {css_file}: {exc}")
+                continue
+            total, hardcoded = self._count_design_tokens(content, patterns)
+            total_values += total
+            hardcoded_values += hardcoded
 
-                for pattern in hardcoded_patterns:
-                    matches = re.findall(pattern, content)
-                    hardcoded_values += len(matches)
-
-                # Count var() usage
-                var_usage = len(re.findall(r"var\(--[^)]+\)", content))
-                total_values += var_usage + hardcoded_values
-            except Exception as e:
-                logging.warning(f"Error analyzing file {css_file}: {e}")
-
-        if total_values > 0:
-            token_usage_percent = (
-                (total_values - hardcoded_values) / total_values
-            ) * 100
-        else:
-            token_usage_percent = 100
+        token_usage_percent = (
+            (total_values - hardcoded_values) / total_values * 100
+            if total_values
+            else 100
+        )
 
         match token_usage_percent:
             case _ if token_usage_percent >= 95:
@@ -224,7 +233,6 @@ class CSSQualityAnalyzer:
             case _ if token_usage_percent >= 85:
                 status = "good"
             case _ if token_usage_percent >= 70:
-
                 status = "warning"
             case _:
                 status = "critical"
@@ -238,59 +246,60 @@ class CSSQualityAnalyzer:
             "Percentage of values using design tokens vs hardcoded values",
         )
 
-    def analyze_selector_specificity(self) -> CSSMetric:
-        """Analyze CSS selector specificity for maintainability"""
-        high_specificity_selectors = []
-        total_selectors = 0
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _specificity(selector_text: str) -> int:
+        id_count = selector_text.count("#")
+        class_count = selector_text.count(".")
+        element_count = len(re.findall(r"\b[a-z]+\b", selector_text.lower()))
+        return (id_count * 100) + (class_count * 10) + element_count
 
-        for css_file in self.css_dir.rglob("*.css"):
+    # ------------------------------------------------------------------
+    def _process_specificity_file(
+        self, css_file: Path
+    ) -> tuple[int, List[tuple[str, int]]]:
+        try:
+            content = css_file.read_text(encoding="utf-8")
+        except Exception as exc:
+            logging.warning(f"Error reading CSS file {css_file}: {exc}")
+            return 0, []
+
+        total = 0
+        high_specificity: List[tuple[str, int]] = []
+
+        if cssutils:
             try:
-                content = css_file.read_text(encoding="utf-8")
-
-                # Parse CSS only if cssutils is available
-                if cssutils:
-                    try:
-                        sheet = cssutils.parseString(content)
-                        for rule in sheet:
-                            if rule.type == rule.STYLE_RULE:
-                                total_selectors += 1
-                                selector_text = rule.selectorText
-
-                                # Calculate specificity (simplified)
-                                id_count = selector_text.count("#")
-                                class_count = selector_text.count(".")
-                                element_count = len(
-                                    re.findall(r"\b[a-z]+\b", selector_text.lower())
-                                )
-
-                                specificity = (
-                                    (id_count * 100)
-                                    + (class_count * 10)
-                                    + element_count
-                                )
-
-                                if (
-                                    specificity > dynamic_config.css.specificity_high
-                                ):  # High specificity threshold
-                                    high_specificity_selectors.append(
-                                        (selector_text, specificity)
-                                    )
-                    except Exception as e:
-                        logging.warning(f"Error parsing CSS in {css_file}: {e}")
-                else:
-                    # Fallback simple analysis
-                    selectors = re.findall(r"([^{}]+)\s*{", content)
-                    total_selectors += len(selectors)
-
-            except Exception as e:
-                logging.warning(f"Error reading CSS file {css_file}: {e}")
-
-        if total_selectors > 0:
-            high_specificity_percent = (
-                len(high_specificity_selectors) / total_selectors
-            ) * 100
+                sheet = cssutils.parseString(content)
+                for rule in sheet:
+                    if rule.type == rule.STYLE_RULE:
+                        total += 1
+                        spec = self._specificity(rule.selectorText)
+                        if spec > dynamic_config.css.specificity_high:
+                            high_specificity.append((rule.selectorText, spec))
+            except Exception as exc:
+                logging.warning(f"Error parsing CSS in {css_file}: {exc}")
         else:
-            high_specificity_percent = 0
+            selectors = re.findall(r"([^{}]+)\s*{", content)
+            total += len(selectors)
+
+        return total, high_specificity
+
+    # ------------------------------------------------------------------
+    def analyze_selector_specificity(self) -> CSSMetric:
+        """Analyze CSS selector specificity for maintainability."""
+        total_selectors = 0
+        high_specificity_selectors: List[tuple[str, int]] = []
+
+        for css_file in self._iter_css_files(include_main=True):
+            total, high = self._process_specificity_file(css_file)
+            total_selectors += total
+            high_specificity_selectors.extend(high)
+
+        high_specificity_percent = (
+            len(high_specificity_selectors) / total_selectors * 100
+            if total_selectors
+            else 0
+        )
 
         match high_specificity_percent:
             case _ if high_specificity_percent <= 5:
@@ -298,7 +307,6 @@ class CSSQualityAnalyzer:
             case _ if high_specificity_percent <= 10:
                 status = "good"
             case _ if high_specificity_percent <= 20:
-
                 status = "warning"
             case _:
                 status = "critical"
@@ -312,34 +320,39 @@ class CSSQualityAnalyzer:
             "Percentage of selectors with healthy specificity (< 30)",
         )
 
-    def check_accessibility_compliance(self) -> CSSMetric:
-        """Check CSS for accessibility compliance"""
-        accessibility_score = 100
-        violations = []
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _accessibility_rules(content: str, filename: str) -> tuple[int, List[str]]:
+        score_penalty = 0
+        violations: List[str] = []
+        if not re.search(r":focus", content) and "button" in content.lower():
+            violations.append(f"{filename}: Missing focus styles")
+            score_penalty += 10
+        if re.search(r"color:\s*#(?:808080|888888|999999)", content):
+            violations.append(f"{filename}: Potentially low contrast colors")
+            score_penalty += 5
+        if "@media" in content and "prefers-reduced-motion" not in content:
+            violations.append(f"{filename}: No reduced motion support")
+            score_penalty += 5
+        return score_penalty, violations
 
-        for css_file in self.css_dir.rglob("*.css"):
+    # ------------------------------------------------------------------
+    def check_accessibility_compliance(self) -> CSSMetric:
+        """Check CSS for accessibility compliance."""
+        accessibility_score = 100
+        violations: List[str] = []
+
+        for css_file in self._iter_css_files(include_main=True):
             try:
                 content = css_file.read_text(encoding="utf-8")
-
-                # Check for focus styles
-                if not re.search(r":focus", content) and "button" in content.lower():
-                    violations.append(f"{css_file.name}: Missing focus styles")
-                    accessibility_score -= 10
-
-                # Check for proper contrast (simplified check)
-                if re.search(r"color:\s*#(?:808080|888888|999999)", content):
-                    violations.append(
-                        f"{css_file.name}: Potentially low contrast colors"
-                    )
-                    accessibility_score -= 5
-
-                # Check for reduced motion support
-                if "@media" in content and "prefers-reduced-motion" not in content:
-                    violations.append(f"{css_file.name}: No reduced motion support")
-                    accessibility_score -= 5
-
-            except Exception as e:
-                logging.warning(f"Error checking accessibility in {css_file}: {e}")
+            except Exception as exc:
+                logging.warning(f"Error checking accessibility in {css_file}: {exc}")
+                continue
+            penalty, file_violations = self._accessibility_rules(
+                content, css_file.name
+            )
+            accessibility_score -= penalty
+            violations.extend(file_violations)
 
         accessibility_score = max(0, accessibility_score)
 
@@ -349,7 +362,6 @@ class CSSQualityAnalyzer:
             case _ if accessibility_score >= 85:
                 status = "good"
             case _ if accessibility_score >= 70:
-
                 status = "warning"
             case _:
                 status = "critical"

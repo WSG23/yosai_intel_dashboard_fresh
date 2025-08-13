@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 from packaging.version import Version
-from sqlalchemy import (
+from sqlalchemy import (  # type: ignore[import-not-found]
     JSON,
     Boolean,
     Column,
@@ -19,7 +19,11 @@ from sqlalchemy import (
     select,
     update,
 )
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import (  # type: ignore[import-not-found]
+    Session,
+    DeclarativeBase,
+    sessionmaker,
+)
 
 from optional_dependencies import import_optional
 
@@ -29,7 +33,9 @@ requests = import_optional("requests")
 
 logger = logging.getLogger(__name__)
 
-Base = declarative_base()
+class Base(DeclarativeBase):  # type: ignore[misc]
+    """Base class for SQLAlchemy models."""
+    pass
 
 
 class ModelRecord(Base):
@@ -113,7 +119,7 @@ class ModelRegistry:
             patch += 1
         return f"{major}.{minor}.{patch}"
 
-    def _session(self):
+    def _session(self) -> Session:
         return self.Session()
 
     # --------------------------------------------------------------

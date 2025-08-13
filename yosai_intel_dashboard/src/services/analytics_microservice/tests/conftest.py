@@ -1,10 +1,19 @@
+import importlib.util
+import os
 import pathlib
 import sys
 import types
+from dataclasses import dataclass
+from pathlib import Path
+from unittest.mock import AsyncMock
+
+import pytest
+from fastapi import FastAPI
+from jose import jwt
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
 
-# Provide a lightweight 'services' package to avoid heavy dependencies during test collection
+# Stub out the heavy 'services' package before tests import anything
 services_stub = types.ModuleType("services")
 services_stub.__path__ = [str(SERVICES_PATH)]
 sys.modules.setdefault("services", services_stub)
