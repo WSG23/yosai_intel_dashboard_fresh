@@ -61,6 +61,13 @@ DashboardBuilder.preload = () => {
   import('./pages/DashboardBuilder');
 };
 
+const LearnMore: PreloadableComponent = React.lazy(
+  () => import('./pages/LearnMore'),
+);
+LearnMore.preload = () => {
+  import('./pages/LearnMore');
+};
+
 import './index.css';
 
 const rootEl = document.getElementById('root');
@@ -123,6 +130,14 @@ if (rootEl) {
                   </Suspense>
                 }
               />
+              <Route
+                path="/learn"
+                element={
+                  <Suspense fallback={<CenteredSpinner />}>
+                    <LearnMore />
+                  </Suspense>
+                }
+              />
             </Routes>
             {isMobile && <BottomNav />}
           </BrowserRouter>
@@ -139,7 +154,15 @@ if (rootEl) {
     </React.StrictMode>,
   );
 
-  const pages = [Upload, Analytics, Graphs, Export, Settings, DashboardBuilder];
+  const pages = [
+    Upload,
+    Analytics,
+    Graphs,
+    Export,
+    Settings,
+    DashboardBuilder,
+    LearnMore,
+  ];
   if ('requestIdleCallback' in window) {
     (window as any).requestIdleCallback(() =>
       pages.forEach((p) => p.preload?.()),
@@ -181,4 +204,5 @@ export {
   Export,
   Settings,
   DashboardBuilder,
+  LearnMore,
 };
