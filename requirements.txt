@@ -11,8 +11,8 @@ cachetools==6.1.0
 websockets==11.0.3
 plotly==5.15.0
 dash-bootstrap-components==1.6.0
-pandas==2.2.3  # Feast >=0.47 supports pandas >=2
-numpy>=1.26,<2.0  # required for pandas 2.2.3
+pandas==1.5.3  # pinned for compatibility with Feast 0.47
+numpy>=1.22,<2.0  # required for pandas 1.5.3
 Authlib==1.6.1
 python-jose==3.5.0
 argon2-cffi==23.1.0
@@ -69,7 +69,7 @@ boto3==1.34.103
 protobuf==4.25.3  # required by Feast 0.47.0
 
 strawberry-graphql[fastapi]==0.278.1
-feast==0.47.0  # supports pandas >=2 and pydantic >=2
+feast==0.47.0  # compatible with pandas 1.x and pydantic >=2
 tenacity==8.2.3
 shap==0.44.1
 lime==0.2.0.1
