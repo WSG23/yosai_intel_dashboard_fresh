@@ -14,6 +14,9 @@ import joblib
 import pytest
 from fastapi import FastAPI
 from jose import jwt
+from yosai_intel_dashboard.src.services.analytics_microservice.model_loader import (
+    preload_active_models,
+)
 
 SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2]
 
@@ -140,9 +143,6 @@ def load_app(jwt_secret: str | None = "secret") -> tuple:
             self.models = {}
 
         async def close(self):
-            pass
-
-        def preload_active_models(self):
             pass
 
     dummy_service = DummyAnalyticsService()
@@ -552,7 +552,7 @@ async def test_predict_endpoint(tmp_path):
     registry.register_model("demo", str(path), {}, "", version="1")
     registry.set_active_version("demo", "1")
     svc.model_registry = registry
-    module.preload_active_models(svc)
+    preload_active_models(svc)
 
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},

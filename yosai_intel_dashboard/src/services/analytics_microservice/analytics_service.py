@@ -11,6 +11,7 @@ from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
     ServiceSettings,
 )
 from yosai_intel_dashboard.src.services.common.async_db import close_pool
+from .model_loader import preload_active_models as _preload_models
 
 
 class AnalyticsService:
@@ -37,33 +38,7 @@ class AnalyticsService:
 
     def preload_active_models(self) -> None:
         """Load active models into memory from the registry."""
-        self.models = {}
-        registry = self.model_registry
-        try:
-            records = registry.list_models()
-        except Exception:  # pragma: no cover - registry unavailable
-            return
-        names = {r.name for r in records}
-        for name in names:
-            record = registry.get_model(name, active_only=True)
-            if record is None:
-                continue
-            local_dir = self.model_dir / name / record.version
-            local_dir.mkdir(parents=True, exist_ok=True)
-            filename = record.storage_uri.split("/")[-1]
-            local_path = local_dir / filename
-            if not local_path.exists():
-                try:
-                    registry.download_artifact(record.storage_uri, str(local_path))
-                except Exception:  # pragma: no cover - best effort
-                    continue
-            try:
-                import joblib
-
-                model_obj = joblib.load(local_path)
-                self.models[name] = model_obj
-            except Exception:  # pragma: no cover - invalid model
-                continue
+        _preload_models(self)
 
 
 async def get_analytics_service(request) -> AnalyticsService:
