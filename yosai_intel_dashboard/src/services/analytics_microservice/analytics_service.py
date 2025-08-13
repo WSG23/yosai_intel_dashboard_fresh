@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import asyncpg
 import redis.asyncio as aioredis
@@ -41,5 +41,7 @@ class AnalyticsService:
         _preload_models(self)
 
 
-async def get_analytics_service(request) -> AnalyticsService:
-    return request.app.state.analytics_service
+async def get_analytics_service(request: Any) -> AnalyticsService:
+    """Fetch the :class:`AnalyticsService` instance from a request object."""
+
+    return cast(AnalyticsService, request.app.state.analytics_service)
