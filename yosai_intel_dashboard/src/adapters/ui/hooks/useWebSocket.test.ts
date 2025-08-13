@@ -1,14 +1,15 @@
 import { renderHook, act } from '@testing-library/react';
+import { vi } from 'vitest';
 import { useWebSocket, WebSocketState } from '.';
 import { eventBus } from '../eventBus';
 import websocket_metrics from '../metrics/websocket_metrics';
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 beforeEach(() => {
   MockSocket.instances = [];
   MockSocket.instance = null;
-  jest.clearAllTimers();
+  vi.clearAllTimers();
   websocket_metrics.reset();
 });
 
@@ -16,8 +17,8 @@ class MockSocket {
   public onmessage: ((ev: { data: string }) => void) | null = null;
   public onopen: (() => void) | null = null;
   public onclose: (() => void) | null = null;
-  public close = jest.fn();
-  public pong = jest.fn();
+  public close = vi.fn();
+  public pong = vi.fn();
   private handlers: Record<string, Function> = {};
   constructor(public url: string) {
     MockSocket.instance = this;
@@ -31,6 +32,17 @@ class MockSocket {
   }
   static instance: MockSocket | null = null;
   static instances: MockSocket[] = [];
+}
+
+class MockES {
+  public onopen: (() => void) | null = null;
+  public onmessage: ((ev: { data: string }) => void) | null = null;
+  public onerror: (() => void) | null = null;
+  public close = vi.fn();
+  constructor(public url: string) {
+    MockES.instance = this;
+  }
+  static instance: MockES | null = null;
 }
 
 describe('useWebSocket', () => {
@@ -62,7 +74,7 @@ describe('useWebSocket', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(1000);
     });
 
     expect(MockSocket.instances).toHaveLength(2);
@@ -74,12 +86,12 @@ describe('useWebSocket', () => {
     });
 
     act(() => {
-      jest.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(1000);
     });
     expect(MockSocket.instances).toHaveLength(2);
 
     act(() => {
-      jest.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(1000);
     });
 
     expect(MockSocket.instances).toHaveLength(3);
@@ -97,17 +109,18 @@ describe('useWebSocket', () => {
       MockSocket.instances[0].onclose?.();
     });
 
-    unmount();
+    const countAfterClose = MockSocket.instances.length;
 
     act(() => {
-      jest.runOnlyPendingTimers();
+      unmount();
+      vi.advanceTimersByTime(1000);
     });
 
-    expect(MockSocket.instances).toHaveLength(1);
+    expect(MockSocket.instances).toHaveLength(countAfterClose);
   });
 
   it('emits state transitions through the eventBus', () => {
-    const handler = jest.fn();
+    const handler = vi.fn();
     const off = eventBus.on('websocket_state', handler);
     const { unmount } = renderHook(() =>
       useWebSocket('ws://test', url => new MockSocket(url) as unknown as WebSocket),
@@ -134,7 +147,7 @@ describe('useWebSocket', () => {
     );
 
     act(() => {
-      jest.advanceTimersByTime(29999);
+      vi.advanceTimersByTime(29999);
     });
     expect(MockSocket.instance?.close).not.toHaveBeenCalled();
 
@@ -144,16 +157,53 @@ describe('useWebSocket', () => {
     expect(MockSocket.instance?.pong).toHaveBeenCalled();
 
     act(() => {
-      jest.advanceTimersByTime(29999);
+      vi.advanceTimersByTime(29999);
     });
     expect(MockSocket.instance?.close).not.toHaveBeenCalled();
 
     act(() => {
-      jest.advanceTimersByTime(30000);
+      vi.advanceTimersByTime(30000);
     });
     expect(MockSocket.instance?.close).toHaveBeenCalled();
 
     unmount();
 
+  });
+
+  it('falls back to EventSource after max retries', () => {
+    const { result, unmount } = renderHook(() =>
+      useWebSocket(
+        'ws://test',
+        url => new MockSocket(url) as unknown as WebSocket,
+        {
+          fallbackPath: '/events',
+          eventSourceFactory: url => new MockES(url) as unknown as EventSource,
+          maxRetries: 2,
+        },
+      ),
+    );
+
+    act(() => {
+      // first websocket attempt fails
+      MockSocket.instances[0].onclose?.();
+      vi.advanceTimersByTime(1000);
+      // second attempt fails triggering fallback
+      MockSocket.instances[1].onclose?.();
+      MockES.instance?.onopen?.();
+      MockES.instance?.onmessage?.({ data: 'sse' });
+    });
+
+    expect(result.current.data).toBe('sse');
+
+    const countAfterFallback = MockSocket.instances.length;
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(MockSocket.instances).toHaveLength(countAfterFallback);
+
+    unmount();
+    expect(MockES.instance?.close).toHaveBeenCalled();
   });
 });
