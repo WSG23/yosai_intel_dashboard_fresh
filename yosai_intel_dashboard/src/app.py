@@ -2,7 +2,8 @@
 
 from dash import Dash, html
 
-from yosai_intel_dashboard.src.pages import greetings, register_callbacks
+from yosai_intel_dashboard.src.adapters.ui.pages import greetings
+from yosai_intel_dashboard.src.callbacks.controller import register_callbacks
 from yosai_intel_dashboard.src.services.greeting import GreetingService
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
 
