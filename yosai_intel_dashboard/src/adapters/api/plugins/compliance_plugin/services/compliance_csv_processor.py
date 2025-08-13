@@ -291,9 +291,11 @@ class ComplianceCSVProcessor:
             # Check for timestamp patterns
             try:
                 pd.to_datetime(sample_values.iloc[0])
-                detected_types.add("access_logs")
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, pd.errors.ParserError):
+
                 pass
+            else:
+                detected_types.add("access_logs")
 
         return {"detected_types": detected_types}
 

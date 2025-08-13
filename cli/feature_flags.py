@@ -4,9 +4,19 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Sequence
+import logging
+from typing import Any, Sequence
 
 import requests
+
+from yosai_intel_dashboard.src.exceptions import (
+    ExternalServiceError,
+    InvalidResponseError,
+)
+from yosai_intel_dashboard.src.logging_config import configure_logging
+
+logger = logging.getLogger(__name__)
+DEFAULT_TIMEOUT = 5
 
 
 def _headers(token: str | None, roles: str | None) -> dict[str, str]:
@@ -18,42 +28,115 @@ def _headers(token: str | None, roles: str | None) -> dict[str, str]:
     return headers
 
 
-def list_flags(api_url: str, token: str | None, roles: str | None) -> None:
-    resp = requests.get(api_url, headers=_headers(token, roles))
-    resp.raise_for_status()
-    print(json.dumps(resp.json(), indent=2))
+def list_flags(api_url: str, token: str | None, roles: str | None) -> list[dict[str, Any]]:
+    try:
+        resp = requests.get(
+            api_url, headers=_headers(token, roles), timeout=DEFAULT_TIMEOUT
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as exc:  # pragma: no cover - network error
+        logger.error("Failed to list feature flags: %s", exc)
+        raise ExternalServiceError("Failed to list feature flags") from exc
+    except json.JSONDecodeError as exc:  # pragma: no cover - malformed response
+        logger.error("Invalid JSON in feature flag response: %s", exc)
+        raise InvalidResponseError("Invalid feature flag response") from exc
+
+    logger.info("Retrieved %d feature flags", len(data))
+    return data
 
 
-def get_flag(api_url: str, name: str, token: str | None, roles: str | None) -> None:
-    resp = requests.get(f"{api_url}/{name}", headers=_headers(token, roles))
-    resp.raise_for_status()
-    print(json.dumps(resp.json(), indent=2))
+def get_flag(
+    api_url: str, name: str, token: str | None, roles: str | None
+) -> dict[str, Any]:
+    try:
+        resp = requests.get(
+            f"{api_url}/{name}",
+            headers=_headers(token, roles),
+            timeout=DEFAULT_TIMEOUT,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as exc:  # pragma: no cover - network error
+        logger.error("Failed to get feature flag %s: %s", name, exc)
+        raise ExternalServiceError(
+            f"Failed to get feature flag '{name}'"
+        ) from exc
+    except json.JSONDecodeError as exc:  # pragma: no cover - malformed response
+        logger.error("Invalid JSON in get flag response: %s", exc)
+        raise InvalidResponseError("Invalid feature flag response") from exc
+
+    logger.info("Retrieved feature flag '%s'", name)
+    return data
 
 
 def create_flag(
     api_url: str, name: str, enabled: bool, token: str | None, roles: str | None
-) -> None:
+) -> dict[str, Any]:
     payload = {"name": name, "enabled": enabled}
-    resp = requests.post(api_url, json=payload, headers=_headers(token, roles))
-    resp.raise_for_status()
-    print(json.dumps(resp.json(), indent=2))
+    try:
+        resp = requests.post(
+            api_url,
+            json=payload,
+            headers=_headers(token, roles),
+            timeout=DEFAULT_TIMEOUT,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as exc:  # pragma: no cover - network error
+        logger.error("Failed to create feature flag %s: %s", name, exc)
+        raise ExternalServiceError(
+            f"Failed to create feature flag '{name}'"
+        ) from exc
+    except json.JSONDecodeError as exc:  # pragma: no cover - malformed response
+        logger.error("Invalid JSON in create flag response: %s", exc)
+        raise InvalidResponseError("Invalid feature flag response") from exc
+
+    logger.info("Created feature flag '%s'", name)
+    return data
 
 
 def update_flag(
     api_url: str, name: str, enabled: bool, token: str | None, roles: str | None
-) -> None:
+) -> dict[str, Any]:
     payload = {"enabled": enabled}
-    resp = requests.put(
-        f"{api_url}/{name}", json=payload, headers=_headers(token, roles)
-    )
-    resp.raise_for_status()
-    print(json.dumps(resp.json(), indent=2))
+    try:
+        resp = requests.put(
+            f"{api_url}/{name}",
+            json=payload,
+            headers=_headers(token, roles),
+            timeout=DEFAULT_TIMEOUT,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as exc:  # pragma: no cover - network error
+        logger.error("Failed to update feature flag %s: %s", name, exc)
+        raise ExternalServiceError(
+            f"Failed to update feature flag '{name}'"
+        ) from exc
+    except json.JSONDecodeError as exc:  # pragma: no cover - malformed response
+        logger.error("Invalid JSON in update flag response: %s", exc)
+        raise InvalidResponseError("Invalid feature flag response") from exc
+
+    logger.info("Updated feature flag '%s'", name)
+    return data
 
 
 def delete_flag(api_url: str, name: str, token: str | None, roles: str | None) -> None:
-    resp = requests.delete(f"{api_url}/{name}", headers=_headers(token, roles))
-    resp.raise_for_status()
-    print("deleted")
+    try:
+        resp = requests.delete(
+            f"{api_url}/{name}",
+            headers=_headers(token, roles),
+            timeout=DEFAULT_TIMEOUT,
+        )
+        resp.raise_for_status()
+    except requests.RequestException as exc:  # pragma: no cover - network error
+        logger.error("Failed to delete feature flag %s: %s", name, exc)
+        raise ExternalServiceError(
+            f"Failed to delete feature flag '{name}'"
+        ) from exc
+
+    logger.info("Deleted feature flag '%s'", name)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -102,10 +185,13 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
 
     args = parser.parse_args(argv)
+    configure_logging()
     if not hasattr(args, "func"):
         parser.print_help()
         return
-    args.func(args)
+    result = args.func(args)
+    if result is not None:
+        logger.debug(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
