@@ -84,9 +84,9 @@ perf_fp_mod = types.ModuleType("core.performance_file_processor")
 perf_fp_mod.PerformanceFileProcessor = object
 safe_import('core.performance_file_processor', perf_fp_mod)
 
-rabbit_pkg = types.ModuleType("services.rabbitmq_client")
-rabbit_pkg.RabbitMQClient = object
-safe_import('services.rabbitmq_client', rabbit_pkg)
+rabbit_pkg = types.ModuleType("services.kafka_client")
+rabbit_pkg.KafkaClient = object
+safe_import('services.kafka_client', rabbit_pkg)
 
 memory_pkg = types.ModuleType("utils.memory_utils")
 memory_pkg.check_memory_limit = lambda *a, **k: None

@@ -21,7 +21,7 @@ from yosai_intel_dashboard.src.infrastructure.callbacks import (
     CallbackType,
     UnifiedCallbackRegistry,
 )
-from yosai_intel_dashboard.src.services.rabbitmq_client import RabbitMQClient
+from yosai_intel_dashboard.src.services.kafka_client import KafkaClient
 from yosai_intel_dashboard.src.services.task_queue import create_task, get_status
 from yosai_intel_dashboard.src.utils.memory_utils import check_memory_limit
 
@@ -46,13 +46,13 @@ class AsyncFileProcessor(FileProcessorProtocol):
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.callbacks = callback_registry or UnifiedCallbackRegistry()
-        self._queue: RabbitMQClient | None = None
+        self._queue: KafkaClient | None = None
         self._semaphore = asyncio.Semaphore(4)
         if task_queue_url:
             try:
-                self._queue = RabbitMQClient(task_queue_url)
+                self._queue = KafkaClient(task_queue_url)
             except Exception as exc:  # pragma: no cover - connection optional
-                self.logger.error("RabbitMQ connection failed: %s", exc)
+                self.logger.error("Kafka connection failed: %s", exc)
                 self._queue = None
 
     async def read_csv_chunks(
@@ -176,7 +176,7 @@ class AsyncFileProcessor(FileProcessorProtocol):
         return df, ""
 
     def process_file_async(self, contents: str, filename: str) -> str:
-        """Schedule ``process_file`` using RabbitMQ when available."""
+        """Schedule ``process_file`` using Kafka when available."""
 
         if self._queue:
             payload = {"contents": contents, "filename": filename}
@@ -196,7 +196,7 @@ class AsyncFileProcessor(FileProcessorProtocol):
     def get_job_status(self, job_id: str) -> Dict[str, Any]:
         """Return current status for ``job_id``."""
         if self._queue:
-            # No status tracking yet for RabbitMQ tasks
+            # No status tracking yet for Kafka tasks
             return {"progress": 0, "result": None, "done": False}
         return get_status(job_id)
 
