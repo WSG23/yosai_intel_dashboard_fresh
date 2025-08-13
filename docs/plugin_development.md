@@ -81,15 +81,15 @@ can monitor all running plugins.
 
 ## Configuration
 
-Plugins are enabled and configured through `core/plugins/config/plugins.yaml`.
+Plugins are enabled and configured through `config/plugins/plugins.yaml`.
 This dedicated file centralizes all plugin settings. Reference it in your main
 configuration:
 
 ```yaml
-plugins: !include ../../core/plugins/config/plugins.yaml
+plugins: !include ../../config/plugins/plugins.yaml
 ```
 
-Inside `core/plugins/config/plugins.yaml` define each plugin section:
+Inside `config/plugins/plugins.yaml` define each plugin section:
 
 ```yaml
 my_plugin:

@@ -22,10 +22,11 @@ def select_config_file(explicit_path: Optional[str] = None) -> Optional[Path]:
 
     env = get_environment()
     config_dir = Path("config")
+    env_dir = config_dir / "environments"
     env_files = {
-        "production": config_dir / "production.yaml",
-        "staging": config_dir / "staging.yaml",
-        "test": config_dir / "test.yaml",
+        "production": env_dir / "production.yaml",
+        "staging": env_dir / "staging.yaml",
+        "test": env_dir / "test.yaml",
         "development": config_dir / "config.yaml",
     }
     path = env_files.get(env, config_dir / "config.yaml")

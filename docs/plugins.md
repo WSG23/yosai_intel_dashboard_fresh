@@ -93,7 +93,7 @@ You can change the search location by passing a different package name to `Plugi
 
    The `load()` method registers a service with the DI container. Callbacks retrieve that service back from the container.
 
-3. **Enable the plugin** in `core/plugins/config/plugins.yaml`:
+3. **Enable the plugin** in `config/plugins/plugins.yaml`:
 
    ```yaml
    example:

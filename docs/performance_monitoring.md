@@ -351,7 +351,7 @@ cache.start()
 
 Resource optimizers use the environment variables `MAX_MEMORY`,
 `MEMORY_WARNING_THRESHOLD`, `MAX_CPU_CORES` and `CPU_WARNING_THRESHOLD` (see
-`core/plugins/config/staging.yaml`). When the process exceeds these thresholds,
+`config/plugins/staging.yaml`). When the process exceeds these thresholds,
 warnings are logged and background tasks may be throttled.
 
 Garbage collection is tuned globally via `sitecustomize.py`, which sets

@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Mapping, Protocol, TypedDict
 
 from services.resilience import CircuitBreaker, CircuitBreakerOpen
+from config.service_discovery import resolve_service
 
 
 class _KafkaProducer(Protocol):
@@ -29,7 +30,12 @@ class EventServiceAdapter:
     """Adapter protecting event processing with a circuit breaker."""
 
     def __init__(self, base_url: str | None = None) -> None:
-        self.base_url = base_url or "http://localhost"
+        if base_url is None:
+            try:
+                base_url = f"http://{resolve_service('event-service')}"
+            except Exception:
+                base_url = "http://localhost"
+        self.base_url = base_url
         self.kafka_producer: _KafkaProducer | None = None
         self.circuit_breaker = CircuitBreaker(5, 60, name="event_service")
 

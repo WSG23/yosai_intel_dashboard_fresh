@@ -17,12 +17,12 @@ container = get_configured_container_with_yaml(config_manager)
 registry = setup_plugins(app, container=container, config_manager=config_manager)
 app._yosai_plugin_manager = registry.plugin_manager
 
-Step 2: Update your core/plugins/config/plugins.yaml
+Step 2: Update your config/plugins/plugins.yaml
 ====================================================
 
 # Reference the shared plugin configuration:
 
-plugins: !include ../../core/plugins/config/plugins.yaml
+plugins: !include ../../config/plugins/plugins.yaml
 
 This dedicated file centralizes all plugin settings.
 
