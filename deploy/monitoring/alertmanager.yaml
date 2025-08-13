@@ -1,0 +1,8 @@
+route:
+  receiver: ops
+  group_by: ['alertname']
+receivers:
+- name: ops
+  slack_configs:
+  - channel: '#ops'
+    send_resolved: true
