@@ -36,7 +36,7 @@ from jose import jwt
 from yosai_framework import ServiceBuilder
 from yosai_framework.errors import ServiceError
 from yosai_framework.service import BaseService
-from yosai_intel_dashboard.models.ml import ModelRegistry
+from yosai_intel_dashboard.models.ml import ModelRecord, ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter, security_config
 from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.error_handling import http_error
@@ -90,6 +90,7 @@ async def _start_rate_limiter() -> None:
 async def _stop_rate_limiter() -> None:
     await rate_limiter.stop_cleanup()
 
+
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse, "description": "Bad Request"},
     401: {"model": ErrorResponse, "description": "Unauthorized"},
@@ -104,7 +105,9 @@ async def rate_limit(request: Request, call_next):
     identifier = (
         auth.split(" ", 1)[1] if auth.startswith("Bearer ") else request.client.host
     )
-    result = await rate_limiter.is_allowed(identifier or "anonymous", request.client.host)
+    result = await rate_limiter.is_allowed(
+        identifier or "anonymous", request.client.host
+    )
     headers = {
         "X-RateLimit-Limit": str(result.get("limit", rate_limiter.max_requests)),
         "X-RateLimit-Remaining": str(result.get("remaining", 0)),
@@ -423,8 +426,8 @@ async def batch_predict(
 
     features = preprocess_events(df)
 
-    model_obj = svc.models.get(model) if model else next(
-        iter(svc.models.values()), None
+    model_obj = (
+        svc.models.get(model) if model else next(iter(svc.models.values()), None)
     )
     if model_obj is None:
         raise http_error(ErrorCode.NOT_FOUND, "model not found", 404)
@@ -524,6 +527,77 @@ async def rollback(
     return {"name": name, "active_version": version}
 
 
+def _download_artifact(svc: AnalyticsService, name: str, record: ModelRecord) -> Path:
+    """Ensure the model artifact is available locally and return its path."""
+    local_dir = svc.model_dir / name / record.version
+    try:
+        local_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as exc:
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    local_path = local_dir / os.path.basename(record.storage_uri)
+    if local_path.exists():
+        return local_path
+    try:
+        svc.model_registry.download_artifact(record.storage_uri, str(local_path))
+    except Exception as exc:
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    return local_path
+
+
+def _load_model(svc: AnalyticsService, name: str, local_path: Path) -> Any:
+    """Load a model from memory or disk."""
+    model_obj = svc.models.get(name)
+    if model_obj is not None:
+        return model_obj
+    try:
+        model_obj = joblib.load(local_path)
+    except Exception as exc:
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    svc.models[name] = model_obj
+    return model_obj
+
+
+def _run_prediction(model_obj: Any, data: Any) -> Any:
+    """Execute model inference on ``data``."""
+    try:
+        return model_obj.predict(data)
+    except Exception as exc:
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+
+
+def _log_explainability(
+    svc: AnalyticsService,
+    name: str,
+    model_obj: Any,
+    data: Any,
+    record: ModelRecord,
+    prediction_id: str,
+) -> None:
+    """Log feature data and SHAP explanations if possible."""
+    try:
+        df = pd.DataFrame(data)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.debug("DataFrame creation failed: %s", exc)
+        return
+    try:
+        svc.model_registry.log_features(name, df)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.debug("Feature logging failed: %s", exc)
+    try:
+        explainer = ExplainabilityService()
+        explainer.register_model(name, model_obj, background_data=df)
+        shap_vals = explainer.shap_values(name, df)
+        if svc.model_registry:
+            svc.model_registry.log_explanation(
+                prediction_id,
+                name,
+                record.version,
+                {"shap_values": shap_vals.tolist()},
+            )
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.debug("Explainability logging failed: %s", exc)
+
+
 @models_router.post("/{name}/predict", responses=ERROR_RESPONSES)
 @rate_limit_decorator()
 async def predict(
@@ -540,47 +614,20 @@ async def predict(
     record = svc.model_registry.get_model(name, active_only=True)
     if record is None:
         raise http_error(ErrorCode.NOT_FOUND, "no active version", 404)
-    local_dir = app.state.model_dir / name / record.version
 
-    local_dir.mkdir(parents=True, exist_ok=True)
-    local_path = local_dir / os.path.basename(record.storage_uri)
-    if not local_path.exists():
-        try:
-            svc.model_registry.download_artifact(record.storage_uri, str(local_path))
-        except Exception as exc:
-            raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
-
-    model_obj = svc.models.get(name)
-    if model_obj is None:
-        try:
-            model_obj = joblib.load(local_path)
-            svc.models[name] = model_obj
-        except Exception as exc:
-            raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
-    try:
-        result = model_obj.predict(req.data)
-    except Exception as exc:
-        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    local_path = _download_artifact(svc, name, record)
+    model_obj = _load_model(svc, name, local_path)
+    result = _run_prediction(model_obj, req.data)
 
     prediction_id = str(uuid.uuid4())
-    try:
-        df = pd.DataFrame(req.data)
-        svc.model_registry.log_features(name, df)
-    except Exception:
-        df = pd.DataFrame(req.data)
-    try:
-        explainer = ExplainabilityService()
-        explainer.register_model(name, model_obj, background_data=df)
-        shap_vals = explainer.shap_values(name, df)
-        if svc.model_registry:
-            svc.model_registry.log_explanation(
-                prediction_id,
-                name,
-                record.version,
-                {"shap_values": shap_vals.tolist()},
-            )
-    except Exception:
-        pass
+    _log_explainability(
+        svc,
+        name,
+        model_obj,
+        req.data,
+        record,
+        prediction_id,
+    )
     return {"prediction_id": prediction_id, "predictions": result}
 
 
