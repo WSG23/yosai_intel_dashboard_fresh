@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from .unicode import normalize_text
+from .unicode import safe_encode_text
 
 
 def stream_upload(store, filename: str, data: Any) -> None:
-    """Save ``data`` to ``store`` under a normalized ``filename``."""
-    safe_name = normalize_text(filename)
+    """Save ``data`` to ``store`` under a sanitized ``filename``."""
+    safe_name = safe_encode_text(filename)
     store.add_file(safe_name, data)

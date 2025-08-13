@@ -1,21 +1,16 @@
 """Page callback registry and helper for registering all callbacks."""
 
-from importlib import import_module
 from typing import Iterable
+
+from yosai_intel_dashboard.src.callbacks.controller import register_callbacks
 
 FEATURES: Iterable[str] = ["greetings", "upload", "device_learning", "data_enhancer"]
 
-
-def register_callbacks(app, container) -> None:
-    """Import each page package and register its callbacks."""
-    for name in FEATURES:
-        try:
-            module = import_module(f"{__name__}.{name}")
-        except Exception:  # pragma: no cover - optional pages
-            continue
-
-        if hasattr(module, "register_callbacks"):
-            module.register_callbacks(app, container)
-
+# Import subpackages so ``from ... import greetings`` works
+for name in FEATURES:
+    try:  # pragma: no cover - optional pages
+        globals()[name] = import_module(f"{__name__}.{name}")
+    except Exception:  # pragma: no cover - optional pages
+        continue
 
 __all__ = [*FEATURES, "register_callbacks"]

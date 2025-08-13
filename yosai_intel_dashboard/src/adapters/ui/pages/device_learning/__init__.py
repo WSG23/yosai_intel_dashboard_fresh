@@ -1,5 +1,4 @@
 """Device learning page package."""
-
-from .callbacks import register_callbacks
+from yosai_intel_dashboard.src.callbacks.controller import register_device_learning_callbacks as register_callbacks
 
 __all__ = ["register_callbacks"]
