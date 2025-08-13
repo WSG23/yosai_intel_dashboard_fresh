@@ -78,6 +78,7 @@
     "postcss-cli": "^11.0.1",
     "postcss-import": "^16.1.1",
     "prettier": "^3.6.2",
+    "rollup-plugin-visualizer": "^6.0.3",
     "tailwindcss": "^4.1.11",
     "tailwindcss-react-native": "^1.7.10",
     "typescript": "^5.9.2",
@@ -87,7 +88,7 @@
   },
   "scripts": {
     "start": "cd yosai_intel_dashboard/src/adapters/ui && vite --config ../../../../vite.config.ts",
-    "build": "cd yosai_intel_dashboard/src/adapters/ui && vite build --config ../../../../vite.config.ts",
+    "build": "cd yosai_intel_dashboard/src/adapters/ui && ANALYZE=true vite build --config ../../../../vite.config.ts",
     "build:android": "cd yosai_intel_dashboard/src/adapters/ui && vite build --config ../../../../vite.config.ts && npx cap sync android",
     "build:ios": "cd yosai_intel_dashboard/src/adapters/ui && vite build --config ../../../../vite.config.ts && npx cap sync ios",
     "test": "vitest",
