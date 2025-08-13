@@ -6,15 +6,13 @@ go 1.23.8
 require (
         github.com/WSG23/resilience v0.0.0
         github.com/WSG23/yosai-framework v0.0.0
+        github.com/WSG23/errors v0.0.0
         github.com/confluentinc/confluent-kafka-go v1.9.3-RC3
         github.com/prometheus/client_golang v1.22.0
-        go.opentelemetry.io/otel v1.37.0
-        go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.37.0
-        go.opentelemetry.io/otel/sdk v1.37.0
         github.com/sony/gobreaker v1.0.0
-        github.com/xeipuuv/gojsonschema v1.2.0
+	github.com/xeipuuv/gojsonschema v1.2.0
 
-        gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -51,3 +49,5 @@ replace github.com/WSG23/resilience => ../../resilience
 replace github.com/WSG23/yosai-gateway => ../../gateway
 
 replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../../shared/errors
+
+replace github.com/WSG23/errors => ../../../../pkg/errors

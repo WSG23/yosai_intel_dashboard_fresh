@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 
 	"net"
@@ -34,6 +33,8 @@ import (
 	framework "github.com/WSG23/yosai-framework"
 
 	"github.com/sony/gobreaker"
+
+	xerrors "github.com/WSG23/errors"
 )
 
 func validateRequiredEnv(vars []string) {
@@ -59,7 +60,7 @@ func newVaultClient() (*vault.Client, error) {
 	}
 	token := os.Getenv("VAULT_TOKEN")
 	if token == "" {
-		return nil, fmt.Errorf("VAULT_TOKEN not set")
+		return nil, xerrors.Errorf("VAULT_TOKEN not set")
 	}
 	c.SetToken(token)
 	return c, nil
@@ -68,7 +69,7 @@ func newVaultClient() (*vault.Client, error) {
 func readVaultField(c *vault.Client, path string) (string, error) {
 	parts := strings.SplitN(path, "#", 2)
 	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid vault path %q", path)
+		return "", xerrors.Errorf("invalid vault path %q", path)
 	}
 	p, field := parts[0], parts[1]
 	secretPath := strings.TrimPrefix(p, "secret/data/")
@@ -78,7 +79,7 @@ func readVaultField(c *vault.Client, path string) (string, error) {
 	}
 	val, ok := s.Data[field].(string)
 	if !ok {
-		return "", fmt.Errorf("field %s not found at %s", field, p)
+		return "", xerrors.Errorf("field %s not found at %s", field, p)
 	}
 	return val, nil
 }
