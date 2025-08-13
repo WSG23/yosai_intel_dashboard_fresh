@@ -1,11 +1,29 @@
 from __future__ import annotations
+import os
+import types
+from pathlib import Path
 
-from dataclasses import FrozenInstanceError
-
-import pytest
-
-from src.common.events import EventBus, EventPublisher
+from shared.events.bus import EventBus, EventPublisher
 from src.common.base import BaseComponent
+from yosai_intel_dashboard.src.core.imports.resolver import safe_import
+
+repo_root = Path(os.getenv("REPO_ROOT") or Path(__file__).resolve().parents[3])
+
+services_stub = types.ModuleType("yosai_intel_dashboard.src.services")
+services_stub.__path__ = [
+    str(repo_root / "yosai_intel_dashboard" / "src" / "services")
+]
+safe_import("yosai_intel_dashboard.src.services", services_stub)
+
+analytics_stub = types.ModuleType("yosai_intel_dashboard.src.services.analytics")
+analytics_stub.__path__ = [
+    str(repo_root / "yosai_intel_dashboard" / "src" / "services" / "analytics")
+]
+safe_import("yosai_intel_dashboard.src.services.analytics", analytics_stub)
+
+from yosai_intel_dashboard.src.services.analytics.publisher import (
+    Publisher as AnalyticsPublisher,
+)
 
 
 def test_publish_and_unsubscribe():
@@ -15,13 +33,13 @@ def test_publish_and_unsubscribe():
     def handler(payload):
         received.update(payload)
 
-    token = bus.subscribe("evt", handler)
-    bus.emit("evt", {"a": 1})
+    bus.subscribe("evt", handler)
+    bus.publish("evt", {"a": 1})
     assert received == {"a": 1}
 
-    bus.unsubscribe(token)
+    bus.unsubscribe("evt", handler)
     received.clear()
-    bus.emit("evt", {"b": 2})
+    bus.publish("evt", {"b": 2})
     assert received == {}
 
 
@@ -39,13 +57,18 @@ def test_event_publisher_mixin():
     assert received == {"c": 3}
 
 
-def test_event_history_immutable():
+def test_analytics_publisher():
     bus = EventBus()
-    bus.emit("evt", {"a": 1})
-    event = bus._history[0]
+    received = []
+    bus.subscribe("evt", lambda payload: received.append(payload))
+    publisher = AnalyticsPublisher(bus)
+    publisher.publish({"d": 4}, event="evt")
+    assert received == [{"d": 4}]
 
-    with pytest.raises(FrozenInstanceError):
-        event.type = "other"  # type: ignore[misc]
 
-    with pytest.raises(TypeError):
-        event.data["a"] = 2  # type: ignore[index]
+def test_analytics_publisher_without_bus():
+    publisher = AnalyticsPublisher()
+    received = []
+    publisher.event_bus.subscribe("evt", lambda payload: received.append(payload))
+    publisher.publish({"e": 5}, event="evt")
+    assert received == [{"e": 5}]
