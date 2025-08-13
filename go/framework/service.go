@@ -2,7 +2,6 @@ package framework
 
 import (
 	"context"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -40,10 +39,10 @@ func NewBaseService(name, cfgPath string) (*BaseService, error) {
 // Start runs the configured components and waits for termination signals.
 func (s *BaseService) Start() {
 	if s.Metrics != nil {
-		_ = s.Metrics.Start()
+		_ = s.Metrics.Start(s.ctx)
 	}
 	if s.tracer != nil {
-		shutdown, err := s.tracer.Start(s.Config.ServiceName, s.Config.TracingEndpoint)
+		shutdown, err := s.tracer.Start(s.ctx, s.Config.ServiceName, s.Config.TracingEndpoint)
 		if err == nil {
 			s.traceShutdown = shutdown
 		} else if s.Logger != nil {
@@ -79,10 +78,15 @@ func (s *BaseService) Stop() {
 }
 
 func (s *BaseService) handleSignals() {
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
+	sigCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		<-ch
+		defer stop()
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-sigCtx.Done():
+		}
+
 		if s.traceShutdown != nil {
 			_ = s.traceShutdown(context.Background())
 		}

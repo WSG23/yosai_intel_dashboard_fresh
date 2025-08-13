@@ -40,8 +40,19 @@ def test_safe_encode_text_handles_surrogate_pair_bytes():
     assert safe_encode_text(pair_bytes) == "\U00010000"
 
 
+def test_safe_encode_text_drops_unpaired_surrogate():
+    assert safe_encode_text("bad\ud83dname") == "badname"
+
+
 def test_stream_upload_normalizes_filename_with_surrogates():
     store = DummyStore()
     filename = "\ud800\udc00.csv"
     stream_upload(store, filename, object())
     assert "\U00010000.csv" in store.get_filenames()
+
+
+def test_stream_upload_strips_unpaired_surrogate_from_filename():
+    store = DummyStore()
+    filename = "bad\ud83df.csv"
+    stream_upload(store, filename, object())
+    assert "badf.csv" in store.get_filenames()

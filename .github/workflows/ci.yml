@@ -106,6 +106,7 @@ jobs:
             coverage
 
   golangci:
+
     name: Go Lint
     runs-on: ubuntu-latest
     steps:
@@ -141,6 +142,7 @@ jobs:
             echo "No shell scripts found" | tee shellcheck-report.txt
           fi
       - name: Upload shellcheck report
+
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -189,6 +191,7 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
       - name: Run integration tests
         run: |
+          set -euo pipefail
           if ! docker info >/dev/null 2>&1; then
             echo "Docker not available - skipping integration tests." | tee integration-report.txt
             exit 0
@@ -210,6 +213,7 @@ jobs:
       - golangci
       - shellcheck
       - hadolint
+      - build-test
       - integration
     runs-on: ubuntu-latest
     steps:
@@ -242,6 +246,7 @@ jobs:
         run: |
           npm ci --no-audit
           npm audit --audit-level=high | tee npm-audit.txt
+
       - name: Upload audit reports
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

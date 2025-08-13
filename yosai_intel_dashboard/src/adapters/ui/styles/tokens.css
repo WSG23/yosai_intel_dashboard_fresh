@@ -1,0 +1,5 @@
+:root {
+  --focus-outline: 2px solid var(--color-primary);
+  --focus-outline-offset: 2px;
+  --interactive-hover-bg: rgba(var(--color-primary-rgb), 0.1);
+}

@@ -11,14 +11,14 @@ cachetools==6.1.0
 websockets==11.0.3
 plotly==5.15.0
 dash-bootstrap-components==1.6.0
-pandas==1.5.3  # pinned for compatibility with Feast 0.47
-numpy>=1.22,<2.0  # required for pandas 1.5.3
+pandas==2.0.3  # feast 0.51.0 compatible
+numpy>=2.0,<3.0  # required for Feast 0.51.0
 Authlib==1.6.1
 python-jose==3.5.0
 argon2-cffi==23.1.0
 pyotp==2.9.0
 cssutils==2.8.0
-scipy==1.11.3
+scipy==1.16.1
 scikit-learn==1.7.1
 joblib==1.3.2
 psutil==6.1.0  # safety 3.6.0 requires psutil~=6.1
@@ -50,7 +50,6 @@ RapidFuzz==3.13.0
 pymemcache==4.0.0
 
 # Kafka integration
-apache-flink>=1.20.0
 confluent-kafka==2.11.0
 fastavro==1.11.1
 
@@ -63,13 +62,12 @@ fastapi==0.116.1
 opentelemetry-api==1.35.0
 opentelemetry-sdk==1.35.0
 opentelemetry-exporter-jaeger==1.21.0
-opentelemetry-exporter-zipkin-json==1.21.0
 pika==1.3.2
 boto3==1.34.103
-protobuf==4.25.3  # required by Feast 0.47.0
+protobuf==4.25.3
 
 strawberry-graphql[fastapi]==0.278.1
-feast==0.47.0  # compatible with pandas 1.x and pydantic >=2
+feast==0.51.0
 tenacity==8.2.3
 shap==0.44.1
 lime==0.2.0.1
@@ -77,4 +75,4 @@ fairlearn==0.10.0
 networkx==3.5
 neo4j==5.14.1
 python-louvain==0.16
-uvicorn==0.30.1
+uvicorn==0.34.0

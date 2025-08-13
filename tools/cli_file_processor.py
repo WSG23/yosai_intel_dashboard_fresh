@@ -5,8 +5,6 @@ Usage: python tools/cli_file_processor.py <file_path> [--verbose]
 """
 
 import argparse
-import asyncio
-import base64
 import json
 import logging
 import sys
@@ -18,69 +16,49 @@ from typing import Any, Dict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.exceptions import FileProcessingError
+from src.logging_config import setup_logging
 from yosai_intel_dashboard.src.utils.text_utils import safe_text
 
 
-def setup_logging(verbose: bool = False) -> None:
-    """Configure logging for CLI tool"""
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=level
-    )
-
-
 def process_file_simple(file_path: str, verbose: bool = False) -> Dict[str, Any]:
-    """Process a file directly using pandas and basic error handling"""
-    setup_logging(verbose)
+    """Process a file directly using pandas with structured logging."""
+    setup_logging(logging.DEBUG if verbose else logging.INFO)
     logger = logging.getLogger(__name__)
 
+    path = Path(file_path)
+    if not path.exists():
+        raise FileProcessingError(f"File not found: {file_path}")
+    if not path.is_file():
+        raise FileProcessingError(f"Path is not a file: {file_path}")
+
+    logger.info("Processing file", extra={"file_path": file_path})
+
     try:
-        # Validate file exists
-        path = Path(file_path)
-        if not path.exists():
-            return {
-                "success": False,
-                "error": f"File not found: {file_path}",
-                "file_path": file_path,
-            }
-
-        if not path.is_file():
-            return {
-                "success": False,
-                "error": f"Path is not a file: {file_path}",
-                "file_path": file_path,
-            }
-
-        logger.info(f"Processing file: {file_path}")
-
         # Read file content
         with open(path, "rb") as f:
             content = f.read()
 
-        logger.info(f"File size: {len(content):,} bytes")
-        logger.info(f"File extension: {path.suffix}")
+        logger.info(
+            "File metadata",
+            extra={"size_bytes": len(content), "extension": path.suffix},
+        )
 
-        # Basic pandas processing (bypassing broken service imports)
         import pandas as pd
 
-        logger.info("Using direct pandas processing...")
+        logger.info("Using direct pandas processing")
 
         if path.suffix.lower() == ".csv":
-            # Handle CSV with encoding detection
             try:
-                df = pd.read_csv(
-                    path, encoding="utf-8", dtype=str, keep_default_na=False
-                )
+                df = pd.read_csv(path, encoding="utf-8", dtype=str, keep_default_na=False)
             except UnicodeDecodeError:
                 logger.info("UTF-8 failed, trying with encoding detection")
                 import chardet
 
                 detected = chardet.detect(content)
                 encoding = detected.get("encoding", "latin-1")
-                logger.info(f"Detected encoding: {encoding}")
-                df = pd.read_csv(
-                    path, encoding=encoding, dtype=str, keep_default_na=False
-                )
+                logger.info("Detected encoding", extra={"encoding": encoding})
+                df = pd.read_csv(path, encoding=encoding, dtype=str, keep_default_na=False)
 
         elif path.suffix.lower() == ".json":
             df = pd.read_json(path)
@@ -93,22 +71,18 @@ def process_file_simple(file_path: str, verbose: bool = False) -> Dict[str, Any]
             logger.info("Successfully read parquet file")
 
         else:
-            # Try to detect format by content
             try:
-                # Try JSON first
                 df = pd.read_json(path)
                 logger.info("Detected as JSON file")
-            except:
+            except (ValueError, json.JSONDecodeError):
                 try:
-                    # Try CSV
-                    df = pd.read_csv(
-                        path, encoding="utf-8", dtype=str, keep_default_na=False
-                    )
+                    df = pd.read_csv(path, encoding="utf-8", dtype=str, keep_default_na=False)
                     logger.info("Detected as CSV file")
-                except:
-                    raise ValueError(f"Cannot determine file format for: {path.suffix}")
+                except (pd.errors.ParserError, UnicodeDecodeError, ValueError) as err:
+                    raise FileProcessingError(
+                        f"Cannot determine file format for: {path.suffix}"
+                    ) from err
 
-        # Gather results
         result = {
             "success": True,
             "file_path": file_path,
@@ -127,22 +101,16 @@ def process_file_simple(file_path: str, verbose: bool = False) -> Dict[str, Any]
         }
 
         logger.info(
-            f"Successfully processed: {len(df)} rows, {len(df.columns)} columns"
+            "Successfully processed dataframe",
+            extra={"rows": len(df), "columns": len(df.columns)},
         )
         return result
 
-    except Exception as e:
-        logger.error(f"Error processing file: {safe_text(e)}")
-        if verbose:
-            logger.error(traceback.format_exc())
-
-        return {
-            "success": False,
-            "error": safe_text(e),
-            "error_type": type(e).__name__,
-            "file_path": file_path,
-            "traceback": traceback.format_exc() if verbose else None,
-        }
+    except FileProcessingError:
+        raise
+    except Exception as err:  # pragma: no cover - unexpected errors
+        logger.error("Error processing file", exc_info=err)
+        raise FileProcessingError("Error processing file") from err
 
 
 def main():
@@ -170,13 +138,13 @@ Examples:
     args = parser.parse_args()
 
     # Process the file
-    result = process_file_simple(args.file_path, args.verbose)
-
-    # Output results
-    print(json.dumps(result, indent=2, default=str))
-
-    # Exit with appropriate code
-    sys.exit(0 if result["success"] else 1)
+    try:
+        result = process_file_simple(args.file_path, args.verbose)
+        logging.getLogger(__name__).info("Processing result", extra={"result": result})
+        sys.exit(0)
+    except FileProcessingError as err:
+        logging.getLogger(__name__).error("Processing failed", extra={"error": str(err)})
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -1,13 +1,15 @@
+@import '../styles/tokens.css';
+
 /* Upload component styles */
 :root {
   --upload-border: var(--color-primary);
   --upload-padding: clamp(1.5rem, 5vw, 3rem);
   --upload-bg: var(--color-background-secondary);
   --upload-text: var(--color-text-primary);
-  --upload-active-border: #28a745;
-  --upload-active-bg: #f0fff4;
-  --upload-hover-border: #0056b3;
-  --upload-hover-bg: #f0f8ff;
+  --upload-active-border: var(--color-success);
+  --upload-active-bg: rgba(var(--color-success-rgb), 0.1);
+  --upload-hover-border: var(--color-primary-hover);
+  --upload-hover-bg: var(--interactive-hover-bg);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -46,17 +48,15 @@
   opacity: 0.6;
 }
 
+
 .upload-dropzone:hover:not(.upload-dropzone--disabled) {
   border-color: var(--upload-hover-border);
   background-color: var(--upload-hover-bg);
 }
 
-.alerts-container {
-  position: fixed;
-  top: 1.25rem;
-  right: 1.25rem;
-  z-index: 9999;
-  max-width: 25rem;
+.upload-dropzone:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .upload-container {
@@ -64,54 +64,4 @@
   margin: 0 auto;
 }
 
-/* Progress bar animations */
-.progress-bar-striped {
-  background-image: linear-gradient(45deg,
-      rgba(255, 255, 255, 0.15) 25%,
-      transparent 25%,
-      transparent 50%,
-      rgba(255, 255, 255, 0.15) 50%,
-      rgba(255, 255, 255, 0.15) 75%,
-      transparent 75%,
-      transparent);
-  background-size: 1rem 1rem;
-}
-
-.progress-bar-animated {
-  animation: progress-bar-stripes 1s linear infinite;
-}
-
-@keyframes progress-bar-stripes {
-  from {
-    background-position: 1rem 0;
-  }
-
-  to {
-    background-position: 0 0;
-  }
-}
-
-/* Modal styles */
-.modal-body {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-/* Table styles */
-.table-sm td,
-.table-sm th {
-  padding: 0.3rem;
-}
-
-.text-monospace {
-  font-family: 'Courier New', Courier, monospace;
-}
-
-/* Device verification specific */
-.device-verification-table input[type="checkbox"] {
-  margin-right: 0.25rem;
-}
-
-.device-verification-table input[type="number"] {
-  width: 80px;
-}
+/* Removed unused selectors for clarity */
