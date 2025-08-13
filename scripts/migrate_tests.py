@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import pathlib
 import re
-from typing import List, Tuple
 
 TESTS_DIR = pathlib.Path(__file__).resolve().parents[1] / "tests"
 
@@ -20,21 +19,21 @@ TESTS_DIR = pathlib.Path(__file__).resolve().parents[1] / "tests"
 SETDEFAULT_RE = re.compile(
     r"^(\s*)sys\.modules\.setdefault\((['\"])([^'\"]+)\2,\s*(.*)\)\s*(#.*)?$"
 )
-ASSIGN_RE = re.compile(
-    r"^(\s*)sys\.modules\[(['\"])([^'\"]+)\2\]\s*=\s*(.+)"
-)
+ASSIGN_RE = re.compile(r"^(\s*)sys\.modules\[(['\"])([^'\"]+)\2\]\s*=\s*(.+)")
 MONKEYPATCH_RE = re.compile(
     r"^(\s*)monkeypatch\.setitem\(sys\.modules,\s*(['\"])([^'\"]+)\2,\s*(.*)\)\s*(#.*)?$"
 )
 
 # Regex for fixture import replacements
 FAKE_CONFIG_RE = re.compile(r"^(\s*)from\s+tests\.fake_configuration\s+import\s+(.*)")
-FAKE_CONFIG_IMPORT_AS_RE = re.compile(r"^(\s*)import\s+tests\.fake_configuration\s+as\s+(\w+)")
+FAKE_CONFIG_IMPORT_AS_RE = re.compile(
+    r"^(\s*)import\s+tests\.fake_configuration\s+as\s+(\w+)"
+)
 
 IMPORT_HELPERS_LINE = "from tests.import_helpers import safe_import, import_optional"
 
 
-def ensure_import_helpers(lines: List[str]) -> None:
+def ensure_import_helpers(lines: list[str]) -> None:
     """Insert import for helper functions if not already present."""
     if any("tests.import_helpers" in line for line in lines):
         return
@@ -47,13 +46,18 @@ def ensure_import_helpers(lines: List[str]) -> None:
     lines.insert(insert_pos, IMPORT_HELPERS_LINE)
 
 
-def replace_sys_modules(lines: List[str]) -> Tuple[List[str], List[Tuple[int, str]]]:
+def replace_sys_modules(lines: list[str]) -> tuple[list[str], list[tuple[int, str]]]:
     """Replace sys.modules patterns returning modified lines and TODO items."""
-    todos: List[Tuple[int, str]] = []
+    todos: list[tuple[int, str]] = []
     for i, line in enumerate(lines):
         m = SETDEFAULT_RE.match(line)
         if m:
-            indent, name, stub, comment = m.group(1), m.group(3), m.group(4), m.group(5) or ""
+            indent, name, stub, comment = (
+                m.group(1),
+                m.group(3),
+                m.group(4),
+                m.group(5) or "",
+            )
             call = f"safe_import('{name}', {stub})"
             lines[i] = f"{indent}{call}{comment}"
             continue
@@ -65,16 +69,25 @@ def replace_sys_modules(lines: List[str]) -> Tuple[List[str], List[Tuple[int, st
             continue
         m = MONKEYPATCH_RE.match(line)
         if m:
-            indent, name, stub, comment = m.group(1), m.group(3), m.group(4), m.group(5) or ""
+            indent, name, stub, comment = (
+                m.group(1),
+                m.group(3),
+                m.group(4),
+                m.group(5) or "",
+            )
             call = f"safe_import('{name}', {stub})"
             lines[i] = f"{indent}{call}{comment}"
             continue
-        if "sys.modules" in line and "safe_import" not in line and "import_optional" not in line:
+        if (
+            "sys.modules" in line
+            and "safe_import" not in line
+            and "import_optional" not in line
+        ):
             todos.append((i + 1, line.rstrip()))
     return lines, todos
 
 
-def replace_fixture_imports(lines: List[str]) -> List[str]:
+def replace_fixture_imports(lines: list[str]) -> list[str]:
     """Update fixture imports to use ``tests.config``."""
     for i, line in enumerate(lines):
         m = FAKE_CONFIG_RE.match(line)
@@ -89,7 +102,12 @@ def replace_fixture_imports(lines: List[str]) -> List[str]:
     return lines
 
 
-def process_file(path: pathlib.Path) -> List[Tuple[int, str]]:
+def process_file(path: pathlib.Path) -> list[tuple[pathlib.Path, int, str]]:
+    """Rewrite a test file replacing legacy ``sys.modules`` patterns.
+
+    Returns a list of ``(path, line number, content)`` tuples for any remaining
+    ``sys.modules`` manipulations that require manual follow-up.
+    """
     text = path.read_text().splitlines()
     original_lines = list(text)
     text = replace_fixture_imports(text)
@@ -101,7 +119,8 @@ def process_file(path: pathlib.Path) -> List[Tuple[int, str]]:
 
 
 def main() -> None:
-    todos: List[Tuple[pathlib.Path, int, str]] = []
+    """Run migrations over the test suite and report remaining TODO items."""
+    todos: list[tuple[pathlib.Path, int, str]] = []
     for py_file in TESTS_DIR.rglob("*.py"):
         if py_file == TESTS_DIR / "config.py":
             continue
