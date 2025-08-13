@@ -10,4 +10,5 @@ def test_import_and_usage() -> None:
     assert a.do_a() == "A -> B"
 
     a2 = create_a()
+    assert isinstance(a2, A)
     assert a2.do_a() == "A -> B"

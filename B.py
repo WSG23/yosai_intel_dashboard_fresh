@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from core.types import BProtocol
 
 
@@ -8,7 +10,7 @@ class B(BProtocol):
         return "B"
 
 
-def create_a() -> "A":
+def create_a() -> A:
     """Create an :class:`A` instance without top-level imports.
 
     Importing :mod:`A` locally keeps this module importable on its own and
