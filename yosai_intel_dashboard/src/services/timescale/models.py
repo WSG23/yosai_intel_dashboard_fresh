@@ -106,13 +106,24 @@ def ensure_hypertable(
 
 
 def apply_policies(conn: Connection, table: str = "access_events") -> None:
-    """Apply compression and retention policies for ``table``."""
+    """Apply compression and retention policies for ``table``.
+
+    Parameters
+    ----------
+    conn: Connection
+        Open SQLAlchemy connection.
+    table: str
+        Name of the table to modify.  Only simple identifiers are allowed.
+    """
+
+    if not table.isidentifier():
+        raise ValueError("invalid table name")
 
     hot = Base.metadata.info.get("hot_interval", "30 days")
     retention = Base.metadata.info.get("retention_interval", "365 days")
     conn.execute(
         text(
-            f"ALTER TABLE {table} SET ("  # nosec B608
+            f"ALTER TABLE {table} SET ("  # nosec B608 - table validated above
             "timescaledb.compress, "
             "timescaledb.compress_orderby = 'time DESC', "
             "timescaledb.compress_segmentby = 'facility_id')"

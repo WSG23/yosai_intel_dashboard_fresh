@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_IMAGE=python:3.11-slim
-# hadolint ignore=DL3006
-FROM ${PYTHON_IMAGE} AS builder
+FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee AS builder
+
 WORKDIR /app
 
 # Install system packages
@@ -19,8 +18,8 @@ RUN python -m venv /opt/venv \
     && grep -v '^apache-flink' requirements.txt > requirements.filtered \
     && pip install --no-cache-dir -r requirements.filtered
 
-# hadolint ignore=DL3006
-FROM ${PYTHON_IMAGE}
+FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee
+
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
