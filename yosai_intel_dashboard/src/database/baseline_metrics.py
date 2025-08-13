@@ -11,7 +11,7 @@ historical performance metrics.
 import logging
 from typing import Dict
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.database.connection import create_database_connection
 from yosai_intel_dashboard.src.database.types import DBRows
 from yosai_intel_dashboard.src.infrastructure.security.secure_query_wrapper import (

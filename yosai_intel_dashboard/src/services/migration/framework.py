@@ -7,7 +7,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Sequence
 
 import asyncpg
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 
 from .validators.integrity_checker import IntegrityChecker
 

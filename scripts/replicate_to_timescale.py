@@ -12,7 +12,7 @@ import psycopg2
 from prometheus_client import Gauge, start_http_server
 from psycopg2.extras import DictCursor, execute_values
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.database.secure_exec import (
     execute_command,
     execute_query,
