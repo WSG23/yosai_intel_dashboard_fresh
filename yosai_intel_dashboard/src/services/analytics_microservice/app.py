@@ -123,6 +123,7 @@ async def register_model(
             {},
             "",
             version=version,
+            feature_defs_version=None,
         )
         svc.model_registry.set_active_version(name, record.version)
         try:
