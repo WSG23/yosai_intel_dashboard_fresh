@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-import pathlib
-import sys
-
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
-
-from core.graph_etl_pipeline import GraphETLPipeline  # noqa: E402
-from core.streaming import KafkaETLConsumer  # noqa: E402
+from yosai_intel_dashboard.src.core.graph_etl_pipeline import GraphETLPipeline
+from yosai_intel_dashboard.src.core.streaming import KafkaETLConsumer
 
 
 class DummyMessage:

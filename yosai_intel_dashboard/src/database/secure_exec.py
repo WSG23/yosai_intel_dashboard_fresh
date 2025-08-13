@@ -9,7 +9,9 @@ from functools import lru_cache
 from typing import Any, Iterable, Optional
 
 try:  # optional import to avoid heavy dependency chain
-    from core.performance import PerformanceThresholds as _PerfThresh
+    from yosai_intel_dashboard.src.core.performance import (
+        PerformanceThresholds as _PerfThresh,
+    )
 
     _SLOW_DEFAULT = getattr(_PerfThresh, "SLOW_QUERY_SECONDS", 1.0)
 except Exception:  # pragma: no cover - default if core package unavailable
