@@ -40,7 +40,11 @@ from yosai_intel_dashboard.src.services.common.async_db import create_pool
 from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
+import logging
+import uuid
+from fastapi import APIRouter, Depends, FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
+from monitoring.ab_testing import ABTest
 
 try:  # pragma: no cover - optional dependency
     from prometheus_client import Histogram  # type: ignore
@@ -52,30 +56,29 @@ from .analytics_service import AnalyticsService, get_analytics_service
 
 logger = logging.getLogger(__name__)
 
-if Histogram:
-    _INFERENCE_LATENCY = Histogram(
-        "analytics_inference_latency_seconds",
-        "Time spent performing model inference",
-        ["model"],
-        registry=None,
-    )
-else:  # pragma: no cover - metrics disabled
-    _INFERENCE_LATENCY = None  # type: ignore
-
 app = FastAPI()
 
 
 @app.on_event("startup")  # type: ignore[misc]
-
 async def _startup() -> None:
-    """Placeholder startup hook."""
-    return None
+    """Initialize A/B test experiment."""
+    app.state.ab_test = ABTest({"control": 1, "treatment": 1})
+    app.state.ab_test.set_rollout_strategy(
+        lambda winner: logger.info("Rolling out variant %s", winner)
+    )
 
 
 @app.get("/api/v1/health")  # type: ignore[misc]
 async def health() -> Dict[str, str]:
     """Basic service health endpoint."""
     return {"status": "ok"}
+
+
+@app.post("/api/v1/abtest/evaluate")  # type: ignore[misc]
+async def evaluate_ab_test() -> Dict[str, str | None]:
+    """Evaluate the current experiment and return the winner."""
+    winner = app.state.ab_test.evaluate()
+    return {"winner": winner}
 
 
 @app.get("/api/v1/analytics/dashboard-summary")  # type: ignore[misc]
@@ -295,9 +298,9 @@ async def predict(
 
     local_path = _download_artifact(svc, name, record)
     model_obj = _load_model(svc, name, local_path)
-    result, latency = _run_prediction(model_obj, req.data)
-
     prediction_id = str(uuid.uuid4())
+    variant = app.state.ab_test.assign(prediction_id)
+    result = _run_prediction(model_obj, req.data)
     _log_explainability(
         svc,
         name,
@@ -306,10 +309,11 @@ async def predict(
         record,
         prediction_id,
     )
+    app.state.ab_test.log_metric(variant, 1.0)
     return {
         "prediction_id": prediction_id,
         "predictions": result,
-        "latency_seconds": latency,
+        "variant": variant,
     }
 
 
