@@ -119,4 +119,4 @@ class CachedMetricsRepository(BaseComponent):
         )
 
 
-__all__ = ["InMemoryMetricsRepository", "CachedMetricsRepository"]
+__all__ = ["CachedMetricsRepository"]

@@ -1,5 +1,5 @@
 """Repository interfaces and implementations."""
 
-from .metrics import InMemoryMetricsRepository, CachedMetricsRepository
+from .metrics import CachedMetricsRepository
 
-__all__ = ["InMemoryMetricsRepository", "CachedMetricsRepository"]
+__all__ = ["CachedMetricsRepository"]
