@@ -6,6 +6,10 @@ from typing import Any, TYPE_CHECKING
 
 import requests
 
+from yosai_intel_dashboard.src.services.common.analytics_utils import (
+    ensure_model_downloaded,
+)
+
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from yosai_intel_dashboard.models.ml import ModelRegistry
 
@@ -31,28 +35,20 @@ class ModelManager:
         models_path = getattr(self._config, "analytics", None)
         models_path = getattr(models_path, "ml_models_path", "models/ml")
         dest = Path(destination_dir or str(models_path))
-        dest = dest / name / record.version
-        dest.mkdir(parents=True, exist_ok=True)
-        local_path = dest / Path(record.storage_uri).name
+        dest_path = dest / name / record.version / Path(record.storage_uri).name
 
         local_version = self._registry.get_version_metadata(name)
-        if local_version == record.version and local_path.exists():
-            return str(local_path)
+        if local_version == record.version and dest_path.exists():
+            return str(dest_path)
 
-        try:
-            self._registry.download_artifact(record.storage_uri, str(local_path))
-            self._registry.store_version_metadata(name, record.version)
-            return str(local_path)
-        except (
-            OSError,
-            RuntimeError,
-            requests.RequestException,
-            ValueError,
-        ) as exc:  # pragma: no cover - best effort
-            logger.error(
-                "Failed to download model %s (%s): %s", name, type(exc).__name__, exc
-            )
+        path = ensure_model_downloaded(self._registry, name, dest)
+        if path is None:
             return None
+        try:
+            self._registry.store_version_metadata(name, record.version)
+        except Exception:  # pragma: no cover - best effort
+            logger.error("Failed to store version metadata for %s", name)
+        return str(path)
 
 
 __all__ = ["ModelManager"]

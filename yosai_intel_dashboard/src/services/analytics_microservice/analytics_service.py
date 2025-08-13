@@ -10,8 +10,10 @@ from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.infrastructure.config.config_loader import (
     ServiceSettings,
 )
+from yosai_intel_dashboard.src.services.common.analytics_utils import (
+    preload_active_models,
+)
 from yosai_intel_dashboard.src.services.common.async_db import close_pool
-from .model_loader import preload_active_models as _preload_models
 
 
 class AnalyticsService:
@@ -38,7 +40,7 @@ class AnalyticsService:
 
     def preload_active_models(self) -> None:
         """Load active models into memory from the registry."""
-        _preload_models(self)
+        preload_active_models(self)
 
 
 async def get_analytics_service(request: Any) -> AnalyticsService:

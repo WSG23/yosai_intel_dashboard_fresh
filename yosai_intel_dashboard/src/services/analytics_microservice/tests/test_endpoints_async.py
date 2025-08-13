@@ -123,11 +123,12 @@ async def test_predict_endpoint(app_factory, tmp_path, token_factory, client):
     registry.register_model("demo", str(path), {}, "", version="1")
     registry.set_active_version("demo", "1")
     svc.model_registry = registry
-    from yosai_intel_dashboard.src.services.analytics_microservice.model_loader import (
+    from yosai_intel_dashboard.src.services.common.analytics_utils import (
         preload_active_models,
     )
 
     preload_active_models(svc)
+    assert "demo" in svc.models
 
     token = token_factory()
     headers = {"Authorization": f"Bearer {token}"}
