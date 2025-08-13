@@ -93,6 +93,9 @@ class SecurityConfig:
                 invalidate_secret as _vault_invalidate,
             )
         except Exception:  # pragma: no cover - vault not available
+            logging.getLogger(__name__).warning(
+                "Vault secrets module not available; falling back to environment."
+            )
             _vault_get = _vault_invalidate = None  # type: ignore
         self._vault_get = _vault_get
         self._vault_invalidate = _vault_invalidate

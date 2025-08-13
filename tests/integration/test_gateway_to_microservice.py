@@ -52,19 +52,21 @@ class DummyVault:
         pass
 
 
-common_stub = types.ModuleType("services.common")
-common_stub.__path__ = [str(SERVICES_PATH / "common")]
-secrets_stub = types.ModuleType("services.common.secrets")
+secrets_stub = types.ModuleType(
+    "yosai_intel_dashboard.src.services.common.secrets"
+)
 secrets_stub._init_client = lambda: DummyVault()
 secrets_stub.VaultClient = object
 secrets_stub.get_secret = lambda key: "test"
 secrets_stub.invalidate_secret = lambda key=None: None
-common_stub.secrets = secrets_stub
-safe_import('services.common', common_stub)
-safe_import('services.common.secrets', secrets_stub)
+safe_import(
+    'yosai_intel_dashboard.src.services.common.secrets', secrets_stub
+)
 
 # Stub async database module used by the microservice
-async_db_stub = types.ModuleType("services.common.async_db")
+async_db_stub = types.ModuleType(
+    "yosai_intel_dashboard.src.services.common.async_db"
+)
 async_db_stub.create_pool = lambda *a, **k: None
 
 
@@ -79,7 +81,7 @@ async def _get_pool() -> DummyPool:
 
 async_db_stub.get_pool = _get_pool
 async_db_stub.close_pool = lambda: None
-safe_import('services.common.async_db', async_db_stub)
+safe_import('yosai_intel_dashboard.src.services.common.async_db', async_db_stub)
 
 tracing_stub = types.ModuleType("tracing")
 tracing_stub.init_tracing = lambda name: None

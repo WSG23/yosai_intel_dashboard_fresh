@@ -58,7 +58,9 @@ def _register_environment_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
         close_pool=AsyncMock(),
         get_pool=AsyncMock(return_value=object()),
     )
-    monkeypatch.setitem(sys.modules, "services.common.async_db", db)
+    monkeypatch.setitem(
+        sys.modules, "yosai_intel_dashboard.src.services.common.async_db", db
+    )
     cfg = types.SimpleNamespace(
         type="sqlite",
         host="localhost",
@@ -210,7 +212,7 @@ def _register_environment_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setitem(
         sys.modules,
-        "services.common.secrets",
+        "yosai_intel_dashboard.src.services.common.secrets",
         types.SimpleNamespace(get_secret=lambda path: "secret"),
     )
 
