@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """Automated ML training pipeline utilities."""
 
+import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +16,7 @@ from yosai_intel_dashboard.src.utils.sklearn_compat import optional_import
 from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.models.ml.feature_store import FeastFeatureStore
 from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
+from yosai_intel_dashboard.models.ml.training.bias import detect_bias
 
 # Optional heavy dependencies
 KFold = optional_import("sklearn.model_selection.KFold")
@@ -34,6 +36,7 @@ class ExperimentResult:
     name: str
     metrics: Dict[str, float]
     model_path: Path
+    bias_metrics: Dict[str, Any] | None = None
 
 
 class TrainingPipeline:
@@ -132,6 +135,8 @@ class TrainingPipeline:
         *,
         feature_store: FeastFeatureStore | None = None,
         feature_service: Any | None = None,
+        bias_column: str | None = None,
+        bias_report: Path | None = None,
     ) -> ExperimentResult:
         """Run hyperparameter tuning and register the best performing model."""
         if feature_store:
@@ -148,8 +153,9 @@ class TrainingPipeline:
 
         dataset_hash = hash_dataframe(df)
         y = df[target_column].values
+        feature_df = df.drop(columns=[target_column])
         X = (
-            df.drop(columns=[target_column])
+            feature_df
             .select_dtypes(include=["number", "bool"])
             .fillna(0)
             .values
@@ -179,6 +185,14 @@ class TrainingPipeline:
         )
         if improved:
             self.registry.set_active_version(best_res.name, record.version)
+
+        if bias_column and bias_column in df.columns:
+            model = optional_import("joblib").load(best_res.model_path)
+            y_pred = model.predict(X)
+            bias_metrics = detect_bias(y, y_pred, df[bias_column].values)
+            best_res.bias_metrics = bias_metrics
+            if bias_report:
+                bias_report.write_text(json.dumps(bias_metrics, indent=2))
 
         return best_res
 
