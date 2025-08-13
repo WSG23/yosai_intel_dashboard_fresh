@@ -49,6 +49,14 @@ jobs:
             ruff-report.txt
             mypy-report.txt
 
+  schema-version:
+    name: Schema Version Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Validate schema version bumps
+        run: python scripts/check_schema_versions.py
+
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
