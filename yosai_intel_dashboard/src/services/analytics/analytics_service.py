@@ -12,7 +12,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
-from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -26,7 +25,6 @@ from typing import (
     cast,
 )
 
-import requests
 from shared.events.names import EventName
 
 from yosai_intel_dashboard.src.core.error_handling import (
@@ -57,7 +55,6 @@ from yosai_intel_dashboard.src.core.interfaces.service_protocols import (
     AnalyticsDataLoaderProtocol,
     DatabaseAnalyticsRetrieverProtocol,
     get_analytics_data_loader,
-    get_database_analytics_retriever,
     get_upload_data_service,
 )
 from yosai_intel_dashboard.src.services.analytics.calculator import Calculator
@@ -84,8 +81,10 @@ from yosai_intel_dashboard.src.services.controllers.upload_controller import (
 )
 from yosai_intel_dashboard.src.services.data_processing.processor import Processor
 from yosai_intel_dashboard.src.services.helpers.database_initializer import (
-    initialize_database,
+    DatabaseInitializer,
 )
+from yosai_intel_dashboard.src.services.helpers.event_publisher import EventPublisher
+from yosai_intel_dashboard.src.services.helpers.model_manager import ModelManager
 from yosai_intel_dashboard.src.services.protocols import UploadDataServiceProtocol
 from yosai_intel_dashboard.src.services.summary_report_generator import (
     SummaryReportGenerator,
@@ -210,6 +209,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         storage: Storage | None = None,
         upload_data_service: UploadDataServiceProtocol | None = None,
         model_registry: ModelRegistry | None = None,
+        db_initializer: DatabaseInitializer | None = None,
         *,
         loader: AnalyticsDataLoaderProtocol | None = None,
         calculator: CalculatorProtocol | None = None,
@@ -227,14 +227,21 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             storage=storage,
             upload_data_service=upload_data_service,
             model_registry=model_registry,
+            db_initializer=db_initializer,
             upload_processor=upload_processor,
             upload_controller=upload_controller,
             report_generator=report_generator,
         )
-        self._setup_database(db_retriever)
+        (
+            self.database_manager,
+            self.db_helper,
+            self.summary_reporter,
+            self.database_retriever,
+        ) = self.db_initializer.setup(self.database, db_retriever)
         if loader is None or calculator is None or publisher is None:
             raise ValueError("loader, calculator and publisher are required")
         self._create_orchestrator(loader, calculator, publisher)
+        self.event_publisher = EventPublisher(self.publisher)
         self.router = DataSourceRouter(self.orchestrator)
 
     def _inject_dependencies(
@@ -247,6 +254,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         storage: Storage | None,
         upload_data_service: UploadDataServiceProtocol | None,
         model_registry: ModelRegistry | None,
+        db_initializer: DatabaseInitializer | None,
         upload_processor: UploadAnalyticsProtocol | None,
         upload_controller: UploadProcessingControllerProtocol | None,
         report_generator: ReportGeneratorProtocol | None,
@@ -261,6 +269,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self.storage = storage
         self.upload_data_service = upload_data_service
         self.model_registry = model_registry
+        self.model_manager = ModelManager(model_registry, config)
         self.validation_service = SecurityValidator()
         self.processor = data_processor
         self.data_loading_service = self.processor  # Legacy alias
@@ -272,6 +281,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self.upload_processor = upload_processor
         self.upload_controller = upload_controller
         self.report_generator = report_generator
+        self.db_initializer = db_initializer or DatabaseInitializer()
         self.database_manager: Any
         self.db_helper: Any
         self.summary_reporter: Any
@@ -279,21 +289,9 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self.data_loader: AnalyticsDataLoaderProtocol
         self.calculator: CalculatorProtocol
         self.publisher: PublishingProtocol
+        self.event_publisher: EventPublisher
         self.orchestrator: AnalyticsOrchestrator
         self.router: DataSourceRouter
-
-    def _setup_database(
-        self, db_retriever: DatabaseAnalyticsRetrieverProtocol | None = None
-    ) -> None:
-        """Initialize database helpers and retriever."""
-        (
-            self.database_manager,
-            self.db_helper,
-            self.summary_reporter,
-        ) = initialize_database(self.database)
-        self.database_retriever = db_retriever or get_database_analytics_retriever(
-            self.db_helper
-        )
 
     def _create_orchestrator(
         self,
@@ -424,11 +422,11 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
             logger.error(f"Dashboard summary failed: {e}")
             return {"status": "error", "message": str(e)}
 
-    def _publish_event(
+    def publish_event(
         self, payload: Dict[str, Any], event: str = EventName.ANALYTICS_UPDATE
     ) -> None:
-        """Publish ``payload`` to the event bus if available."""
-        self.publisher.publish(payload, event)
+        """Publish ``payload`` using the event publisher."""
+        self.event_publisher.publish(payload, event)
 
     def _load_patterns_dataframe(
         self, data_source: str | None
@@ -586,37 +584,7 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
         self, name: str, *, destination_dir: str | None = None
     ) -> str | None:
         """Download the active model from the registry."""
-        if self.model_registry is None:
-            return None
-        record = self.model_registry.get_model(name, active_only=True)
-        if record is None:
-            return None
-        models_path = getattr(self.config, "analytics", None)
-        models_path = getattr(models_path, "ml_models_path", "models/ml")
-        dest = Path(destination_dir or str(models_path))
-        dest = dest / name / record.version
-        dest.mkdir(parents=True, exist_ok=True)
-        local_path = dest / Path(record.storage_uri).name
-        local_version = self.model_registry.get_version_metadata(name)
-        if local_version == record.version and local_path.exists():
-            return str(local_path)
-        try:
-            self.model_registry.download_artifact(
-                record.storage_uri,
-                str(local_path),
-            )
-            self.model_registry.store_version_metadata(name, record.version)
-            return str(local_path)
-        except (
-            OSError,
-            RuntimeError,
-            requests.RequestException,
-            ValueError,
-        ) as exc:  # pragma: no cover - best effort
-            logger.error(
-                f"Failed to download model {name} ({type(exc).__name__}): {exc}"
-            )
-            return None
+        return self.model_manager.load_model(name, destination_dir=destination_dir)
 
 
 # Global service instance
