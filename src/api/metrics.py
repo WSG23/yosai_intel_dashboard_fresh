@@ -3,24 +3,24 @@ from __future__ import annotations
 from flask import Blueprint, jsonify
 from typing import TYPE_CHECKING
 
+from yosai_intel_dashboard.src.core.registry import ServiceRegistry
+
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from yosai_intel_dashboard.src.core.protocols.metrics import MetricsRepositoryProtocol
 
 metrics_bp = Blueprint("metrics", __name__, url_prefix="/v1/metrics")
 
-_metrics_repo: MetricsRepositoryProtocol | None = None
-
 
 def set_metrics_repository(repo: MetricsRepositoryProtocol) -> None:
     """Inject a metrics repository implementation."""
-    global _metrics_repo
-    _metrics_repo = repo
+    ServiceRegistry.register("metrics_repository", repo)
 
 
 def _get_repo() -> MetricsRepositoryProtocol:
-    if _metrics_repo is None:  # pragma: no cover - safety check
+    repo = ServiceRegistry.get("metrics_repository")
+    if repo is None:  # pragma: no cover - safety check
         raise RuntimeError("Metrics repository not configured")
-    return _metrics_repo
+    return repo
 
 
 @metrics_bp.get("/performance")
