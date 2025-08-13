@@ -1,0 +1,9 @@
+{
+  "extends": ["stylelint-config-standard", "stylelint-config-prettier"],
+  "rules": {
+    "selector-max-compound-selectors": 3,
+    "selector-max-specificity": "0,3,0",
+    "declaration-empty-line-before": null,
+    "color-hex-length": "short"
+  }
+}
