@@ -159,6 +159,16 @@ jobs:
         steps.report.outputs.severity == 'CRITICAL' }}
       run: exit 1
 
+  slo-rollback:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Check SLO and rollback if needed
+      env:
+        SLO_METRIC_URL: ${{ secrets.SLO_METRIC_URL }}
+      run: scripts/rollback/auto_rollback.sh staging yosai-dashboard
+
   trivy-scan:
     needs: build-test
     runs-on: ubuntu-latest
