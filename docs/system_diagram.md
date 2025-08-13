@@ -1,30 +1,38 @@
-# System Flow Diagram
+# System Diagram
 
-This diagram illustrates how the frontend interacts with the service layer, plugins,
-the database and the asynchronous messaging components.
+This document outlines the high-level components of the platform and how they communicate. It serves as an entry point; for a deeper look at the application layering see [Architecture](architecture.md) and for runtime messaging refer to [Data Flow](data_flow.md).
 
-```mermaid
-flowchart TD
-    Browser -->|HTTP| UI["Web UI"]
-    UI -->|Calls| Services
-    Services -->|Queries| DB[(Database)]
-    Services --> PluginManager
-    PluginManager --> Plugins
-    Plugins -->|Register callbacks| UI
-    Services -->|Publish events| MQ[(Kafka/Redis)]
-    MQ --> Worker[Background Worker]
-    Worker -->|Invoke callbacks| UI
-    Services -->|Errors| ErrorHandler
-    MQ -->|Errors| ErrorHandler
-    ErrorHandler -->|Bubble up| UI
+```plantuml
+@startuml
+skinparam componentStyle rectangle
+actor Browser
+
+package "Frontend" {
+  [Web UI] as UI
+}
+
+package "Service Layer" {
+  [API Gateway] as API
+  [Business Services] as Services
+  [Plugin Manager] as PluginManager
+  [Background Worker] as Worker
+}
+
+package "Data Stores" {
+  database DB
+  queue MQ
+}
+
+Browser --> UI
+UI --> API
+API --> Services
+Services --> DB
+Services --> MQ
+Services --> PluginManager
+MQ --> Worker
+@enduml
 ```
 
-## Retry Logic and Circuit Breakers
+The diagram highlights the service boundaries: the Web UI issues HTTP calls to the API gateway, services encapsulate business logic and plugin management, and data persists through the database or flows asynchronously via the message queue to background workers.
 
-The `core.error_handling` module provides a `CircuitBreaker` class and
-`with_retry` decorator that wrap external calls. Services publish events to Kafka
-or Redis through these utilities so that temporary failures are retried with
-exponential backoff. When the breaker opens, further calls raise a
-`CircuitBreakerError` which is captured by the global error handler and reported
-back to the UI.
-
+For additional context see the [Architecture](architecture.md) and [Data Flow](data_flow.md) documents which provide more detailed design and sequence information.
