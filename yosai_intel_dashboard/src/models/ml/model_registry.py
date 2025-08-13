@@ -187,14 +187,19 @@ class ModelRegistry:
         return self.Session()
 
     # --------------------------------------------------------------
-    def _validate_registration(
+    def _resolve_version(
         self,
         name: str,
         metrics: Dict[str, float],
         version: str | None,
         experiment_id: str,
     ) -> str:
-        """Determine the model version after validating existing records."""
+        """Return the version to use for registration.
+
+        If ``version`` is provided it is returned unchanged. Otherwise the
+        currently active model is inspected and the semantic version is bumped
+        depending on metric improvement.
+        """
         active = self.get_model(name, active_only=True, experiment_id=experiment_id)
         if version is None:
             if active:
@@ -204,23 +209,42 @@ class ModelRegistry:
                 version = "0.1.0"
         return version
 
-    def _update_storage_with_model(
+    def _upload_artifacts(
         self,
-        session: Session,
         name: str,
         version: str,
         model_path: str,
-        metrics: Dict[str, float],
-        dataset_hash: str,
-        training_date: datetime | None,
-        experiment_id: str,
-        feature_defs_version: str | None,
-    ) -> ModelRecord:
-        """Upload the model artifact, log metrics and persist the registry record."""
+        baseline: pd.DataFrame | None,
+    ) -> Tuple[str, str | None, Dict[str, Dict[str, float]] | None]:
+        """Upload model and optional baseline, returning their locations.
+
+        Returns a tuple of ``(storage_uri, baseline_uri, baseline_stats)`` where
+        ``baseline_uri`` and ``baseline_stats`` may be ``None`` if no baseline is
+        supplied.
+        """
         key = f"{name}/{version}/{Path(model_path).name}"
         self.s3.upload_file(model_path, self.bucket, key)
         storage_uri = f"s3://{self.bucket}/{key}"
 
+        baseline_uri: str | None = None
+        baseline_stats: Dict[str, Dict[str, float]] | None = None
+        if baseline is not None:
+            with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+                baseline.to_csv(tmp.name, index=False)
+                bkey = f"{name}/{version}/baseline.csv"
+                self.s3.upload_file(tmp.name, self.bucket, bkey)
+                baseline_uri = f"s3://{self.bucket}/{bkey}"
+                baseline_stats = baseline.describe().to_dict()
+            try:
+                os.remove(tmp.name)
+            except OSError:
+                pass
+            self._baseline_features[name] = baseline
+
+        return storage_uri, baseline_uri, baseline_stats
+
+    def _log_metrics(self, metrics: Dict[str, float], model_path: str) -> str:
+        """Log metrics and the model artifact to MLflow, returning the run id."""
         if not mlflow:
             raise RuntimeError("mlflow is required to register models")
         with mlflow.start_run() as run:
@@ -228,46 +252,12 @@ class ModelRegistry:
                 mlflow.log_metric(k, v)
             mlflow.log_artifact(model_path)
             run_id = run.info.run_id
+        return run_id
 
-        record = ModelRecord(
-            name=name,
-            version=version,
-            training_date=training_date or datetime.utcnow(),
-            metrics=metrics,
-            accuracy=metrics.get("accuracy"),
-            dataset_hash=dataset_hash,
-            feature_defs_version=feature_defs_version,
-            storage_uri=storage_uri,
-            mlflow_run_id=run_id,
-            experiment_id=experiment_id,
-            is_active=False,
-        )
-        session.add(record)
-        session.commit()
-        session.refresh(record)
-
-        # Keep only the five most recent versions per model
-        stmt = (
-            select(ModelRecord)
-            .where(ModelRecord.name == name)
-            .order_by(ModelRecord.training_date.desc())
-        )
-        versions = session.execute(stmt).scalars().all()
-        for old in versions[5:]:
-            session.delete(old)
-        if len(versions) > 5:
-            session.commit()
-
-        return record
-
-    def _log_registration_event(self, record: ModelRecord) -> None:
-        """Log information about a newly registered model."""
-        logger.info(f"Registered model {record.name} version {record.version}")
-
-    def _validate_activation(
+    def _validate_transition(
         self, session: Session, name: str, version: str, experiment_id: str
     ) -> None:
-        """Ensure the requested version exists and passes drift checks."""
+        """Ensure the requested activation is valid and track prior version."""
         new_rec = session.execute(
             select(ModelRecord)
             .where(
@@ -303,7 +293,7 @@ class ModelRegistry:
                 current.version
             )
 
-    def _update_active_storage(
+    def _update_active_flags(
         self, session: Session, name: str, version: str, experiment_id: str
     ) -> None:
         """Persist active version changes to the database."""
@@ -329,6 +319,19 @@ class ModelRegistry:
             f"Activated model {name} version {version} for experiment {experiment_id}"
         )
 
+    def _prune_old_versions(self, session: Session, name: str) -> None:
+        """Keep only the five most recent versions for ``name``."""
+        stmt = (
+            select(ModelRecord)
+            .where(ModelRecord.name == name)
+            .order_by(ModelRecord.training_date.desc())
+        )
+        versions = session.execute(stmt).scalars().all()
+        for old in versions[5:]:
+            session.delete(old)
+        if len(versions) > 5:
+            session.commit()
+
     # --------------------------------------------------------------
     def register_model(
         self,
@@ -341,76 +344,39 @@ class ModelRegistry:
         training_date: datetime | None = None,
         experiment_id: str = "default",
         baseline: pd.DataFrame | None = None,
+        feature_defs_version: str | None = None,
 
     ) -> ModelRecord:
         session = self._session()
         try:
-            active = self.get_model(name, active_only=True, experiment_id=experiment_id)
-            if version is None:
-                if active:
-                    improved = self._metrics_improved(metrics, active.metrics or {})
-                    version = self._bump_version(active.version, improved)
-                else:
-                    version = "0.1.0"
+            version_resolved = self._resolve_version(
+                name, metrics, version, experiment_id
+            )
+            storage_uri, baseline_uri, baseline_stats = self._upload_artifacts(
+                name, version_resolved, model_path, baseline
+            )
+            run_id = self._log_metrics(metrics, model_path)
 
-            key = f"{name}/{version}/{Path(model_path).name}"
-            self.s3.upload_file(model_path, self.bucket, key)
-            storage_uri = f"s3://{self.bucket}/{key}"
-
-            baseline_uri = None
-            baseline_stats = None
-            if baseline is not None:
-                with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-                    baseline.to_csv(tmp.name, index=False)
-                    bkey = f"{name}/{version}/baseline.csv"
-                    self.s3.upload_file(tmp.name, self.bucket, bkey)
-                    baseline_uri = f"s3://{self.bucket}/{bkey}"
-                    baseline_stats = baseline.describe().to_dict()
-                try:
-                    os.remove(tmp.name)
-                except OSError:
-                    pass
-                self._baseline_features[name] = baseline
-
-            if not mlflow:
-                raise RuntimeError("mlflow is required to register models")
-            with mlflow.start_run() as run:
-                for k, v in metrics.items():
-                    mlflow.log_metric(k, v)
-                mlflow.log_artifact(model_path)
-                run_id = run.info.run_id
-                record = ModelRecord(
-                    name=name,
-                    version=version,
-                    training_date=training_date or datetime.utcnow(),
-                    metrics=metrics,
-                    accuracy=metrics.get("accuracy"),
-                    dataset_hash=dataset_hash,
-                    feature_defs_version=feature_defs_version,
-                    storage_uri=storage_uri,
-                    mlflow_run_id=run_id,
-                    experiment_id=experiment_id,
-                    is_active=False,
-                    baseline_stats=baseline_stats,
-                    baseline_uri=baseline_uri,
-                )
-                session.add(record)
-                session.commit()
-                session.refresh(record)
-
-                # Keep only the five most recent versions per model
-                stmt = (
-                    select(ModelRecord)
-                    .where(ModelRecord.name == name)
-                    .order_by(ModelRecord.training_date.desc())
-                )
-                versions = session.execute(stmt).scalars().all()
-                for old in versions[5:]:
-                    session.delete(old)
-                if len(versions) > 5:
-                    session.commit()
-
-                return record
+            record = ModelRecord(
+                name=name,
+                version=version_resolved,
+                training_date=training_date or datetime.utcnow(),
+                metrics=metrics,
+                accuracy=metrics.get("accuracy"),
+                dataset_hash=dataset_hash,
+                feature_defs_version=feature_defs_version,
+                storage_uri=storage_uri,
+                mlflow_run_id=run_id,
+                experiment_id=experiment_id,
+                is_active=False,
+                baseline_stats=baseline_stats,
+                baseline_uri=baseline_uri,
+            )
+            session.add(record)
+            session.commit()
+            session.refresh(record)
+            self._prune_old_versions(session, name)
+            return record
         finally:
             session.close()
 
@@ -480,61 +446,8 @@ class ModelRegistry:
     ) -> None:
         session = self._session()
         try:
-            new_rec = session.execute(
-                select(ModelRecord)
-                .where(
-                    ModelRecord.name == name,
-                    ModelRecord.version == version,
-                    ModelRecord.experiment_id == experiment_id,
-                )
-            ).scalar_one_or_none()
-            if new_rec is None:
-                raise ValueError(f"Model {name} version {version} not found")
-            current = session.execute(
-                select(ModelRecord)
-                .where(
-                    ModelRecord.name == name,
-                    ModelRecord.experiment_id == experiment_id,
-                    ModelRecord.is_active.is_(True),
-                )
-            ).scalar_one_or_none()
-            if current:
-                for m, threshold in self.drift_thresholds.items():
-                    old_val = (current.metrics or {}).get(m)
-                    new_val = (new_rec.metrics or {}).get(m)
-                    if (
-                        old_val is not None
-                        and new_val is not None
-                        and abs(new_val - old_val) > threshold
-                    ):
-                        raise ValueError(
-                            (
-                                f"Metric {m} drift {abs(new_val - old_val):.4f} exceeds"
-                                f" {threshold}"
-                            )
-                        )
-                self._previous_active.setdefault((name, experiment_id), []).append(
-                    current.version
-                )
-            session.execute(
-                update(ModelRecord)
-                .where(
-                    ModelRecord.name == name,
-                    ModelRecord.experiment_id == experiment_id,
-                )
-                .values(is_active=False)
-            )
-            session.execute(
-                update(ModelRecord)
-                .where(
-                    ModelRecord.name == name,
-                    ModelRecord.version == version,
-                    ModelRecord.experiment_id == experiment_id,
-                )
-                .values(is_active=True)
-            )
-            session.commit()
-
+            self._validate_transition(session, name, version, experiment_id)
+            self._update_active_flags(session, name, version, experiment_id)
         finally:
             session.close()
 
