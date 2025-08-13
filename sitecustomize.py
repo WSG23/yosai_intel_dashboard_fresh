@@ -34,6 +34,14 @@ if "services" not in sys.modules:
     services_pkg.__path__ = [str(ROOT / "services")]
     sys.modules["services"] = services_pkg
 
+# Ensure package alias used by tests points to the lightweight stub
+if "services" in sys.modules and "yosai_intel_dashboard.src.services" not in sys.modules:
+    yf_services = importlib.util.module_from_spec(
+        importlib.machinery.ModuleSpec("yosai_intel_dashboard.src.services", None)
+    )
+    yf_services.__path__ = [str(ROOT / "yosai_intel_dashboard" / "src" / "services")]
+    sys.modules["yosai_intel_dashboard.src.services"] = yf_services
+
 if "services.resilience" not in sys.modules:
     resilience_pkg = importlib.util.module_from_spec(
         importlib.machinery.ModuleSpec("services.resilience", None)
