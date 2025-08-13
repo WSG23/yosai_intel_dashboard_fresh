@@ -183,3 +183,11 @@ def test_mapping_processor_io(tmp_path):
     result.data.to_parquet(parquet_path)
     loaded = pd.read_parquet(parquet_path)
     assert loaded.equals(result.data)
+
+
+def test_missing_value_standardization():
+    df = pd.DataFrame({"num": [1.0, None], "cat": ["x", None]})
+    proc = DataProcessor()
+    out = proc.clean_data(df)
+    assert out.loc[1, "num"] == 0
+    assert out.loc[1, "cat"] == "missing"
