@@ -32,13 +32,13 @@ func LoadConfig(path string) (Config, error) {
 	var cfg Config
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return cfg, err
+		return cfg, fmt.Errorf("read config: %w", err)
 	}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return cfg, err
+		return cfg, fmt.Errorf("unmarshal config: %w", err)
 	}
 	if err := validateConfig(data); err != nil {
-		return cfg, err
+		return cfg, fmt.Errorf("validate config: %w", err)
 	}
 	applyEnv(&cfg)
 	if errs := validateYosaiConfig(cfg); len(errs) > 0 {
@@ -69,17 +69,17 @@ func applyEnv(cfg *Config) {
 func validateConfig(yamlData []byte) error {
 	var obj interface{}
 	if err := yaml.Unmarshal(yamlData, &obj); err != nil {
-		return err
+		return fmt.Errorf("unmarshal yaml: %w", err)
 	}
 	jsonBytes, err := json.Marshal(obj)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal json: %w", err)
 	}
 	loader := gojsonschema.NewReferenceLoader("file://" + schemaPath())
 	docLoader := gojsonschema.NewBytesLoader(jsonBytes)
 	result, err := gojsonschema.Validate(loader, docLoader)
 	if err != nil {
-		return err
+		return fmt.Errorf("validate schema: %w", err)
 	}
 	if !result.Valid() {
 		return fmt.Errorf("config validation failed: %v", result.Errors())

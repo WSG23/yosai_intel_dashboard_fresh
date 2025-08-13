@@ -28,10 +28,15 @@ func TestPrometheusCollector(t *testing.T) {
 		}
 	}()
 	c.Requests().WithLabelValues("GET", "/", "200").Inc()
-	resp, err := http.Get("http://" + c.ListenerAddr() + "/metrics")
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://"+c.ListenerAddr()+"/metrics", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)

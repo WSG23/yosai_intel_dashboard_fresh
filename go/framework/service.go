@@ -42,7 +42,7 @@ func (s *BaseService) Start() {
 		_ = s.Metrics.Start(s.ctx)
 	}
 	if s.tracer != nil {
-		shutdown, err := s.tracer.Start(s.Config.ServiceName, s.Config.TracingEndpoint)
+		shutdown, err := s.tracer.Start(s.ctx, s.Config.ServiceName, s.Config.TracingEndpoint)
 		if err == nil {
 			s.traceShutdown = shutdown
 		} else if s.Logger != nil {
@@ -78,10 +78,15 @@ func (s *BaseService) Stop() {
 }
 
 func (s *BaseService) handleSignals() {
-	ctx, stop := signal.NotifyContext(s.ctx, syscall.SIGTERM, syscall.SIGINT)
+	sigCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		defer stop()
-		<-ctx.Done()
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-sigCtx.Done():
+		}
+
 		if s.traceShutdown != nil {
 			_ = s.traceShutdown(context.Background())
 		}

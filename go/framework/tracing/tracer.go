@@ -3,9 +3,9 @@ package tracing
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -14,19 +14,28 @@ import (
 
 // Tracer configures application tracing and returns a shutdown function.
 type Tracer interface {
-	Start(serviceName, endpoint string) (func(context.Context) error, error)
+	Start(ctx context.Context, serviceName, endpoint string) (func(context.Context) error, error)
 }
 
-type OTLPTracer struct{}
+// OTLPTracer implements Tracer using the OTLP HTTP exporter.
+type OTLPTracer struct {
+	client otlptrace.Client
+}
 
-func NewOTLPTracer() *OTLPTracer { return &OTLPTracer{} }
+// NewTracer constructs an OTLPTracer. If client is nil, a default HTTP client is used.
+func NewTracer(client otlptrace.Client) *OTLPTracer { return &OTLPTracer{client: client} }
 
-func (OTLPTracer) Start(serviceName, endpoint string) (func(context.Context) error, error) {
-	if endpoint == "" {
-		endpoint = "localhost:4318"
+// Start configures tracing and returns a shutdown function.
+func (t *OTLPTracer) Start(ctx context.Context, serviceName, endpoint string) (func(context.Context) error, error) {
+	if t.client == nil {
+		opts := []otlptracehttp.Option{}
+		if endpoint != "" {
+			opts = append(opts, otlptracehttp.WithEndpoint(endpoint), otlptracehttp.WithInsecure())
+		}
+		t.client = otlptracehttp.NewClient(opts...)
 	}
-	endpoint = strings.TrimPrefix(strings.TrimPrefix(endpoint, "http://"), "https://")
-	exp, err := otlptracehttp.New(context.Background(), otlptracehttp.WithEndpoint(endpoint), otlptracehttp.WithInsecure())
+	exp, err := otlptrace.New(ctx, t.client)
+
 	if err != nil {
 		return nil, fmt.Errorf("create exporter: %w", err)
 	}

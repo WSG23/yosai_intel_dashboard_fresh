@@ -3,9 +3,10 @@ package logging
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
-	"strings"
+	"syscall"
 	"testing"
 )
 
@@ -21,7 +22,8 @@ func TestZapLoggerJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	lg.Info("hello")
-	if err := lg.Sync(); err != nil && !strings.Contains(err.Error(), "invalid argument") {
+	if err := lg.Sync(); err != nil && !errors.Is(err, syscall.ENOTTY) && !errors.Is(err, syscall.EINVAL) {
+
 		t.Fatal(err)
 	}
 	if err := w.Close(); err != nil {
