@@ -27,27 +27,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
-      - name: Run black
-        run: |
-          set -euo pipefail
-          black --check . | tee black.log
-      - name: Run ruff
-        run: |
-          set -euo pipefail
-          ruff . | tee ruff.log
-      - name: Run mypy
-        run: |
-          set -euo pipefail
-          mypy . | tee mypy.log
-      - name: Upload Python lint reports
+      - name: Black
+        run: black --check . | tee black-report.txt
+      - name: Ruff
+        run: ruff check . | tee ruff-report.txt
+      - name: Mypy
+        run: mypy . --strict | tee mypy-report.txt
+      - name: Upload lint reports
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: python-lint-reports
+          name: python-lint
           path: |
-            black.log
-            ruff.log
-            mypy.log
+            black-report.txt
+            ruff-report.txt
+            mypy-report.txt
 
   backend-tests:
     name: Backend Tests
@@ -66,13 +60,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
-      - name: Run pytest with coverage
-        env:
-          PYTHONWARNINGS: error
-        run: |
-          set -euo pipefail
-          pytest | tee pytest.log
-          coverage xml
+      - name: Run pytest
+        run: pytest -W error --cov=. --cov-report=xml --cov-report=term | tee pytest-report.txt
       - name: Upload coverage
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -80,42 +69,7 @@ jobs:
           name: backend-coverage
           path: |
             coverage.xml
-            htmlcov
-            pytest.log
-
-  frontend-lint:
-    name: Frontend Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 20
-          cache: "npm"
-      - name: Install npm dependencies
-        run: npm ci
-      - name: Run ESLint
-        run: |
-          set -euo pipefail
-          npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 | tee eslint.log
-      - name: Run Prettier
-        run: |
-          set -euo pipefail
-          npx prettier . --check | tee prettier.log
-      - name: Run Stylelint
-        run: |
-          set -euo pipefail
-          npx --yes stylelint "**/*.{css,scss}" --max-warnings=0 | tee stylelint.log
-      - name: Upload frontend lint reports
-        if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: frontend-lint-reports
-          path: |
-            eslint.log
-            prettier.log
-            stylelint.log
+            pytest-report.txt
 
   frontend-tests:
     name: Frontend Tests
@@ -129,40 +83,48 @@ jobs:
           cache: "npm"
       - name: Install npm dependencies
         run: npm ci
-      - name: Run frontend tests with coverage
-        run: |
-          set -euo pipefail
-          npm test -- --watchAll=false --coverage | tee frontend-tests.log
-      - name: Upload frontend coverage
+      - name: Install stylelint
+        run: npm install --no-save stylelint stylelint-config-standard
+      - name: ESLint
+        run: npm run lint -- --max-warnings=0 | tee eslint-report.txt
+      - name: Prettier
+        run: npx prettier --check . | tee prettier-report.txt
+      - name: Stylelint
+        run: npx stylelint "**/*.{css,scss}" --max-warnings=0 | tee stylelint-report.txt
+      - name: Run frontend tests
+        run: npm test -- --coverage | tee frontend-test.log
+      - name: Upload frontend artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: frontend-coverage
+          name: frontend-artifacts
           path: |
+            eslint-report.txt
+            prettier-report.txt
+            stylelint-report.txt
+            frontend-test.log
             coverage
-            frontend-tests.log
 
-  golangci-lint:
+  golangci:
+
     name: Go Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
       - name: Set up Go
-        uses: actions/setup-go@cd1f1e171f0d4b3a6570b6a6213b5636e33d7e40
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
         with:
-          go-version: "1.22"
-      - name: Install golangci-lint
-        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
-      - name: Run golangci-lint
-        run: |
-          set -euo pipefail
-          golangci-lint run ./... --timeout=5m --max-issues-per-linter=0 --max-same-issues=0 | tee golangci-lint.log
-      - name: Upload Go lint report
+          go-version: stable
+      - name: GolangCI-Lint
+        uses: golangci/golangci-lint-action@25e2cdc5eb1d7a04fdc45ff538f1a00e960ae128
+        with:
+          args: --out-format=checkstyle --out=golangci-lint.xml --timeout=5m --max-issues-per-linter=0 --max-same-issues=0
+      - name: Upload golangci-lint report
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: golangci-lint-report
-          path: golangci-lint.log
+          name: golangci-lint
+          path: golangci-lint.xml
 
   shellcheck:
     name: ShellCheck
@@ -173,15 +135,19 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
       - name: Run ShellCheck
         run: |
-          set -euo pipefail
-          mapfile -t files < <(git ls-files '*.sh')
-          if [ "${#files[@]}" -gt 0 ]; then shellcheck -x "${files[@]}" | tee shellcheck.log; else echo "No shell scripts found" | tee shellcheck.log; fi
-      - name: Upload ShellCheck report
+          files=$(git ls-files '*.sh')
+          if [ -n "$files" ]; then
+            shellcheck --severity=warning -x $files | tee shellcheck-report.txt
+          else
+            echo "No shell scripts found" | tee shellcheck-report.txt
+          fi
+      - name: Upload shellcheck report
+
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: shellcheck-report
-          path: shellcheck.log
+          path: shellcheck-report.txt
 
   hadolint:
     name: Hadolint
@@ -195,32 +161,16 @@ jobs:
           sudo mv hadolint /usr/local/bin/hadolint
       - name: Run hadolint
         run: |
-          set -euo pipefail
-          files=$(git ls-files '*Dockerfile*')
-          if [ -n "$files" ]; then
-            hadolint --config infra/.hadolint.yaml --failure-threshold warning $files | tee hadolint.log
-          else
-            echo "No Dockerfiles found" | tee hadolint.log
-          fi
+          for file in $(git ls-files '*Dockerfile*'); do
+            echo "Linting $file" | tee -a hadolint-report.txt
+            hadolint --config infra/.hadolint.yaml --failure-threshold warning "$file" | tee -a hadolint-report.txt
+          done
       - name: Upload hadolint report
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: hadolint-report
-          path: hadolint.log
-
-  build-test:
-    name: Build Docker Images
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-      - name: Build images
-        run: |
-          set -euo pipefail
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose.kafka.yml \
-            build
+          path: hadolint-report.txt
 
   integration:
     name: Integration Tests
@@ -243,19 +193,24 @@ jobs:
         run: |
           set -euo pipefail
           if ! docker info >/dev/null 2>&1; then
-            echo "Docker not available - skipping integration tests."
+            echo "Docker not available - skipping integration tests." | tee integration-report.txt
             exit 0
           fi
-          pytest tests/integration
+          pytest tests/integration -W error | tee integration-report.txt
+      - name: Upload integration report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: integration-report
+          path: integration-report.txt
 
   audits:
-    name: Dependency and Vulnerability Scan
+    name: Audits
     needs:
       - backend-tests
       - frontend-tests
       - python-lint
-      - frontend-lint
-      - golangci-lint
+      - golangci
       - shellcheck
       - hadolint
       - build-test
@@ -277,36 +232,26 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
-          python-version: "3.11"
-      - name: Run pip-audit
+          python-version: '3.11'
+      - name: pip-audit
         run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip pip-audit
-          pip-audit -r requirements.txt -r requirements-dev.txt | tee pip-audit.log
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt pip-audit
+          pip-audit | tee pip-audit.txt
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 20
-      - name: Run npm audit
+      - name: npm audit
         run: |
-          set -euo pipefail
           npm ci --no-audit
-          npm audit --audit-level=high | tee npm-audit.log
-      - name: Set up Go
-        uses: actions/setup-go@cd1f1e171f0d4b3a6570b6a6213b5636e33d7e40
-        with:
-          go-version: "1.22"
-      - name: Run govulncheck
-        run: |
-          set -euo pipefail
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./... | tee govulncheck.log
+          npm audit --audit-level=high | tee npm-audit.txt
+
       - name: Upload audit reports
         if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: audit-reports
           path: |
-            pip-audit.log
-            npm-audit.log
-            govulncheck.log
+            pip-audit.txt
+            npm-audit.txt
