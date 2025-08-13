@@ -44,6 +44,7 @@ class ModelRecord(Base):
     metrics = Column(JSON)
     accuracy = Column(Float)
     dataset_hash = Column(String(64))
+    feature_defs_version = Column(String(20))
     storage_uri = Column(String(255))
     mlflow_run_id = Column(String(64))
     is_active = Column(Boolean, default=False)
@@ -125,6 +126,7 @@ class ModelRegistry:
         *,
         version: str | None = None,
         training_date: datetime | None = None,
+        feature_defs_version: str | None = None,
     ) -> ModelRecord:
         session = self._session()
         try:
@@ -155,6 +157,7 @@ class ModelRegistry:
                     metrics=metrics,
                     accuracy=metrics.get("accuracy"),
                     dataset_hash=dataset_hash,
+                    feature_defs_version=feature_defs_version,
                     storage_uri=storage_uri,
                     mlflow_run_id=run_id,
                     is_active=False,
