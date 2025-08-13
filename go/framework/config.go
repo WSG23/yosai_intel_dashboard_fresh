@@ -2,6 +2,7 @@ package framework
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -41,7 +42,7 @@ func LoadConfig(path string) (Config, error) {
 	}
 	applyEnv(&cfg)
 	if errs := validateYosaiConfig(cfg); len(errs) > 0 {
-		return cfg, fmt.Errorf(strings.Join(errs, "; "))
+		return cfg, errors.New(strings.Join(errs, "; "))
 	}
 	return cfg, nil
 }
@@ -109,7 +110,7 @@ func validateYosaiConfig(cfg Config) []string {
 	} else if strings.ToUpper(cfg.LogLevel) == "DEBUG" {
 		errs = append(errs, "metrics_addr required when log_level is DEBUG")
 	}
-	if cfg.TracingEndpoint != "" && !(strings.HasPrefix(cfg.TracingEndpoint, "http://") || strings.HasPrefix(cfg.TracingEndpoint, "https://")) {
+	if cfg.TracingEndpoint != "" && !strings.HasPrefix(cfg.TracingEndpoint, "http://") && !strings.HasPrefix(cfg.TracingEndpoint, "https://") {
 		errs = append(errs, "tracing_endpoint must start with http:// or https://")
 	}
 	if cfg.MetricsAddr != "" && cfg.MetricsAddr == cfg.TracingEndpoint {

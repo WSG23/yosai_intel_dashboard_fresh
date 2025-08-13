@@ -17,17 +17,28 @@ func TestPrometheusCollector(t *testing.T) {
 	hm := health.NewManager()
 	logger := &logging.ZapLogger{Logger: zap.NewNop()}
 	c := NewPrometheusCollector("127.0.0.1:0", hm, logger)
-	if err := c.Start(); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := c.Start(ctx); err != nil {
 		t.Fatal(err)
 	}
-	defer c.Stop(context.Background())
+	defer func() {
+		if err := c.Stop(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}()
 	c.Requests().WithLabelValues("GET", "/", "200").Inc()
 	resp, err := http.Get("http://" + c.ListenerAddr() + "/metrics")
 	if err != nil {
 		t.Fatal(err)
 	}
-	body, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := resp.Body.Close(); err != nil {
+		t.Fatal(err)
+	}
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected status %d", resp.StatusCode)
 	}

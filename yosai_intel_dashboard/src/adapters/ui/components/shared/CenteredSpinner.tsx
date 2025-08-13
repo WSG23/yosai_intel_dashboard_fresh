@@ -1,12 +1,12 @@
 import React from 'react';
-import Spinner from './Spinner';
+import Spinner, { SpinnerProps } from './Spinner';
 
-interface Props {
-  sizeClass?: string;
-  className?: string;
-}
+type CenteredSpinnerProps = SpinnerProps;
 
-export const CenteredSpinner: React.FC<Props> = ({ sizeClass, className = '' }) => (
+const CenteredSpinner: React.FC<CenteredSpinnerProps> = ({
+  sizeClass,
+  className = '',
+}) => (
   <div className={`flex items-center justify-center ${className}`}>
     <Spinner sizeClass={sizeClass} />
   </div>

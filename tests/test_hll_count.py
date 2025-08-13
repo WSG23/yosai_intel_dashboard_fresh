@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from services.analytics.core.utils import hll_count
+from yosai_intel_dashboard.src.services.analytics.core.utils import hll_count
 
 
 def test_hll_count_small_series():

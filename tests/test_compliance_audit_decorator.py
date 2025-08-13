@@ -2,6 +2,8 @@ import importlib
 import logging
 import sys
 import types
+import builtins
+import functools
 import pytest
 
 # Ensure dependent modules can be imported in minimal environment
@@ -10,13 +12,12 @@ sys.modules["controllers.compliance_controller"] = types.SimpleNamespace(
     register_compliance_routes=lambda *a, **k: None
 )
 
-# Robust import of audit_decorator
-try:  # pragma: no cover - attempt full path import
-    from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.compliance_setup import (
-        audit_decorator,
-    )
-except Exception:  # pragma: no cover - fallback for alternate layouts
-    from adapters.api.plugins.compliance_plugin.compliance_setup import audit_decorator
+# Provide wraps in builtins for modules that expect it without explicit import
+builtins.wraps = functools.wraps
+
+from yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.compliance_setup import (
+    audit_decorator,
+)
 
 
 def test_audit_decorator_logs_failure(monkeypatch, caplog):

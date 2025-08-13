@@ -1,44 +1,18 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+"""Deprecated module. Use :mod:`services.common.analytics_utils` instead."""
 
-from yosai_intel_dashboard.models.ml import ModelRegistry
+import warnings
 
+from yosai_intel_dashboard.src.services.common.analytics_utils import (
+    preload_active_models,
+)
 
-def preload_active_models(service: Any) -> None:
-    """Load active models into memory from the registry.
+warnings.warn(
+    "services.analytics_microservice.model_loader is deprecated; use"
+    " services.common.analytics_utils.preload_active_models",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-    Parameters
-    ----------
-    service:
-        Analytics service instance with ``model_registry``, ``model_dir`` and
-        ``models`` attributes.
-    """
-    service.models = {}
-    registry: ModelRegistry = service.model_registry
-    try:
-        records = registry.list_models()
-    except Exception:  # pragma: no cover - registry unavailable
-        return
-    names = {r.name for r in records}
-    for name in names:
-        record = registry.get_model(name, active_only=True)
-        if record is None:
-            continue
-        local_dir: Path = service.model_dir / name / record.version
-        local_dir.mkdir(parents=True, exist_ok=True)
-        filename = Path(record.storage_uri).name
-        local_path = local_dir / filename
-        if not local_path.exists():
-            try:
-                registry.download_artifact(record.storage_uri, local_path)
-            except Exception:  # pragma: no cover - best effort
-                continue
-        try:
-            import joblib
-
-            model_obj = joblib.load(local_path)
-            service.models[name] = model_obj
-        except Exception:  # pragma: no cover - invalid model
-            continue
+__all__ = ["preload_active_models"]

@@ -48,7 +48,7 @@ if "services.resilience" not in sys.modules:
     )
     resilience_pkg.__path__ = [str(ROOT / "services" / "resilience")]
     # Populate the package with our lightweight circuit breaker implementation
-    # so that ``from services.resilience import CircuitBreaker`` works even in
+    # so that ``from yosai_intel_dashboard.src.services.resilience import CircuitBreaker`` works even in
     # environments where the full application dependencies are missing.
     cb_path = ROOT / "services" / "resilience" / "circuit_breaker.py"
     if cb_path.exists():

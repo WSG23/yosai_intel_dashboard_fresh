@@ -66,7 +66,7 @@ distribution. Each run logs PSI, KS and Wasserstein metrics, stores them via a
 user provided callback and triggers alerts when thresholds are exceeded.
 
 ```python
-from services.monitoring.drift_monitor import DriftMonitor
+from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
 
 baseline = get_training_predictions()
 

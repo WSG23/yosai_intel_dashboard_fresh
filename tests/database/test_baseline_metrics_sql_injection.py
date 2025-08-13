@@ -23,7 +23,7 @@ def test_baseline_metrics_uses_parameters(monkeypatch):
     monkeypatch.setitem(sys.modules, "security", types.ModuleType("security"))
     monkeypatch.setitem(sys.modules, "security.secure_query_wrapper", fake_sec)
     monkeypatch.setitem(
-        sys.modules, "infrastructure.security.query_builder", fake_secure_query
+        sys.modules, "yosai_intel_dashboard.src.infrastructure.security.query_builder", fake_secure_query
     )
     bm = importlib.import_module("yosai_intel_dashboard.src.database.baseline_metrics")
     importlib.reload(bm)

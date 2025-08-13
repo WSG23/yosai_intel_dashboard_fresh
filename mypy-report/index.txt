@@ -1,0 +1,14 @@
+Mypy Type Check Coverage Summary
+================================
+
+Script: index
+
++----------------------------+-------------------+--------+
+| Module                     | Imprecision       | Lines  |
++----------------------------+-------------------+--------+
+| core                       |   5.88% imprecise | 34 LOC |
+| services.arrival_estimator |   0.00% imprecise | 50 LOC |
+| services.interfaces        |   9.09% imprecise | 11 LOC |
++----------------------------+-------------------+--------+
+| Total                      |   3.16% imprecise | 95 LOC |
++----------------------------+-------------------+--------+

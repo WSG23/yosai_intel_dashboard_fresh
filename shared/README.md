@@ -11,4 +11,4 @@
 `libs/ts/logger.ts` – `createLogger(name, level?)` JSON console logs.
 `libs/ts/retry.ts` – `retry(fn, { attempts, baseDelayMs, jitter, signal })`.
 
-> Import these from services/pages to eliminate duplicate helpers and to enforce consistent behavior across the stack.
+> Import these from `yosai_intel_dashboard.src.services.pages` to eliminate duplicate helpers and to enforce consistent behavior across the stack.

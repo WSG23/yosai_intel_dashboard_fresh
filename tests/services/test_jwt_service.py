@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import importlib
 import os
-import pathlib
 import sys
 import time
 import types
@@ -11,8 +10,6 @@ import pytest
 
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
-SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
-
 
 def load_jwt_service(monkeypatch, secret: str | None = None):
     """Import ``jwt_service`` with the given secret configured."""
@@ -20,24 +17,16 @@ def load_jwt_service(monkeypatch, secret: str | None = None):
     if secret is None:
         secret = os.urandom(16).hex()
 
-    services_mod = sys.modules.get("services")
-    if services_mod is None:
-        services_mod = types.ModuleType("services")
-        safe_import("services", services_mod)
-    services_mod.__path__ = [str(SERVICES_PATH)]
-
-    security_mod = sys.modules.get("services.security")
-    if security_mod is None:
-        security_mod = types.ModuleType("services.security")
-        safe_import("services.security", security_mod)
-    security_mod.__path__ = [str(SERVICES_PATH / "security")]
-
-    secrets_mod = types.ModuleType("services.common.secrets")
+    secrets_mod = types.ModuleType(
+        "yosai_intel_dashboard.src.services.common.secrets"
+    )
     secrets_mod.get_secret = lambda key: secret
     secrets_mod.invalidate_secret = lambda key=None: None
-    safe_import("services.common.secrets", secrets_mod)
+    safe_import(
+        "yosai_intel_dashboard.src.services.common.secrets", secrets_mod
+    )
 
-    module_name = "services.security.jwt_service"
+    module_name = "yosai_intel_dashboard.src.services.security.jwt_service"
     if module_name in sys.modules:
         module = sys.modules[module_name]
         importlib.reload(module)
@@ -76,7 +65,9 @@ def test_invalid_signature_raises_error(monkeypatch):
     monkeypatch.setattr(svc.time, "time", lambda: now)
     token = svc.generate_service_jwt("svc", expires_in=30)
     # Change the secret used for verification
-    secrets_mod = sys.modules["services.common.secrets"]
+    secrets_mod = sys.modules[
+        "yosai_intel_dashboard.src.services.common.secrets"
+    ]
     secrets_mod.get_secret = lambda key: "secret-two"
     svc.invalidate_jwt_secret_cache()
     with pytest.raises(svc.TokenValidationError) as exc:
@@ -120,7 +111,9 @@ def test_secret_cached_until_invalidated(monkeypatch):
     svc = load_jwt_service(monkeypatch, secret_one)
     assert svc.jwt_secret() == secret_one
 
-    secrets_mod = sys.modules["services.common.secrets"]
+    secrets_mod = sys.modules[
+        "yosai_intel_dashboard.src.services.common.secrets"
+    ]
     secret_two = os.urandom(16).hex()
     secrets_mod.get_secret = lambda key: secret_two
     # Still returns cached secret

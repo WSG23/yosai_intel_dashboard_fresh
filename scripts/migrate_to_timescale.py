@@ -29,7 +29,7 @@ from psycopg2.extensions import connection, cursor
 from psycopg2.extras import DictCursor, execute_batch
 from tqdm import tqdm
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.database.secure_exec import (
     execute_command,
     execute_query,

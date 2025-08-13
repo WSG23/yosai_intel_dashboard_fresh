@@ -1304,7 +1304,7 @@ async with factory.get_async_connection() as conn:
   ```python
     # Legacy paths
     from simple_di import ServiceContainer
-    from services.analytics_service import create_analytics_service
+    from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service
     # New paths
     from yosai_intel_dashboard.src.simple_di import ServiceContainer
     from yosai_intel_dashboard.src.services.analytics_service import create_analytics_service

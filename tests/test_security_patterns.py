@@ -4,11 +4,11 @@ import inspect
 
 import pandas as pd
 
-from services.analytics.security_patterns import (
+from yosai_intel_dashboard.src.services.analytics.security_patterns import (
     SecurityPatternsAnalyzer,
     prepare_security_data,
 )
-from services.analytics.security_patterns.pattern_detection import (
+from yosai_intel_dashboard.src.services.analytics.security_patterns.pattern_detection import (
     detect_critical_door_risks,
 )
 
@@ -81,12 +81,12 @@ def test_detect_odd_time_zero_variance(monkeypatch):
             pass
 
     monkeypatch.setattr(
-        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        "yosai_intel_dashboard.src.services.analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
         lambda: DummyBaseline(),
     )
 
     df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 10]})
-    from services.analytics.security_patterns.odd_time_detection import detect_odd_time
+    from yosai_intel_dashboard.src.services.analytics.security_patterns.odd_time_detection import detect_odd_time
 
     threats = list(detect_odd_time(df))
     assert threats == []
@@ -101,12 +101,12 @@ def test_detect_odd_time_zero_baseline_std(monkeypatch):
             pass
 
     monkeypatch.setattr(
-        "analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
+        "yosai_intel_dashboard.src.services.analytics.security_patterns.odd_time_detection.BaselineMetricsDB",
         lambda: DummyBaseline(),
     )
 
     df = pd.DataFrame({"person_id": ["u1", "u1"], "hour": [10, 12]})
-    from services.analytics.security_patterns.odd_time_detection import detect_odd_time
+    from yosai_intel_dashboard.src.services.analytics.security_patterns.odd_time_detection import detect_odd_time
 
     threats = list(detect_odd_time(df))
     assert len(threats) == 1
@@ -120,7 +120,7 @@ def test_detection_functions_return_generators():
     prepared_cd = prepare_security_data(df_cd)
     assert inspect.isgenerator(detect_critical_door_risks(prepared_cd))
 
-    from services.analytics.security_patterns.odd_time_detection import detect_odd_time
+    from yosai_intel_dashboard.src.services.analytics.security_patterns.odd_time_detection import detect_odd_time
 
     df_ot = pd.DataFrame(columns=["person_id", "hour"])
     assert inspect.isgenerator(detect_odd_time(df_ot))

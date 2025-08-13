@@ -163,7 +163,7 @@ the dev server. In all deployments `VAULT_ADDR` and `VAULT_TOKEN` must be
 supplied via environment variables or the accompanying Kubernetes
 `ConfigMap` and `Secret` manifests.
 
-Secrets are fetched through `services.common.secrets.get_secret()` which
+Secrets are fetched through `yosai_intel_dashboard.src.services.common.secrets.get_secret()` which
 uses an in-memory cache. Call `invalidate_secret()` after rotating a
 value to force a reload.
 

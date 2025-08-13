@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, List, Sequence
 
-from infrastructure.security.query_builder import SecureQueryBuilder
+from yosai_intel_dashboard.src.infrastructure.security.query_builder import SecureQueryBuilder
 from yosai_intel_dashboard.src.database.types import DBRows
 
 # Importing create_database_connection at module level pulls in heavy

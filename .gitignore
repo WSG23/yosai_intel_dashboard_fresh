@@ -63,6 +63,7 @@ data/learned_mappings.json
 !renovate.json
 !package.json
 !package-lock.json
+!.stylelintrc.json
 !yosai_intel_dashboard/src/adapters/ui/tsconfig.json
 !public/manifest.json
 !yosai_intel_dashboard/src/adapters/ui/lib/

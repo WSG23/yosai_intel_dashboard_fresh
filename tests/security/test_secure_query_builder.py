@@ -9,10 +9,10 @@ import pytest
 SRC_PATH = pathlib.Path(__file__).resolve().parents[2] / "yosai_intel_dashboard" / "src"
 SECURE_QUERY_FILE = SRC_PATH / "infrastructure" / "security" / "query_builder.py"
 spec = importlib.util.spec_from_file_location(
-    "infrastructure.security.query_builder", SECURE_QUERY_FILE
+    "yosai_intel_dashboard.src.infrastructure.security.query_builder", SECURE_QUERY_FILE
 )
 secure_query = importlib.util.module_from_spec(spec)
-sys.modules["infrastructure.security.query_builder"] = secure_query
+sys.modules["yosai_intel_dashboard.src.infrastructure.security.query_builder"] = secure_query
 spec.loader.exec_module(secure_query)
 SecureQueryBuilder = secure_query.SecureQueryBuilder
 
