@@ -71,7 +71,7 @@ spec:
       serviceAccountName: vault-auth
       containers:
         - name: api
-          image: registry.example.com/yosai:latest
+          image: registry.example.com/yosai:1.0.0
           env:
             - name: JWT_SECRET_KEY
               valueFrom:

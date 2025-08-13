@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.11-slim AS builder
+ARG PYTHON_IMAGE=python:3.11-slim
+# hadolint ignore=DL3006
+FROM ${PYTHON_IMAGE} AS builder
 WORKDIR /app
 
 # Install system packages
@@ -11,13 +13,14 @@ RUN apt-get update \
 
 # Install Python dependencies
 COPY ../requirements.txt ./
-
+# hadolint ignore=SC1091
 RUN python -m venv /opt/venv \
     && . /opt/venv/bin/activate \
     && grep -v '^apache-flink' requirements.txt > requirements.filtered \
     && pip install --no-cache-dir -r requirements.filtered
 
-FROM python:3.11-slim
+# hadolint ignore=DL3006
+FROM ${PYTHON_IMAGE}
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
@@ -40,7 +43,9 @@ WORKDIR /app
 COPY . /app
 COPY ../core /app/core
 COPY ../docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x docker-entrypoint.sh \
+RUN chmod 0755 docker-entrypoint.sh \
+    && find /app -type f -name '*.sh' -exec chmod 0755 {} \; \
+    && find /app -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.conf' \) -exec chmod 0644 {} \; \
     && rm -rf /app/yosai_intel_dashboard/tests \
     && chown -R appuser:appuser /app
 USER appuser
