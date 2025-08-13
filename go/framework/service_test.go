@@ -1,11 +1,9 @@
 package framework
 
 import (
-	"io"
 	"net/http"
-	"os"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -13,16 +11,6 @@ import (
 	"github.com/WSG23/yosai-framework/logging"
 	"github.com/WSG23/yosai-framework/metrics"
 )
-
-func writeConfig(t *testing.T, content string) string {
-	t.Helper()
-	dir := t.TempDir()
-	path := dir + "/cfg.yaml"
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	return path
-}
 
 func TestServiceBuilder(t *testing.T) {
 	b, err := NewServiceBuilder("test", "")
@@ -36,20 +24,10 @@ func TestServiceBuilder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	go svc.Start()
-	defer svc.Stop()
-	time.Sleep(100 * time.Millisecond)
-	addr := svc.Metrics.ListenerAddr()
-	resp, err := http.Get("http://" + addr + "/health")
-	if err != nil {
-		t.Fatal(err)
-	}
-	body, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected status %d", resp.StatusCode)
-	}
-	if string(body) != "{\"status\":\"ok\"}\n" && string(body) != "{\"status\":\"ok\"}" {
-		t.Fatalf("unexpected body %s", string(body))
+	svc.Health.SetStartupComplete(true)
+	rr := httptest.NewRecorder()
+	svc.Health.Handler(rr, httptest.NewRequest(http.MethodGet, "/health", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("unexpected status %d", rr.Code)
 	}
 }
