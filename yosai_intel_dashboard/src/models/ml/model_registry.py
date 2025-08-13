@@ -31,6 +31,7 @@ from sqlalchemy.orm import (  # type: ignore[import-not-found]
 from types import SimpleNamespace
 
 from optional_dependencies import import_optional
+from yosai_intel_dashboard.src.exceptions import DownloadError
 
 boto3 = import_optional("boto3")
 mlflow = import_optional("mlflow")
@@ -538,8 +539,15 @@ class ModelRegistry:
         elif scheme in ("http", "https"):
             if not requests:
                 raise RuntimeError("requests is required for HTTP downloads")
-            resp = requests.get(storage_uri, stream=True)
-            resp.raise_for_status()
+            try:
+                resp = requests.get(storage_uri, stream=True, timeout=5)
+                resp.raise_for_status()
+            except requests.RequestException as exc:
+                logger.error(
+                    "Artifact download failed",
+                    extra={"uri_scheme": scheme},
+                )
+                raise DownloadError("Failed to download artifact") from exc
             with dest_path.open("wb") as fh:
                 for chunk in resp.iter_content(chunk_size=8192):
                     if chunk:

@@ -99,9 +99,9 @@ class EnvironmentProcessor:
                     sec.rate_limit_window_minutes = v
             if (val := settings.security.max_upload_mb) is not None:
                 if val < 50 and hasattr(sec, "max_file_size_mb"):
-                    print(
-                        "WARNING: MAX_UPLOAD_MB="
-                        f"{val} is too small. Using 50MB minimum."
+                    self.log.warning(
+                        "MAX_UPLOAD_MB too small; using minimum",
+                        extra={"configured": val, "minimum": 50},
                     )
                     val = 50
                 sec.max_upload_mb = val
