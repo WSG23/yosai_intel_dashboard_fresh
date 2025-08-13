@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import time
+import types
+from dataclasses import dataclass
+from pathlib import Path
+from unittest.mock import AsyncMock
 
 import httpx
 import joblib
@@ -36,8 +40,9 @@ async def test_health_endpoints(app_factory):
 
 
 @pytest.mark.asyncio
-async def test_dashboard_summary_endpoint(app_factory):
-    module, queries_stub, _ = app_factory()
+async def test_dashboard_summary_endpoint():
+    module, queries_stub, dummy_service = load_app()
+    from services.auth import verify_jwt_token
 
     token = jwt.encode(
         {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
@@ -72,9 +77,10 @@ async def test_unauthorized_request(app_factory):
 
 
 @pytest.mark.asyncio
-async def test_internal_error_response(app_factory):
-    module, queries_stub, _ = app_factory()
-    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+async def test_internal_error_response():
+    module, queries_stub, _ = load_app()
+    from services.auth import verify_jwt_token
+
 
     queries_stub.fetch_dashboard_summary.side_effect = RuntimeError("boom")
     token = jwt.encode(
@@ -96,8 +102,10 @@ async def test_internal_error_response(app_factory):
 
 
 @pytest.mark.asyncio
-async def test_model_registry_endpoints(app_factory, tmp_path):
-    module, _, svc = app_factory()
+async def test_model_registry_endpoints(tmp_path):
+    module, _, svc = load_app()
+    from services.auth import verify_jwt_token
+
     svc.model_dir = tmp_path
     from yosai_intel_dashboard.models.ml import ModelRegistry
 
@@ -137,8 +145,10 @@ async def test_model_registry_endpoints(app_factory, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_predict_endpoint(app_factory, tmp_path):
-    module, _, svc = app_factory()
+async def test_predict_endpoint(tmp_path):
+    module, _, svc = load_app()
+    from services.auth import verify_jwt_token
+
     svc.model_dir = tmp_path
 
     model = Dummy()
@@ -175,8 +185,10 @@ async def test_predict_endpoint(app_factory, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_batch_predict_endpoint(app_factory, tmp_path):
-    module, _, svc = app_factory()
+async def test_batch_predict_endpoint(tmp_path):
+    module, _, svc = load_app()
+    from services.auth import verify_jwt_token
+
     svc.model_dir = tmp_path
 
     model = Dummy()

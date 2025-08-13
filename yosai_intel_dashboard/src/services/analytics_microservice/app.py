@@ -34,9 +34,7 @@ from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 from shared.errors.types import ErrorCode, ErrorResponse
 from jose import jwt
 from yosai_framework import ServiceBuilder
-from yosai_framework.errors import ServiceError
-from yosai_framework.service import BaseService
-from yosai_intel_dashboard.models.ml import ModelRecord, ModelRegistry
+from yosai_intel_dashboard.models.ml import ModelRegistry
 from yosai_intel_dashboard.src.core.security import RateLimiter, security_config
 from yosai_intel_dashboard.src.database.utils import parse_connection_string
 from yosai_intel_dashboard.src.error_handling import http_error
@@ -57,8 +55,7 @@ from yosai_intel_dashboard.src.services.analytics_microservice.analytics_service
 from yosai_intel_dashboard.src.services.analytics_microservice.unicode_middleware import (
     UnicodeSanitizationMiddleware,
 )
-from yosai_intel_dashboard.src.services.auth import verify_jwt_token
-from yosai_intel_dashboard.src.services.common.async_db import close_pool, create_pool
+from yosai_intel_dashboard.src.services.common.async_db import create_pool
 from yosai_intel_dashboard.src.services.explainability_service import (
     ExplainabilityService,
 )
@@ -126,6 +123,15 @@ async def rate_limit(request: Request, call_next):
     for key, value in headers.items():
         response.headers[key] = value
     return response
+
+
+def rate_limit_decorator(*_: Any, **__: Any):
+    """Placeholder rate limit decorator."""
+
+    def decorator(func):
+        return func
+
+    return decorator
 
 
 async def _external_api_check(_: FastAPI) -> Dict[str, Any]:
