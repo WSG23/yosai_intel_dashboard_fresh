@@ -292,7 +292,7 @@ class ComplianceCSVProcessor:
             try:
                 pd.to_datetime(sample_values.iloc[0])
                 detected_types.add("access_logs")
-            except:
+            except (ValueError, TypeError):
                 pass
 
         return {"detected_types": detected_types}

@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from unicode_toolkit import safe_encode_text
 from .unicode_handler import UnicodeHandler
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,6 @@ def write_text(path: Path, data: str) -> None:
     path.write_text(cleaned, encoding="utf-8")
     logger.info("Sanitized write to %s", UnicodeHandler.sanitize(str(path)))
 
-
 def read_json(path: Path) -> Any:
     """Read JSON from ``path`` applying sanitization."""
     text = read_text(path)
@@ -41,6 +41,5 @@ def write_json(path: Path, data: Any) -> None:
         encoding="utf-8",
     )
     logger.info("Sanitized write to %s", UnicodeHandler.sanitize(str(path)))
-
 
 __all__ = ["read_text", "write_text", "read_json", "write_json"]

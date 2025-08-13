@@ -2,8 +2,8 @@ package tracing
 
 import "testing"
 
-func TestJaegerTracer(t *testing.T) {
-	jt := NewJaegerTracer()
+func TestOTLPTracer(t *testing.T) {
+	jt := NewOTLPTracer()
 	shutdown, err := jt.Start("test", "")
 	if err != nil {
 		t.Fatal(err)

@@ -55,7 +55,7 @@ func (b *ServiceBuilder) Build() (*BaseService, error) {
 		b.metrics = metrics.NewPrometheusCollector(b.cfg.MetricsAddr, b.health, b.logger)
 	}
 	if b.tracer == nil {
-		b.tracer = tracing.NewJaegerTracer()
+		b.tracer = tracing.NewOTLPTracer()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
