@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Dict
 
+import logging
+from time import perf_counter
+
 from analytics import anomaly_detection, security_patterns
 from yosai_intel_dashboard.models.ml.pipeline_contract import preprocess_events
 from shared.errors.types import ErrorCode, ErrorResponse
@@ -39,8 +42,25 @@ from yosai_intel_dashboard.src.services.explainability_service import (
 )
 from fastapi.responses import JSONResponse
 
+try:  # pragma: no cover - optional dependency
+    from prometheus_client import Histogram  # type: ignore
+except Exception:  # pragma: no cover
+    Histogram = None  # type: ignore
+
 
 from .analytics_service import AnalyticsService, get_analytics_service
+
+logger = logging.getLogger(__name__)
+
+if Histogram:
+    _INFERENCE_LATENCY = Histogram(
+        "analytics_inference_latency_seconds",
+        "Time spent performing model inference",
+        ["model"],
+        registry=None,
+    )
+else:  # pragma: no cover - metrics disabled
+    _INFERENCE_LATENCY = None  # type: ignore
 
 app = FastAPI()
 
@@ -207,12 +227,19 @@ def _load_model(svc: AnalyticsService, name: str, local_path: Path) -> Any:
     return model_obj
 
 
-def _run_prediction(model_obj: Any, data: Any) -> Any:
-    """Execute model inference on ``data``."""
+def _run_prediction(model_obj: Any, data: Any) -> tuple[Any, float]:
+    """Execute model inference on ``data`` and record latency."""
+    start = perf_counter()
     try:
-        return model_obj.predict(data)
+        result = model_obj.predict(data)
     except Exception as exc:
         raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+    latency = perf_counter() - start
+    model_label = getattr(getattr(model_obj, "metadata", None), "name", model_obj.__class__.__name__)
+    if _INFERENCE_LATENCY:
+        _INFERENCE_LATENCY.labels(model_label).observe(latency)
+    logger.debug("Model %s inference took %.6f seconds", model_label, latency)
+    return result, latency
 
 
 def _log_explainability(
@@ -267,7 +294,7 @@ async def predict(
 
     local_path = _download_artifact(svc, name, record)
     model_obj = _load_model(svc, name, local_path)
-    result = _run_prediction(model_obj, req.data)
+    result, latency = _run_prediction(model_obj, req.data)
 
     prediction_id = str(uuid.uuid4())
     _log_explainability(
@@ -278,7 +305,11 @@ async def predict(
         record,
         prediction_id,
     )
-    return {"prediction_id": prediction_id, "predictions": result}
+    return {
+        "prediction_id": prediction_id,
+        "predictions": result,
+        "latency_seconds": latency,
+    }
 
 
 @models_router.get("/{name}/drift", responses=ERROR_RESPONSES)
