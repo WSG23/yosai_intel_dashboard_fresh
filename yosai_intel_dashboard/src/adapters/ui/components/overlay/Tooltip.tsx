@@ -35,4 +35,3 @@ const Tooltip: React.FC<TooltipProps> = ({ text, children, onOpen }) => {
 };
 
 export default Tooltip;
-export { Tooltip };

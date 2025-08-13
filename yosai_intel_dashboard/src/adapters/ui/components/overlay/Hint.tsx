@@ -31,4 +31,3 @@ const Hint: React.FC<HintProps> = ({ id, message }) => {
 };
 
 export default Hint;
-export { Hint };

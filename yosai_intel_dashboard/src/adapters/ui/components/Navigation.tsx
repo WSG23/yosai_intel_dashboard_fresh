@@ -10,14 +10,14 @@ import {
   Database,
   Shield,
   Activity,
-  LayoutDashboard
+  LayoutDashboard,
 } from 'lucide-react';
 import { useProficiencyStore } from '../state/store';
 
 interface NavItem {
   name: string;
   href?: string;
-  icon?: any;
+  icon?: React.ComponentType<{ className?: string }>;
   description?: string;
   level: number;
   children?: NavItem[];
@@ -90,7 +90,10 @@ interface NavigationProps {
   orientation?: 'horizontal' | 'vertical';
 }
 
-const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = 'horizontal' }) => {
+const Navigation: React.FC<NavigationProps> = ({
+  className = '',
+  orientation = 'horizontal',
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { level: userLevel, logFeatureUsage } = useProficiencyStore();
@@ -103,7 +106,7 @@ const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = '
         orientation === 'horizontal' && depth === 0
           ? 'flex items-center space-x-1'
           : 'flex flex-col space-y-2',
-        depth > 0 ? 'ml-4' : ''
+        depth > 0 ? 'ml-4' : '',
       )}
     >
       {items
@@ -123,7 +126,7 @@ const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = '
                 'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                 active
                   ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
               )}
               title={item.description}
               aria-current={active ? 'page' : undefined}
@@ -131,20 +134,26 @@ const Navigation: React.FC<NavigationProps> = ({ className = '', orientation = '
               {Icon && (
                 <Icon
                   className={
-                    orientation === 'horizontal' && depth === 0 ? 'h-4 w-4' : 'h-5 w-5'
+                    orientation === 'horizontal' && depth === 0
+                      ? 'h-4 w-4'
+                      : 'h-5 w-5'
                   }
                 />
               )}
               <span
                 className={
-                  orientation === 'horizontal' && depth === 0 ? 'hidden sm:inline' : undefined
+                  orientation === 'horizontal' && depth === 0
+                    ? 'hidden sm:inline'
+                    : undefined
                 }
               >
                 {item.name}
               </span>
             </Link>
           ) : (
-            <span className="px-3 py-2 text-sm font-medium text-gray-500">{item.name}</span>
+            <span className="px-3 py-2 text-sm font-medium text-gray-500">
+              {item.name}
+            </span>
           );
 
           return (
@@ -200,7 +209,7 @@ export const Sidebar: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
     <aside
       className={cn(
         'fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out',
-        isOpen ? 'translate-x-0' : '-translate-x-full'
+        isOpen ? 'translate-x-0' : '-translate-x-full',
       )}
     >
       <div className="flex flex-col h-full">
