@@ -10,6 +10,7 @@ VENV="${ROOT_DIR}/.venv"
 if [ ! -d "$VENV" ]; then
   python3 -m venv "$VENV"
 fi
+# shellcheck disable=SC1091
 source "$VENV/bin/activate"
 
 pip install -U pip
@@ -25,7 +26,7 @@ export PYTHONPATH="${ROOT_DIR}:${PYTHONPATH:-}"
 ##########################
 # 2. Frontend dependency #
 ##########################
-find "$ROOT_DIR" -name package.json -not -path "*/node_modules/*" | while read pkg; do
+find "$ROOT_DIR" -name package.json -not -path "*/node_modules/*" | while IFS= read -r pkg; do
   dir=$(dirname "$pkg")
   pushd "$dir" >/dev/null
   npm ci
@@ -42,7 +43,7 @@ done
 ########################
 # 3. Dockerfile tweaks #
 ########################
-find "$ROOT_DIR" -iname "Dockerfile*" | while read df; do
+find "$ROOT_DIR" -iname "Dockerfile*" | while IFS= read -r df; do
   if grep -Eq '^FROM [^:@]+$' "$df"; then
     sed -i -E 's/^(FROM [^:@]+)$/\1:latest/' "$df"
   fi

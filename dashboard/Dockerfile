@@ -13,9 +13,8 @@ RUN apt-get update \
 COPY ../requirements.txt ./
 
 RUN python -m venv /opt/venv \
-    && . /opt/venv/bin/activate \
     && grep -v '^apache-flink' requirements.txt > requirements.filtered \
-    && pip install --no-cache-dir -r requirements.filtered
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.filtered
 
 FROM python:3.11-slim
 ENV PATH="/opt/venv/bin:$PATH"
