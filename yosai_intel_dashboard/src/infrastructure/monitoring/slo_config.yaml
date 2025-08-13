@@ -3,3 +3,5 @@
 # Error rate SLO represents the maximum fraction of 5xx responses.
 latency_p95_ms: 500
 error_rate: 0.01
+# Maximum allowed recovery time from chaos experiments in seconds.
+chaos_recovery_time_p95_seconds: 120
