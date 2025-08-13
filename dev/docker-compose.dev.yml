@@ -38,6 +38,7 @@ services:
 
     kafka:
       image: redpandadata/redpanda:${REDPANDA_TAG:-23.2.4}
+
     command:
       - redpanda
       - start

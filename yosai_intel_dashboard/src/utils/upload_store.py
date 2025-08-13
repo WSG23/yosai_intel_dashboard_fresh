@@ -20,6 +20,9 @@ from yosai_intel_dashboard.src.core.cache_manager import (
 )
 from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
 from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
+from yosai_intel_dashboard.src.infrastructure.config.unicode_handler import (
+    UnicodeHandler,
+)
 from yosai_intel_dashboard.src.services.upload.protocols import UploadStorageProtocol
 
 _cache_manager: InMemoryCacheManager | None = None
@@ -86,6 +89,7 @@ class UploadedDataStore(UploadStorageProtocol):
         inside :attr:`storage_dir`.
         """
 
+        filename = UnicodeHandler.sanitize(filename)
         if ".." in filename or "\\" in filename:
             raise ValueError(f"Unsafe filename: {filename}")
 
@@ -94,6 +98,7 @@ class UploadedDataStore(UploadStorageProtocol):
 
     def get_file_path(self, filename: str) -> Path:
         """Public wrapper for :meth:`_get_file_path`."""
+        filename = UnicodeHandler.sanitize(filename)
         return self._get_file_path(filename)
 
     def _info_path(self) -> Path:
@@ -110,11 +115,14 @@ class UploadedDataStore(UploadStorageProtocol):
                 ) as f:
                     self._file_info_store = json.load(f)
 
-            filenames = set(self._file_info_store.keys())
+            filenames = {
+                UnicodeHandler.sanitize(k) for k in self._file_info_store.keys()
+            }
             # include any legacy pickle files not tracked yet
             for pkl_file in self.storage_dir.glob("*.pkl"):
-                filenames.add(pkl_file.stem)
-                self._file_info_store.setdefault(pkl_file.stem, {})
+                fname = UnicodeHandler.sanitize(pkl_file.stem)
+                filenames.add(fname)
+                self._file_info_store.setdefault(fname, {})
 
             modified = False
             for fname in filenames:
@@ -154,6 +162,7 @@ class UploadedDataStore(UploadStorageProtocol):
             logger.error(f"Error loading uploaded data info: {e}")
 
     def _save_to_disk(self, filename: str, df: pd.DataFrame) -> None:
+        filename = UnicodeHandler.sanitize(filename)
         try:
             path = self._get_file_path(filename)
             df.to_parquet(path, index=False)
@@ -174,6 +183,7 @@ class UploadedDataStore(UploadStorageProtocol):
     # -- Public API ---------------------------------------------------------
     def add_file(self, filename: str, df: pd.DataFrame) -> None:
         """Persist ``df`` to disk and record its metadata."""
+        filename = UnicodeHandler.sanitize(filename)
         # save synchronously to ensure metadata exists immediately
         self._save_to_disk(filename, df)
         try:
@@ -193,6 +203,7 @@ class UploadedDataStore(UploadStorageProtocol):
 
     def load_dataframe(self, filename: str) -> pd.DataFrame:
         """Load a previously saved dataframe."""
+        filename = UnicodeHandler.sanitize(filename)
         with self._lock:
             future = self._save_futures.get(filename)
         if future is not None:
@@ -203,6 +214,7 @@ class UploadedDataStore(UploadStorageProtocol):
 
     def load_mapping(self, filename: str) -> Dict[str, Any]:
         """Load saved column mapping for *filename* if present."""
+        filename = UnicodeHandler.sanitize(filename)
         path = self._get_file_path(filename).with_suffix(".mapping.json")
         if path.exists():
             try:
@@ -218,6 +230,7 @@ class UploadedDataStore(UploadStorageProtocol):
 
     def save_mapping(self, filename: str, mapping: Dict[str, Any]) -> None:
         """Persist *mapping* for *filename*."""
+        filename = UnicodeHandler.sanitize(filename)
         path = self._get_file_path(filename).with_suffix(".mapping.json")
         try:
             with open(path, "w", encoding="utf-8") as fh:

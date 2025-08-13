@@ -63,6 +63,7 @@ data/learned_mappings.json
 !renovate.json
 !package.json
 !package-lock.json
+!.stylelintrc.json
 !yosai_intel_dashboard/src/adapters/ui/tsconfig.json
 !public/manifest.json
 !yosai_intel_dashboard/src/adapters/ui/lib/
@@ -110,6 +111,9 @@ temp_*
 .env.staging
 *.key
 *.pem
+# Certificates and locally generated K8s secrets
+*.crt
+k8s/config/db-cert-secret.yaml
 # Secrets should not be version controlled
 secrets/
 # Training data
