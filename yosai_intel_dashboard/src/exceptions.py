@@ -8,3 +8,11 @@ class ExternalServiceError(YosaiError):
 
 class InvalidResponseError(YosaiError):
     """Raised when external services return an unexpected response."""
+
+
+class DownloadError(ExternalServiceError):
+    """Raised when artifact downloads fail."""
+
+
+class ConfigurationError(YosaiError):
+    """Raised for configuration related errors."""

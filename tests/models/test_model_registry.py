@@ -3,6 +3,8 @@ import importlib.util
 import sys
 import types
 from pathlib import Path
+import logging
+import requests
 
 def safe_import(name: str, module: types.ModuleType) -> types.ModuleType:
     sys.modules.setdefault(name, module)
@@ -20,6 +22,12 @@ if "services.resilience.metrics" not in sys.modules:
 import pandas as pd
 import pytest
 from sqlalchemy.orm import Session as SASession
+
+from yosai_intel_dashboard.src.exceptions import DownloadError
+from yosai_intel_dashboard.src.logging_config import configure_logging
+
+
+configure_logging()
 
 
 class DummyS3:
@@ -208,12 +216,29 @@ def test_download_artifact_http(monkeypatch, tmp_path, registry):
     monkeypatch.setattr(
         requests_mod,
         "get",
-        lambda url, stream=True: DummyResponse(b"xyz"),
+        lambda *args, **kwargs: DummyResponse(b"xyz"),
         raising=False,
     )
     dest = tmp_path / "dest3.bin"
     registry.download_artifact("http://example.com/file.bin", str(dest))
     assert dest.read_text() == "xyz"
+
+
+def test_download_artifact_http_timeout(monkeypatch, tmp_path, registry, caplog):
+    def fake_get(*args, **kwargs):
+        raise requests.Timeout("boom")
+
+    real_requests = requests
+    monkeypatch.setitem(registry.download_artifact.__globals__, "requests", real_requests)
+    monkeypatch.setattr(real_requests, "get", fake_get)
+
+    dest = tmp_path / "dest_timeout.bin"
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(Exception) as excinfo:
+            registry.download_artifact("http://example.com/file.bin", str(dest))
+    assert excinfo.value.__class__.__name__ == DownloadError.__name__
+    assert "example.com" not in caplog.text
+    assert any("Artifact download failed" in r.getMessage() for r in caplog.records)
 
 
 def test_download_artifact_invalid_scheme(tmp_path, registry):
