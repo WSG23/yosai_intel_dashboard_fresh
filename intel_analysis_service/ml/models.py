@@ -6,7 +6,10 @@ from dataclasses import dataclass, field
 from typing import Dict, Iterable, Protocol
 
 import logging
+from opentelemetry import trace
 import pandas as pd
+
+tracer = trace.get_tracer(__name__)
 
 
 class DriftDetector(Protocol):
@@ -62,37 +65,38 @@ class AnomalyDetector:
     def predict(self, df: pd.DataFrame, value_col: str = "value", timestamp_col: str = "timestamp") -> pd.DataFrame:
         if self.thresholds is None:
             raise RuntimeError("Model must be fitted before prediction")
-        ts = pd.to_datetime(df[timestamp_col])
-        season = ts.dt.month
-        default = (self.global_mean or 0.0) + self.factor * (self.global_std or 1.0)
-        thresholds = season.map(self.thresholds).fillna(default)
+        with tracer.start_as_current_span("anomaly_predict"):
+            ts = pd.to_datetime(df[timestamp_col])
+            season = ts.dt.month
+            default = (self.global_mean or 0.0) + self.factor * (self.global_std or 1.0)
+            thresholds = season.map(self.thresholds).fillna(default)
 
-        context = pd.Series(0.0, index=df.index)
-        if self.context_weights:
-            for col, weight in self.context_weights.items():
-                if col in df:
-                    base = (self.context_means or {}).get(col, 0.0)
-                    context += (df[col] - base) * weight
-        thresholds = thresholds + context
+            context = pd.Series(0.0, index=df.index)
+            if self.context_weights:
+                for col, weight in self.context_weights.items():
+                    if col in df:
+                        base = (self.context_means or {}).get(col, 0.0)
+                        context += (df[col] - base) * weight
+            thresholds = thresholds + context
 
-        values = df[value_col]
-        anomalies = values > thresholds
-        result = pd.DataFrame({
-            timestamp_col: ts,
-            value_col: values,
-            "threshold": thresholds,
-            "is_anomaly": anomalies,
-        })
-        self.logger.info(
-            "model=%s predictions=%s thresholds=%s",
-            self.model_version,
-            result[value_col].tolist(),
-            result["threshold"].tolist(),
-        )
-        if self.drift_detector:
-            drift = self.drift_detector.detect(result[value_col], result["threshold"])
-            result["drift_detected"] = drift
-        return result
+            values = df[value_col]
+            anomalies = values > thresholds
+            result = pd.DataFrame({
+                timestamp_col: ts,
+                value_col: values,
+                "threshold": thresholds,
+                "is_anomaly": anomalies,
+            })
+            self.logger.info(
+                "model=%s predictions=%s thresholds=%s",
+                self.model_version,
+                result[value_col].tolist(),
+                result["threshold"].tolist(),
+            )
+            if self.drift_detector:
+                drift = self.drift_detector.detect(result[value_col], result["threshold"])
+                result["drift_detected"] = drift
+            return result
 
 
 @dataclass
@@ -127,25 +131,26 @@ class RiskScorer:
     def score(self, df: pd.DataFrame, timestamp_col: str = "timestamp") -> pd.DataFrame:
         if self.thresholds is None:
             raise RuntimeError("Model must be fitted before scoring")
-        ts = pd.to_datetime(df[timestamp_col])
-        scores = self._score_features(df)
-        season = ts.dt.month
-        default_threshold = pd.Series(self.thresholds.values()).mean()
-        thresholds = season.map(self.thresholds).fillna(default_threshold)
-        risk = scores > thresholds
-        result = pd.DataFrame({
-            timestamp_col: ts,
-            "score": scores,
-            "threshold": thresholds,
-            "is_risky": risk,
-        })
-        self.logger.info(
-            "model=%s predictions=%s thresholds=%s",
-            self.model_version,
-            result["score"].tolist(),
-            result["threshold"].tolist(),
-        )
-        if self.drift_detector:
-            drift = self.drift_detector.detect(result["score"], result["threshold"])
-            result["drift_detected"] = drift
-        return result
+        with tracer.start_as_current_span("risk_score"):
+            ts = pd.to_datetime(df[timestamp_col])
+            scores = self._score_features(df)
+            season = ts.dt.month
+            default_threshold = pd.Series(self.thresholds.values()).mean()
+            thresholds = season.map(self.thresholds).fillna(default_threshold)
+            risk = scores > thresholds
+            result = pd.DataFrame({
+                timestamp_col: ts,
+                "score": scores,
+                "threshold": thresholds,
+                "is_risky": risk,
+            })
+            self.logger.info(
+                "model=%s predictions=%s thresholds=%s",
+                self.model_version,
+                result["score"].tolist(),
+                result["threshold"].tolist(),
+            )
+            if self.drift_detector:
+                drift = self.drift_detector.detect(result["score"], result["threshold"])
+                result["drift_detected"] = drift
+            return result

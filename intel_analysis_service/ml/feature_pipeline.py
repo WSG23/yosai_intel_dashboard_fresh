@@ -10,7 +10,10 @@ from __future__ import annotations
 from functools import reduce
 from typing import Iterable
 
+from opentelemetry import trace
 import pandas as pd
+
+tracer = trace.get_tracer(__name__)
 
 
 def _normalize(df: pd.DataFrame) -> pd.DataFrame:
@@ -44,31 +47,32 @@ def build_context_features(
         missing values are filled with ``0``.
     """
 
-    dataframes: Iterable[pd.DataFrame] = (
-        weather_events,
-        events,
-        transport_events,
-        social_signals,
-        infrastructure_events,
-    )
-
-    normalized = [_normalize(df) for df in dataframes]
-
-    # Perform an outer join across all data sources on timestamp.
-    features = reduce(
-        lambda left, right: pd.merge(left, right, on="timestamp", how="outer"),
-        normalized,
-    )
-
-    features = features.sort_values("timestamp").fillna(0)
-
-    if "events" in features:
-        features["event_density"] = (
-            features["events"].rolling(window=3, min_periods=1).sum()
-        )
-    if "social" in features:
-        features["social_sentiment"] = (
-            features["social"].rolling(window=3, min_periods=1).mean()
+    with tracer.start_as_current_span("build_context_features"):
+        dataframes: Iterable[pd.DataFrame] = (
+            weather_events,
+            events,
+            transport_events,
+            social_signals,
+            infrastructure_events,
         )
 
-    return features
+        normalized = [_normalize(df) for df in dataframes]
+
+        # Perform an outer join across all data sources on timestamp.
+        features = reduce(
+            lambda left, right: pd.merge(left, right, on="timestamp", how="outer"),
+            normalized,
+        )
+
+        features = features.sort_values("timestamp").fillna(0)
+
+        if "events" in features:
+            features["event_density"] = (
+                features["events"].rolling(window=3, min_periods=1).sum()
+            )
+        if "social" in features:
+            features["social_sentiment"] = (
+                features["social"].rolling(window=3, min_periods=1).mean()
+            )
+
+        return features
