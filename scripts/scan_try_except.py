@@ -1,7 +1,7 @@
 import argparse
 import ast
 import difflib
-import os
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 
@@ -68,27 +68,24 @@ class RedundantTryFinder(ast.NodeVisitor):
         return False
 
 
-def find_redundant_trys(path: str) -> Dict[str, List[Tuple[int, str, int]]]:
-    results: Dict[str, List[Tuple[int, str, int]]] = {}
-    for root, _, files in os.walk(path):
-        for name in files:
-            if name.endswith(".py"):
-                filepath = os.path.join(root, name)
-                try:
-                    with open(filepath, "r", encoding="utf-8") as f:
-                        source = f.read()
-                    tree = ast.parse(source, filename=filepath)
-                except Exception:
-                    continue
-                visitor = RedundantTryFinder()
-                visitor.visit(tree)
-                if visitor.redundant:
-                    results[filepath] = visitor.redundant
+def find_redundant_trys(path: Path) -> Dict[Path, List[Tuple[int, str, int]]]:
+    results: Dict[Path, List[Tuple[int, str, int]]] = {}
+    for filepath in path.rglob("*.py"):
+        try:
+            with filepath.open(encoding="utf-8") as f:
+                source = f.read()
+            tree = ast.parse(source, filename=str(filepath))
+        except Exception:
+            continue
+        visitor = RedundantTryFinder()
+        visitor.visit(tree)
+        if visitor.redundant:
+            results[filepath] = visitor.redundant
     return results
 
 
-def generate_patch(file: str, entries: List[Tuple[int, str, int]]) -> str:
-    with open(file, "r", encoding="utf-8") as f:
+def generate_patch(file: Path, entries: List[Tuple[int, str, int]]) -> str:
+    with file.open(encoding="utf-8") as f:
         original_lines = f.read().splitlines()
 
     lines = original_lines[:]
@@ -118,8 +115,8 @@ def generate_patch(file: str, entries: List[Tuple[int, str, int]]) -> str:
     diff = difflib.unified_diff(
         original_lines,
         lines,
-        fromfile=file,
-        tofile=file,
+        fromfile=str(file),
+        tofile=str(file),
         lineterm="",
     )
     return "\n".join(diff)
@@ -137,7 +134,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    findings = find_redundant_trys(args.path)
+    path = Path(args.path)
+    findings = find_redundant_trys(path)
     for file, entries in findings.items():
         for line, func_name, func_line in entries:
             parts = [f"{file}:{line}"]

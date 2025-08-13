@@ -12,18 +12,23 @@ OUTPUT_HTML = Path("security-report.html")
 SEVERITY_ORDER = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}
 
 
-def load_result(path: str) -> dict | None:
-    if not os.path.exists(path):
+def load_result(path: Path) -> dict | None:
+    p = Path(path)
+    if not p.exists():
         return None
-    with open(path, "r", encoding="utf-8") as fh:
+    with p.open(encoding="utf-8") as fh:
         return json.load(fh)
 
 
 def main() -> None:
-    reports = [r for r in [
-        load_result("security_code_scan.json"),
-        load_result("security_secrets_scan.json"),
-    ] if r]
+    reports = [
+        r
+        for r in [
+            load_result(Path("security_code_scan.json")),
+            load_result(Path("security_secrets_scan.json")),
+        ]
+        if r
+    ]
 
     highest = "LOW"
     lines = ["# Security Scan Report", ""]
@@ -49,7 +54,8 @@ def main() -> None:
     # communicate severity back to GitHub Actions
     gha_output = os.environ.get("GITHUB_OUTPUT")
     if gha_output:
-        with open(gha_output, "a", encoding="utf-8") as fh:
+        gha_path = Path(gha_output)
+        with gha_path.open("a", encoding="utf-8") as fh:
             fh.write(f"severity={highest}\n")
 
     if highest in {"HIGH", "CRITICAL"}:

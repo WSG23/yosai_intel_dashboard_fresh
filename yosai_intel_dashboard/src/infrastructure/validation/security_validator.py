@@ -21,7 +21,6 @@ import html
 import json
 import logging
 import mimetypes
-import os
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -261,7 +260,7 @@ class SecurityValidator(CompositeValidator):
 
     def sanitize_filename(self, filename: str) -> ValidationResult:
         """Return a safe filename stripped of path components."""
-        name = os.path.basename(filename)
+        name = Path(filename).name
         if name != filename or not name or name in {".", ".."}:
             return self._augment(ValidationResult(False, name, ["invalid_filename"]))
         return self._augment(ValidationResult(True, name))
@@ -330,7 +329,7 @@ class SecurityValidator(CompositeValidator):
         issues: list[str] = []
         size_bytes = len(content)
         name_res = self.sanitize_filename(filename)
-        sanitized = name_res.sanitized or os.path.basename(filename)
+        sanitized = name_res.sanitized or Path(filename).name
         if not name_res.valid and name_res.issues:
             issues.extend(name_res.issues)
 

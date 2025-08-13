@@ -60,7 +60,7 @@ from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import 
 from yosai_intel_dashboard.src.services.auth import require_service_token
 
 
-def _configure_app(service: BaseService) -> str:
+def _configure_app(service: BaseService) -> Path:
     """Initialize the FastAPI app, base service and middleware."""
     service.app = FastAPI(
         title="Yosai Dashboard API",
@@ -82,7 +82,7 @@ def _configure_app(service: BaseService) -> str:
     limiter = RedisRateLimiter(redis_client, {"default": {"limit": 100, "burst": 0}})
     service.app.add_middleware(RateLimitMiddleware, limiter=limiter)
 
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "build"))
+    return Path(__file__).resolve().parent.parent / "build"
 
 
 def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, callable]:
@@ -130,7 +130,7 @@ def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, calla
 
 
 def _register_routes(
-    service: BaseService, build_dir: str, add_deprecation_warning: callable
+    service: BaseService, build_dir: Path, add_deprecation_warning: callable
 ) -> None:
     """Register routers and static file handlers."""
     service.app.add_event_handler("startup", init_cache_manager)
@@ -155,14 +155,14 @@ def _register_routes(
 
     @service.app.get("/", include_in_schema=False)
     def root_index() -> FileResponse:
-        return FileResponse(os.path.join(build_dir, "index.html"))
+        return FileResponse(build_dir / "index.html")
 
     @service.app.get("/{path:path}", include_in_schema=False)
     def serve_static(path: str) -> FileResponse:
-        full_path = os.path.join(build_dir, path)
-        if os.path.exists(full_path) and os.path.isfile(full_path):
+        full_path = build_dir / path
+        if full_path.exists() and full_path.is_file():
             return FileResponse(full_path)
-        return FileResponse(os.path.join(build_dir, "index.html"))
+        return FileResponse(build_dir / "index.html")
 
     def custom_openapi() -> dict:
         if service.app.openapi_schema:

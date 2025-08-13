@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
@@ -9,7 +10,7 @@ from flask import Blueprint, Flask
 from flask_apispec import FlaskApiSpec
 
 # Ensure project root is on the path when executed directly
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Provide lightweight stubs for heavy dependencies when generating the spec
 if os.environ.get("SPEC_STUBS"):
