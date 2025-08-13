@@ -1,0 +1,7 @@
+replicaCount: 1
+image:
+  repository: yosai-intel-dashboard
+  tag: v0.1.0
+  pullPolicy: IfNotPresent
+service:
+  port: 8050
