@@ -5,6 +5,7 @@ import os
 import uuid
 import logging
 import time
+import io
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict
@@ -398,6 +399,44 @@ async def threat_assessment(
         "security_patterns": sp_result,
         "combined_risk_score": combined_risk,
     }
+
+
+@app.post("/api/v1/analytics/batch_predict", responses=ERROR_RESPONSES)
+async def batch_predict(
+    file: UploadFile = File(...),
+    model: str | None = Query(None),
+    _: None = Depends(verify_token),
+    svc: AnalyticsService = Depends(get_analytics_service),
+):
+    """Generate predictions from a CSV upload.
+
+    The uploaded file is parsed as CSV, transformed using
+    :func:`preprocess_events`, and then passed to a loaded model for
+    inference. If multiple models are loaded, a specific model can be
+    selected via the optional ``model`` query parameter.
+    """
+
+    try:
+        df = pd.read_csv(io.BytesIO(await file.read()))
+    except Exception as exc:  # noqa: BLE001
+        raise http_error(ErrorCode.INVALID_INPUT, "invalid csv", 400) from exc
+
+    features = preprocess_events(df)
+
+    model_obj = svc.models.get(model) if model else next(
+        iter(svc.models.values()), None
+    )
+    if model_obj is None:
+        raise http_error(ErrorCode.NOT_FOUND, "model not found", 404)
+
+    try:
+        preds = model_obj.predict(features)
+    except Exception as exc:  # noqa: BLE001
+        raise http_error(ErrorCode.INTERNAL, str(exc), 500) from exc
+
+    if hasattr(preds, "tolist"):
+        preds = preds.tolist()
+    return {"predictions": preds}
 
 
 models_router = APIRouter(prefix="/api/v1/models", tags=["models"])

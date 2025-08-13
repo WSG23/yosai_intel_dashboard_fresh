@@ -349,6 +349,14 @@ def load_app(jwt_secret: str | None = "secret") -> tuple:
     sys.modules["analytics.anomaly_detection"] = ad_stub
     sys.modules["analytics.security_patterns"] = sp_stub
 
+    pipeline_stub = types.ModuleType(
+        "yosai_intel_dashboard.models.ml.pipeline_contract"
+    )
+    pipeline_stub.preprocess_events = lambda df: df
+    ml_pkg.pipeline_contract = pipeline_stub
+    sys.modules["yosai_intel_dashboard.models.ml.pipeline_contract"] = pipeline_stub
+    sys.modules["models.ml.pipeline_contract"] = pipeline_stub
+
     # Minimal stubs for unicode and validation utilities
     core_unicode = types.ModuleType("core.unicode")
     core_unicode.sanitize_for_utf8 = lambda x: x
@@ -560,6 +568,39 @@ async def test_predict_endpoint(tmp_path):
             "/api/v1/models/demo/predict",
             headers=headers,
             json={"data": [1, 2]},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["predictions"] == [2]
+
+
+@pytest.mark.asyncio
+async def test_batch_predict_endpoint(tmp_path):
+    from yosai_intel_dashboard.src.services.auth import verify_jwt_token
+
+    module, _, svc = load_app()
+    svc.model_dir = tmp_path
+
+    model = Dummy()
+    svc.models = {"demo": model}
+
+    token = jwt.encode(
+        {"sub": "svc", "iss": "gateway", "exp": int(time.time()) + 60},
+        "secret",
+        algorithm="HS256",
+    )
+    assert verify_jwt_token(token)["iss"] == "gateway"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    csv_content = "col1,col2\n1,2\n3,4\n"
+
+    transport = httpx.ASGITransport(app=module.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        files = {"file": ("data.csv", csv_content)}
+        resp = await client.post(
+            "/api/v1/analytics/batch_predict",
+            headers=headers,
+            params={"model": "demo"},
+            files=files,
         )
         assert resp.status_code == 200
         assert resp.json()["predictions"] == [2]
