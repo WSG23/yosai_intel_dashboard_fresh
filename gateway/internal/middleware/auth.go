@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+
+	xerrors "github.com/WSG23/errors"
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
 	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
@@ -52,7 +53,7 @@ func Auth(secret []byte) func(http.Handler) http.Handler {
 			claims := &auth.EnhancedClaims{}
 			token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("unexpected signing method")
+					return nil, xerrors.Errorf("unexpected signing method")
 				}
 				return secret, nil
 			})

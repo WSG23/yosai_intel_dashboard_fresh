@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -11,6 +10,8 @@ import (
 	_ "embed"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
+
+	xerrors "github.com/WSG23/errors"
 )
 
 // CircuitBreakerSettings defines parameters for a gobreaker breaker.
@@ -59,7 +60,7 @@ func Load(path string) (*Config, error) {
 		for i, e := range result.Errors() {
 			msgs[i] = e.String()
 		}
-		return nil, fmt.Errorf("invalid configuration: %s", strings.Join(msgs, "; "))
+		return nil, xerrors.Errorf("invalid configuration: %s", strings.Join(msgs, "; "))
 	}
 
 	var cfg Config
