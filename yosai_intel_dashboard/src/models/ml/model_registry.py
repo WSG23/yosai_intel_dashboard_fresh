@@ -152,6 +152,7 @@ class ModelRegistry:
         dataset_hash: str,
         training_date: datetime | None,
         experiment_id: str,
+        feature_defs_version: str | None,
     ) -> ModelRecord:
         """Upload the model artifact, log metrics and persist the registry record."""
         key = f"{name}/{version}/{Path(model_path).name}"
@@ -277,6 +278,7 @@ class ModelRegistry:
         version: str | None = None,
         training_date: datetime | None = None,
         experiment_id: str = "default",
+        feature_defs_version: str | None = None,
 
     ) -> ModelRecord:
         session = self._session()
@@ -308,7 +310,7 @@ class ModelRegistry:
                     metrics=metrics,
                     accuracy=metrics.get("accuracy"),
                     dataset_hash=dataset_hash,
-                    feature_defs_version=None,
+                    feature_defs_version=feature_defs_version,
                     storage_uri=storage_uri,
                     mlflow_run_id=run_id,
                     experiment_id=experiment_id,

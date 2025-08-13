@@ -162,6 +162,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{name}.joblib",
             metrics,
             dataset_hash,
+            feature_defs_version=None,
         )
         LOG.info("Registered %s version %s", record.name, record.version)
     return 0
