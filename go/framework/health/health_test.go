@@ -32,7 +32,10 @@ func TestHandlers(t *testing.T) {
 	for _, tt := range tests {
 		rr := httptest.NewRecorder()
 		tt.handler(rr, nil)
-		body, _ := io.ReadAll(rr.Body)
+		body, err := io.ReadAll(rr.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
 		if rr.Code != http.StatusOK {
 			t.Fatalf("status %d", rr.Code)
 		}
