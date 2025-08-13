@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yosai-intel-dashboard-canary
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/WSG23/yosai_intel_dashboard_fresh.git
+    path: deploy/helm/canary
+    targetRevision: main
+    helm:
+      releaseName: yosai-dashboard
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

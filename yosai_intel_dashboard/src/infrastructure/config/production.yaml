@@ -15,7 +15,7 @@ database:
   events_name: ${DB_EVENTS_NAME:yosai_events_db}
   name: ${DB_NAME}
   user: ${DB_USER}
-  password: vault:secret/data/db#password
+  password: file:/vault/secrets/db-password
   url: ${DATABASE_URL:}
   initial_pool_size: ${DB_INITIAL_POOL_SIZE:10}
   max_pool_size: ${DB_MAX_POOL_SIZE:20}
@@ -34,7 +34,7 @@ cache:
   max_memory_mb: ${CACHE_MAX_MEMORY_MB:100}
 
 security:
-  secret_key: vault:secret/data/app#secret_key
+  secret_key: file:/vault/secrets/app-secret-key
   session_timeout_minutes: ${SESSION_TIMEOUT:30}
   max_file_size_mb: ${MAX_FILE_SIZE:50}
   max_upload_mb: ${MAX_UPLOAD_MB:500}

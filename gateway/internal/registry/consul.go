@@ -7,6 +7,8 @@ import (
 	"strconv"
 
 	consul "github.com/hashicorp/consul/api"
+
+	xerrors "github.com/WSG23/errors"
 )
 
 // ConsulRegistry implements ServiceRegistry using Hashicorp Consul.
@@ -58,7 +60,7 @@ func (cr *ConsulRegistry) ResolveService(ctx context.Context, name string) (stri
 		return "", err
 	}
 	if len(services) == 0 {
-		return "", fmt.Errorf("service %s not found", name)
+		return "", xerrors.Errorf("service %s not found", name)
 	}
 	s := services[0].Service
 	return fmt.Sprintf("%s:%d", s.Address, s.Port), nil

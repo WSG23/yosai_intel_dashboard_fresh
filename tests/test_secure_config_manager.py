@@ -138,3 +138,25 @@ security:
     mgr = SecureConfigManager()
 
     assert mgr.get_database_config().password == aws_secret
+
+
+def test_file_secret_resolution(tmp_path, monkeypatch):
+    secret_path = tmp_path / "dbpass"
+    secret_path.write_text("super-secret", encoding="utf-8")
+
+    cfg_yaml = f"""
+app:
+  title: Test
+database:
+  password: file:{secret_path}
+security:
+  secret_key: file:{secret_path}
+"""
+    cfg_file = tmp_path / "cfg.yaml"
+    cfg_file.write_text(cfg_yaml, encoding="utf-8")
+    monkeypatch.setenv("YOSAI_CONFIG_FILE", str(cfg_file))
+
+    mgr = SecureConfigManager()
+
+    assert mgr.get_database_config().password == "super-secret"
+    assert mgr.get_security_config().secret_key == "super-secret"

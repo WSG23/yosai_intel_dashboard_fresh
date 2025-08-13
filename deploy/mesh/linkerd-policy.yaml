@@ -1,0 +1,13 @@
+apiVersion: policy.linkerd.io/v1beta1
+kind: ServerAuthorization
+metadata:
+  name: backend-allow-frontend
+  namespace: sandbox
+spec:
+  server:
+    name: backend
+  client:
+    meshTLS:
+      serviceAccounts:
+      - namespace: sandbox
+        name: frontend

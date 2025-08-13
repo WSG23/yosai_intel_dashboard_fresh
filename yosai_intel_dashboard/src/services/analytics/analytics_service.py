@@ -19,6 +19,8 @@ from typing import (
 
 from shared.events.names import EventName
 
+from opentelemetry import trace
+
 from yosai_intel_dashboard.src.core.error_handling import (
     ErrorCategory,
     ErrorSeverity,
@@ -92,6 +94,8 @@ from .schemas import AnalyticsQueryV1, AnalyticsSummaryV1
 from .unicode import normalize_text
 
 _cache_manager = InMemoryCacheManager(CacheConfig())
+
+tracer = trace.get_tracer(__name__)
 
 
 class AnalyticsProviderProtocol(Protocol):
@@ -387,7 +391,8 @@ class AnalyticsService(AnalyticsServiceProtocol, AnalyticsProviderProtocol):
     @cache_with_lock(_cache_manager, ttl=600)
     def _get_database_analytics(self) -> Dict[str, Any]:
         """Get analytics from database."""
-        return self.orchestrator.get_database_analytics()
+        with tracer.start_as_current_span("fetch_database_analytics"):
+            return self.orchestrator.get_database_analytics()
 
     async def _aget_database_analytics(self) -> Dict[str, Any]:
         """Asynchronously get analytics from database."""
@@ -654,14 +659,14 @@ def calculate_risk_score(
     behavior_component: float = 0.0,
 ) -> RiskScoreResult:
     """Combine numeric risk components into a final score."""
-
-    score = (
-        max(0.0, min(anomaly_component, 100.0))
-        + max(0.0, min(pattern_component, 100.0))
-        + max(0.0, min(behavior_component, 100.0))
-    ) / 3
-    score = round(score, 2)
-    return RiskScoreResult(score=score, level=_risk_level(score))
+    with tracer.start_as_current_span("calculate_risk_score"):
+        score = (
+            max(0.0, min(anomaly_component, 100.0))
+            + max(0.0, min(pattern_component, 100.0))
+            + max(0.0, min(behavior_component, 100.0))
+        ) / 3
+        score = round(score, 2)
+        return RiskScoreResult(score=score, level=_risk_level(score))
 
 
 

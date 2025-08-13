@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -19,6 +18,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 	"github.com/sony/gobreaker"
+
+	xerrors "github.com/WSG23/errors"
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
@@ -204,7 +205,7 @@ func (am *AuthMiddleware) refresh(ctx context.Context, token string) (string, *a
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("refresh failed: %s", resp.Status)
+			return nil, xerrors.Errorf("refresh failed: %s", resp.Status)
 		}
 		var reader io.Reader = resp.Body
 		if am.cfg.MaxJSONBytes > 0 {

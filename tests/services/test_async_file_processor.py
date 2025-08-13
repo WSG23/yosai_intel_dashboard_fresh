@@ -17,9 +17,9 @@ config_base = types.ModuleType("config.base")
 core_protocols = types.ModuleType("core.protocols")
 core_protocols.FileProcessorProtocol = object
 safe_import('core.protocols', core_protocols)
-rabbit_stub = types.ModuleType("services.rabbitmq_client")
-rabbit_stub.RabbitMQClient = lambda *a, **k: None
-safe_import('services.rabbitmq_client', rabbit_stub)
+rabbit_stub = types.ModuleType("services.kafka_client")
+rabbit_stub.KafkaClient = lambda *a, **k: None
+safe_import('services.kafka_client', rabbit_stub)
 taskq_stub = types.ModuleType("services.task_queue")
 taskq_stub.create_task = lambda *a, **k: "id"
 taskq_stub.get_status = lambda *a, **k: {"progress": 0}
