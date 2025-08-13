@@ -21,8 +21,8 @@ sys.modules.setdefault(
     types.SimpleNamespace(FileProcessorProtocol=object),
 )
 sys.modules.setdefault(
-    "services.rabbitmq_client",
-    types.SimpleNamespace(RabbitMQClient=lambda *a, **k: None),
+    "services.kafka_client",
+    types.SimpleNamespace(KafkaClient=lambda *a, **k: None),
 )
 sys.modules.setdefault(
     "services.task_queue",
