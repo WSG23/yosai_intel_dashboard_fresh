@@ -6,6 +6,8 @@ The dashboard is organized around a small core that wires together services and 
 
 ![Architecture Diagram](architecture.svg)
 
+For a high-level overview of how services and data stores interact, see the [System Diagram](system_diagram.md).
+
 1. **App Factory** – Initializes the Flask app and configures extensions.
 2. **DI Container** – Provides application-wide services and resolves dependencies.
 3. **Services** – Encapsulate business logic and rely on models for data access.

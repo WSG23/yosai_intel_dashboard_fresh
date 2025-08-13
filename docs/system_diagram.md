@@ -1,6 +1,6 @@
 # System Diagram
 
-This document outlines the high-level components of the platform and how they communicate. It serves as an entry point; for a deeper look at the application layering see [Architecture](architecture.md) and for runtime messaging refer to [Data Flow](data_flow.md).
+This document outlines the high-level components of the platform and how they communicate. It serves as an entry point; for a deeper look at the application layering see [Architecture](architecture.md) and for runtime messaging refer to [Data Flow](data_flow.md). The PlantUML source for this diagram is available in [system_diagram.puml](system_diagram.puml).
 
 ```plantuml
 @startuml

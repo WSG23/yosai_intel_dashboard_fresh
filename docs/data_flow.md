@@ -1,5 +1,7 @@
 # Data Flow Overview
 
+For the big-picture service layout, refer to the [System Diagram](system_diagram.md).
+
 ```mermaid
 sequenceDiagram
     participant Browser
