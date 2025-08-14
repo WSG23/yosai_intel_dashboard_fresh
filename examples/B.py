@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.types import BProtocol
+from .types import BProtocol
 
 
 class B(BProtocol):
@@ -13,11 +13,11 @@ class B(BProtocol):
 def create_a() -> A:
     """Create an :class:`A` instance without top-level imports.
 
-    Importing :mod:`A` locally keeps this module importable on its own and
-    breaks the circular dependency that would otherwise exist between the
-    two modules.
+    Importing :mod:`examples.A` locally keeps this module importable on its
+    own and breaks the circular dependency that would otherwise exist between
+    the two modules.
     """
 
-    from A import A  # Local import to avoid circular dependency
+    from .A import A  # Local import to avoid circular dependency
 
     return A(B())

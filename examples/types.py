@@ -4,7 +4,7 @@ from typing import Protocol
 
 
 class BProtocol(Protocol):
-    """Protocol representing the behaviour expected by :mod:`A`."""
+    """Protocol representing the behaviour expected by :mod:`examples.A`."""
 
     def do_b(self) -> str:
         """Return a string representation."""

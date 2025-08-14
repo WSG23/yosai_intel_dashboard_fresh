@@ -6,8 +6,8 @@ Script: index
 +-------------------------------------+-------------------+---------+
 | Module                              | Imprecision       | Lines   |
 +-------------------------------------+-------------------+---------+
-| core                                |   6.25% imprecise |  32 LOC |
-| core.types                          |   0.00% imprecise |  11 LOC |
+| examples                            |   6.25% imprecise |  32 LOC |
+| examples.types                      |   0.00% imprecise |  11 LOC |
 | services                            |   0.00% imprecise |   6 LOC |
 | services.analytics_microservice.app |   3.12% imprecise |  32 LOC |
 | services.arrival_estimator          |   0.00% imprecise |  53 LOC |
