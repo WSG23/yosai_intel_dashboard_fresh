@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
+	"github.com/sony/gobreaker"
+
+	"github.com/WSG23/yosai-gateway/internal/tracing"
 )
 
 // CacheRule defines caching behaviour for a specific path.
@@ -33,13 +37,21 @@ type cachedResponse struct {
 
 // CachePlugin is an HTTP middleware caching GET/HEAD responses in Redis.
 type CachePlugin struct {
-	redis *redis.Client
-	rules []CacheRule
+	redis   *redis.Client
+	rules   []CacheRule
+	breaker *gobreaker.CircuitBreaker
 }
 
 // NewCachePlugin creates a CachePlugin using the provided Redis client and rules.
 func NewCachePlugin(client *redis.Client, rules []CacheRule) *CachePlugin {
-	return &CachePlugin{redis: client, rules: rules}
+	settings := gobreaker.Settings{
+		Name:    "analytics-service",
+		Timeout: 30 * time.Second,
+		ReadyToTrip: func(c gobreaker.Counts) bool {
+			return c.ConsecutiveFailures >= 3
+		},
+	}
+	return &CachePlugin{redis: client, rules: rules, breaker: gobreaker.NewCircuitBreaker(settings)}
 }
 
 var (
@@ -51,16 +63,19 @@ var (
 		Name: "gateway_api_cache_misses_total",
 		Help: "Number of API cache misses",
 	})
+	analyticsFallbacks = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "gateway_analytics_fallback_total",
+		Help: "Number of analytics requests served from cache or default due to service errors",
+	})
 )
 
 func init() {
-	prometheus.MustRegister(apiCacheHits, apiCacheMisses)
+	prometheus.MustRegister(apiCacheHits, apiCacheMisses, analyticsFallbacks)
 }
 
 func (c *CachePlugin) Name() string                        { return "api-cache" }
 func (c *CachePlugin) Priority() int                       { return 50 }
 func (c *CachePlugin) Init(_ map[string]interface{}) error { return nil }
-
 
 // invalidate removes cached entries for the given rule.
 func (c *CachePlugin) invalidate(ctx context.Context, rule CacheRule) {
@@ -103,10 +118,43 @@ func (c *CachePlugin) Process(ctx context.Context, req *http.Request, resp http.
 
 			apiCacheMisses.Inc()
 			recorder := httptest.NewRecorder()
-			next.ServeHTTP(recorder, req)
+			_, execErr := c.breaker.Execute(func() (interface{}, error) {
+				next.ServeHTTP(recorder, req)
+				if recorder.Result().StatusCode >= http.StatusInternalServerError {
+					return nil, fmt.Errorf("status %d", recorder.Result().StatusCode)
+				}
+				return nil, nil
+			})
 			res := recorder.Result()
 			body, _ := io.ReadAll(res.Body)
 			res.Body.Close()
+
+			if execErr != nil {
+				tracing.Logger.WithError(execErr).Error("analytics service request failed")
+				analyticsFallbacks.Inc()
+				// attempt to serve stale cache again (if any)
+				if err == nil {
+					var cr cachedResponse
+					if json.Unmarshal([]byte(val), &cr) == nil {
+						for k, v := range cr.Headers {
+							resp.Header()[k] = v
+						}
+						resp.Header().Set("X-Cache", "STALE")
+						resp.WriteHeader(cr.StatusCode)
+						if req.Method != http.MethodHead {
+							resp.Write(cr.Body)
+						}
+						return
+					}
+				}
+				resp.Header().Set("Content-Type", "application/json")
+				resp.Header().Set("X-Cache", "EMPTY")
+				resp.WriteHeader(http.StatusOK)
+				if req.Method != http.MethodHead {
+					resp.Write([]byte("{}"))
+				}
+				return
+			}
 
 			if res.StatusCode < 300 {
 				data, _ := json.Marshal(cachedResponse{StatusCode: res.StatusCode, Headers: res.Header, Body: body})

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +25,7 @@ func TestAPICacheGET(t *testing.T) {
 	srv, client := newTestRedis(t)
 	defer srv.Close()
 
-	p := &CachePlugin{redis: client, rules: []CacheRule{{Path: "/foo", TTL: time.Minute}}}
+	p := NewCachePlugin(client, []CacheRule{{Path: "/foo", TTL: time.Minute}})
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
@@ -53,7 +54,7 @@ func TestAPICacheHeadAndInvalidate(t *testing.T) {
 		TTL:             time.Minute,
 		InvalidatePaths: []string{"/invalidate"},
 	}
-	p := &CachePlugin{redis: client, rules: []CacheRule{rule}}
+	p := NewCachePlugin(client, []CacheRule{rule})
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
@@ -82,5 +83,53 @@ func TestAPICacheHeadAndInvalidate(t *testing.T) {
 	p.Process(context.Background(), reqGet, w4, handler)
 	if w4.Header().Get("X-Cache") != "MISS" {
 		t.Fatalf("expected MISS after invalidate got %s", w4.Header().Get("X-Cache"))
+	}
+}
+
+func TestAPICacheFallback(t *testing.T) {
+	srv, client := newTestRedis(t)
+	defer srv.Close()
+
+	rule := CacheRule{Path: "/foo", TTL: time.Minute}
+	p := NewCachePlugin(client, []CacheRule{rule})
+
+	req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+	key := cacheKey(req, rule)
+	data, _ := json.Marshal(cachedResponse{StatusCode: http.StatusOK, Headers: http.Header{"Content-Type": {"text/plain"}}, Body: []byte("cached")})
+	client.Set(context.Background(), key, data, time.Minute)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	w := httptest.NewRecorder()
+	p.Process(context.Background(), req, w, handler)
+	if w.Header().Get("X-Cache") != "STALE" {
+		t.Fatalf("expected STALE got %s", w.Header().Get("X-Cache"))
+	}
+	if w.Code != http.StatusOK || w.Body.String() != "cached" {
+		t.Fatalf("unexpected fallback response: %d %s", w.Code, w.Body.String())
+	}
+}
+
+func TestAPICacheFallbackEmpty(t *testing.T) {
+	srv, client := newTestRedis(t)
+	defer srv.Close()
+
+	rule := CacheRule{Path: "/foo", TTL: time.Minute}
+	p := NewCachePlugin(client, []CacheRule{rule})
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+	w := httptest.NewRecorder()
+	p.Process(context.Background(), req, w, handler)
+	if w.Header().Get("X-Cache") != "EMPTY" {
+		t.Fatalf("expected EMPTY got %s", w.Header().Get("X-Cache"))
+	}
+	if w.Code != http.StatusOK || w.Body.String() != "{}" {
+		t.Fatalf("unexpected empty fallback: %d %s", w.Code, w.Body.String())
 	}
 }
