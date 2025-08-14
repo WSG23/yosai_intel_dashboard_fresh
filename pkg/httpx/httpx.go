@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // HTTPDoer is the subset of http.Client used by this package. It enables
@@ -24,7 +26,7 @@ func New(c HTTPDoer) *Client { return &Client{httpClient: c} }
 
 // Default is the package level client used by DoJSON. It has a non-zero
 // timeout to avoid hanging requests.
-var Default = New(&http.Client{Timeout: 10 * time.Second})
+var Default = New(&http.Client{Timeout: 10 * time.Second, Transport: otelhttp.NewTransport(http.DefaultTransport)})
 
 // DoJSON executes the HTTP request using the client's HTTPDoer and decodes
 // the JSON response body into dst. The provided context controls the request

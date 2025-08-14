@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"fmt"
 	vault "github.com/hashicorp/vault/api"
 
 	_ "github.com/lib/pq"

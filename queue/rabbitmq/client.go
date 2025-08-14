@@ -7,6 +7,10 @@ import (
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // QueueClient wraps an AMQP connection and channel.
@@ -58,15 +62,21 @@ func (q *QueueClient) DeclareQueue(name string, durable bool, deadLetter string,
 
 // PublishTask publishes a Task to the queue with optional delay and priority.
 func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task) error {
+	tracer := otel.Tracer("queue")
+	ctx, span := tracer.Start(ctx, "queue.publish", trace.WithAttributes(attribute.String("queue", queue)))
+	defer span.End()
+
 	body, err := json.Marshal(task)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "marshal task")
 		return err
 	}
 	headers := amqp.Table{}
 	if task.Delay > 0 {
 		headers["x-delay"] = task.Delay
 	}
-	return q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
+	err = q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
 		ContentType:  "application/json",
 		Body:         body,
 		DeliveryMode: amqp.Persistent,
@@ -74,6 +84,11 @@ func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task)
 		Timestamp:    time.Now(),
 		Headers:      headers,
 	})
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "publish")
+	}
+	return err
 }
 
 // ConsumeQueue consumes messages from queue until ctx is cancelled.
@@ -82,6 +97,7 @@ func (q *QueueClient) ConsumeQueue(ctx context.Context, queue string, handler fu
 	if err != nil {
 		return err
 	}
+	tracer := otel.Tracer("queue")
 	for {
 		select {
 		case <-ctx.Done():
@@ -95,11 +111,15 @@ func (q *QueueClient) ConsumeQueue(ctx context.Context, queue string, handler fu
 				msg.Nack(false, false)
 				continue
 			}
-			if err := handler(ctx, &t); err != nil {
+			mctx, span := tracer.Start(ctx, "queue.consume", trace.WithAttributes(attribute.String("queue", queue)))
+			if err := handler(mctx, &t); err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, "handler")
 				msg.Nack(false, true)
 			} else {
 				msg.Ack(false)
 			}
+			span.End()
 		}
 	}
 }

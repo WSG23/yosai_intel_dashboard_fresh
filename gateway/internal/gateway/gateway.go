@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/WSG23/yosai-gateway/internal/handlers"
 	ilog "github.com/WSG23/yosai-gateway/internal/logging"
@@ -82,7 +83,7 @@ func (g *Gateway) UseSecurityHeaders() {
 
 // Handler returns the root HTTP handler.
 func (g *Gateway) Handler() http.Handler {
-	return g.plugins.BuildMiddlewareChain(g.router)
+	return otelhttp.NewHandler(g.plugins.BuildMiddlewareChain(g.router), "gateway")
 }
 
 // RegisterPlugin registers a gateway plugin.
