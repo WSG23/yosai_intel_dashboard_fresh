@@ -10,6 +10,7 @@ the public API similar to the real service.
 from __future__ import annotations
 
 from typing import Dict
+import os
 
 from fastapi import Depends, FastAPI
 
@@ -17,6 +18,7 @@ from yosai_intel_dashboard.src.services.analytics_service import (
     create_analytics_service,
 )
 from tracing import init_tracing
+from ..common.service_discovery import ConsulServiceDiscovery
 
 try:  # pragma: no cover - optional dependency in tests
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -49,6 +51,15 @@ if Instrumentator is not None:
 
 # Initialise tracing for the service.
 init_tracing("analytics-microservice")
+
+# Resolve dependent service locations dynamically at runtime.
+_discovery = ConsulServiceDiscovery()
+
+
+@app.on_event("startup")
+async def _configure_discovery() -> None:
+    if addr := _discovery.get_service("analytics-db"):
+        os.environ.setdefault("DATABASE_URL", f"postgresql://{addr}/analytics")
 
 # Create the analytics service once on startup.  The tests provide a stub for
 # ``create_analytics_service`` so no heavy initialisation happens here.

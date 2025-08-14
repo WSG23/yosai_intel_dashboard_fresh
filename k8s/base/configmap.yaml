@@ -8,7 +8,7 @@ data:
   FLASK_ENV: "development"
   FLASK_DEBUG: "1"
   DEBUG: "1"
-  YOSAI_CONFIG_FILE: "config/config.yaml"
+  YOSAI_CONFIG_FILE: "config/environments/development.yaml"
   DB_TYPE: "postgresql"
   DB_HOST: "pgbouncer"
   DB_PORT: "6432"
