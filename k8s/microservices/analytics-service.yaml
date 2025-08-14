@@ -28,7 +28,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: analytics-service
-          image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+          image: yosai-intel-dashboard:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true

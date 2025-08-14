@@ -7,15 +7,22 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 
+def _env_required(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"{name} environment variable must be set")
+    return value
+
+
 @dataclass
 class DatabaseSettings:
     """Database connection configuration."""
 
-    host: str = field(default_factory=lambda: os.getenv("DB_HOST", "localhost"))
-    port: int = field(default_factory=lambda: int(os.getenv("DB_PORT", "5432")))
-    user: str = field(default_factory=lambda: os.getenv("DB_USER", "postgres"))
-    password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", ""))
-    name: str = field(default_factory=lambda: os.getenv("DB_NAME", "app"))
+    host: str = field(default_factory=lambda: _env_required("DB_HOST"))
+    port: int = field(default_factory=lambda: int(_env_required("DB_PORT")))
+    user: str = field(default_factory=lambda: _env_required("DB_USER"))
+    password: str = field(default_factory=lambda: _env_required("DB_PASSWORD"))
+    name: str = field(default_factory=lambda: _env_required("DB_NAME"))
     min_connections: int = field(
         default_factory=lambda: int(os.getenv("DB_MIN_CONNECTIONS", "1"))
     )
@@ -59,7 +66,7 @@ class SecuritySettings:
 class AnalyticsSettings:
     """Analytics service configuration."""
 
-    api_key: str = field(default_factory=lambda: os.getenv("ANALYTICS_API_KEY", ""))
+    api_key: str = field(default_factory=lambda: _env_required("ANALYTICS_API_KEY"))
     endpoint: str = field(default_factory=lambda: os.getenv("ANALYTICS_ENDPOINT", ""))
     enabled: bool = field(
         default_factory=lambda: os.getenv("ENABLE_ANALYTICS", "false").lower() == "true"

@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-key-rotation
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: rotate-vault-keys
+              image: curlimages/curl:8.6.0
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  curl -sSf -X POST -H "X-Vault-Token: $VAULT_TOKEN" "$VAULT_ADDR/v1/sys/rotate"
+              env:
+                - name: VAULT_ADDR
+                  valueFrom:
+                    configMapKeyRef:
+                      name: vault-config
+                      key: VAULT_ADDR
+                - name: VAULT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: vault-secret
+                      key: VAULT_TOKEN
