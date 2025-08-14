@@ -11,8 +11,8 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom'],
           ui: ['@headlessui/react', '@heroicons/react'],
-          charts: ['recharts', 'd3', 'echarts'],
-          maps: ['mapbox-gl', 'deck.gl'],
+          charts: ['echarts'],
+          maps: ['mapbox-gl'],
         },
       },
     },

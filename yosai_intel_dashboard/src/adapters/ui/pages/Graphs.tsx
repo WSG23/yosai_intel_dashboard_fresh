@@ -3,15 +3,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { LineChart as LineChartIcon } from 'lucide-react';
 import { ChunkGroup } from '../components/layout';
 import ProgressiveSection from '../components/ProgressiveSection';
-import {
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import EChart from '../components/EChart';
 import { AccessibleVisualization } from '../components/accessibility';
 import useGraphsData from '../hooks/useGraphsData';
 
@@ -151,15 +143,14 @@ const Graphs: React.FC = () => {
             rows: data.map((d) => [d.hour, d.count]),
           }}
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="count" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
+          <EChart
+            option={{
+              tooltip: {},
+              xAxis: { type: 'category', data: data.map(d => d.hour) },
+              yAxis: { type: 'value' },
+              series: [{ type: 'line', data: data.map(d => d.count) }],
+            }}
+          />
         </AccessibleVisualization>
       );
     }
@@ -179,15 +170,14 @@ const Graphs: React.FC = () => {
             rows: data.map((d) => [d.hour, d.count]),
           }}
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="count" stroke="#82ca9d" />
-            </LineChart>
-          </ResponsiveContainer>
+          <EChart
+            option={{
+              tooltip: {},
+              xAxis: { type: 'category', data: data.map(d => d.hour) },
+              yAxis: { type: 'value' },
+              series: [{ type: 'line', data: data.map(d => d.count) }],
+            }}
+          />
         </AccessibleVisualization>
       );
     }

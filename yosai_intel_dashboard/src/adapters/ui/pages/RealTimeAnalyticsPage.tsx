@@ -1,23 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 
 import ErrorBoundary from '../components/ErrorBoundary';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Brush,
-} from 'recharts';
+import EChart from '../components/EChart';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useRealTimeAnalytics } from '../hooks/useRealTimeAnalytics';
@@ -30,8 +14,6 @@ import { ChunkGroup } from '../components/layout';
 import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
 import useIsMobile from '../hooks/useIsMobile';
 
-
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 const MAX_BUFFER = 100;
 
@@ -164,21 +146,18 @@ const RealTimeAnalyticsPage: React.FC = () => {
             rows: topUsers.slice(0, 10).map((u) => [u.user_id, u.count]),
           }}
         >
-          <div className="mb-4" style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <BarChart data={topUsers.slice(0, 10)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="user_id" />
-                <YAxis />
-                <Tooltip />
-                <Bar
-                  dataKey="count"
-                  fill="#8884d8"
-                  isAnimationActive={!prefersReducedMotion}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <EChart
+            option={{
+              tooltip: {},
+              xAxis: { type: 'category', data: topUsers.slice(0,10).map(u => u.user_id) },
+              yAxis: { type: 'value' },
+              series: [{
+                type: 'bar',
+                data: topUsers.slice(0,10).map(u => u.count),
+                animation: !prefersReducedMotion,
+              }],
+            }}
+          />
         </AccessibleVisualization>
       )}
 
@@ -191,21 +170,18 @@ const RealTimeAnalyticsPage: React.FC = () => {
             rows: topDoors.slice(0, 10).map((d) => [d.door_id, d.count]),
           }}
         >
-          <div className="mb-4" style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <BarChart data={topDoors.slice(0, 10)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="door_id" />
-                <YAxis />
-                <Tooltip />
-                <Bar
-                  dataKey="count"
-                  fill="#82ca9d"
-                  isAnimationActive={!prefersReducedMotion}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <EChart
+            option={{
+              tooltip: {},
+              xAxis: { type: 'category', data: topDoors.slice(0,10).map(d => d.door_id) },
+              yAxis: { type: 'value' },
+              series: [{
+                type: 'bar',
+                data: topDoors.slice(0,10).map(d => d.count),
+                animation: !prefersReducedMotion,
+              }],
+            }}
+          />
         </AccessibleVisualization>
       )}
 
@@ -218,28 +194,18 @@ const RealTimeAnalyticsPage: React.FC = () => {
             rows: patterns.map((p) => [p.pattern, p.count]),
           }}
         >
-          <div className="mb-4" style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <PieChart>
-              <Pie
-                data={patterns}
-                dataKey="count"
-                nameKey="pattern"
-                label
-                isAnimationActive={!prefersReducedMotion}
-              >
-
-                  {patterns.map((pattern, i) => (
-                    <Cell
-                      key={pattern.pattern}
-                      fill={COLORS[i % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <EChart
+            option={{
+              tooltip: { trigger: 'item' },
+              series: [
+                {
+                  type: 'pie',
+                  data: patterns.map(p => ({ value: p.count, name: p.pattern })),
+                  animation: !prefersReducedMotion,
+                },
+              ],
+            }}
+          />
         </AccessibleVisualization>
 
       )}
