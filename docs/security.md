@@ -61,3 +61,16 @@ To reduce the risk of SQL injection vulnerabilities:
 - Validate user-supplied data types before executing a query.
 
 Following these practices ensures that user input is passed separately from the SQL statement, preventing malicious injections.
+
+## Secret Rotation
+
+Secrets are rotated automatically. The `k8s/cron/secret-rotate.yaml` CronJob
+invokes a Vault script to generate fresh credentials and update Kubernetes
+secrets. Services load credentials from mounted files and rely on the
+`pkg/config` `SecretWatcher` to reload values when the files change.
+
+To trigger a rotation manually, run:
+
+```bash
+kubectl create job --from=cronjob/secret-rotate secret-rotate-manual
+```
