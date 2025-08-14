@@ -2,7 +2,7 @@
 
 The gateway enforces request quotas using Redis backed token buckets. Limits are
 configured in `gateway/config/ratelimit.yaml` and enabled by default in
-`config/production.yaml`. Application code now uses the unified
+`config/environments/production.yaml`. Application code now uses the unified
 `RateLimiter` implementation in `core/security.py`; the older
 `core/rate_limiter.py` module has been deprecated.
 

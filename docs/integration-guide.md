@@ -922,7 +922,7 @@ register_compliance_dashboard(app, container)
 # Update your production configuration:
 
 PRODUCTION_COMPLIANCE_CONFIG = """
-# Add to your production.yaml or environment variables:
+# Add to your config/environments/production.yaml or environment variables:
 
 compliance:
   enabled: true
