@@ -8,8 +8,9 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 from yosai_intel_dashboard.src.file_processing import create_file_preview
-
-from .file_preview import create_file_preview_ui
+from yosai_intel_dashboard.src.adapters.ui.shared_ui_helpers import (
+    create_file_preview_ui,
+)
 
 logger = logging.getLogger(__name__)
 

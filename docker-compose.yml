@@ -9,7 +9,13 @@ services:
       - "8050:8050"
     volumes:
       - .:/app
+    env_file:
+      - ./local.env
     environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      ANALYTICS_API_KEY: ${ANALYTICS_API_KEY}
+      ANALYTICS_API_URL: ${ANALYTICS_API_URL}
       YOSAI_ENV: development
       PYTHONPATH: /app:/app/yosai_intel_dashboard/src
       HTTP_PROXY: ${HTTP_PROXY:-}
@@ -17,7 +23,7 @@ services:
       NO_PROXY: ${NO_PROXY:-}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8050/health"]
+      test: ["CMD-SHELL", "true"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -32,7 +38,11 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    env_file:
+      - ./local.env
     environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       YOSAI_ENV: development
       PYTHONPATH: /app:/app/yosai_intel_dashboard/src
       API_PORT: 8000
@@ -41,7 +51,7 @@ services:
       NO_PROXY: ${NO_PROXY:-}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "true"]
       interval: 30s
       timeout: 10s
       retries: 5

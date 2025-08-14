@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.config import get_max_display_rows
+from yosai_intel_dashboard.src.core.config_helpers import get_max_display_rows
 from yosai_intel_dashboard.src.core.protocols import ConfigurationProtocol
 from yosai_intel_dashboard.src.core.unicode import sanitize_for_utf8
 

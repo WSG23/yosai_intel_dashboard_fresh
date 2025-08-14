@@ -1,6 +1,6 @@
 """Core upload services."""
 
-from yosai_intel_dashboard.src.components.ui_builder import UploadUIBuilder
+from yosai_intel_dashboard.src.adapters.ui.components import UploadUIBuilder
 from validation.file_validator import FileValidator
 
 from .file_processor_service import FileProcessor

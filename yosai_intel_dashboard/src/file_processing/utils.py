@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterable
 import chardet
 import pandas as pd
 
-from yosai_intel_dashboard.src.core.config import get_max_display_rows
+from yosai_intel_dashboard.src.core.config_helpers import get_max_display_rows
 from yosai_intel_dashboard.src.core.performance_file_processor import (
     PerformanceFileProcessor,
 )
