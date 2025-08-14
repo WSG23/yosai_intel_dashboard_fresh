@@ -7,7 +7,7 @@ SECRET_DIR=${SECRET_DIR:-/etc/secrets}
 PID_FILE=${PID_FILE:-/var/run/service.pid}
 
 inotifywait -m "$SECRET_DIR" -e modify,create,delete |
-while read -r path _ file; do
+while read -r _ _ file; do
   if [ -f "$PID_FILE" ]; then
     kill -HUP "$(cat "$PID_FILE")"
   fi
