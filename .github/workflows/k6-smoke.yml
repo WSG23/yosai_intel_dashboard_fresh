@@ -1,0 +1,17 @@
+name: k6 smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install k6
+        uses: grafana/setup-k6@v1
+      - name: Run unlock path smoke test
+        run: k6 run load-tests/k6/scenarios/unlock-path-smoke.js
