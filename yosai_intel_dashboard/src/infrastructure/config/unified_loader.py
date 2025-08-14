@@ -11,6 +11,7 @@ from google.protobuf import json_format
 
 from .base_loader import BaseConfigLoader
 from .environment_processor import EnvironmentProcessor
+from .environment import select_config_file
 from .generated.protobuf.config.schema import config_pb2
 
 
@@ -32,7 +33,8 @@ class UnifiedLoader(BaseConfigLoader):
         return data
 
     def load(self, config_path: Optional[str] = None) -> config_pb2.YosaiConfig:
-        path = Path(config_path or self.config_path or "config/config.yaml")
+        default_path = select_config_file()
+        path = Path(config_path or self.config_path or default_path or "config/environments/development.yaml")
         cfg_dict = self._read_source(path)
         message = config_pb2.YosaiConfig()
         json_format.ParseDict(cfg_dict, message, ignore_unknown_fields=True)

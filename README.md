@@ -1137,7 +1137,7 @@ defaults:
 Plugins live in the `plugins/` directory. Place any custom plugin package inside
 this folder, for example `plugins/my_plugin/plugin.py` defining a
 `create_plugin()` function. Enable the plugin by adding a section under
-`plugins:` in `config/config.yaml` and setting `enabled: true` plus any plugin
+`plugins:` in `config/environments/development.yaml` and setting `enabled: true` plus any plugin
 options. Initialize plugins by calling `setup_plugins` from
 `core.plugins.auto_config`. This discovers plugins, registers callbacks, exposes
 `/health/plugins` and attaches the manager as `app._yosai_plugin_manager`.
@@ -1152,7 +1152,7 @@ The same document includes a minimal **Hello World** plugin showcasing
 
 1. Copy the `plugins/example` folder (or any existing plugin) and update the
    `PluginMetadata` values.
-2. Add a section under `plugins:` in `config/config.yaml` with `enabled: true`
+2. Add a section under `plugins:` in `config/environments/development.yaml` with `enabled: true`
    and any custom options.
 3. Call `setup_plugins` from `core.plugins.auto_config` during app start-up to
    load your plugin and register its callbacks.
@@ -1700,6 +1700,19 @@ job periodically (for example via `cron` or a Kubernetes CronJob):
 ```bash
 python scripts/replicate_to_timescale.py
 ```
+
+### Data Synchronization Check
+
+Use `scripts/data-sync-check.sh` to ensure tables remain consistent between the
+source PostgreSQL database and TimescaleDB. Provide connection strings via flags
+or the `POSTGRES_DSN` and `TIMESCALE_DSN` environment variables:
+
+```bash
+scripts/data-sync-check.sh --postgres "$POSTGRES_DSN" --timescale "$TIMESCALE_DSN" --tables events,metrics
+```
+
+The script compares row counts for each table (or hashes with `--hash`) and
+exits with a non‑zero status when mismatches are found.
 
 For convenience the repository provides a wrapper script which upgrades all
 databases defined in the configuration:

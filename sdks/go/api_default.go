@@ -1,7 +1,7 @@
 /*
 Yōsai Intel Dashboard API
 
-Physical security intelligence and access control API. 
+Physical security intelligence and access control API.
 
 API version: 1.0.0
 */
@@ -20,12 +20,11 @@ import (
 	"time"
 )
 
-
 // DefaultAPIService DefaultAPI service
 type DefaultAPIService service
 
 type ApiAnalyticsHealthRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -36,22 +35,22 @@ func (r ApiAnalyticsHealthRequest) Execute() (*http.Response, error) {
 /*
 AnalyticsHealth Analytics service health
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiAnalyticsHealthRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiAnalyticsHealthRequest
 */
 func (a *DefaultAPIService) AnalyticsHealth(ctx context.Context) ApiAnalyticsHealthRequest {
 	return ApiAnalyticsHealthRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) AnalyticsHealthExecute(r ApiAnalyticsHealthRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.AnalyticsHealth")
@@ -125,7 +124,7 @@ func (a *DefaultAPIService) AnalyticsHealthExecute(r ApiAnalyticsHealthRequest) 
 }
 
 type ApiCreateFeatureFlagRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -136,22 +135,22 @@ func (r ApiCreateFeatureFlagRequest) Execute() (*http.Response, error) {
 /*
 CreateFeatureFlag Create feature flag
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiCreateFeatureFlagRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiCreateFeatureFlagRequest
 */
 func (a *DefaultAPIService) CreateFeatureFlag(ctx context.Context) ApiCreateFeatureFlagRequest {
 	return ApiCreateFeatureFlagRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) CreateFeatureFlagExecute(r ApiCreateFeatureFlagRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateFeatureFlag")
@@ -225,9 +224,9 @@ func (a *DefaultAPIService) CreateFeatureFlagExecute(r ApiCreateFeatureFlagReque
 }
 
 type ApiDeleteFeatureFlagRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
-	name string
+	name       string
 }
 
 func (r ApiDeleteFeatureFlagRequest) Execute() (*http.Response, error) {
@@ -237,24 +236,24 @@ func (r ApiDeleteFeatureFlagRequest) Execute() (*http.Response, error) {
 /*
 DeleteFeatureFlag Delete feature flag
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param name
- @return ApiDeleteFeatureFlagRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param name
+	@return ApiDeleteFeatureFlagRequest
 */
 func (a *DefaultAPIService) DeleteFeatureFlag(ctx context.Context, name string) ApiDeleteFeatureFlagRequest {
 	return ApiDeleteFeatureFlagRequest{
 		ApiService: a,
-		ctx: ctx,
-		name: name,
+		ctx:        ctx,
+		name:       name,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) DeleteFeatureFlagExecute(r ApiDeleteFeatureFlagRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteFeatureFlag")
@@ -329,9 +328,9 @@ func (a *DefaultAPIService) DeleteFeatureFlagExecute(r ApiDeleteFeatureFlagReque
 }
 
 type ApiGetChartDataRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
-	chartType string
+	chartType  string
 }
 
 func (r ApiGetChartDataRequest) Execute() (*http.Response, error) {
@@ -341,24 +340,24 @@ func (r ApiGetChartDataRequest) Execute() (*http.Response, error) {
 /*
 GetChartData Retrieve chart data
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param chartType
- @return ApiGetChartDataRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param chartType
+	@return ApiGetChartDataRequest
 */
 func (a *DefaultAPIService) GetChartData(ctx context.Context, chartType string) ApiGetChartDataRequest {
 	return ApiGetChartDataRequest{
 		ApiService: a,
-		ctx: ctx,
-		chartType: chartType,
+		ctx:        ctx,
+		chartType:  chartType,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) GetChartDataExecute(r ApiGetChartDataRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetChartData")
@@ -433,7 +432,7 @@ func (a *DefaultAPIService) GetChartDataExecute(r ApiGetChartDataRequest) (*http
 }
 
 type ApiGetCsrfTokenRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -444,24 +443,25 @@ func (r ApiGetCsrfTokenRequest) Execute() (*GetCsrfToken200Response, *http.Respo
 /*
 GetCsrfToken Get CSRF token
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiGetCsrfTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetCsrfTokenRequest
 */
 func (a *DefaultAPIService) GetCsrfToken(ctx context.Context) ApiGetCsrfTokenRequest {
 	return ApiGetCsrfTokenRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return GetCsrfToken200Response
+//
+//	@return GetCsrfToken200Response
 func (a *DefaultAPIService) GetCsrfTokenExecute(r ApiGetCsrfTokenRequest) (*GetCsrfToken200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *GetCsrfToken200Response
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GetCsrfToken200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetCsrfToken")
@@ -528,6 +528,16 @@ func (a *DefaultAPIService) GetCsrfTokenExecute(r ApiGetCsrfTokenRequest) (*GetC
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+		if localVarHTTPResponse.StatusCode == 429 {
+			var v Error
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -544,8 +554,8 @@ func (a *DefaultAPIService) GetCsrfTokenExecute(r ApiGetCsrfTokenRequest) (*GetC
 }
 
 type ApiGetExplanationRequest struct {
-	ctx context.Context
-	ApiService *DefaultAPIService
+	ctx          context.Context
+	ApiService   *DefaultAPIService
 	predictionId string
 }
 
@@ -556,14 +566,14 @@ func (r ApiGetExplanationRequest) Execute() (*http.Response, error) {
 /*
 GetExplanation Get prediction explanation
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param predictionId
- @return ApiGetExplanationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param predictionId
+	@return ApiGetExplanationRequest
 */
 func (a *DefaultAPIService) GetExplanation(ctx context.Context, predictionId string) ApiGetExplanationRequest {
 	return ApiGetExplanationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:   a,
+		ctx:          ctx,
 		predictionId: predictionId,
 	}
 }
@@ -571,9 +581,9 @@ func (a *DefaultAPIService) GetExplanation(ctx context.Context, predictionId str
 // Execute executes the request
 func (a *DefaultAPIService) GetExplanationExecute(r ApiGetExplanationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetExplanation")
@@ -648,9 +658,9 @@ func (a *DefaultAPIService) GetExplanationExecute(r ApiGetExplanationRequest) (*
 }
 
 type ApiGetFeatureFlagRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
-	name string
+	name       string
 }
 
 func (r ApiGetFeatureFlagRequest) Execute() (*http.Response, error) {
@@ -660,24 +670,24 @@ func (r ApiGetFeatureFlagRequest) Execute() (*http.Response, error) {
 /*
 GetFeatureFlag Get feature flag
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param name
- @return ApiGetFeatureFlagRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param name
+	@return ApiGetFeatureFlagRequest
 */
 func (a *DefaultAPIService) GetFeatureFlag(ctx context.Context, name string) ApiGetFeatureFlagRequest {
 	return ApiGetFeatureFlagRequest{
 		ApiService: a,
-		ctx: ctx,
-		name: name,
+		ctx:        ctx,
+		name:       name,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) GetFeatureFlagExecute(r ApiGetFeatureFlagRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetFeatureFlag")
@@ -752,9 +762,9 @@ func (a *DefaultAPIService) GetFeatureFlagExecute(r ApiGetFeatureFlagRequest) (*
 }
 
 type ApiGetFeatureFlagAuditRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
-	name string
+	name       string
 }
 
 func (r ApiGetFeatureFlagAuditRequest) Execute() (*http.Response, error) {
@@ -764,24 +774,24 @@ func (r ApiGetFeatureFlagAuditRequest) Execute() (*http.Response, error) {
 /*
 GetFeatureFlagAudit Get feature flag audit history
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param name
- @return ApiGetFeatureFlagAuditRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param name
+	@return ApiGetFeatureFlagAuditRequest
 */
 func (a *DefaultAPIService) GetFeatureFlagAudit(ctx context.Context, name string) ApiGetFeatureFlagAuditRequest {
 	return ApiGetFeatureFlagAuditRequest{
 		ApiService: a,
-		ctx: ctx,
-		name: name,
+		ctx:        ctx,
+		name:       name,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) GetFeatureFlagAuditExecute(r ApiGetFeatureFlagAuditRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetFeatureFlagAudit")
@@ -856,11 +866,11 @@ func (a *DefaultAPIService) GetFeatureFlagAuditExecute(r ApiGetFeatureFlagAuditR
 }
 
 type ApiGetModelMonitoringEventsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
-	modelName string
-	start *time.Time
-	end *time.Time
+	modelName  string
+	start      *time.Time
+	end        *time.Time
 }
 
 func (r ApiGetModelMonitoringEventsRequest) Start(start time.Time) ApiGetModelMonitoringEventsRequest {
@@ -880,24 +890,24 @@ func (r ApiGetModelMonitoringEventsRequest) Execute() (*http.Response, error) {
 /*
 GetModelMonitoringEvents Get model monitoring events
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param modelName
- @return ApiGetModelMonitoringEventsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param modelName
+	@return ApiGetModelMonitoringEventsRequest
 */
 func (a *DefaultAPIService) GetModelMonitoringEvents(ctx context.Context, modelName string) ApiGetModelMonitoringEventsRequest {
 	return ApiGetModelMonitoringEventsRequest{
 		ApiService: a,
-		ctx: ctx,
-		modelName: modelName,
+		ctx:        ctx,
+		modelName:  modelName,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) GetModelMonitoringEventsExecute(r ApiGetModelMonitoringEventsRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetModelMonitoringEvents")
@@ -978,7 +988,7 @@ func (a *DefaultAPIService) GetModelMonitoringEventsExecute(r ApiGetModelMonitor
 }
 
 type ApiGetPatternsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -989,22 +999,22 @@ func (r ApiGetPatternsRequest) Execute() (*http.Response, error) {
 /*
 GetPatterns Summarize access patterns
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiGetPatternsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetPatternsRequest
 */
 func (a *DefaultAPIService) GetPatterns(ctx context.Context) ApiGetPatternsRequest {
 	return ApiGetPatternsRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) GetPatternsExecute(r ApiGetPatternsRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetPatterns")
@@ -1078,7 +1088,7 @@ func (a *DefaultAPIService) GetPatternsExecute(r ApiGetPatternsRequest) (*http.R
 }
 
 type ApiGetSettingsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -1089,22 +1099,22 @@ func (r ApiGetSettingsRequest) Execute() (*http.Response, error) {
 /*
 GetSettings Get user settings
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiGetSettingsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetSettingsRequest
 */
 func (a *DefaultAPIService) GetSettings(ctx context.Context) ApiGetSettingsRequest {
 	return ApiGetSettingsRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) GetSettingsExecute(r ApiGetSettingsRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetSettings")
@@ -1178,7 +1188,7 @@ func (a *DefaultAPIService) GetSettingsExecute(r ApiGetSettingsRequest) (*http.R
 }
 
 type ApiGetSourcesRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -1189,22 +1199,22 @@ func (r ApiGetSourcesRequest) Execute() (*http.Response, error) {
 /*
 GetSources List data sources
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiGetSourcesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetSourcesRequest
 */
 func (a *DefaultAPIService) GetSources(ctx context.Context) ApiGetSourcesRequest {
 	return ApiGetSourcesRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) GetSourcesExecute(r ApiGetSourcesRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetSources")
@@ -1278,7 +1288,7 @@ func (a *DefaultAPIService) GetSourcesExecute(r ApiGetSourcesRequest) (*http.Res
 }
 
 type ApiListFeatureFlagsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -1289,22 +1299,22 @@ func (r ApiListFeatureFlagsRequest) Execute() (*http.Response, error) {
 /*
 ListFeatureFlags List feature flags
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListFeatureFlagsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListFeatureFlagsRequest
 */
 func (a *DefaultAPIService) ListFeatureFlags(ctx context.Context) ApiListFeatureFlagsRequest {
 	return ApiListFeatureFlagsRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) ListFeatureFlagsExecute(r ApiListFeatureFlagsRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListFeatureFlags")
@@ -1378,7 +1388,7 @@ func (a *DefaultAPIService) ListFeatureFlagsExecute(r ApiListFeatureFlagsRequest
 }
 
 type ApiRefreshTokenRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -1389,22 +1399,22 @@ func (r ApiRefreshTokenRequest) Execute() (*http.Response, error) {
 /*
 RefreshToken Refresh access token
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiRefreshTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiRefreshTokenRequest
 */
 func (a *DefaultAPIService) RefreshToken(ctx context.Context) ApiRefreshTokenRequest {
 	return ApiRefreshTokenRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.RefreshToken")
@@ -1478,9 +1488,9 @@ func (a *DefaultAPIService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*http
 }
 
 type ApiUpdateFeatureFlagRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
-	name string
+	name       string
 }
 
 func (r ApiUpdateFeatureFlagRequest) Execute() (*http.Response, error) {
@@ -1490,24 +1500,24 @@ func (r ApiUpdateFeatureFlagRequest) Execute() (*http.Response, error) {
 /*
 UpdateFeatureFlag Update feature flag
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param name
- @return ApiUpdateFeatureFlagRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param name
+	@return ApiUpdateFeatureFlagRequest
 */
 func (a *DefaultAPIService) UpdateFeatureFlag(ctx context.Context, name string) ApiUpdateFeatureFlagRequest {
 	return ApiUpdateFeatureFlagRequest{
 		ApiService: a,
-		ctx: ctx,
-		name: name,
+		ctx:        ctx,
+		name:       name,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) UpdateFeatureFlagExecute(r ApiUpdateFeatureFlagRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPut
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateFeatureFlag")
@@ -1582,7 +1592,7 @@ func (a *DefaultAPIService) UpdateFeatureFlagExecute(r ApiUpdateFeatureFlagReque
 }
 
 type ApiUpdateSettingsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -1593,22 +1603,22 @@ func (r ApiUpdateSettingsRequest) Execute() (*http.Response, error) {
 /*
 UpdateSettings Update user settings
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUpdateSettingsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUpdateSettingsRequest
 */
 func (a *DefaultAPIService) UpdateSettings(ctx context.Context) ApiUpdateSettingsRequest {
 	return ApiUpdateSettingsRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) UpdateSettingsExecute(r ApiUpdateSettingsRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateSettings")
@@ -1682,7 +1692,7 @@ func (a *DefaultAPIService) UpdateSettingsExecute(r ApiUpdateSettingsRequest) (*
 }
 
 type ApiUploadFileRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DefaultAPIService
 }
 
@@ -1693,22 +1703,22 @@ func (r ApiUploadFileRequest) Execute() (*http.Response, error) {
 /*
 UploadFile Upload a file
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUploadFileRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUploadFileRequest
 */
 func (a *DefaultAPIService) UploadFile(ctx context.Context) ApiUploadFileRequest {
 	return ApiUploadFileRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DefaultAPIService) UploadFileExecute(r ApiUploadFileRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UploadFile")

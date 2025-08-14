@@ -14,10 +14,10 @@ CREATE TABLE IF NOT EXISTS access_events (
 SELECT create_hypertable('access_events', 'time', chunk_time_interval => INTERVAL '1 day', if_not_exists => TRUE);
 
 -- Indexes for common query patterns
-CREATE INDEX IF NOT EXISTS idx_access_events_time ON access_events(time);
-CREATE INDEX IF NOT EXISTS idx_access_events_person_id ON access_events(person_id);
-CREATE INDEX IF NOT EXISTS idx_access_events_door_id ON access_events(door_id);
-CREATE INDEX IF NOT EXISTS idx_access_events_facility_id ON access_events(facility_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_time ON access_events(time);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_person_id ON access_events(person_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_door_id ON access_events(door_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_facility_id ON access_events(facility_id);
 
 -- Anomaly detections hypertable
 CREATE TABLE IF NOT EXISTS anomaly_detections (
@@ -35,5 +35,5 @@ CREATE TABLE IF NOT EXISTS anomaly_detections (
     verified_at TIMESTAMPTZ
 );
 SELECT create_hypertable('anomaly_detections', 'detected_at', if_not_exists => TRUE);
-CREATE INDEX IF NOT EXISTS idx_anomaly_detections_detected_at ON anomaly_detections(detected_at);
-CREATE INDEX IF NOT EXISTS idx_anomaly_detections_type ON anomaly_detections(anomaly_type);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_anomaly_detections_detected_at ON anomaly_detections(detected_at);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_anomaly_detections_type ON anomaly_detections(anomaly_type);

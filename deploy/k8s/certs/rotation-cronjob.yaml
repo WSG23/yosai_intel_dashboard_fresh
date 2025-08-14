@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cert-generator
+  namespace: default
+data:
+  generate.sh: |
+    #!/bin/sh
+    set -e
+    DIR="$(dirname "$0")"
+    # generate CA if not exist
+    if [ ! -f "$DIR/ca.key" ]; then
+      openssl req -x509 -new -nodes -newkey rsa:4096 -days 365 -subj "/CN=Yosai Internal CA" -keyout "$DIR/ca.key" -out "$DIR/ca.crt"
+    fi
+    for svc in gateway queue resilience httpx; do
+      if [ ! -f "$DIR/${svc}.key" ]; then
+        openssl req -new -nodes -newkey rsa:2048 -keyout "$DIR/${svc}.key" -subj "/CN=${svc}" -out "$DIR/${svc}.csr"
+        openssl x509 -req -in "$DIR/${svc}.csr" -CA "$DIR/ca.crt" -CAkey "$DIR/ca.key" -CAcreateserial -out "$DIR/${svc}.crt" -days 365
+        rm "$DIR/${svc}.csr"
+      fi
+    done
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cert-rotation
+  namespace: default
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: rotate
+            image: alpine:3
+            command: ["/bin/sh", "/scripts/generate.sh"]
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+          restartPolicy: OnFailure
+          volumes:
+          - name: scripts
+            configMap:
+              name: cert-generator

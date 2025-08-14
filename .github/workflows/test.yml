@@ -1,0 +1,34 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Run unit tests
+        run: |
+          pytest tests/unit tests/integration --cov=repositories --cov=yosai_intel_dashboard/src/services/kafka_consumer.py --cov-fail-under=80
+      - name: Go handler tests
+        run: |
+          cd gateway && go test ./internal/handlers -coverprofile=coverage.out
+          cov=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3,1,length($3)-1)}')
+          echo "Go coverage: $cov%"
+          awk -v cov="$cov" 'BEGIN { if (cov+0 < 80) exit 1 }'

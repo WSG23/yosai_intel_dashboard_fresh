@@ -1,4 +1,4 @@
-# config/production.yaml - ENHANCED: Complete production configuration
+# config/environments/production.yaml - ENHANCED: Complete production configuration
 # Complete production configuration with environment variable substitution
 app:
   debug: false
@@ -69,7 +69,7 @@ monitoring:
   log_retention_days: ${LOG_RETENTION_DAYS:90}
 
 ---
-# config/staging.yaml - NEW: Staging environment configuration
+# config/environments/staging.yaml - NEW: Staging environment configuration
 app:
   debug: false
   host: 0.0.0.0
@@ -190,7 +190,7 @@ monitoring:
   log_retention_days: 7
 
 ---
-# config/test.yaml - ENHANCED: Complete test configuration
+# config/environments/test.yaml - ENHANCED: Complete test configuration
 app:
   debug: true
   host: 127.0.0.1

@@ -15,13 +15,14 @@ depends_on = None
 
 def upgrade() -> None:
     base = Path(__file__).resolve().parents[1]
-    for fname in [
-        "001_create_hypertables.sql",
-        "002_create_continuous_aggregates.sql",
-        "003_setup_compression.sql",
-        "004_retention_policies.sql",
-    ]:
-        op.execute((base / fname).read_text())
+    with op.get_context().autocommit_block():
+        for fname in [
+            "001_create_hypertables.sql",
+            "002_create_continuous_aggregates.sql",
+            "003_setup_compression.sql",
+            "004_retention_policies.sql",
+        ]:
+            op.execute((base / fname).read_text())
 
 
 def downgrade() -> None:

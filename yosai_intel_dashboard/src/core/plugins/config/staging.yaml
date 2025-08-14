@@ -1,4 +1,4 @@
-# config/staging.yaml - Staging Environment Configuration
+# config/environments/staging.yaml - Staging Environment Configuration
 # Yōsai Intel Dashboard - Staging Environment
 # 
 # This configuration bridges development and production environments

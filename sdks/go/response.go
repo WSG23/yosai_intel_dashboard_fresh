@@ -1,7 +1,7 @@
 /*
 Yōsai Intel Dashboard API
 
-Physical security intelligence and access control API. 
+Physical security intelligence and access control API.
 
 API version: 1.0.0
 */
