@@ -10,17 +10,12 @@ services:
     volumes:
       - .:/app
     env_file:
-      - ./local.env
+      - ./.env
     environment:
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      ANALYTICS_API_KEY: ${ANALYTICS_API_KEY}
-      ANALYTICS_API_URL: ${ANALYTICS_API_URL}
-      YOSAI_ENV: development
-      PYTHONPATH: /app:/app/yosai_intel_dashboard/src
-      HTTP_PROXY: ${HTTP_PROXY:-}
-      HTTPS_PROXY: ${HTTPS_PROXY:-}
-      NO_PROXY: ${NO_PROXY:-}
+      - ANALYTICS_API_KEY
+      - ANALYTICS_API_URL
+      - DB_USER
+      - DB_PASSWORD
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "true"]
@@ -39,16 +34,12 @@ services:
     volumes:
       - .:/app
     env_file:
-      - ./local.env
+      - ./.env
     environment:
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      YOSAI_ENV: development
-      PYTHONPATH: /app:/app/yosai_intel_dashboard/src
-      API_PORT: 8000
-      HTTP_PROXY: ${HTTP_PROXY:-}
-      HTTPS_PROXY: ${HTTPS_PROXY:-}
-      NO_PROXY: ${NO_PROXY:-}
+      - ANALYTICS_API_KEY
+      - ANALYTICS_API_URL
+      - DB_USER
+      - DB_PASSWORD
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "true"]
