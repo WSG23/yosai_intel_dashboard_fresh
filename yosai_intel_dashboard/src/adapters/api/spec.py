@@ -126,7 +126,7 @@ def create_flask_app() -> Flask:
         create_mappings_blueprint,
     )
     from yosai_intel_dashboard.src.services.token_endpoint import create_token_blueprint
-    from yosai_intel_dashboard.src.services.upload_endpoint import (
+    from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
         create_upload_blueprint,
     )
 

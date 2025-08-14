@@ -43,7 +43,7 @@ stub_redis = types.ModuleType("redis")
 stub_redis.Redis = types.SimpleNamespace(from_url=lambda url: types.SimpleNamespace())
 sys.modules["redis"] = stub_redis
 
-from yosai_intel_dashboard.src.services.upload_endpoint import create_upload_blueprint
+from yosai_intel_dashboard.src.services.upload.upload_endpoint import create_upload_blueprint
 
 
 @pytest.fixture()
