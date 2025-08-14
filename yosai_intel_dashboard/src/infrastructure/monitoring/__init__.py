@@ -32,6 +32,10 @@ __all__ = [
     "circuit_breaker_state",
     "start_metrics_server",
     "ModelRegistryAlerting",
+    "decision_count",
+    "decision_latency",
+    "record_decision",
+    "track_decision_latency",
 
 ]
 
@@ -136,6 +140,20 @@ def __getattr__(name: str):
             circuit_breaker_state,
             start_metrics_server,
 
+        )
+
+        return locals()[name]
+    if name in {
+        "decision_count",
+        "decision_latency",
+        "record_decision",
+        "track_decision_latency",
+    }:
+        from .decision_metrics import (  # noqa: F401
+            decision_count,
+            decision_latency,
+            record_decision,
+            track_decision_latency,
         )
 
         return locals()[name]

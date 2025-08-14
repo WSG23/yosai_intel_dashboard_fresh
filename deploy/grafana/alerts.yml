@@ -1,0 +1,19 @@
+apiVersion: 1
+groups:
+  - name: slo
+    rules:
+      - uid: decision-latency-high
+        title: High decision latency
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(service_decision_latency_seconds_bucket[5m])) by (le))
+              interval: 1m
+        for: 5m
+        annotations:
+          summary: Decision latency p95 above SLO
