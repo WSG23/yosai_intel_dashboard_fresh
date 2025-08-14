@@ -3,7 +3,10 @@ from __future__ import annotations
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict
+
+import yaml
 
 from .app_config import UploadConfig
 from .base_loader import BaseConfigLoader
@@ -25,6 +28,12 @@ from yosai_intel_dashboard.src.infrastructure.config.configuration_mixin import 
 )
 
 logger = logging.getLogger(__name__)
+
+try:
+    with Path(__file__).with_name("monitoring.yaml").open(encoding="utf-8") as f:
+        monitoring_config = yaml.safe_load(f) or {}
+except FileNotFoundError:
+    monitoring_config = {}
 
 
 class DynamicConfigManager(ConfigurationMixin, BaseConfigLoader):
