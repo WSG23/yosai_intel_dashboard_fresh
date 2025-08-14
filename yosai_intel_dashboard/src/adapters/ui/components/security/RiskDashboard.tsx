@@ -1,18 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-  PolarAngleAxis,
-  LineChart,
-  Line,
-  ComposedChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from 'recharts';
+import EChart from '../EChart';
 import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 import { usePreferencesStore } from '../../state';
 import { useNetworkStatus } from '../../lib/network';
@@ -57,7 +44,6 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
     return () => clearInterval(interval);
   }, [score]);
 
-  const radialData = [{ name: 'risk', value: displayScore }];
   const historyData = (
     dataSaver ? history.filter((_, i) => i % 2 === 0) : history
   ).map((h, index) => ({ index, score: h }));
@@ -68,41 +54,41 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
       <h2 className="text-lg font-semibold mb-4">Risk Dashboard</h2>
       <div className="flex flex-col md:flex-row items-center">
         <div className="relative w-40 h-40">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart
-              innerRadius="70%"
-              outerRadius="100%"
-              data={radialData}
-              startAngle={90}
-              endAngle={450}
-            >
-              <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-              <RadialBar
-                background
-                clockWise
-                dataKey="value"
-                cornerRadius={10}
-                fill="#ef4444"
-              />
-            </RadialBarChart>
-          </ResponsiveContainer>
+          <EChart
+            style={{ height: '100%' }}
+            option={{
+              series: [
+                {
+                  type: 'gauge',
+                  min: 0,
+                  max: 100,
+                  progress: { show: true },
+                  detail: { formatter: '{value}' },
+                  data: [{ value: displayScore }],
+                },
+              ],
+            }}
+          />
           <div className="absolute inset-0 flex items-center justify-center text-xl font-bold">
             {Math.round(displayScore)}
           </div>
         </div>
         {!dataSaver && (
           <div className="flex-1 mt-4 md:mt-0 md:ml-8 w-full h-24">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={historyData}>
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <EChart
+              style={{ height: '100%' }}
+              option={{
+                xAxis: { type: 'category', data: historyData.map(d => d.index.toString()) },
+                yAxis: { type: 'value' },
+                series: [
+                  {
+                    type: 'line',
+                    data: historyData.map(d => d.score),
+                    showSymbol: false,
+                  },
+                ],
+              }}
+            />
           </div>
         )}
       </div>
@@ -114,21 +100,25 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
       </button>
       {expanded && !dataSaver && (
         <div className="mt-4" data-testid="risk-factors">
-          <ResponsiveContainer width="100%" height={200}>
-            <ComposedChart data={factorData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar
-                dataKey="value"
-                barSize={20}
-                fill="#3b82f6"
-                isAnimationActive={!prefersReducedMotion}
-              />
-              <Line type="monotone" dataKey="benchmark" stroke="#ef4444" />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <EChart
+            style={{ height: 200 }}
+            option={{
+              tooltip: {},
+              xAxis: { type: 'category', data: factorData.map(f => f.name) },
+              yAxis: { type: 'value' },
+              series: [
+                {
+                  type: 'bar',
+                  data: factorData.map(f => f.value),
+                  animation: !prefersReducedMotion,
+                },
+                {
+                  type: 'line',
+                  data: factorData.map(f => f.benchmark),
+                },
+              ],
+            }}
+          />
         </div>
       )}
       {dataSaver && (

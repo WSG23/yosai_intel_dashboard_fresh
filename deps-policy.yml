@@ -1,7 +1,7 @@
 critical_path:
   charting:
     allow:
-      - recharts
+      - echarts
   mapping:
     allow:
       - mapbox-gl

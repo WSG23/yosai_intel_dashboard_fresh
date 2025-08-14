@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import * as d3 from 'd3';
 import { subscribeToAccessStream, AccessEvent } from '../../services/realtime';
 
 type Range = '24h' | 'week' | 'month';
@@ -10,11 +9,10 @@ mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_TOKEN || '';
 const AccessPatternHeatmap: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const svgRef = useRef<SVGSVGElement | null>(null);
   const [range, setRange] = useState<Range>('24h');
   const eventsRef = useRef<AccessEvent[]>([]);
 
-  // initialize map and svg overlay
+  // initialize map and layers
   useEffect(() => {
     if (mapContainer.current && !mapRef.current) {
       mapRef.current = new mapboxgl.Map({
@@ -24,11 +22,35 @@ const AccessPatternHeatmap: React.FC = () => {
         zoom: 15,
       });
       mapRef.current.on('load', () => {
-        svgRef.current = d3
-          .select(mapRef.current!.getCanvasContainer())
-          .append('svg')
-          .attr('class', 'pointer-events-none absolute inset-0')
-          .node() as SVGSVGElement;
+        mapRef.current!.addSource('events', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        });
+        mapRef.current!.addLayer({
+          id: 'events',
+          type: 'circle',
+          source: 'events',
+          paint: {
+            'circle-radius': ['+', 4, ['get', 'count']],
+            'circle-color': 'rgba(0,123,255,0.6)',
+            'circle-stroke-color': [
+              'case',
+              ['get', 'anomaly'],
+              'red',
+              'transparent',
+            ],
+            'circle-stroke-width': 2,
+          },
+        });
+        mapRef.current!.on('click', 'events', (e) => {
+          const feature = e.features?.[0];
+          if (feature) {
+            new mapboxgl.Popup()
+              .setLngLat(feature.geometry.coordinates as mapboxgl.LngLatLike)
+              .setHTML(`<strong>${feature.properties?.id}</strong>`)
+              .addTo(mapRef.current!);
+          }
+        });
         draw();
       });
     }
@@ -46,16 +68,6 @@ const AccessPatternHeatmap: React.FC = () => {
     return unsubscribe;
   }, [range]);
 
-  // redraw on map move
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const redraw = () => draw();
-    mapRef.current.on('move', redraw);
-    return () => {
-      mapRef.current?.off('move', redraw);
-    };
-  }, []);
-
   const filterEvents = (): AccessEvent[] => {
     const now = Date.now();
     const dur =
@@ -70,44 +82,19 @@ const AccessPatternHeatmap: React.FC = () => {
   };
 
   const draw = () => {
-    if (!svgRef.current || !mapRef.current) return;
-    const map = mapRef.current;
-    const data = filterEvents();
-    const project = (d: AccessEvent) => map.project([d.lng, d.lat]);
-    const svg = d3.select(svgRef.current);
-
-    const circles = svg
-      .selectAll<SVGCircleElement, AccessEvent>('circle')
-      .data(data, (d: any) => d.id);
-
-    const enter = circles
-      .enter()
-      .append('circle')
-      .attr('r', 0)
-      .attr('cx', (d) => project(d).x)
-      .attr('cy', (d) => project(d).y)
-      .style('fill', 'rgba(0,123,255,0.6)')
-      .style('filter', (d) => (d.anomaly ? 'drop-shadow(0 0 6px red)' : 'none'))
-      .on('click', (_evt, d) => {
-        new mapboxgl.Popup()
-          .setLngLat([d.lng, d.lat])
-          .setHTML(`<strong>${d.id}</strong>`)
-          .addTo(map);
-      });
-
-    enter
-      .transition()
-      .duration(500)
-      .attr('r', (d) => 5 + d.count);
-
-    circles
-      .merge(enter as any)
-      .transition()
-      .duration(500)
-      .attr('cx', (d) => project(d).x)
-      .attr('cy', (d) => project(d).y);
-
-    circles.exit().transition().duration(300).attr('r', 0).remove();
+    if (!mapRef.current) return;
+    const data = {
+      type: 'FeatureCollection' as const,
+      features: filterEvents().map((e) => ({
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [e.lng, e.lat] },
+        properties: { id: e.id, count: e.count, anomaly: e.anomaly },
+      })),
+    };
+    const source = mapRef.current.getSource('events') as mapboxgl.GeoJSONSource;
+    if (source) {
+      source.setData(data);
+    }
   };
 
   return (
