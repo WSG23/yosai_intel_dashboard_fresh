@@ -216,7 +216,7 @@ def test_allowed_origin(monkeypatch):
     )
     app = _create_app(monkeypatch, ["https://allowed.com"])
     client = TestClient(app)
-    resp = client.get("/v1/csrf-token", headers={"Origin": "https://allowed.com"})
+    resp = client.get("/api/v1/csrf-token", headers={"Origin": "https://allowed.com"})
     assert resp.headers.get("access-control-allow-origin") == "https://allowed.com"
 
 
@@ -228,5 +228,5 @@ def test_blocked_origin(monkeypatch):
     )
     app = _create_app(monkeypatch, ["https://allowed.com"])
     client = TestClient(app)
-    resp = client.get("/v1/csrf-token", headers={"Origin": "https://other.com"})
+    resp = client.get("/api/v1/csrf-token", headers={"Origin": "https://other.com"})
     assert "access-control-allow-origin" not in resp.headers

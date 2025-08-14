@@ -3,7 +3,7 @@ import { useAnalyticsStore } from '../state/store';
 import { AnalyticsData } from '../state/analyticsSlice';
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
+  process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 
 export const useAnalyticsData = (sourceType: string) => {
   const { analyticsCache, setAnalytics } = useAnalyticsStore();

@@ -126,7 +126,7 @@ def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, calla
 
     def add_deprecation_warning(response: Response) -> None:
         response.headers["Warning"] = (
-            "299 - Deprecated API path; please use versioned '/v1' routes"
+            "299 - Deprecated API path; please use versioned '/api/v1' routes"
         )
 
     return serializer, add_deprecation_warning
@@ -138,7 +138,7 @@ def _register_routes(
     """Register routers and static file handlers."""
     service.app.add_event_handler("startup", init_cache_manager)
 
-    api_v1 = APIRouter(prefix="/v1")
+    api_v1 = APIRouter(prefix="/api/v1")
     api_v1.include_router(analytics_router)
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)
@@ -189,7 +189,7 @@ def _register_routes(
 
 
 def _register_upload_endpoints(
-    service: BaseService, serializer: URLSafeTimedSerializer
+    service: BaseService, serializer: URLSafeTimedSerializer, add_deprecation_warning: callable
 ) -> None:
     """Register upload, settings and token refresh endpoints."""
     file_handler = (
@@ -213,11 +213,17 @@ def _register_upload_endpoints(
         return await call_next(request)
 
 
-    @service.app.get("/v1/csrf-token")
+    @service.app.get("/api/v1/csrf-token")
     def get_csrf_token(response: Response) -> dict:
         token = serializer.dumps("csrf")
         response.set_cookie("csrf_token", token, httponly=True)
         return {"csrf_token": token}
+
+    @service.app.get(
+        "/csrf-token", dependencies=[Depends(add_deprecation_warning)], deprecated=True
+    )
+    def get_csrf_token_legacy(response: Response) -> dict:
+        return get_csrf_token(response)
 
     def verify_csrf(request: Request) -> None:
         token = (
@@ -235,7 +241,7 @@ def _register_upload_endpoints(
     cfg = UploadConfig()
 
     @service.app.post(
-        "/v1/upload",
+        "/api/v1/upload",
         response_model=UploadResponse,
         status_code=200,
         dependencies=[Depends(verify_csrf)],
@@ -307,18 +313,31 @@ def _register_upload_endpoints(
 
         return {"results": results}
 
+    @service.app.post(
+        "/upload",
+        response_model=UploadResponse,
+        status_code=200,
+        dependencies=[Depends(verify_csrf), Depends(add_deprecation_warning)],
+        deprecated=True,
+    )
+    async def upload_files_legacy(
+        payload: UploadRequestSchema,
+        files: list[UploadFile] = File([]),
+    ) -> dict:
+        return await upload_files(payload, files)
+
     from yosai_intel_dashboard.src.adapters.api.settings_endpoint import (
         SettingsSchema,
         _load_settings,
         _save_settings,
     )
 
-    @service.app.get("/v1/settings", response_model=SettingsSchema)
+    @service.app.get("/api/v1/settings", response_model=SettingsSchema)
     def get_settings() -> dict:
         return _load_settings()
 
-    @service.app.post("/v1/settings", response_model=SettingsSchema)
-    @service.app.put("/v1/settings", response_model=SettingsSchema)
+    @service.app.post("/api/v1/settings", response_model=SettingsSchema)
+    @service.app.put("/api/v1/settings", response_model=SettingsSchema)
     def update_settings(payload: SettingsSchema) -> dict:
         settings_data = _load_settings()
         settings_data.update(payload.dict(exclude_none=True))
@@ -328,6 +347,27 @@ def _register_upload_endpoints(
             raise HTTPException(status_code=500, detail=str(exc))
         return settings_data
 
+    @service.app.get(
+        "/settings", response_model=SettingsSchema, dependencies=[Depends(add_deprecation_warning)], deprecated=True
+    )
+    def get_settings_legacy() -> dict:
+        return get_settings()
+
+    @service.app.post(
+        "/settings",
+        response_model=SettingsSchema,
+        dependencies=[Depends(add_deprecation_warning)],
+        deprecated=True,
+    )
+    @service.app.put(
+        "/settings",
+        response_model=SettingsSchema,
+        dependencies=[Depends(add_deprecation_warning)],
+        deprecated=True,
+    )
+    def update_settings_legacy(payload: SettingsSchema) -> dict:
+        return update_settings(payload)
+
     from yosai_intel_dashboard.src.services.security import refresh_access_token
     from yosai_intel_dashboard.src.services.token_endpoint import (
         AccessTokenResponse,
@@ -335,13 +375,23 @@ def _register_upload_endpoints(
     )
 
     @service.app.post(
-        "/v1/token/refresh", response_model=AccessTokenResponse, status_code=200
+        "/api/v1/token/refresh", response_model=AccessTokenResponse, status_code=200
     )
     def refresh_token(payload: RefreshRequest) -> dict:
         new_token = refresh_access_token(payload.refresh_token)
         if not new_token:
             raise HTTPException(status_code=401, detail="invalid refresh token")
         return {"access_token": new_token}
+
+    @service.app.post(
+        "/token/refresh",
+        response_model=AccessTokenResponse,
+        status_code=200,
+        dependencies=[Depends(add_deprecation_warning)],
+        deprecated=True,
+    )
+    def refresh_token_legacy(payload: RefreshRequest) -> dict:
+        return refresh_token(payload)
 
 
 def create_api_app() -> "FastAPI":
@@ -351,7 +401,7 @@ def create_api_app() -> "FastAPI":
     build_dir = _configure_app(service)
     serializer, add_deprecation_warning = _setup_security(service)
     _register_routes(service, build_dir, add_deprecation_warning)
-    _register_upload_endpoints(service, serializer)
+    _register_upload_endpoints(service, serializer, add_deprecation_warning)
     return service.app
 
 
@@ -362,7 +412,7 @@ if __name__ == "__main__":
         extra={
             "port": API_PORT,
             "url": f"http://localhost:{API_PORT}",
-            "upload_endpoint": f"http://localhost:{API_PORT}/v1/upload",
+            "upload_endpoint": f"http://localhost:{API_PORT}/api/v1/upload",
         },
     )
 

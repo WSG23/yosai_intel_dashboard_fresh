@@ -71,7 +71,7 @@ def test_happy_path(app):
     app_obj, storage = app
     client = app_obj.test_client()
     data = {"file": (io.BytesIO(b"a"), "good.csv", "text/csv")}
-    resp = client.post("/v1/upload", data=data, headers={"X-CSRFToken": "x"})
+    resp = client.post("/api/v1/upload", data=data, headers={"X-CSRFToken": "x"})
     assert resp.status_code == 200
     assert resp.get_json()["results"][0]["filename"] == "good.csv"
     assert (storage / "good.csv").exists()
@@ -81,7 +81,7 @@ def test_bad_extension(app):
     app_obj, _ = app
     client = app_obj.test_client()
     data = {"file": (io.BytesIO(b"a"), "bad.exe", "application/octet-stream")}
-    resp = client.post("/v1/upload", data=data, headers={"X-CSRFToken": "x"})
+    resp = client.post("/api/v1/upload", data=data, headers={"X-CSRFToken": "x"})
     assert resp.status_code == 400
 
 
@@ -89,7 +89,7 @@ def test_bad_mime(app):
     app_obj, _ = app
     client = app_obj.test_client()
     data = {"file": (io.BytesIO(b"a"), "good.csv", "application/json")}
-    resp = client.post("/v1/upload", data=data, headers={"X-CSRFToken": "x"})
+    resp = client.post("/api/v1/upload", data=data, headers={"X-CSRFToken": "x"})
     assert resp.status_code == 400
 
 
@@ -98,14 +98,14 @@ def test_oversize_file(app):
     client = app_obj.test_client()
     big = io.BytesIO(b"a" * 20)
     data = {"file": (big, "big.csv", "text/csv")}
-    resp = client.post("/v1/upload", data=data, headers={"X-CSRFToken": "x"})
+    resp = client.post("/api/v1/upload", data=data, headers={"X-CSRFToken": "x"})
     assert resp.status_code == 400
 
 
 def test_missing_file_field(app):
     app_obj, _ = app
     client = app_obj.test_client()
-    resp = client.post("/v1/upload", headers={"X-CSRFToken": "x"})
+    resp = client.post("/api/v1/upload", headers={"X-CSRFToken": "x"})
     assert resp.status_code == 400
 
 
@@ -116,7 +116,7 @@ def test_multiple_files(app):
         "f1": (io.BytesIO(b"a"), "a.csv", "text/csv"),
         "f2": (io.BytesIO(b"b"), "b.csv", "text/csv"),
     }
-    resp = client.post("/v1/upload", data=data, headers={"X-CSRFToken": "x"})
+    resp = client.post("/api/v1/upload", data=data, headers={"X-CSRFToken": "x"})
     assert resp.status_code == 200
     assert (storage / "a.csv").exists()
     assert (storage / "b.csv").exists()

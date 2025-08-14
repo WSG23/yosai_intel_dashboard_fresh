@@ -6,7 +6,7 @@ export interface UserSettings {
 }
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
+  process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 const DEFAULT_SETTINGS: UserSettings = { theme: 'light', itemsPerPage: 10 };
 let cachedSettings: UserSettings | null = null;
 

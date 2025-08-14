@@ -52,7 +52,7 @@ def test_analytics_service_adapter_microservice(monkeypatch):
     client = TestClient(app_module.app)
 
     async def _local_call(self, method: str, params: dict):
-        resp = client.post(f"/v1/analytics/{method}", json=params)
+        resp = client.post(f"/api/v1/analytics/{method}", json=params)
         return resp.json()
 
     monkeypatch.setattr(
@@ -65,5 +65,5 @@ def test_analytics_service_adapter_microservice(monkeypatch):
     migration_adapter.register_migration_services(container)
 
     adapter = container.get("analytics_service")
-    expected = client.get("/v1/analytics/dashboard-summary").json()
+    expected = client.get("/api/v1/analytics/dashboard-summary").json()
     assert adapter.get_dashboard_summary() == expected

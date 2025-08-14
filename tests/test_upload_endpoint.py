@@ -37,7 +37,7 @@ def test_upload_saves_file(tmp_path):
     data_url = f"data:text/csv;base64,{b64}"
     client = app.test_client()
     resp = client.post(
-        "/v1/upload", json={"contents": [data_url], "filenames": ["test.csv"]}
+        "/api/v1/upload", json={"contents": [data_url], "filenames": ["test.csv"]}
     )
     assert resp.status_code == 200
     assert (tmp_path / "test.csv").exists()
@@ -63,7 +63,7 @@ def test_upload_rejects_oversized_file(tmp_path):
     app = _create_app(tmp_path, TinyHandler())
     client = app.test_client()
     data = {"file": (io.BytesIO(b"123456"), "big.csv")}
-    resp = client.post("/v1/upload", data=data)
+    resp = client.post("/api/v1/upload", data=data)
     assert resp.status_code == 400
 
 
@@ -71,7 +71,7 @@ def test_upload_rejects_unsupported_file(tmp_path):
     app = _create_app(tmp_path)
     client = app.test_client()
     data = {"file": (io.BytesIO(b"abc"), "bad.exe")}
-    resp = client.post("/v1/upload", data=data)
+    resp = client.post("/api/v1/upload", data=data)
     assert resp.status_code == 400
 
 
@@ -80,7 +80,7 @@ def test_upload_rejects_path_traversal_filename(tmp_path):
     client = app.test_client()
     content = "data:text/csv;base64,YSx6"
     resp = client.post(
-        "/v1/upload", json={"contents": [content], "filenames": ["../bad.csv"]}
+        "/api/v1/upload", json={"contents": [content], "filenames": ["../bad.csv"]}
     )
     assert resp.status_code == 400
 

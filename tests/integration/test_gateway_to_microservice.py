@@ -138,7 +138,7 @@ def test_requests_without_valid_token_return_401():
     client = TestClient(app_module.app)
 
     # No Authorization header
-    resp = client.get("/v1/analytics/dashboard-summary")
+    resp = client.get("/api/v1/analytics/dashboard-summary")
     assert resp.status_code == 401
 
     # Expired token
@@ -149,7 +149,7 @@ def test_requests_without_valid_token_return_401():
         algorithm="HS256",
     )
     resp = client.get(
-        "/v1/analytics/dashboard-summary",
+        "/api/v1/analytics/dashboard-summary",
         headers={"Authorization": f"Bearer {bad_token}"},
     )
     assert resp.status_code == 401
@@ -161,7 +161,7 @@ def test_requests_without_valid_token_return_401():
         algorithm="HS256",
     )
     resp = client.get(
-        "/v1/analytics/dashboard-summary",
+        "/api/v1/analytics/dashboard-summary",
         headers={"Authorization": f"Bearer {good_token}"},
     )
     assert resp.status_code == 200

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { graphsAPI, AvailableChart } from '../api/graphs';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 
 // In-memory cache for chart data
 const chartCache = new Map<string, any>();
