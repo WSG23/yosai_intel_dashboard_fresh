@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
+	"github.com/sony/gobreaker"
 
+	"github.com/WSG23/resilience"
 	"go.opentelemetry.io/otel"
 )
 
@@ -32,8 +35,9 @@ func init() {
 
 // RedisCache implements CacheService backed by Redis.
 type RedisCache struct {
-	client *redis.Client
-	ttl    time.Duration
+	client  *redis.Client
+	ttl     time.Duration
+	breaker *gobreaker.CircuitBreaker
 }
 
 // NewRedisCache creates a Redis-backed cache service configured via environment variables.
@@ -53,36 +57,47 @@ func NewRedisCache() *RedisCache {
 		}
 	}
 	client := redis.NewClient(&redis.Options{Addr: fmt.Sprintf("%s:%s", host, port)})
-	return &RedisCache{client: client, ttl: time.Duration(ttl) * time.Second}
+	settings := gobreaker.Settings{
+		Name:        "redis-cache",
+		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 3 },
+		Timeout:     100*time.Millisecond + time.Duration(rand.Intn(100))*time.Millisecond,
+	}
+	cb := resilience.NewGoBreaker("redis-cache", settings)
+	return &RedisCache{client: client, ttl: time.Duration(ttl) * time.Second, breaker: cb}
 }
 
 func (r *RedisCache) key(person, door string) string {
 	return fmt.Sprintf("decision:%s:%s", person, door)
 }
 
-// GetDecision retrieves a decision from Redis. Missing keys and timeouts are not treated as errors.
+const defaultDecision = "Denied"
+
+// GetDecision retrieves a decision from Redis. Missing keys and timeouts return the default decision.
 func (r *RedisCache) GetDecision(ctx context.Context, personID, doorID string) (*Decision, error) {
 	ctx, span := otel.Tracer("redis").Start(ctx, "GetDecision")
 	defer span.End()
-	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
 	defer cancel()
-
-	val, err := r.client.Get(ctx, r.key(personID, doorID)).Result()
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			cacheMisses.Inc()
-			return nil, nil
+	var val string
+	_, err := r.breaker.Execute(func() (interface{}, error) {
+		v, e := r.client.Get(ctx, r.key(personID, doorID)).Result()
+		if e != nil {
+			if errors.Is(e, redis.Nil) {
+				return nil, nil
+			}
+			return nil, e
 		}
-		if err == redis.Nil {
-			cacheMisses.Inc()
-			return nil, nil
-		}
-		return nil, err
+		val = v
+		return nil, nil
+	})
+	if err != nil || val == "" {
+		cacheMisses.Inc()
+		return &Decision{PersonID: personID, DoorID: doorID, Decision: defaultDecision}, nil
 	}
 	cacheHits.Inc()
 	var d Decision
 	if err := json.Unmarshal([]byte(val), &d); err != nil {
-		return nil, err
+		return &Decision{PersonID: personID, DoorID: doorID, Decision: defaultDecision}, nil
 	}
 	return &d, nil
 }
@@ -96,9 +111,11 @@ func (r *RedisCache) SetDecision(ctx context.Context, d Decision) error {
 		span.RecordError(err)
 		return err
 	}
-	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
 	defer cancel()
-	err = r.client.Set(ctx, r.key(d.PersonID, d.DoorID), data, r.ttl).Err()
+	_, err = r.breaker.Execute(func() (interface{}, error) {
+		return nil, r.client.Set(ctx, r.key(d.PersonID, d.DoorID), data, r.ttl).Err()
+	})
 	if err != nil {
 		span.RecordError(err)
 	}
@@ -109,9 +126,11 @@ func (r *RedisCache) SetDecision(ctx context.Context, d Decision) error {
 func (r *RedisCache) InvalidateDecision(ctx context.Context, personID, doorID string) error {
 	ctx, span := otel.Tracer("redis").Start(ctx, "InvalidateDecision")
 	defer span.End()
-	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
 	defer cancel()
-	err := r.client.Del(ctx, r.key(personID, doorID)).Err()
+	_, err := r.breaker.Execute(func() (interface{}, error) {
+		return nil, r.client.Del(ctx, r.key(personID, doorID)).Err()
+	})
 	if err != nil {
 		span.RecordError(err)
 	}

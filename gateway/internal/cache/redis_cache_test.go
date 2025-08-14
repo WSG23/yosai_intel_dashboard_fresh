@@ -41,7 +41,28 @@ func TestRedisCacheSetGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get after ttl: %v", err)
 	}
-	if expired != nil {
-		t.Fatalf("expected nil after ttl, got %+v", expired)
+	if expired == nil || expired.Decision != defaultDecision {
+		t.Fatalf("expected default decision after ttl, got %+v", expired)
+	}
+}
+
+func TestRedisCacheMissReturnsDefault(t *testing.T) {
+	srv, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("failed to start miniredis: %v", err)
+	}
+	defer srv.Close()
+
+	os.Setenv("REDIS_HOST", srv.Host())
+	os.Setenv("REDIS_PORT", srv.Port())
+	os.Setenv("CACHE_TTL_SECONDS", "1")
+
+	c := NewRedisCache()
+	got, err := c.GetDecision(context.Background(), "missing", "door")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got == nil || got.Decision != defaultDecision {
+		t.Fatalf("expected default decision, got %+v", got)
 	}
 }
