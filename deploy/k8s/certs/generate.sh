@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+DIR="$(dirname "$0")"
+# generate CA if not exist
+if [ ! -f "$DIR/ca.key" ]; then
+  openssl req -x509 -new -nodes -newkey rsa:4096 -days 365 -subj "/CN=Yosai Internal CA" -keyout "$DIR/ca.key" -out "$DIR/ca.crt"
+fi
+for svc in gateway queue resilience httpx; do
+  if [ ! -f "$DIR/${svc}.key" ]; then
+    openssl req -new -nodes -newkey rsa:2048 -keyout "$DIR/${svc}.key" -subj "/CN=${svc}" -addext "subjectAltName=DNS:${svc},IP:127.0.0.1" -out "$DIR/${svc}.csr"
+    printf "[v3_req]\nsubjectAltName=DNS:${svc},IP:127.0.0.1" > "$DIR/${svc}.ext"
+    openssl x509 -req -in "$DIR/${svc}.csr" -CA "$DIR/ca.crt" -CAkey "$DIR/ca.key" -CAcreateserial -out "$DIR/${svc}.crt" -days 365 -extfile "$DIR/${svc}.ext" -extensions v3_req
+    rm "$DIR/${svc}.csr" "$DIR/${svc}.ext"
+  fi
+done

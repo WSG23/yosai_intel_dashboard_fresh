@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"log"
 
+	"crypto/tls"
+	"crypto/x509"
 	"net"
 	"net/http"
 	"os"
@@ -275,11 +277,31 @@ func main() {
 		addr = ":" + port
 	}
 
-	srv := &http.Server{Addr: addr, Handler: g.Handler()}
+	tlsCert := os.Getenv("TLS_CERT_FILE")
+	tlsKey := os.Getenv("TLS_KEY_FILE")
+	tlsCA := os.Getenv("TLS_CA_FILE")
+	tlsCfg := &tls.Config{}
+	if tlsCA != "" {
+		caBytes, err := os.ReadFile(tlsCA)
+		if err == nil {
+			pool := x509.NewCertPool()
+			if pool.AppendCertsFromPEM(caBytes) {
+				tlsCfg.ClientCAs = pool
+				tlsCfg.ClientAuth = tls.RequireAndVerifyClientCert
+			}
+		}
+	}
+	srv := &http.Server{Addr: addr, Handler: g.Handler(), TLSConfig: tlsCfg}
 
 	go func() {
 		tracing.Logger.Infof("starting gateway on %s", addr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		var err error
+		if tlsCert != "" && tlsKey != "" {
+			err = srv.ListenAndServeTLS(tlsCert, tlsKey)
+		} else {
+			err = srv.ListenAndServe()
+		}
+		if err != nil && err != http.ErrServerClosed {
 			tracing.Logger.Fatalf("server error: %v", err)
 		}
 	}()

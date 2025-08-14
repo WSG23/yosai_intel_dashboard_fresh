@@ -2,7 +2,10 @@ package rabbitmq
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"os"
 	"sync"
 	"time"
 
@@ -30,7 +33,30 @@ type Task struct {
 
 // NewQueueClient establishes a new AMQP connection.
 func NewQueueClient(url string) (*QueueClient, error) {
-	conn, err := amqp.Dial(url)
+	tlsCert := os.Getenv("TLS_CERT_FILE")
+	tlsKey := os.Getenv("TLS_KEY_FILE")
+	tlsCA := os.Getenv("TLS_CA_FILE")
+	var conn *amqp.Connection
+	var err error
+	if tlsCert != "" && tlsKey != "" {
+		cfg := &tls.Config{}
+		if tlsCA != "" {
+			ca, err2 := os.ReadFile(tlsCA)
+			if err2 == nil {
+				pool := x509.NewCertPool()
+				if pool.AppendCertsFromPEM(ca) {
+					cfg.RootCAs = pool
+				}
+			}
+		}
+		cert, err2 := tls.LoadX509KeyPair(tlsCert, tlsKey)
+		if err2 == nil {
+			cfg.Certificates = []tls.Certificate{cert}
+		}
+		conn, err = amqp.DialTLS(url, cfg)
+	} else {
+		conn, err = amqp.Dial(url)
+	}
 	if err != nil {
 		return nil, err
 	}
