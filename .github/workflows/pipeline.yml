@@ -10,9 +10,10 @@ permissions:
   security-events: write
   actions: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+
+# Removed concurrency to prevent cancellation of in-progress runs.
+# If necessary, reintroduce with a more specific group key.
+
 
 jobs:
   build-test:
