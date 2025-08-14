@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	cb "github.com/WSG23/resilience"
+	"github.com/sony/gobreaker"
 )
 
 // HTTPDoer is the subset of http.Client used by this package. It enables
@@ -20,14 +23,25 @@ type HTTPDoer interface {
 // Client wraps an HTTPDoer to perform JSON requests.
 type Client struct {
 	httpClient HTTPDoer
+	breaker    *gobreaker.CircuitBreaker
+	cfg        Config
 }
 
-// New creates a Client that uses the provided HTTPDoer.
-func New(c HTTPDoer) *Client { return &Client{httpClient: c} }
+// New creates a Client that uses the provided HTTPDoer with default settings.
+func New(c HTTPDoer) *Client {
+	return NewWithConfig(c, DefaultConfig(), nil)
+}
 
-// Default is the package level client used by DoJSON. It has a non-zero
-// timeout to avoid hanging requests.
-var Default = New(&http.Client{Timeout: 10 * time.Second})
+// NewWithConfig allows providing a configuration and custom breaker.
+func NewWithConfig(c HTTPDoer, cfg Config, b *gobreaker.CircuitBreaker) *Client {
+	if b == nil {
+		b = cb.NewGoBreaker("httpx", gobreaker.Settings{})
+	}
+	return &Client{httpClient: c, breaker: b, cfg: cfg}
+}
+
+// Default is the package level client used by DoJSON. It uses DefaultConfig.
+var Default = NewWithConfig(&http.Client{Timeout: DefaultConfig().Timeout}, DefaultConfig(), nil)
 
 // NewTLSClient creates a Client using certificates for mTLS.
 func NewTLSClient(certFile, keyFile, caFile string) (*Client, error) {
@@ -59,7 +73,20 @@ func NewTLSClient(certFile, keyFile, caFile string) (*Client, error) {
 // and will cancel the call if it is done.
 func (c *Client) DoJSON(ctx context.Context, req *http.Request, dst any) (err error) {
 	req = req.WithContext(ctx)
-	resp, err := c.httpClient.Do(req)
+	var resp *http.Response
+	backoff := c.cfg.Backoff
+	for attempt := 0; ; attempt++ {
+		_, err = c.breaker.Execute(func() (interface{}, error) {
+			var e error
+			resp, e = c.httpClient.Do(req)
+			return nil, e
+		})
+		if err == nil || attempt >= c.cfg.Retries {
+			break
+		}
+		time.Sleep(backoff)
+		backoff *= 2
+	}
 	if err != nil {
 		return fmt.Errorf("do request: %w", err)
 	}

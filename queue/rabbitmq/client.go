@@ -9,7 +9,9 @@ import (
 	"sync"
 	"time"
 
+	cb "github.com/WSG23/resilience"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sony/gobreaker"
 )
 
 // QueueClient wraps an AMQP connection and channel.
@@ -17,6 +19,7 @@ type QueueClient struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	mu      sync.RWMutex
+	breaker *gobreaker.CircuitBreaker
 }
 
 // Task represents a work item sent through the queue.
@@ -65,7 +68,8 @@ func NewQueueClient(url string) (*QueueClient, error) {
 		conn.Close()
 		return nil, err
 	}
-	return &QueueClient{conn: conn, channel: ch}, nil
+	b := cb.NewGoBreaker("rabbitmq", gobreaker.Settings{})
+	return &QueueClient{conn: conn, channel: ch, breaker: b}, nil
 }
 
 // DeclareQueue ensures a queue exists with optional dead-letter routing and priority support.
@@ -92,14 +96,17 @@ func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task)
 	if task.Delay > 0 {
 		headers["x-delay"] = task.Delay
 	}
-	return q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
-		ContentType:  "application/json",
-		Body:         body,
-		DeliveryMode: amqp.Persistent,
-		Priority:     task.Priority,
-		Timestamp:    time.Now(),
-		Headers:      headers,
+	_, err = q.breaker.Execute(func() (interface{}, error) {
+		return nil, q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
+			ContentType:  "application/json",
+			Body:         body,
+			DeliveryMode: amqp.Persistent,
+			Priority:     task.Priority,
+			Timestamp:    time.Now(),
+			Headers:      headers,
+		})
 	})
+	return err
 }
 
 // ConsumeQueue consumes messages from queue until ctx is cancelled.
