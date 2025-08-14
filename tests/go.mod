@@ -3,10 +3,11 @@ module github.com/WSG23/yosai-gateway/tests
 go 1.23.8
 
 require (
-	github.com/WSG23/yosai-gateway v0.0.0
-	github.com/redis/go-redis/v9 v9.11.0
-	github.com/stretchr/testify v1.10.0
-	github.com/testcontainers/testcontainers-go v0.24.1
+        github.com/WSG23/yosai-gateway v0.0.0
+        github.com/WSG23/errors v0.0.0
+        github.com/redis/go-redis/v9 v9.11.0
+        github.com/stretchr/testify v1.10.0
+        github.com/testcontainers/testcontainers-go v0.24.1
 )
 
 require (
@@ -16,6 +17,8 @@ require (
 	github.com/Microsoft/hcsshim v0.11.0 // indirect
 	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bits-and-blooms/bitset v1.10.0
+	github.com/bits-and-blooms/bloom/v3 v3.7.0
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/containerd v1.7.6 // indirect
@@ -57,6 +60,7 @@ require (
 	github.com/sony/gobreaker v1.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
+	github.com/twmb/murmur3 v1.1.6
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
@@ -81,5 +85,7 @@ require (
 )
 
 replace github.com/WSG23/yosai-gateway => ../gateway
+
+replace github.com/WSG23/errors => ../pkg/errors
 
 replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../shared/errors

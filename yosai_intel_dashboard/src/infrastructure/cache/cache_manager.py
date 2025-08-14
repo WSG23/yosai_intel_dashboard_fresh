@@ -97,17 +97,21 @@ class InMemoryCacheManager(CacheManager):
     async def get(self, key: str) -> Optional[Any]:
         item = self._cache.get(key)
         if not item:
+            cache_monitor.record_cache_miss("memory")
             return None
         value, expiry = item
         if expiry is not None and time.time() > expiry:
             del self._cache[key]
+            cache_monitor.record_cache_miss("memory")
             return None
         if isinstance(value, weakref.ReferenceType):
             value = value()
             if value is None:
                 self._cache.pop(key, None)
+                cache_monitor.record_cache_miss("memory")
                 return None
         self._cache.move_to_end(key)
+        cache_monitor.record_cache_hit("memory")
         return value
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
@@ -173,7 +177,9 @@ class RedisCacheManager(CacheManager):
             try:
                 data = await self._redis.get(self._full_key(key))
                 if data is not None:
+                    cache_monitor.record_cache_hit("redis")
                     return json.loads(data.decode("utf-8"))
+                cache_monitor.record_cache_miss("redis")
             except Exception as exc:  # pragma: no cover - fallback
                 logger.warning(f"Redis GET failed for {key}: {exc}")
         return await self._fallback.get(key)
