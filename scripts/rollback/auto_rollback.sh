@@ -11,7 +11,7 @@ error_rate=$(curl -sf "$METRIC_URL" || echo 0)
 # Compare the current error rate with the threshold using a tiny Python
 # snippet. If the threshold is breached we trigger a rollback of the
 # deployment in the target namespace.
-if python - "$error_rate" "$THRESHOLD" 2>/dev/null <<'PY' | grep -q breach; then
+if python - "$error_rate" "$THRESHOLD" <<'PY' 2>/dev/null | grep -q breach; then
 import sys
 err=float(sys.argv[1]); thr=float(sys.argv[2])
 print("breach" if err>thr else "ok")
