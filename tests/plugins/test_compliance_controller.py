@@ -124,7 +124,7 @@ def _create_client(monkeypatch):
 def test_pending_requests_invalid_param(monkeypatch):
     client = _create_client(monkeypatch)
     resp = client.get(
-        "/v1/compliance/admin/dsar/pending",
+        "/api/v1/compliance/admin/dsar/pending",
         query_string={"due_within_days": "<script>"},
     )
     assert resp.status_code == 200
@@ -133,6 +133,6 @@ def test_pending_requests_invalid_param(monkeypatch):
 
 def test_audit_trail_invalid_param(monkeypatch):
     client = _create_client(monkeypatch)
-    resp = client.get("/v1/compliance/audit/my-data", query_string={"days": "<script>"})
+    resp = client.get("/api/v1/compliance/audit/my-data", query_string={"days": "<script>"})
     assert resp.status_code == 200
     assert resp.get_json()["period_days"] == 30

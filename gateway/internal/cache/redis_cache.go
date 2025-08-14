@@ -11,6 +11,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
+
+	"go.opentelemetry.io/otel"
 )
 
 var (
@@ -60,6 +62,8 @@ func (r *RedisCache) key(person, door string) string {
 
 // GetDecision retrieves a decision from Redis. Missing keys and timeouts are not treated as errors.
 func (r *RedisCache) GetDecision(ctx context.Context, personID, doorID string) (*Decision, error) {
+	ctx, span := otel.Tracer("redis").Start(ctx, "GetDecision")
+	defer span.End()
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
 
@@ -85,18 +89,31 @@ func (r *RedisCache) GetDecision(ctx context.Context, personID, doorID string) (
 
 // SetDecision stores a decision in Redis using the configured TTL. Timeouts are ignored.
 func (r *RedisCache) SetDecision(ctx context.Context, d Decision) error {
+	ctx, span := otel.Tracer("redis").Start(ctx, "SetDecision")
+	defer span.End()
 	data, err := json.Marshal(d)
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
-	return r.client.Set(ctx, r.key(d.PersonID, d.DoorID), data, r.ttl).Err()
+	err = r.client.Set(ctx, r.key(d.PersonID, d.DoorID), data, r.ttl).Err()
+	if err != nil {
+		span.RecordError(err)
+	}
+	return err
 }
 
 // InvalidateDecision removes a cached decision for the given person and door.
 func (r *RedisCache) InvalidateDecision(ctx context.Context, personID, doorID string) error {
+	ctx, span := otel.Tracer("redis").Start(ctx, "InvalidateDecision")
+	defer span.End()
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
-	return r.client.Del(ctx, r.key(personID, doorID)).Err()
+	err := r.client.Del(ctx, r.key(personID, doorID)).Err()
+	if err != nil {
+		span.RecordError(err)
+	}
+	return err
 }

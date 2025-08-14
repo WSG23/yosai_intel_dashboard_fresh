@@ -36,7 +36,7 @@ write `docs/analytics_microservice_openapi.json` and
 Legacy dashboards still rely on Flask routes for file uploads and admin views.
 `api/adapter.py` builds a Flask `app` and then mounts it inside the FastAPI
 service using `WSGIMiddleware`. FastAPI handles its own routes first (such as
-`/v1/analytics`) and forwards any remaining paths to the Flask app.
+`/api/v1/analytics`) and forwards any remaining paths to the Flask app.
 
 ```python
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -73,10 +73,10 @@ sequenceDiagram
 
 ## API Versioning
 
-All routes are grouped under a versioned prefix such as `/v1`.
+All routes are grouped under a versioned prefix such as `/api/v1`.
 Unversioned paths remain temporarily available for backward compatibility but
 return a `Warning` header and are marked as deprecated. Future releases will
-introduce `/v2` endpoints following the same pattern.
+introduce `/api/v2` endpoints following the same pattern.
 The Go `versioning` module provides `VersionManager` middleware that extracts
 the version from the request path and attaches metadata to the context. The
 manager can mark versions as `active`, `deprecated`, or `sunset` to control
@@ -183,9 +183,9 @@ The following table lists the required role or permission for key API route grou
 | Route Prefix | Required Role | Required Permission |
 |--------------|---------------|--------------------|
 | `/admin` | `admin` | - |
-| `/v1/analytics` | - | `analytics.read` |
-| `/v1/events` | - | `events.write` |
-| `/v1/doors` | - | `doors.control` |
+| `/api/v1/analytics` | - | `analytics.read` |
+| `/api/v1/events` | - | `events.write` |
+| `/api/v1/doors` | - | `doors.control` |
 
 For details on internal streaming, alert dispatching and WebSocket messages see
 [Internal Service Interfaces](internal_services.md).

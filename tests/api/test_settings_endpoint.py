@@ -117,15 +117,15 @@ def test_get_and_update_settings(monkeypatch):
     app.register_blueprint(settings_endpoint.settings_bp)
     client = app.test_client()
 
-    resp = client.get("/v1/settings")
+    resp = client.get("/api/v1/settings")
     assert resp.status_code == 200
     assert resp.get_json() == settings_endpoint.DEFAULT_SETTINGS
 
     payload = {"theme": "dark", "itemsPerPage": 20}
-    resp = client.post("/v1/settings", json=payload)
+    resp = client.post("/api/v1/settings", json=payload)
     assert resp.status_code == 200
     assert json.loads(fs["settings.json"]) == payload
 
-    resp = client.get("/v1/settings")
+    resp = client.get("/api/v1/settings")
     assert resp.status_code == 200
     assert resp.get_json() == payload

@@ -98,3 +98,12 @@ describe('request queue bounds', () => {
   });
 });
 
+it('adds traceparent header to requests', async () => {
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ status: 'success', data: {} }),
+  }) as any;
+  await apiRequest({ url: '/trace', method: 'GET' });
+  const headers = (global.fetch as any).mock.calls[0][1].headers;
+  expect(headers.traceparent).toMatch(/^00-\w{32}-\w{16}-01$/);
+});

@@ -11,6 +11,8 @@ import (
 	"github.com/WSG23/resilience"
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/sony/gobreaker"
+
+	"go.opentelemetry.io/otel"
 )
 
 // Decision mirrors cache.Decision for convenience.
@@ -33,10 +35,11 @@ type RuleEngine struct {
 	db      *sql.DB
 	stmts   *StmtCache
 	breaker *gobreaker.CircuitBreaker
+	outbox  *Outbox
 }
 
 // NewRuleEngine constructs a RuleEngine from an existing DB handle.
-func NewRuleEngine(db *sql.DB) (*RuleEngine, error) {
+func NewRuleEngine(db *sql.DB, ob *Outbox) (*RuleEngine, error) {
 	settings := gobreaker.Settings{
 		Name:        "rule-engine",
 		Timeout:     5 * time.Second,
@@ -48,11 +51,11 @@ func NewRuleEngine(db *sql.DB) (*RuleEngine, error) {
 			size = n
 		}
 	}
-	return NewRuleEngineWithSettings(db, settings, size)
+	return NewRuleEngineWithSettings(db, ob, settings, size)
 }
 
 // NewRuleEngineWithSettings constructs a RuleEngine using custom circuit breaker settings.
-func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings, cacheSize int) (*RuleEngine, error) {
+func NewRuleEngineWithSettings(db *sql.DB, ob *Outbox, settings gobreaker.Settings, cacheSize int) (*RuleEngine, error) {
 	stmtCache, err := NewStmtCache(db, cacheSize)
 	if err != nil {
 		return nil, err
@@ -64,19 +67,50 @@ func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings, cacheSiz
 		return nil, err
 	}
 	cb := resilience.NewGoBreaker("rule-engine", settings)
-	return &RuleEngine{db: db, stmts: stmtCache, breaker: cb}, nil
+	return &RuleEngine{db: db, stmts: stmtCache, breaker: cb, outbox: ob}, nil
+}
+
+// RecordEvent performs dbOp within a transaction then enqueues payload for publishing.
+func (re *RuleEngine) RecordEvent(ctx context.Context, topic string, payload interface{}, dbOp func(*sql.Tx) error) error {
+	if re.outbox == nil {
+		return errors.New("outbox not configured")
+	}
+	tx, err := re.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if dbOp != nil {
+		if err := dbOp(tx); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+	if err := re.outbox.Enqueue(ctx, tx, topic, payload); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
 
 // EvaluateAccess evaluates the rules for a single person/door pair.
 func (re *RuleEngine) EvaluateAccess(ctx context.Context, personID, doorID string) (Decision, error) {
+	ctx, span := otel.Tracer("rule-engine").Start(ctx, "EvaluateAccess")
+	defer span.End()
 	var d Decision
 	_, err := re.breaker.Execute(func() (interface{}, error) {
-		stmt, err := re.stmts.Get(ctx, queryEvaluate)
+		ctxQuery, qSpan := otel.Tracer("rule-engine").Start(ctx, "db.query")
+		defer qSpan.End()
+		stmt, err := re.stmts.Get(ctxQuery, queryEvaluate)
 		if err != nil {
+			qSpan.RecordError(err)
 			return nil, err
 		}
-		row := stmt.QueryRowContext(ctx, personID, doorID)
-		return nil, row.Scan(&d.PersonID, &d.DoorID, &d.Decision)
+		row := stmt.QueryRowContext(ctxQuery, personID, doorID)
+		err = row.Scan(&d.PersonID, &d.DoorID, &d.Decision)
+		if err != nil {
+			qSpan.RecordError(err)
+		}
+		return nil, err
 	})
 	if err != nil {
 		return Decision{}, err
@@ -105,12 +139,20 @@ func (re *RuleEngine) EvaluateBatch(ctx context.Context, reqs []AccessRequest) (
 
 // WarmCache preloads frequently used rules for the given facility.
 func (re *RuleEngine) WarmCache(ctx context.Context, facility string) error {
+	ctx, span := otel.Tracer("rule-engine").Start(ctx, "WarmCache")
+	defer span.End()
 	_, err := re.breaker.Execute(func() (interface{}, error) {
-		stmt, err := re.stmts.Get(ctx, queryWarm)
+		ctxExec, qSpan := otel.Tracer("rule-engine").Start(ctx, "db.exec")
+		defer qSpan.End()
+		stmt, err := re.stmts.Get(ctxExec, queryWarm)
 		if err != nil {
+			qSpan.RecordError(err)
 			return nil, err
 		}
-		_, err = stmt.ExecContext(ctx, facility)
+		_, err = stmt.ExecContext(ctxExec, facility)
+		if err != nil {
+			qSpan.RecordError(err)
+		}
 		return nil, err
 	})
 	return err

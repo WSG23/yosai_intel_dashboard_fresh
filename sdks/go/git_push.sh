@@ -3,10 +3,10 @@
 #
 # Usage example: /bin/sh ./git_push.sh wing328 openapi-petstore-perl "minor update" "gitlab.com"
 
-git_user_id=$1
-git_repo_id=$2
-release_note=$3
-git_host=$4
+git_user_id="$1"
+git_repo_id="$2"
+release_note="$3"
+git_host="$4"
 
 if [ "$git_host" = "" ]; then
     git_host="github.com"
@@ -43,9 +43,9 @@ if [ "$git_remote" = "" ]; then # git remote not defined
 
     if [ "$GIT_TOKEN" = "" ]; then
         echo "[INFO] \$GIT_TOKEN (environment variable) is not set. Using the git credential in your environment."
-        git remote add origin https://${git_host}/${git_user_id}/${git_repo_id}.git
+        git remote add origin "https://${git_host}/${git_user_id}/${git_repo_id}.git"
     else
-        git remote add origin https://${git_user_id}:"${GIT_TOKEN}"@${git_host}/${git_user_id}/${git_repo_id}.git
+        git remote add origin "https://${git_user_id}:${GIT_TOKEN}@${git_host}/${git_user_id}/${git_repo_id}.git"
     fi
 
 fi

@@ -133,7 +133,7 @@ curl -X GET http://localhost:8000/health/startup
 ## Metrics Endpoints
 
 
-### `GET /v1/metrics/drift`
+### `GET /api/v1/metrics/drift`
 
 **Summary:** Return sample drift statistics.
 
@@ -143,7 +143,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-@app.get("/v1/metrics/drift")
+@app.get("/api/v1/metrics/drift")
 async def v1_metrics_drift():
     ...
 ```
@@ -154,18 +154,18 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-@app.route("/v1/metrics/drift", methods=["GET"])
+@app.route("/api/v1/metrics/drift", methods=["GET"])
 def v1_metrics_drift():
     return jsonify()
 ```
 
 **curl**
 ```bash
-curl -X GET http://localhost:8000/v1/metrics/drift
+curl -X GET http://localhost:8000/api/v1/metrics/drift
 ```
 
 
-### `GET /v1/metrics/feature-importance`
+### `GET /api/v1/metrics/feature-importance`
 
 **Summary:** Return sample feature importances.
 
@@ -175,7 +175,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-@app.get("/v1/metrics/feature-importance")
+@app.get("/api/v1/metrics/feature-importance")
 async def v1_metrics_feature_importance():
     ...
 ```
@@ -186,18 +186,18 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-@app.route("/v1/metrics/feature-importance", methods=["GET"])
+@app.route("/api/v1/metrics/feature-importance", methods=["GET"])
 def v1_metrics_feature_importance():
     return jsonify()
 ```
 
 **curl**
 ```bash
-curl -X GET http://localhost:8000/v1/metrics/feature-importance
+curl -X GET http://localhost:8000/api/v1/metrics/feature-importance
 ```
 
 
-### `GET /v1/metrics/performance`
+### `GET /api/v1/metrics/performance`
 
 **Summary:** Return sample performance metrics.
 
@@ -207,7 +207,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-@app.get("/v1/metrics/performance")
+@app.get("/api/v1/metrics/performance")
 async def v1_metrics_performance():
     ...
 ```
@@ -218,12 +218,12 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-@app.route("/v1/metrics/performance", methods=["GET"])
+@app.route("/api/v1/metrics/performance", methods=["GET"])
 def v1_metrics_performance():
     return jsonify()
 ```
 
 **curl**
 ```bash
-curl -X GET http://localhost:8000/v1/metrics/performance
+curl -X GET http://localhost:8000/api/v1/metrics/performance
 ```

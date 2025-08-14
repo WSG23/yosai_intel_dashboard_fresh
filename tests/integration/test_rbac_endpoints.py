@@ -180,12 +180,12 @@ def test_rbac_enforces_admin_role(monkeypatch):
         login_mod.current_user.id = "regular_user"
         with client.session_transaction() as sess:
             sess["user_id"] = "regular_user"
-        resp = client.get("/v1/compliance/admin/dsar/pending")
+        resp = client.get("/api/v1/compliance/admin/dsar/pending")
         assert resp.status_code == 403
 
         # Admin user
         login_mod.current_user.id = "admin_user"
         with client.session_transaction() as sess:
             sess["user_id"] = "admin_user"
-        resp = client.get("/v1/compliance/admin/dsar/pending")
+        resp = client.get("/api/v1/compliance/admin/dsar/pending")
         assert resp.status_code == 200

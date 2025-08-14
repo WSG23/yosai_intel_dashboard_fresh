@@ -11,14 +11,14 @@ from yosai_intel_dashboard.src.infrastructure.callbacks import (
 
 def test_health_endpoint():
     client = TestClient(app)
-    resp = client.get("/v1/analytics/health")
+    resp = client.get("/api/v1/analytics/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "healthy"
 
 
 def test_chart_bad_type():
     client = TestClient(app)
-    resp = client.get("/v1/analytics/chart/bad")
+    resp = client.get("/api/v1/analytics/chart/bad")
     assert resp.status_code == 400
 
 
@@ -40,7 +40,7 @@ def test_generate_report_json(monkeypatch):
     monkeypatch.setattr(mod, "get_analytics_service", lambda: DummySvc())
     client = TestClient(app)
     resp = client.post(
-        "/v1/analytics/report",
+        "/api/v1/analytics/report",
         json={"type": "summary", "timeframe": "7d"},
     )
     assert resp.status_code == 200
@@ -60,7 +60,7 @@ def test_generate_report_file(monkeypatch):
     monkeypatch.setattr(mod, "get_analytics_service", lambda: DummySvc())
     client = TestClient(app)
     resp = client.post(
-        "/v1/analytics/report",
+        "/api/v1/analytics/report",
         json={"type": "summary", "format": "file"},
     )
     assert resp.status_code == 200

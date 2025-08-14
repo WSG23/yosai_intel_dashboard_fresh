@@ -24,6 +24,6 @@ class EchoResponse(BaseModel):
     message: str
 
 
-@app.post("/v1/echo", response_model=EchoResponse)
+@app.post("/api/v1/echo", response_model=EchoResponse)
 async def echo(body: EchoRequest) -> EchoResponse:
     return EchoResponse(message=body.message)

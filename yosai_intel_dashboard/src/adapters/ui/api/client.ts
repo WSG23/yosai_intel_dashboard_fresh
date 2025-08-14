@@ -30,7 +30,7 @@ export interface CsrfHeaders {
 export type ApiHeaders = Record<string, string> & AuthHeaders & CsrfHeaders;
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
+  process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 const TIMEOUT = 30000;
 
 const requestQueue: Array<() => Promise<any>> = [];
@@ -94,6 +94,26 @@ export interface ApiRequestConfig extends Omit<RequestInit, 'headers'> {
 
 function generateRequestId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+function randomHex(size: number): string {
+  const arr = new Uint8Array(size);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(arr);
+  } else {
+    const nodeCrypto = require('crypto');
+    const buf = nodeCrypto.randomBytes(size);
+    arr.set(buf);
+  }
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function generateTraceParent(): string {
+  const traceId = randomHex(16); // 16 bytes -> 32 hex chars
+  const spanId = randomHex(8); // 8 bytes -> 16 hex chars
+  return `00-${traceId}-${spanId}-01`;
 }
 
 function buildUrl(base: string, params?: Record<string, any>): string {
@@ -185,6 +205,9 @@ export async function apiRequest<T = any>(
       'X-Request-ID': generateRequestId(),
       'X-Request-Time': new Date().toISOString(),
     };
+    if (!finalHeaders['traceparent']) {
+      finalHeaders['traceparent'] = generateTraceParent();
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT);

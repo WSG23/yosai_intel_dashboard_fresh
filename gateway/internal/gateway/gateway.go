@@ -33,6 +33,7 @@ func New() (*Gateway, error) {
 	}
 
 	r := mux.NewRouter()
+	r.Use(imw.TracePropagator())
 	r.HandleFunc("/health", handlers.HealthCheck).Methods(http.MethodGet)
 	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 	r.Handle("/breaker", imw.RequireRole("admin")(http.HandlerFunc(handlers.BreakerMetrics))).Methods(http.MethodGet)

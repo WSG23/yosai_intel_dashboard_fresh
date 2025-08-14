@@ -52,7 +52,7 @@ def test_path_traversal_rejected(tmp_path):
     client = app.test_client()
     content = _csv_data_url(b"a,b")
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         json={"contents": [content], "filenames": ["../evil.csv"]},
     )
     assert resp.status_code == 400
@@ -66,7 +66,7 @@ def test_double_extension_rejected(tmp_path):
     png_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 8
     content = _csv_data_url(png_bytes)
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         json={"contents": [content], "filenames": ["shell.php.csv"]},
     )
     assert resp.status_code == 400
@@ -80,7 +80,7 @@ def test_null_byte_filename_rejected(tmp_path):
     content = _csv_data_url(b"a,b")
     bad_name = "null.csv\x00.txt"
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         json={"contents": [content], "filenames": [bad_name]},
     )
     assert resp.status_code == 400
@@ -93,7 +93,7 @@ def test_mime_mismatch_rejected(tmp_path):
     client = app.test_client()
     content = _csv_data_url(b"a,b", mime="text/plain")
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         json={"contents": [content], "filenames": ["test.csv"]},
     )
     assert resp.status_code == 400
@@ -107,7 +107,7 @@ def test_oversize_file_rejected(tmp_path, monkeypatch):
     client = app.test_client()
     big = b"a" * (1024 * 1024 + 1)
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         data={"file": (io.BytesIO(big), "big.csv")},
     )
     assert resp.status_code == 400
@@ -125,7 +125,7 @@ def test_zip_bomb_simulation_rejected(tmp_path):
     zip_bytes = buf.getvalue()
     content = _csv_data_url(zip_bytes)
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         json={"contents": [content], "filenames": ["bomb.csv"]},
     )
     assert resp.status_code == 400
