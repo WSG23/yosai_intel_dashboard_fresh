@@ -62,10 +62,10 @@ operations require the `feature_admin` role, which must be supplied via
 the `X-Roles` header.
 
 ```
-GET    /v1/flags             # list all flags
-GET    /v1/flags/<name>      # retrieve a single flag
-PUT    /v1/flags/<name>      # create or update a flag
-DELETE /v1/flags/<name>      # remove a flag
+GET    /api/v1/flags             # list all flags
+GET    /api/v1/flags/<name>      # retrieve a single flag
+PUT    /api/v1/flags/<name>      # create or update a flag
+DELETE /api/v1/flags/<name>      # remove a flag
 ```
 
 Only users with the `feature_admin` role can call these endpoints.

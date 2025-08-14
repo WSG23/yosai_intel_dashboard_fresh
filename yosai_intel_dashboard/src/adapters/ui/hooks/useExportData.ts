@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 
 const useExportData = () => {
   const [exporting, setExporting] = useState(false);

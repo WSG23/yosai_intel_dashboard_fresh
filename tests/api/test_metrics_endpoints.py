@@ -37,7 +37,7 @@ def test_performance_endpoint() -> None:
     repo = StubMetricsRepository(performance={"t": 1})
     app = create_app(repo)
     client = app.test_client()
-    resp = client.get("/v1/metrics/performance")
+    resp = client.get("/api/v1/metrics/performance")
     assert resp.status_code == 200
     assert resp.get_json() == {"t": 1}
 
@@ -46,7 +46,7 @@ def test_drift_endpoint() -> None:
     repo = StubMetricsRepository(drift={"prediction_drift": 0.3})
     app = create_app(repo)
     client = app.test_client()
-    resp = client.get("/v1/metrics/drift")
+    resp = client.get("/api/v1/metrics/drift")
     assert resp.status_code == 200
     assert resp.get_json() == {"prediction_drift": 0.3}
 
@@ -55,6 +55,6 @@ def test_feature_importance_endpoint() -> None:
     repo = StubMetricsRepository(feature_importances={"a": 0.1})
     app = create_app(repo)
     client = app.test_client()
-    resp = client.get("/v1/metrics/feature-importance")
+    resp = client.get("/api/v1/metrics/feature-importance")
     assert resp.status_code == 200
     assert resp.get_json() == {"a": 0.1}

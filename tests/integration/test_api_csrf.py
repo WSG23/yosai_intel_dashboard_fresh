@@ -89,19 +89,19 @@ def test_csrf_token_and_protected_endpoint(monkeypatch):
     app = _create_app(monkeypatch)
     client = TestClient(app)
 
-    token_resp = client.get("/v1/csrf-token")
+    token_resp = client.get("/api/v1/csrf-token")
     assert token_resp.status_code == 200
     token = token_resp.json()["csrf_token"]
     assert "HttpOnly" in token_resp.headers.get("set-cookie", "")
 
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         json={"contents": ["data:text/plain;base64,Zm8="], "filenames": ["t.txt"]},
     )
     assert resp.status_code == 400
 
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         json={"contents": ["data:text/plain;base64,Zm8="], "filenames": ["t.txt"]},
         headers={"X-CSRFToken": token},
     )

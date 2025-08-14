@@ -30,7 +30,7 @@ export interface CsrfHeaders {
 export type ApiHeaders = Record<string, string> & AuthHeaders & CsrfHeaders;
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:5001/v1';
+  process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 const TIMEOUT = 30000;
 
 const requestQueue: Array<() => Promise<any>> = [];

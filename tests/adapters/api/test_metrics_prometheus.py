@@ -243,10 +243,10 @@ def test_metrics_endpoint_records_upload(monkeypatch):
     app = _create_app(monkeypatch)
     client = TestClient(app)
 
-    csrf = client.get("/v1/csrf-token").json()["csrf_token"]
+    csrf = client.get("/api/v1/csrf-token").json()["csrf_token"]
     files = {"files": ("t.txt", b"hello", "text/plain")}
     resp = client.post(
-        "/v1/upload",
+        "/api/v1/upload",
         files=files,
         headers={"X-CSRFToken": csrf},
     )
