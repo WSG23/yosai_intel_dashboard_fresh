@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	gwconfig "github.com/WSG23/yosai-gateway/internal/config"
+	serrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
 type RateLimiter struct {
@@ -123,7 +124,7 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 			w.Header().Set("X-RateLimit-Reset", strconv.Itoa(int(ttl.Seconds())))
 		}
 		if !allowed {
-			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+			serrors.WriteJSON(w, http.StatusTooManyRequests, serrors.Unavailable, "rate limit exceeded", nil)
 			return
 		}
 		next.ServeHTTP(w, r)
