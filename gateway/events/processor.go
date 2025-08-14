@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	httpx "github.com/WSG23/httpx"
 	"github.com/WSG23/resilience"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
@@ -116,10 +117,14 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 	_, err = ep.breaker.Execute(func() (interface{}, error) {
 		_, pSpan := otel.Tracer("event-processor").Start(ctx, "kafka.produce")
 		defer pSpan.End()
-		err := ep.producer.Produce(&ckafka.Message{
+		msg := &ckafka.Message{
 			TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
 			Value:          data,
-		}, nil)
+		}
+		if rid, ok := httpx.RequestIDFromContext(ctx); ok {
+			msg.Headers = append(msg.Headers, ckafka.Header{Key: httpx.RequestIDHeader, Value: []byte(rid)})
+		}
+		err := ep.producer.Produce(msg, nil)
 		if err != nil {
 			pSpan.RecordError(err)
 		}

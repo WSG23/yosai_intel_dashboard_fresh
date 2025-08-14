@@ -88,6 +88,11 @@ func (g *Gateway) UseSecurityHeaders() {
 	g.router.Use(imw.SecurityHeaders())
 }
 
+// UseRequestID enables request ID propagation middleware.
+func (g *Gateway) UseRequestID() {
+	g.router.Use(imw.RequestID())
+}
+
 // Handler returns the root HTTP handler.
 func (g *Gateway) Handler() http.Handler {
 	return g.plugins.BuildMiddlewareChain(g.router)

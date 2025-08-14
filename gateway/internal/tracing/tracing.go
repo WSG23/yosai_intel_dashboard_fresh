@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	otlptracehttp "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -36,6 +37,20 @@ var (
 	serviceName        string
 )
 
+type requestIDSpanProcessor struct{}
+
+func (requestIDSpanProcessor) OnStart(ctx context.Context, s sdktrace.ReadWriteSpan) {
+	if rid, ok := httpx.RequestIDFromContext(ctx); ok {
+		s.SetAttributes(attribute.String("request.id", rid))
+	}
+}
+
+func (requestIDSpanProcessor) OnEnd(s sdktrace.ReadOnlySpan) {}
+
+func (requestIDSpanProcessor) Shutdown(ctx context.Context) error { return nil }
+
+func (requestIDSpanProcessor) ForceFlush(ctx context.Context) error { return nil }
+
 type traceFormatter struct {
 	logrus.JSONFormatter
 }
@@ -50,6 +65,9 @@ func (f *traceFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		}
 		if cid, ok := httpx.CorrelationIDFromContext(entry.Context); ok {
 			entry.Data["correlation_id"] = cid
+		}
+		if rid, ok := httpx.RequestIDFromContext(entry.Context); ok {
+			entry.Data["request_id"] = rid
 		}
 	}
 	if entry.Data["service"] == nil {
@@ -96,6 +114,7 @@ func InitTracing(name string) (func(context.Context) error, error) {
 		serviceEnvironment = "development"
 	}
 	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSpanProcessor(requestIDSpanProcessor{}),
 		sdktrace.WithBatcher(exp),
 		sdktrace.WithResource(sdkresource.NewWithAttributes(
 			semconv.SchemaURL,

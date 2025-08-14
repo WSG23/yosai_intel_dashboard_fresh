@@ -7,8 +7,14 @@
       "title": "Cache Hits vs Misses",
       "datasource": "Prometheus",
       "targets": [
-        {"expr": "gateway_cache_hits_total", "legendFormat": "hits"},
-        {"expr": "gateway_cache_misses_total", "legendFormat": "misses"}
+        {
+          "expr": "gateway_cache_hits_total",
+          "legendFormat": "hits"
+        },
+        {
+          "expr": "gateway_cache_misses_total",
+          "legendFormat": "misses"
+        }
       ]
     },
     {
@@ -16,7 +22,10 @@
       "title": "Events Processed",
       "datasource": "Prometheus",
       "targets": [
-        {"expr": "event_processor_events_processed_total", "legendFormat": "processed"}
+        {
+          "expr": "event_processor_events_processed_total",
+          "legendFormat": "processed"
+        }
       ]
     },
     {
@@ -35,7 +44,29 @@
       "title": "HTTP Requests",
       "datasource": "Prometheus",
       "targets": [
-        {"expr": "sum(rate(yosai_request_total[5m]))", "legendFormat": "req/s"}
+        {
+          "expr": "sum(rate(yosai_request_total[5m]))",
+          "legendFormat": "req/s"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Request Latency Percentiles",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.9, sum(rate(yosai_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p90"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(yosai_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(yosai_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p99"
+        }
       ]
     }
   ]

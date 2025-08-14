@@ -198,6 +198,7 @@ func main() {
 	if err != nil {
 		tracing.Logger.Fatalf("failed to create gateway: %v", err)
 	}
+	g.UseRequestID()
 
 	// Load plugin configuration and register plugins
 	gwConf, err := gwconfig.LoadGateway(os.Getenv("GATEWAY_CONFIG"))
