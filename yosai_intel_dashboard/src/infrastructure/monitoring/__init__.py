@@ -143,8 +143,6 @@ def __getattr__(name: str):
         from yosai_intel_dashboard.src.services.resilience.metrics import (
             start_metrics_server,
         )
-
-<<<<<< codex/wrap-http/kafka-clients-with-breaker-library
         return start_metrics_server
 
     raise AttributeError(name)

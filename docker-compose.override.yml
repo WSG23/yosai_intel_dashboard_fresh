@@ -1,7 +1,7 @@
 services:
   dashboard:
-    build:
-      dockerfile: Dockerfile.fixed
-  api:
-    build:
-      dockerfile: Dockerfile.fixed
+    command: >
+      bash -lc "python - <<'PY'
+      from yosai_intel_dashboard.src.app import app
+      app.run_server(host='0.0.0.0', port=8050, debug=True)
+      PY"

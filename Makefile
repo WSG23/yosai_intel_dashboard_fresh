@@ -1,3 +1,12 @@
+SHELL := /bin/bash
+DC := docker compose
+
+.PHONY: up down logs ps
+up:       ; @$(DC) up -d --build
+down:     ; @$(DC) down -v
+logs:     ; @$(DC) logs -f --tail=200
+ps:       ; @$(DC) ps
+
 BROKERS ?= localhost:9092
 PROM_URL ?= http://localhost:9090
 RATE ?= 50
@@ -9,7 +18,7 @@ DOCKER_COMPOSE := $(shell command -v docker-compose >/dev/null 2>&1 && echo dock
 ENV_VARS = $(shell [ -f .env ] && grep -v '^#' .env | xargs)
 
 .PHONY: load-test load-tests validate build test deploy format lint security clean \
-build-all test-all deploy-all logs deprecation-docs \
+build-all test-all deploy-all cli-logs deprecation-docs \
 proto-python proto-go proto-all docs test-quick test-cov \
 infra-up infra-down infra-logs
 
@@ -40,8 +49,8 @@ test-all:
 deploy-all:
 	$(CLI) deploy-all
 
-logs:
-	$(CLI) logs $(service)
+cli-logs:
+        $(CLI) logs $(service)
 
 format:
 	$(CLI) format
