@@ -23,6 +23,17 @@
           "legendFormat": "{{topic}}"
         }
       ]
+    },
+    {
+      "type": "graph",
+      "title": "DLQ Depth",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "queue_dlq_messages_total",
+          "legendFormat": "{{queue}}"
+        }
+      ]
     }
   ]
 }

@@ -1,22 +1,24 @@
 package events
 
 import (
-        "context"
-        "encoding/json"
-        "errors"
-        "time"
+	"context"
+	"encoding/json"
+	"errors"
+	"time"
 
-        "github.com/WSG23/resilience"
-        "github.com/WSG23/yosai-gateway/internal/tracing"
-        ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
-        "github.com/prometheus/client_golang/prometheus"
-        "github.com/sony/gobreaker"
+	httpx "github.com/WSG23/httpx"
+	"github.com/WSG23/resilience"
+	"github.com/WSG23/yosai-gateway/internal/tracing"
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sony/gobreaker"
 
-        "go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel"
 
-        "github.com/WSG23/yosai-gateway/internal/cache"
-        "github.com/WSG23/yosai-gateway/internal/engine"
-        ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
+	"github.com/WSG23/yosai-gateway/internal/cache"
+	"github.com/WSG23/yosai-gateway/internal/engine"
+	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
+
 )
 
 var accessEventsTopic = "access-events"
@@ -123,32 +125,24 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 	} else {
 		data, _ = json.Marshal(event)
 	}
-        eventsProcessed.Inc()
-        _, err = ep.breaker.Execute(func() (interface{}, error) {
-                _, pSpan := otel.Tracer("event-processor").Start(ctx, "kafka.produce")
-                defer pSpan.End()
-                err := ep.producer.Produce(&ckafka.Message{
-                        TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
-                        Key:            []byte(event.EventID),
-                        Value:          data,
-                }, nil)
-                if err != nil {
-                        pSpan.RecordError(err)
-                }
-                return nil, err
-        })
-        if err != nil {
-                // publish to DLQ with idempotency key
-                dlqErr := ep.producer.Produce(&ckafka.Message{
-                        TopicPartition: ckafka.TopicPartition{Topic: &accessEventsDLQ, Partition: ckafka.PartitionAny},
-                        Key:            []byte(event.EventID),
-                        Value:          data,
-                }, nil)
-                if dlqErr != nil {
-                        tracing.Logger.WithError(dlqErr).Error("failed to publish to DLQ")
-                }
-        }
-        return err
+	eventsProcessed.Inc()
+	_, err = ep.breaker.Execute(func() (interface{}, error) {
+		_, pSpan := otel.Tracer("event-processor").Start(ctx, "kafka.produce")
+		defer pSpan.End()
+		msg := &ckafka.Message{
+			TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
+			Value:          data,
+		}
+		if rid, ok := httpx.RequestIDFromContext(ctx); ok {
+			msg.Headers = append(msg.Headers, ckafka.Header{Key: httpx.RequestIDHeader, Value: []byte(rid)})
+		}
+		err := ep.producer.Produce(msg, nil)
+		if err != nil {
+			pSpan.RecordError(err)
+		}
+		return nil, err
+	})
+	return err
 
 }
 

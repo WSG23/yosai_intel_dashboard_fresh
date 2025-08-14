@@ -78,9 +78,13 @@ func NewTLSClient(certFile, keyFile, caFile string) (*Client, error) {
 // and will cancel the call if it is done.
 func (c *Client) DoJSON(ctx context.Context, req *http.Request, dst any) (err error) {
 	ctx, cid := EnsureCorrelationID(ctx)
+	ctx, rid := EnsureRequestID(ctx)
 	req = req.WithContext(ctx)
 	if req.Header.Get(CorrelationIDHeader) == "" {
 		req.Header.Set(CorrelationIDHeader, cid)
+	}
+	if req.Header.Get(RequestIDHeader) == "" {
+		req.Header.Set(RequestIDHeader, rid)
 	}
 	var resp *http.Response
 	backoff := c.cfg.Backoff
