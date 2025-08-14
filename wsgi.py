@@ -20,3 +20,8 @@ from fastapi.responses import RedirectResponse
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse("/docs")
+from fastapi.responses import RedirectResponse
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/docs")
