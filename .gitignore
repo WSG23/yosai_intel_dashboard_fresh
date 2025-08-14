@@ -77,7 +77,8 @@ data/learned_mappings.json
 !config/schema.json
 !gateway/internal/config/circuitbreakers_schema.json
 !deployment/rollback_state.json
-logs/
+/logs/*
+!/logs/.gitkeep
 # Temporary uploaded files
 temp/
 # Database
