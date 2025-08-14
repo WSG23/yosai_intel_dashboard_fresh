@@ -76,3 +76,6 @@ neo4j==5.14.1
 python-louvain==0.16
 uvicorn==0.34.0
 prometheus_fastapi_instrumentator>=6.1.0
+cryptography>=42.0.0
+aiofiles>=23.2.1
+aiofiles>=23.2.1

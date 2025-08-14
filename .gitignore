@@ -151,3 +151,5 @@ code_review_report.md
 archive/
 !yosai_intel_dashboard/src/infrastructure/cache/
 yosai_intel_dashboard/src/**/__pycache__/
+local.env
+local.env
