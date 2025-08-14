@@ -40,7 +40,6 @@ RUN set -eux; \
 WORKDIR /app
 COPY . /app
 COPY ../yosai_intel_dashboard /app/yosai_intel_dashboard
-COPY ../core /app/core
 RUN chmod 0755 docker-entrypoint.sh \
     && find /app -type f -name '*.sh' -exec chmod 0755 {} \; \
     && find /app -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.conf' \) -exec chmod 0644 {} \; \

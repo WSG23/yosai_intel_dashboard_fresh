@@ -39,7 +39,6 @@ RUN set -eux; \
     fi
 WORKDIR /app
 COPY . /app
-COPY ../core /app/core
 COPY ../docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod 0755 docker-entrypoint.sh \
     && find /app -type f -name '*.sh' -exec chmod 0755 {} \; \
