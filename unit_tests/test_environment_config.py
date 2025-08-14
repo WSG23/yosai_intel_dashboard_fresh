@@ -41,12 +41,12 @@ def test_select_config_file_env_var(monkeypatch, tmp_path):
 def test_select_config_file_from_environment(monkeypatch):
     monkeypatch.delenv("YOSAI_CONFIG_FILE", raising=False)
     monkeypatch.setenv("YOSAI_ENV", "production")
-    expected = Path("config/production.yaml")
+    expected = Path("config/environments/production.yaml")
     assert select_config_file() == expected
 
 
 def test_select_config_file_unknown_env(monkeypatch):
     monkeypatch.delenv("YOSAI_CONFIG_FILE", raising=False)
     monkeypatch.setenv("YOSAI_ENV", "qa")
-    expected = Path("config/config.yaml")
+    expected = Path("config/environments/development.yaml")
     assert select_config_file() == expected

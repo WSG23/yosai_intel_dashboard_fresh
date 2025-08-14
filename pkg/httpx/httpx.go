@@ -2,9 +2,12 @@ package httpx
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	cb "github.com/WSG23/resilience"
@@ -39,6 +42,31 @@ func NewWithConfig(c HTTPDoer, cfg Config, b *gobreaker.CircuitBreaker) *Client 
 
 // Default is the package level client used by DoJSON. It uses DefaultConfig.
 var Default = NewWithConfig(&http.Client{Timeout: DefaultConfig().Timeout}, DefaultConfig(), nil)
+
+// NewTLSClient creates a Client using certificates for mTLS.
+func NewTLSClient(certFile, keyFile, caFile string) (*Client, error) {
+	cfg := &tls.Config{}
+	if caFile != "" {
+		ca, err := os.ReadFile(caFile)
+		if err != nil {
+			return nil, err
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(ca) {
+			return nil, fmt.Errorf("append ca cert")
+		}
+		cfg.RootCAs = pool
+	}
+	if certFile != "" && keyFile != "" {
+		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return nil, err
+		}
+		cfg.Certificates = []tls.Certificate{cert}
+	}
+	tr := &http.Transport{TLSClientConfig: cfg}
+	return New(&http.Client{Transport: tr, Timeout: 10 * time.Second}), nil
+}
 
 // DoJSON executes the HTTP request using the client's HTTPDoer and decodes
 // the JSON response body into dst. The provided context controls the request

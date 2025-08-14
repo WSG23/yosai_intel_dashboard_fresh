@@ -32,6 +32,10 @@ __all__ = [
     "circuit_breaker_state",
     "start_metrics_server",
     "ModelRegistryAlerting",
+    "decision_count",
+    "decision_latency",
+    "record_decision",
+    "track_decision_latency",
 
 ]
 
@@ -140,6 +144,7 @@ def __getattr__(name: str):
             start_metrics_server,
         )
 
+<<<<<< codex/wrap-http/kafka-clients-with-breaker-library
         return start_metrics_server
 
     raise AttributeError(name)

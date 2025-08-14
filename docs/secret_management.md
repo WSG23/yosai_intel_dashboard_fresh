@@ -132,7 +132,7 @@ FERNET_KEY=<base64-fernet-key>
 is used to decrypt any encrypted values returned from Vault. The
 `SecureConfigManager` will raise a `ConfigurationError` if either credential is
 missing or if a secret cannot be retrieved.
-Update `production.yaml` to reference secrets like:
+Update `config/environments/production.yaml` to reference secrets like:
 
 ```yaml
 database:
