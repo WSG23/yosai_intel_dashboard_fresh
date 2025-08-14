@@ -7,19 +7,18 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-# Import Path for building robust file paths
 try:
-    from yosai_intel_dashboard.src.adapters.ui.components.ui.navbar import *  # type: ignore  # noqa: F403
+    from yosai_intel_dashboard.src.adapters.ui.components.ui.navbar import *  # type: ignore
 
     _NAVBAR_AVAILABLE = True
 except Exception:
     _NAVBAR_AVAILABLE = False
 
-from yosai_intel_dashboard.src.infrastructure.error_handling.handlers import (
-    register_error_handlers,
-)
 from yosai_intel_dashboard.src.core.app_factory.health import (
     register_health_endpoints,
+)
+from yosai_intel_dashboard.src.infrastructure.error_handling.handlers import (
+    register_error_handlers,
 )
 
 
@@ -38,12 +37,10 @@ def create_app(mode=None, **kwargs):
     register_error_handlers(app.server)
     register_health_endpoints(app.server)
 
-    # if navbar is optional, skip if missing
     if not _NAVBAR_AVAILABLE:
-        # proceed without navbar; layout should still be created elsewhere
-        navbar_layout = None
-    else:
-        navbar_layout = create_navbar_layout()  # noqa: F405
+        pass
+
+    navbar_layout = create_navbar_layout() if _NAVBAR_AVAILABLE else None
 
     # Simple working layout
     app.layout = html.Div(
