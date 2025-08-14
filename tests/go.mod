@@ -3,11 +3,14 @@ module github.com/WSG23/yosai-gateway/tests
 go 1.23.8
 
 require (
+	github.com/WSG23/errors v0.0.0 // indirect
 	github.com/WSG23/yosai-gateway v0.0.0
 	github.com/redis/go-redis/v9 v9.11.0
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.24.1
 )
+
+require github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

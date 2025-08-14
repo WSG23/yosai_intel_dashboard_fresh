@@ -15,7 +15,8 @@ depends_on = None
 
 def upgrade() -> None:
     sql_path = Path(__file__).resolve().parents[1] / "004_add_missing_indexes.sql"
-    op.execute(sql_path.read_text())
+    with op.get_context().autocommit_block():
+        op.execute(sql_path.read_text())
 
 
 def downgrade() -> None:

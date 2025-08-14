@@ -22,10 +22,10 @@ ALTER TABLE access_events
   );
 
 -- Common indexes for query patterns
-CREATE INDEX IF NOT EXISTS idx_access_events_time ON access_events(time);
-CREATE INDEX IF NOT EXISTS idx_access_events_person_id ON access_events(person_id);
-CREATE INDEX IF NOT EXISTS idx_access_events_door_id ON access_events(door_id);
-CREATE INDEX IF NOT EXISTS idx_access_events_facility_id ON access_events(facility_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_time ON access_events(time);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_person_id ON access_events(person_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_door_id ON access_events(door_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_events_facility_id ON access_events(facility_id);
 
 -- Continuous aggregate for fast summaries
 CREATE MATERIALIZED VIEW IF NOT EXISTS access_events_5min
@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS access_permissions (
     valid_from TIMESTAMPTZ,
     valid_to TIMESTAMPTZ
 );
-CREATE INDEX IF NOT EXISTS idx_access_permissions_person_id ON access_permissions(person_id);
-CREATE INDEX IF NOT EXISTS idx_access_permissions_door_id ON access_permissions(door_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_permissions_person_id ON access_permissions(person_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_access_permissions_door_id ON access_permissions(door_id);
 
 CREATE TABLE IF NOT EXISTS access_blocklist (
     person_id VARCHAR(50) PRIMARY KEY,
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS time_restrictions (
     end_time TIME NOT NULL,
     days_of_week INT[]
 );
-CREATE INDEX IF NOT EXISTS idx_time_restrictions_door_id ON time_restrictions(door_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_time_restrictions_door_id ON time_restrictions(door_id);
 
 CREATE TABLE IF NOT EXISTS anti_passback_state (
     person_id VARCHAR(50) PRIMARY KEY,
@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS anomaly_detections (
     verified_at TIMESTAMPTZ
 );
 SELECT create_hypertable('anomaly_detections', 'detected_at', if_not_exists => TRUE);
-CREATE INDEX IF NOT EXISTS idx_anomaly_detections_detected_at ON anomaly_detections(detected_at);
-CREATE INDEX IF NOT EXISTS idx_anomaly_detections_type ON anomaly_detections(anomaly_type);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_anomaly_detections_detected_at ON anomaly_detections(detected_at);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_anomaly_detections_type ON anomaly_detections(anomaly_type);
 ALTER TABLE anomaly_detections
   SET (
        timescaledb.compress,
