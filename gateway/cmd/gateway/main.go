@@ -37,6 +37,8 @@ import (
 	"github.com/sony/gobreaker"
 
 	xerrors "github.com/WSG23/errors"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func validateRequiredEnv(vars []string) {
@@ -291,7 +293,7 @@ func main() {
 			}
 		}
 	}
-	srv := &http.Server{Addr: addr, Handler: g.Handler(), TLSConfig: tlsCfg}
+	srv := &http.Server{Addr: addr, Handler: otelhttp.NewHandler(g.Handler(), "http"), TLSConfig: tlsCfg}
 
 	go func() {
 		tracing.Logger.Infof("starting gateway on %s", addr)

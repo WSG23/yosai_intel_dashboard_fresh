@@ -12,6 +12,8 @@ import (
 
 	cb "github.com/WSG23/resilience"
 	"github.com/sony/gobreaker"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // HTTPDoer is the subset of http.Client used by this package. It enables
@@ -34,6 +36,9 @@ func New(c HTTPDoer) *Client {
 
 // NewWithConfig allows providing a configuration and custom breaker.
 func NewWithConfig(c HTTPDoer, cfg Config, b *gobreaker.CircuitBreaker) *Client {
+	if hc, ok := c.(*http.Client); ok {
+		hc.Transport = otelhttp.NewTransport(hc.Transport)
+	}
 	if b == nil {
 		b = cb.NewGoBreaker("httpx", gobreaker.Settings{})
 	}
@@ -41,7 +46,7 @@ func NewWithConfig(c HTTPDoer, cfg Config, b *gobreaker.CircuitBreaker) *Client 
 }
 
 // Default is the package level client used by DoJSON. It uses DefaultConfig.
-var Default = NewWithConfig(&http.Client{Timeout: DefaultConfig().Timeout}, DefaultConfig(), nil)
+var Default = NewWithConfig(&http.Client{Timeout: DefaultConfig().Timeout, Transport: otelhttp.NewTransport(http.DefaultTransport)}, DefaultConfig(), nil)
 
 // NewTLSClient creates a Client using certificates for mTLS.
 func NewTLSClient(certFile, keyFile, caFile string) (*Client, error) {

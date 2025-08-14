@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	httpx "github.com/WSG23/pkg/httpx"
+	httpx "github.com/WSG23/httpx"
 )
 
 func certPath(name string) string {
