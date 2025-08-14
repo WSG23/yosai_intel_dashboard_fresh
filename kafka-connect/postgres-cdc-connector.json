@@ -16,6 +16,9 @@
     "transforms.timescaledb.database.port": "5432",
     "transforms.timescaledb.database.user": "postgres",
     "transforms.timescaledb.database.password": "${DB_PASSWORD}",
-    "transforms.timescaledb.database.dbname": "postgres"
+    "transforms.timescaledb.database.dbname": "postgres",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "dead-letter",
+    "errors.deadletterqueue.topic.replication.factor": 1
   }
 }
