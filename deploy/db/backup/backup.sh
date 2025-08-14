@@ -3,7 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Load backup configuration
-# shellcheck source=./backup.conf disable=SC1091
+# shellcheck source=deploy/db/backup/backup.conf
+# shellcheck disable=SC1091
+
 source "$SCRIPT_DIR/backup.conf"
 
 # Ensure required variables are set
