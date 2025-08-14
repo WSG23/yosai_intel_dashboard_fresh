@@ -2,10 +2,13 @@ package gateway
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	httpSwagger "github.com/swaggo/http-swagger"
 
+	_ "github.com/WSG23/yosai-gateway/docs"
 	"github.com/WSG23/yosai-gateway/internal/handlers"
 	ilog "github.com/WSG23/yosai-gateway/internal/logging"
 	imw "github.com/WSG23/yosai-gateway/internal/middleware"
@@ -34,6 +37,10 @@ func New() (*Gateway, error) {
 	r.HandleFunc("/health", handlers.HealthCheck).Methods(http.MethodGet)
 	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 	r.Handle("/breaker", imw.RequireRole("admin")(http.HandlerFunc(handlers.BreakerMetrics))).Methods(http.MethodGet)
+
+	if os.Getenv("YOSAI_ENV") == "development" {
+		r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+	}
 
 	// Sensitive endpoint subrouters with access control
 	doors := r.PathPrefix("/api/v1/doors").Subrouter()
