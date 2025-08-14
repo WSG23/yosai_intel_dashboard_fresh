@@ -1701,6 +1701,19 @@ job periodically (for example via `cron` or a Kubernetes CronJob):
 python scripts/replicate_to_timescale.py
 ```
 
+### Data Synchronization Check
+
+Use `scripts/data-sync-check.sh` to ensure tables remain consistent between the
+source PostgreSQL database and TimescaleDB. Provide connection strings via flags
+or the `POSTGRES_DSN` and `TIMESCALE_DSN` environment variables:
+
+```bash
+scripts/data-sync-check.sh --postgres "$POSTGRES_DSN" --timescale "$TIMESCALE_DSN" --tables events,metrics
+```
+
+The script compares row counts for each table (or hashes with `--hash`) and
+exits with a non‑zero status when mismatches are found.
+
 For convenience the repository provides a wrapper script which upgrades all
 databases defined in the configuration:
 
