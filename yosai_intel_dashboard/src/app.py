@@ -6,6 +6,7 @@ from yosai_intel_dashboard.src.adapters.ui.pages import greetings
 from yosai_intel_dashboard.src.callbacks import register_callbacks
 
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
+from flask import Response
 
 try:  # pragma: no cover - allow running without full services package
     from yosai_intel_dashboard.src.services.greeting import GreetingService
@@ -32,5 +33,13 @@ def create_app() -> Dash:
     return app
 
 
+app = create_app()
+
+
+@app.server.get("/health")
+def _health() -> Response:  # pragma: no cover - simple health endpoint
+    return Response("ok", 200)
+
+
 if __name__ == "__main__":
-    create_app().run(debug=True)
+    app.run(debug=True)
