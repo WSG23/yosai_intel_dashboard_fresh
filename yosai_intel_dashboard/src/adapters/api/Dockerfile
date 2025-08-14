@@ -25,12 +25,12 @@ COPY --from=builder /opt/venv /opt/venv
 ARG UID=1000
 ARG GID=1000
 RUN set -eux; \
-    if command -v addgroup >/dev/null 2>&1; then \
-      addgroup -g "${GID}" appuser || true; \
-      adduser -D -u "${UID}" -G appuser appuser 2>/dev/null || adduser --uid "${UID}" --gid "${GID}" --disabled-password --gecos "" appuser; \
+    if addgroup --help 2>&1 | grep -q BusyBox; then \
+        addgroup -g "${GID}" appuser; \
+        adduser -D -u "${UID}" -G appuser appuser; \
     else \
-      groupadd -g "${GID}" appuser || true; \
-      useradd -m -u "${UID}" -g "${GID}" appuser || true; \
+        groupadd --gid "${GID}" appuser; \
+        useradd --no-create-home --uid "${UID}" --gid "${GID}" appuser; \
     fi
 WORKDIR /app
 COPY . /app
