@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Load backup configuration
-# shellcheck source=deploy/db/backup/backup.conf
+# shellcheck source=./backup.conf disable=SC1091
 source "$SCRIPT_DIR/backup.conf"
 
 # Ensure required variables are set
@@ -21,11 +21,9 @@ METRICS_FILE="$METRICS_DIR/db_backup.prom"
 mkdir -p "$METRICS_DIR"
 
 if "$REPO_ROOT/scripts/backup_timescale.sh"; then
-  {
-    echo "backup_last_success_timestamp $(date +%s)"
-    echo "backup_failures_total 0"
-  } >"$METRICS_FILE"
+  printf 'backup_last_success_timestamp %s\nbackup_failures_total 0\n' "$(date +%s)" >"$METRICS_FILE"
 else
   echo "backup_failures_total 1" >"$METRICS_FILE"
   exit 1
 fi
+
