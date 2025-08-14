@@ -9,6 +9,9 @@ import time
 from typing import Dict, List
 
 import psutil
+from yosai_intel_dashboard.src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def profile_pid(pid: int, interval: float, duration: float) -> List[Dict[str, float]]:
@@ -57,8 +60,13 @@ def main() -> None:
             json.dump(records, f, indent=2)
     else:
         for r in records:
-            print(
-                f"{r['timestamp']:.0f} cpu={r['cpu_percent']:.1f}% rss={r['rss_mb']:.1f}MB"
+            logger.info(
+                "Profile record",
+                extra={
+                    "timestamp": r["timestamp"],
+                    "cpu_percent": r["cpu_percent"],
+                    "rss_mb": r["rss_mb"],
+                },
             )
 
 

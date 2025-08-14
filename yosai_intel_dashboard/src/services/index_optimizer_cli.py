@@ -6,7 +6,10 @@ import argparse
 import json
 from typing import Sequence
 
+from yosai_intel_dashboard.src.core.logging import get_logger
 from yosai_intel_dashboard.src.database.index_optimizer import IndexOptimizer
+
+logger = get_logger(__name__)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -25,16 +28,18 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if args.command == "analyze":
         stats = optimizer.analyze_index_usage()
-        print(json.dumps(stats, indent=2, default=str))
+        logger.info("Index usage statistics", extra={"stats": stats})
     elif args.command == "create":
         statements = optimizer.recommend_new_indexes(args.table, args.columns)
         if not statements:
-            print("No indexes to create")
+            logger.info(
+                "No indexes to create", extra={"table": args.table, "columns": args.columns}
+            )
             return
         for sql in statements:
-            print(f"Executing: {sql}")
+            logger.info("Executing index creation", extra={"sql": sql})
         optimizer.apply_recommendations(args.table, args.columns)
-        print("Created")
+        logger.info("Created index", extra={"table": args.table, "columns": args.columns})
 
 
 if __name__ == "__main__":  # pragma: no cover - manual execution
