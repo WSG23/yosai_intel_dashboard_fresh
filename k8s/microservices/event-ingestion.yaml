@@ -28,7 +28,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: event-ingestion
-          image: event-ingestion:${IMAGE_TAG:-v0.1.0}
+          image: event-ingestion:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true

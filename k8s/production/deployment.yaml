@@ -32,12 +32,12 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: setup-symlinks
-          image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+          image: yosai-intel-dashboard:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           command: ["python", "scripts/create_symlinks.py"]
       containers:
         - name: yosai-dashboard
-          image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+          image: yosai-intel-dashboard:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8050
@@ -53,7 +53,10 @@ spec:
             - name: DB_NAME
               value: "yosai_intel"
             - name: DB_USER
-              value: "postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
             - name: VAULT_ADDR
               valueFrom:
                 configMapKeyRef:

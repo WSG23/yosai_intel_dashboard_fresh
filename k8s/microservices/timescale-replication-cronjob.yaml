@@ -15,7 +15,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: replicate-to-timescale
-              image: yosai-intel-dashboard:${IMAGE_TAG:-v0.1.0}
+              image: yosai-intel-dashboard:${IMAGE_TAG}
               imagePullPolicy: IfNotPresent
               command: ["python", "scripts/replicate_to_timescale.py"]
               envFrom:

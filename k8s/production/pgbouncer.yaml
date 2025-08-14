@@ -22,7 +22,10 @@ spec:
             - name: DB_PORT
               value: "5432"
             - name: DB_USER
-              value: postgres
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
