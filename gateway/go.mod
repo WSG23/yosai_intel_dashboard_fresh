@@ -8,10 +8,11 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/WSG23/auth v0.0.0
 	github.com/WSG23/errors v0.0.0
-	github.com/WSG23/resilience v0.0.0
-	github.com/WSG23/yosai-framework v0.0.0
-	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
-	github.com/alicebob/miniredis/v2 v2.35.0
+        github.com/WSG23/resilience v0.0.0
+        github.com/WSG23/yosai-framework v0.0.0
+        github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
+       github.com/WSG23/httpx v0.0.0
+        github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bits-and-blooms/bloom/v3 v3.7.0
 	github.com/confluentinc/confluent-kafka-go v1.9.3-RC3
 	github.com/golang-jwt/jwt/v5 v5.2.3
@@ -100,3 +101,5 @@ replace github.com/WSG23/errors => ../pkg/errors
 replace github.com/WSG23/auth => ../pkg/auth
 
 replace github.com/WSG23/resilience => ../resilience
+
+replace github.com/WSG23/httpx => ../pkg/httpx

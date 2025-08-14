@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/WSG23/resilience"
@@ -166,12 +165,12 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 			spanCtx, span := otel.Tracer("event-processor").Start(ctx, "process_event")
 			var ev AccessEvent
 			if err := json.Unmarshal(m.Value, &ev); err != nil {
-				log.Printf("malformed access event: %v", err)
+				tracing.Logger.WithContext(spanCtx).WithError(err).Warn("malformed access event")
 				span.End()
 				continue
 			}
 			if err := engine.Evaluate(spanCtx, &ev); err != nil {
-				log.Printf("rule evaluation error: %v", err)
+				tracing.Logger.WithContext(spanCtx).WithError(err).Warn("rule evaluation error")
 				span.End()
 				continue
 			}

@@ -72,7 +72,11 @@ func NewTLSClient(certFile, keyFile, caFile string) (*Client, error) {
 // the JSON response body into dst. The provided context controls the request
 // and will cancel the call if it is done.
 func (c *Client) DoJSON(ctx context.Context, req *http.Request, dst any) (err error) {
+	ctx, cid := EnsureCorrelationID(ctx)
 	req = req.WithContext(ctx)
+	if req.Header.Get(CorrelationIDHeader) == "" {
+		req.Header.Set(CorrelationIDHeader, cid)
+	}
 	var resp *http.Response
 	backoff := c.cfg.Backoff
 	for attempt := 0; ; attempt++ {
