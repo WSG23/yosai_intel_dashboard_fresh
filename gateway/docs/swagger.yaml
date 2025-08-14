@@ -1,0 +1,42 @@
+basePath: /
+info:
+  contact: {}
+  description: API documentation for the Yōsai gateway service.
+  title: Yōsai Gateway API
+  version: "1.0"
+paths:
+  /breaker:
+    get:
+      description: Returns Prometheus counters for circuit breaker state transitions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              additionalProperties:
+                type: number
+              type: object
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Circuit breaker metrics
+      tags:
+      - system
+  /health:
+    get:
+      description: Returns OK if the service is running
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      summary: Health check
+      tags:
+      - system
+swagger: "2.0"
