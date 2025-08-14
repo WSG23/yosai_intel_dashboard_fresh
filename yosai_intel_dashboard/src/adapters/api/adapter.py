@@ -58,7 +58,10 @@ from yosai_intel_dashboard.src.infrastructure.monitoring.request_metrics import 
     upload_files_total,
 )
 from yosai_intel_dashboard.src.services.auth import require_service_token
+from yosai_intel_dashboard.src.core.logging import get_logger
 
+
+logger = get_logger(__name__)
 
 def _configure_app(service: BaseService) -> Path:
     """Initialize the FastAPI app, base service and middleware."""
@@ -354,9 +357,14 @@ def create_api_app() -> "FastAPI":
 
 if __name__ == "__main__":
     app = create_api_app()
-    print("\n🚀 Starting Yosai Intel Dashboard API...")
-    print(f"   Available at: http://localhost:{API_PORT}")
-    print(f"   Upload endpoint: http://localhost:{API_PORT}/v1/upload")
+    logger.info(
+        "Starting Yosai Intel Dashboard API",
+        extra={
+            "port": API_PORT,
+            "url": f"http://localhost:{API_PORT}",
+            "upload_endpoint": f"http://localhost:{API_PORT}/v1/upload",
+        },
+    )
 
     import uvicorn
 

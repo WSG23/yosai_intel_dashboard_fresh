@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import functools
 import inspect
-import logging
 import sys
 import time
 from typing import Any, Dict, List, Tuple
 
-logger = logging.getLogger(__name__)
+from yosai_intel_dashboard.src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # In-memory log of registration events: (callback_id, timestamp, caller_module)
 _REGISTRATION_LOG: List[Tuple[str, float, str]] = []
@@ -69,13 +70,15 @@ def print_registration_report() -> None:
     """Print a summary report of captured registration events."""
     for cid, ts, module in _REGISTRATION_LOG:
         timestr = time.strftime("%H:%M:%S", time.localtime(ts))
-        print(f"{timestr} - {module} -> {cid}")
+        logger.info(
+            "Registration event",
+            extra={"timestamp": timestr, "module": module, "callback_id": cid},
+        )
 
     duplicates = find_repeated_imports()
     if duplicates:
-        print("\nRepeated imports detected:")
         for mod in duplicates:
-            print(f"  {mod}")
+            logger.warning("Repeated import detected", extra={"module": mod})
 
 
 if __name__ == "__main__":

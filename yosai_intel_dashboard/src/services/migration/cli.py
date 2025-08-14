@@ -5,8 +5,11 @@ import asyncio
 import json
 from typing import List
 
+from yosai_intel_dashboard.src.core.logging import get_logger
 from .framework import MigrationManager
 from .strategies import AnalyticsMigration, EventsMigration, GatewayMigration
+
+logger = get_logger(__name__)
 
 
 def _build_manager(args: argparse.Namespace) -> MigrationManager:
@@ -40,7 +43,7 @@ def main(argv: List[str] | None = None) -> int:
         return 0
     if args.cmd == "status":
         status = asyncio.run(mgr.status())
-        print(json.dumps(status, indent=2))
+        logger.info("Migration status", extra={"status": status})
         return 0
     parser.print_help()
     return 1
