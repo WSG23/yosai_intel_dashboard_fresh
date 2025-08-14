@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log"
 
 	"crypto/tls"
 	"crypto/x509"
@@ -47,7 +46,7 @@ func validateRequiredEnv(vars []string) {
 		}
 	}
 	if len(missing) > 0 {
-		log.Fatalf("missing required environment variables: %s", strings.Join(missing, ", "))
+		tracing.Logger.Fatalf("missing required environment variables: %s", strings.Join(missing, ", "))
 	}
 }
 
@@ -89,11 +88,11 @@ func readVaultField(c *vault.Client, path string) (string, error) {
 func main() {
 	b, err := framework.NewServiceBuilder("gateway", "")
 	if err != nil {
-		log.Fatalf("failed to init service builder: %v", err)
+		tracing.Logger.Fatalf("failed to init service builder: %v", err)
 	}
 	svc, err := b.Build()
 	if err != nil {
-		log.Fatalf("failed to build service: %v", err)
+		tracing.Logger.Fatalf("failed to build service: %v", err)
 	}
 	go svc.Start()
 	defer svc.Stop()
@@ -102,15 +101,15 @@ func main() {
 
 	vclient, err := newVaultClient()
 	if err != nil {
-		log.Fatalf("failed to init vault client: %v", err)
+		tracing.Logger.Fatalf("failed to init vault client: %v", err)
 	}
 	dbPassword, err := readVaultField(vclient, "secret/data/db#password")
 	if err != nil {
-		log.Fatalf("failed to read db password: %v", err)
+		tracing.Logger.Fatalf("failed to read db password: %v", err)
 	}
 	jwtSecret, err := readVaultField(vclient, "secret/data/jwt#secret")
 	if err != nil {
-		log.Fatalf("failed to read jwt secret: %v", err)
+		tracing.Logger.Fatalf("failed to read jwt secret: %v", err)
 	}
 
 	shutdown, err := tracing.InitTracing("gateway")

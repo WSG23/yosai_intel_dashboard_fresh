@@ -15,3 +15,9 @@ scrape_configs:
         labels:
           job: docker
           __path__: /var/lib/docker/containers/*/*-json.log
+    pipeline_stages:
+      - json:
+          expressions:
+            correlation_id: correlation_id
+            level: level
+            msg: msg
