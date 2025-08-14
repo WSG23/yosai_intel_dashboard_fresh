@@ -8,6 +8,8 @@ import (
 	"os"
 	"syscall"
 	"testing"
+
+	"context"
 )
 
 func TestZapLoggerJSON(t *testing.T) {
@@ -44,5 +46,33 @@ func TestZapLoggerJSON(t *testing.T) {
 	}
 	if m["msg"] != "hello" {
 		t.Fatalf("unexpected message %v", m["msg"])
+	}
+}
+
+func TestInfoContextAddsCorrelationID(t *testing.T) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	orig := os.Stdout
+	os.Stdout = w
+	lg, err := NewZapLogger("test", "INFO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.WithValue(context.Background(), correlationIDKey, "abc123")
+	lg.InfoContext(ctx, "hello")
+	_ = w.Close()
+	os.Stdout = orig
+	data, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(data), &m); err != nil {
+		t.Fatal(err)
+	}
+	if m[correlationIDKey] != "abc123" {
+		t.Fatalf("missing correlation id, got %#v", m)
 	}
 }

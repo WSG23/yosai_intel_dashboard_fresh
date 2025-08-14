@@ -1,0 +1,27 @@
+# Fluent Bit configuration to ship logs to Elasticsearch and Datadog
+service:
+  daemon: "Off"
+  flush: 1
+
+inputs:
+  - name: tail
+    path: /var/log/app/*.log
+    parser: json
+
+filters:
+  - name: modify
+    match: "*"
+    add:
+      service: "gateway"
+
+outputs:
+  - name: es
+    match: "*"
+    host: ${ELASTICSEARCH_HOST}
+    port: 9200
+    logstash_format: On
+  - name: datadog
+    match: "*"
+    apikey: ${DATADOG_API_KEY}
+    dd_service: "gateway"
+    dd_source: "fluentbit"

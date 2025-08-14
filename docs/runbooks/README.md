@@ -7,6 +7,7 @@ This directory contains standard operating procedures for the Yosai Intel Dashbo
 - **Restart services** using `docker-compose restart <service>` or `kubectl rollout restart deployment/<service>`.
 - **Check health** endpoints at `/v1/health` and review Prometheus targets for scrape status.
 - **View metrics** in Grafana dashboards under the `gateway`, `event-processor` and `database` folders.
+- **Validate logs** in staging by searching for recent correlation IDs in Kibana and the Datadog Log Explorer.
 
 ## Incident Response
 

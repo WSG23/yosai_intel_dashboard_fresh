@@ -22,9 +22,8 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/redis/go-redis/v9 v9.11.0
-	github.com/riferrei/srclient v0.7.3
-	github.com/sirupsen/logrus v1.9.3
-	github.com/sony/gobreaker v1.0.0
+       github.com/riferrei/srclient v0.7.3
+       github.com/sony/gobreaker v1.0.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0

@@ -6,7 +6,9 @@ import (
 	"sync"
 
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
+
+	"github.com/WSG23/yosai-gateway/internal/tracing"
 )
 
 // StmtCache caches prepared statements with LRU eviction.
@@ -24,7 +26,9 @@ func NewStmtCache(db *sql.DB, size int) (*StmtCache, error) {
 		if stmt, ok := value.(*sql.Stmt); ok {
 			_ = stmt.Close()
 		}
-		logrus.WithField("query", key).Debug("evicted prepared statement")
+		if tracing.Logger != nil {
+			tracing.Logger.DebugContext(context.Background(), "evicted prepared statement", zap.Any("query", key))
+		}
 	})
 	if err != nil {
 		return nil, err
@@ -39,12 +43,16 @@ func (c *StmtCache) Get(ctx context.Context, query string) (*sql.Stmt, error) {
 
 	if stmt, ok := c.lru.Get(query); ok {
 		c.hits++
-		logrus.WithField("query", query).Debug("prepared statement cache hit")
+		if tracing.Logger != nil {
+			tracing.Logger.DebugContext(ctx, "prepared statement cache hit", zap.String("query", query))
+		}
 		return stmt.(*sql.Stmt), nil
 	}
 
 	c.miss++
-	logrus.WithField("query", query).Debug("prepared statement cache miss")
+	if tracing.Logger != nil {
+		tracing.Logger.DebugContext(ctx, "prepared statement cache miss", zap.String("query", query))
+	}
 	stmt, err := c.db.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
