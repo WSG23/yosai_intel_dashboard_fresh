@@ -131,13 +131,15 @@ def __getattr__(name: str):
         from .ab_testing import ABTest
 
         return ABTest
-    if name in {"circuit_breaker_state", "start_metrics_server"}:
-        from yosai_intel_dashboard.src.services.resilience.metrics import (
-            circuit_breaker_state,
-            start_metrics_server,
+    if name == "circuit_breaker_state":
+        from .prometheus.breaker import circuit_breaker_state  # noqa: F401
 
+        return circuit_breaker_state
+    if name == "start_metrics_server":
+        from yosai_intel_dashboard.src.services.resilience.metrics import (
+            start_metrics_server,
         )
 
-        return locals()[name]
+        return start_metrics_server
 
     raise AttributeError(name)
