@@ -3,12 +3,13 @@ from __future__ import annotations
 from yosai_intel_dashboard.src.core.env_validation import validate_required_env
 from yosai_intel_dashboard.src.core.app_factory import create_app as _create_app
 
-
 def create_app():
     validate_required_env()
     app = _create_app()
     return app.server
 
+
+logger = get_logger(__name__)
 
 if __name__ == "__main__":
     import os

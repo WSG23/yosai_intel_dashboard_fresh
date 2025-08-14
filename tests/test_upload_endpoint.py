@@ -20,7 +20,7 @@ sys.modules["yosai_intel_dashboard"].__path__ = [
 
 def _create_app(tmp_path, handler: object | None = None):
     upload_ep = importlib.import_module(
-        "yosai_intel_dashboard.src.services.upload_endpoint"
+        "yosai_intel_dashboard.src.services.upload.upload_endpoint"
     )
     app = Flask(__name__)
     bp = upload_ep.create_upload_blueprint(

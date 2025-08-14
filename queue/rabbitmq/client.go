@@ -12,6 +12,10 @@ import (
 	cb "github.com/WSG23/resilience"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sony/gobreaker"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // QueueClient wraps an AMQP connection and channel.
@@ -88,8 +92,11 @@ func (q *QueueClient) DeclareQueue(name string, durable bool, deadLetter string,
 
 // PublishTask publishes a Task to the queue with optional delay and priority.
 func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task) error {
+	ctx, span := otel.Tracer("queue").Start(ctx, "rabbitmq.publish", trace.WithAttributes(attribute.String("queue", queue)))
+	defer span.End()
 	body, err := json.Marshal(task)
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 	headers := amqp.Table{}
@@ -105,6 +112,9 @@ func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task)
 		Timestamp:    time.Now(),
 		Headers:      headers,
 	})
+	if err != nil {
+		span.RecordError(err)
+	}
 	return err
 }
 
@@ -127,11 +137,14 @@ func (q *QueueClient) ConsumeQueue(ctx context.Context, queue string, handler fu
 				msg.Nack(false, false)
 				continue
 			}
-			if err := handler(ctx, &t); err != nil {
+			cctx, span := otel.Tracer("queue").Start(ctx, "rabbitmq.consume", trace.WithAttributes(attribute.String("queue", queue)))
+			if err := handler(cctx, &t); err != nil {
+				span.RecordError(err)
 				msg.Nack(false, true)
 			} else {
 				msg.Ack(false)
 			}
+			span.End()
 		}
 	}
 }

@@ -48,14 +48,6 @@ def _create_app(monkeypatch):
         sys.modules, "prometheus_fastapi_instrumentator", prom_stub
     )
 
-    upload_stub = types.ModuleType(
-        "yosai_intel_dashboard.src.services.upload_endpoint"
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "yosai_intel_dashboard.src.services.upload_endpoint",
-        upload_stub,
-    )
 
     upload_upload_stub = types.ModuleType(
         "yosai_intel_dashboard.src.services.upload.upload_endpoint"

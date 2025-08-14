@@ -28,7 +28,7 @@ from tests.stubs.flask_wtf import CSRFProtect, generate_csrf
 
 
 def _create_app(monkeypatch, tmp_path):
-    from yosai_intel_dashboard.src.services import upload_endpoint
+    from yosai_intel_dashboard.src.services.upload import upload_endpoint
 
     app = Flask(__name__)
     # Use a throwaway value instead of a real secret

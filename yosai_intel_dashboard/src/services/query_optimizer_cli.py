@@ -6,7 +6,10 @@ import argparse
 import json
 from typing import Sequence
 
+from yosai_intel_dashboard.src.core.logging import get_logger
 from yosai_intel_dashboard.src.services.query_optimizer import QueryOptimizer
+
+logger = get_logger(__name__)
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Query optimizer utilities")
@@ -29,15 +32,15 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     if args.command == "suggest":
         report = optimizer.generate_regression_report(args.query)
-        print(json.dumps(report, indent=2))
+        logger.info("Index suggestion report", extra={"report": report})
     elif args.command == "migrate":
         suggestions = optimizer.suggest_indexes(args.query)
         if not suggestions:
-            print("No index suggestions")
+            logger.info("No index suggestions", extra={"query": args.query})
             return
         with open(args.output, "w", encoding="utf-8") as fh:
             fh.write(";\n".join(suggestions) + ";\n")
-        print(f"Wrote migration script to {args.output}")
+        logger.info("Wrote migration script", extra={"output": args.output})
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point

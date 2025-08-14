@@ -103,8 +103,6 @@ def _create_app(monkeypatch, origins):
 
     from flask import Blueprint
 
-    upload_stub = types.ModuleType("yosai_intel_dashboard.src.services.upload_endpoint")
-    upload_stub.create_upload_blueprint = lambda *a, **k: Blueprint("upload", __name__)
     device_stub = types.ModuleType("yosai_intel_dashboard.src.services.device_endpoint")
     device_stub.create_device_blueprint = lambda *a, **k: Blueprint("device", __name__)
     mappings_stub = types.ModuleType(
@@ -147,7 +145,6 @@ def _create_app(monkeypatch, origins):
     upload_upload_stub.UploadRequestSchema = UploadRequestSchema
     upload_upload_stub.UploadResponseSchema = UploadResponseSchema
     for name, mod in {
-        "yosai_intel_dashboard.src.services.upload_endpoint": upload_stub,
         "yosai_intel_dashboard.src.services.upload.upload_endpoint": upload_upload_stub,
         "yosai_intel_dashboard.src.services.device_endpoint": device_stub,
         "yosai_intel_dashboard.src.services.mappings_endpoint": mappings_stub,

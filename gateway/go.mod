@@ -8,10 +8,11 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/WSG23/auth v0.0.0
 	github.com/WSG23/errors v0.0.0
-	github.com/WSG23/resilience v0.0.0
-	github.com/WSG23/yosai-framework v0.0.0
-	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
-	github.com/alicebob/miniredis/v2 v2.35.0
+        github.com/WSG23/resilience v0.0.0
+        github.com/WSG23/yosai-framework v0.0.0
+        github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
+       github.com/WSG23/httpx v0.0.0
+        github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bits-and-blooms/bloom/v3 v3.7.0
 	github.com/confluentinc/confluent-kafka-go v1.9.3-RC3
 	github.com/golang-jwt/jwt/v5 v5.2.3
@@ -27,6 +28,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/sony/gobreaker v1.0.0
 	github.com/xeipuuv/gojsonschema v1.2.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/exporters/zipkin v1.17.0
@@ -45,6 +47,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fatih/color v1.18.0 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -100,3 +103,5 @@ replace github.com/WSG23/errors => ../pkg/errors
 replace github.com/WSG23/auth => ../pkg/auth
 
 replace github.com/WSG23/resilience => ../resilience
+
+replace github.com/WSG23/httpx => ../pkg/httpx

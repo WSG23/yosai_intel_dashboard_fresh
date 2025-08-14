@@ -8,9 +8,12 @@ from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Blueprint, Flask
 from flask_apispec import FlaskApiSpec
+from yosai_intel_dashboard.src.core.logging import get_logger
 
 # Ensure project root is on the path when executed directly
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+logger = get_logger(__name__)
 
 # Provide lightweight stubs for heavy dependencies when generating the spec
 if os.environ.get("SPEC_STUBS"):
@@ -123,7 +126,7 @@ def create_flask_app() -> Flask:
         create_mappings_blueprint,
     )
     from yosai_intel_dashboard.src.services.token_endpoint import create_token_blueprint
-    from yosai_intel_dashboard.src.services.upload_endpoint import (
+    from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
         create_upload_blueprint,
     )
 
@@ -219,4 +222,4 @@ if __name__ == "__main__":  # pragma: no cover - manual spec generation
     import yaml
 
     spec = create_spec()
-    print(yaml.safe_dump(spec.to_dict()))
+    logger.info("Generated OpenAPI spec", extra={"spec": spec.to_dict()})
