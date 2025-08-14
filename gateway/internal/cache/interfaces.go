@@ -17,4 +17,7 @@ type CacheService interface {
 
 	// SetDecision stores a decision in the cache using the configured TTL.
 	SetDecision(ctx context.Context, d Decision) error
+
+	// InvalidateDecision removes the cached decision for the given person and door.
+	InvalidateDecision(ctx context.Context, personID, doorID string) error
 }
