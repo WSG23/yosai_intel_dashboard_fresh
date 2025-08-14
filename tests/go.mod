@@ -17,6 +17,9 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.11.0 // indirect
+	github.com/WSG23/auth v0.0.0 // indirect
+	github.com/WSG23/errors v0.0.0 // indirect
+	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/bits-and-blooms/bloom/v3 v3.7.0 // indirect
@@ -91,3 +94,5 @@ replace github.com/WSG23/yosai-gateway => ../gateway
 replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../shared/errors
 
 replace github.com/WSG23/errors => ../pkg/errors
+
+replace github.com/WSG23/auth => ../pkg/auth

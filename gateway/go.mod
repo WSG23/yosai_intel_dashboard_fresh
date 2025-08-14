@@ -5,12 +5,13 @@ go 1.23.8
 require github.com/gorilla/mux v1.8.1
 
 require (
-        github.com/DATA-DOG/go-sqlmock v1.5.2
-        github.com/WSG23/resilience v0.0.0
-        github.com/WSG23/yosai-framework v0.0.0
-        github.com/WSG23/errors v0.0.0
-        github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
-        github.com/alicebob/miniredis/v2 v2.35.0
+	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/WSG23/auth v0.0.0
+	github.com/WSG23/errors v0.0.0
+	github.com/WSG23/resilience v0.0.0
+	github.com/WSG23/yosai-framework v0.0.0
+	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
+	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bits-and-blooms/bloom/v3 v3.7.0
 	github.com/confluentinc/confluent-kafka-go v1.9.3-RC3
 	github.com/golang-jwt/jwt/v5 v5.2.3
@@ -81,12 +82,12 @@ require (
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
-	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
@@ -95,5 +96,7 @@ replace github.com/WSG23/yosai-framework => ../go/framework
 replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../shared/errors
 
 replace github.com/WSG23/errors => ../pkg/errors
+
+replace github.com/WSG23/auth => ../pkg/auth
 
 replace github.com/WSG23/resilience => ../resilience

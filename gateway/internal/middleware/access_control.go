@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	authz "github.com/WSG23/auth"
 	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
@@ -17,6 +18,11 @@ func RequirePermissionHeader(perm string) func(http.Handler) http.Handler {
 					next.ServeHTTP(w, r)
 					return
 				}
+			}
+			roles := strings.Split(r.Header.Get("X-Roles"), ",")
+			if authz.RolesHavePermission(roles, perm) {
+				next.ServeHTTP(w, r)
+				return
 			}
 			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 		})
