@@ -11,7 +11,7 @@ cachetools==6.1.0
 websockets==11.0.3
 plotly==5.15.0
 dash-bootstrap-components==1.6.0
-pandas==2.0.3
+pandas==2.2.3
 numpy>=2.0,<3.0
 Authlib==1.6.1
 PyJWT==2.10.1
@@ -22,7 +22,7 @@ scipy==1.16.1
 scikit-learn==1.7.1
 joblib==1.3.2
 psutil==6.1.0  # safety 3.6.0 requires psutil~=6.1
-psycopg2-binary==2.9.7
+psycopg2-binary==2.9.10
 asyncpg==0.30.0
 redis==6.4.0
 requests==2.32.4
