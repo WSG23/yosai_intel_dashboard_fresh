@@ -23,6 +23,20 @@ Service-to-service calls use signed JWTs. Each token includes a `sub` claim iden
 
 Failures return HTTP 401 with specific error codes such as `token_expired` or `invalid_audience` to aid debugging and auditing.
 
+### Roles
+
+Access to gateway endpoints is controlled by roles defined in `config/rbac.yaml`.
+The default roles are:
+
+- **admin** – full access including door control and configuration changes
+- **analyst** – read and write analytics data
+- **viewer** – read-only analytics access
+- **service** – enqueue and dequeue background tasks
+
+Routes require specific permissions which are granted to roles via the matrix.
+Requests presenting an `X-Roles` header with an appropriate role, or an
+`X-Permissions` header with the explicit permission, are allowed.
+
 ## Sensitive Data Exposure
 
 Secrets and personal data are stored using encrypted channels and secret management tooling. Configuration files avoid embedding credentials directly and rely on secure storage.
@@ -47,3 +61,16 @@ To reduce the risk of SQL injection vulnerabilities:
 - Validate user-supplied data types before executing a query.
 
 Following these practices ensures that user input is passed separately from the SQL statement, preventing malicious injections.
+
+## Secret Rotation
+
+Secrets are rotated automatically. The `k8s/cron/secret-rotate.yaml` CronJob
+invokes a Vault script to generate fresh credentials and update Kubernetes
+secrets. Services load credentials from mounted files and rely on the
+`pkg/config` `SecretWatcher` to reload values when the files change.
+
+To trigger a rotation manually, run:
+
+```bash
+kubectl create job --from=cronjob/secret-rotate secret-rotate-manual
+```

@@ -2,11 +2,16 @@ package rabbitmq
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"os"
 	"sync"
 	"time"
 
+	cb "github.com/WSG23/resilience"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sony/gobreaker"
 )
 
 // QueueClient wraps an AMQP connection and channel.
@@ -14,6 +19,7 @@ type QueueClient struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	mu      sync.RWMutex
+	breaker *gobreaker.CircuitBreaker
 }
 
 // Task represents a work item sent through the queue.
@@ -30,7 +36,30 @@ type Task struct {
 
 // NewQueueClient establishes a new AMQP connection.
 func NewQueueClient(url string) (*QueueClient, error) {
-	conn, err := amqp.Dial(url)
+	tlsCert := os.Getenv("TLS_CERT_FILE")
+	tlsKey := os.Getenv("TLS_KEY_FILE")
+	tlsCA := os.Getenv("TLS_CA_FILE")
+	var conn *amqp.Connection
+	var err error
+	if tlsCert != "" && tlsKey != "" {
+		cfg := &tls.Config{}
+		if tlsCA != "" {
+			ca, err2 := os.ReadFile(tlsCA)
+			if err2 == nil {
+				pool := x509.NewCertPool()
+				if pool.AppendCertsFromPEM(ca) {
+					cfg.RootCAs = pool
+				}
+			}
+		}
+		cert, err2 := tls.LoadX509KeyPair(tlsCert, tlsKey)
+		if err2 == nil {
+			cfg.Certificates = []tls.Certificate{cert}
+		}
+		conn, err = amqp.DialTLS(url, cfg)
+	} else {
+		conn, err = amqp.Dial(url)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +68,8 @@ func NewQueueClient(url string) (*QueueClient, error) {
 		conn.Close()
 		return nil, err
 	}
-	return &QueueClient{conn: conn, channel: ch}, nil
+	b := cb.NewGoBreaker("rabbitmq", gobreaker.Settings{})
+	return &QueueClient{conn: conn, channel: ch, breaker: b}, nil
 }
 
 // DeclareQueue ensures a queue exists with optional dead-letter routing and priority support.
@@ -75,6 +105,7 @@ func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task)
 		Timestamp:    time.Now(),
 		Headers:      headers,
 	})
+	return err
 }
 
 // ConsumeQueue consumes messages from queue until ctx is cancelled.

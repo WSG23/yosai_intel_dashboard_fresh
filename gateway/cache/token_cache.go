@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bits-and-blooms/bloom/v3"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
@@ -29,6 +30,21 @@ func NewTokenCache(client *redis.Client) *TokenCache {
 func tokenKey(id string) string     { return "token:" + id }
 func blacklistKey(id string) string { return "blacklist:" + id }
 
+var (
+	tokenCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "gateway_token_cache_hits_total",
+		Help: "Number of token cache hits",
+	})
+	tokenCacheMisses = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "gateway_token_cache_misses_total",
+		Help: "Number of token cache misses",
+	})
+)
+
+func init() {
+	prometheus.MustRegister(tokenCacheHits, tokenCacheMisses)
+}
+
 // Get retrieves cached claims for a token ID. Missing keys and timeouts are not treated as errors.
 func (t *TokenCache) Get(ctx context.Context, tokenID string) (*auth.EnhancedClaims, error) {
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
@@ -37,10 +53,12 @@ func (t *TokenCache) Get(ctx context.Context, tokenID string) (*auth.EnhancedCla
 	val, err := t.client.Get(ctx, tokenKey(tokenID)).Result()
 	if err != nil {
 		if err == redis.Nil || errors.Is(err, context.DeadlineExceeded) {
+			tokenCacheMisses.Inc()
 			return nil, nil
 		}
 		return nil, err
 	}
+	tokenCacheHits.Inc()
 	var claims auth.EnhancedClaims
 	if err := json.Unmarshal([]byte(val), &claims); err != nil {
 		return nil, err
@@ -57,6 +75,13 @@ func (t *TokenCache) Set(ctx context.Context, tokenID string, claims *auth.Enhan
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
 	return t.client.Set(ctx, tokenKey(tokenID), data, ttl).Err()
+}
+
+// Delete removes cached claims for the given token ID.
+func (t *TokenCache) Delete(ctx context.Context, tokenID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+	return t.client.Del(ctx, tokenKey(tokenID)).Err()
 }
 
 // Blacklist marks a token ID as invalid for the given TTL.

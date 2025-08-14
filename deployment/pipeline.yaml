@@ -1,0 +1,25 @@
+stages:
+  - build
+  - canary
+  - promote
+
+build:
+  stage: build
+  script:
+    - docker build -t yosai-dashboard:$CI_COMMIT_SHA .
+
+canary:
+  stage: canary
+  script:
+    - kubectl apply -f k8s/canary
+  when: manual
+  needs:
+    - build
+
+promote_blue_green:
+  stage: promote
+  script:
+    - kubectl apply -f k8s/bluegreen
+  when: manual
+  needs:
+    - canary

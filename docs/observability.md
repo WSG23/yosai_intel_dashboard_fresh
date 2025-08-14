@@ -28,3 +28,21 @@ prometheus.io/port: "<port>"
 
 These annotations or accompanying `ServiceMonitor` resources allow Prometheus to
 scrape the metrics endpoints automatically.
+
+## Metrics
+
+The platform tracks key decision activity and latency:
+
+- `service_decisions_total{service,decision}` – counter of important decisions made by each service.
+- `service_decision_latency_seconds{service,decision}` – histogram of decision latency in seconds. Target: 95% < 500ms.
+
+Both the `gateway` and `queue` services expose `/metrics` endpoints for Prometheus scraping.
+
+## SLO Targets
+
+| Metric | Target |
+| --- | --- |
+| Decision latency p95 | < 0.5s |
+| Error budget remaining | ≥ 99.9% |
+
+Dashboards and alerting rules for these SLOs live in `deploy/grafana/`.

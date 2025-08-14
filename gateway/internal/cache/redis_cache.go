@@ -93,3 +93,10 @@ func (r *RedisCache) SetDecision(ctx context.Context, d Decision) error {
 	defer cancel()
 	return r.client.Set(ctx, r.key(d.PersonID, d.DoorID), data, r.ttl).Err()
 }
+
+// InvalidateDecision removes a cached decision for the given person and door.
+func (r *RedisCache) InvalidateDecision(ctx context.Context, personID, doorID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+	return r.client.Del(ctx, r.key(personID, doorID)).Err()
+}

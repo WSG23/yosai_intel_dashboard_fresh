@@ -10,6 +10,7 @@ from .interfaces import (
     IDoorRepository,
     IPersonRepository,
 )
+from .outbox_repository import OutboxRepository
 
 __all__ = [
     "IPersonRepository",
@@ -18,4 +19,5 @@ __all__ = [
     "PersonRepository",
     "AccessEventRepository",
     "DoorRepository",
+    "OutboxRepository",
 ]

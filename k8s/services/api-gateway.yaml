@@ -87,3 +87,18 @@ spec:
             limits:
               cpu: "200m"
               memory: "256Mi"
+          env:
+            - name: TLS_CERT_FILE
+              value: /etc/tls/tls.crt
+            - name: TLS_KEY_FILE
+              value: /etc/tls/tls.key
+            - name: TLS_CA_FILE
+              value: /etc/tls/ca.crt
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/tls
+              readOnly: true
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: gateway-tls

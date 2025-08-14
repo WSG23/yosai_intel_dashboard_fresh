@@ -1,0 +1,4 @@
+{
+  "image": "yosai-dashboard:1.0.0",
+  "migration": "head"
+}

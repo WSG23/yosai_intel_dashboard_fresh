@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import time
@@ -155,6 +156,18 @@ class TimescaleDBManager:
             retention_days,
         )
 
+        # Outbox table used for transactional event publishing
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS outbox_events (
+                id UUID PRIMARY KEY,
+                payload JSONB NOT NULL,
+                processed BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+            """,
+        )
+
         await conn.execute(
             """
             CREATE TABLE IF NOT EXISTS model_monitoring_events (
@@ -202,6 +215,53 @@ class TimescaleDBManager:
             if elapsed_ms > 1000:
                 logger.warning("Slow query: %.2fms", elapsed_ms)
             return result
+
+    # ------------------------------------------------------------------
+    async def record_access_event(self, event: dict[str, object]) -> None:
+        """Insert an access event and enqueue it in the outbox.
+
+        The event is written to ``access_events`` and ``outbox_events`` within
+        a single transaction to guarantee atomicity.
+        """
+
+        if self.pool is None:
+            await self.connect()
+        assert self.pool is not None
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute(
+                    """
+                    INSERT INTO access_events (time, event_id, person_id, door_id, facility_id,
+                                              access_result, badge_status, response_time_ms, metadata)
+                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                    """,
+                    event.get("time"),
+                    event.get("event_id"),
+                    event.get("person_id"),
+                    event.get("door_id"),
+                    event.get("facility_id"),
+                    event.get("access_result"),
+                    event.get("badge_status"),
+                    event.get("response_time_ms"),
+                    event.get("metadata", {}),
+                )
+                await conn.execute(
+                    "INSERT INTO outbox_events (id, payload) VALUES ($1, $2)",
+                    event.get("event_id"),
+                    json.dumps(event),
+                )
+
+    async def pending_outbox_events(self) -> int:
+        """Return the number of unprocessed outbox events."""
+
+        if self.pool is None:
+            await self.connect()
+        assert self.pool is not None
+        async with self.pool.acquire() as conn:
+            count = await conn.fetchval(
+                "SELECT COUNT(*) FROM outbox_events WHERE processed = FALSE"
+            )
+        return int(count)
 
     # ------------------------------------------------------------------
     async def close(self) -> None:
