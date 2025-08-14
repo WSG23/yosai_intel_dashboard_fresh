@@ -1,0 +1,7 @@
+database:
+  type: postgres
+  host: db
+  port: 5432
+  name: yosai
+  user: devuser
+  password: devpass

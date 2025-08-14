@@ -71,3 +71,5 @@ networkx==3.5
 neo4j==5.14.1
 python-louvain==0.16
 uvicorn==0.34.0
+
+pydantic>=2.6,<3

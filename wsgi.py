@@ -7,13 +7,16 @@ except Exception:
     def get_logger(name: str):
         logger = logging.getLogger(name)
         if not logger.handlers:
-            logging.basicConfig(level=logging.INFO)
+            logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
         return logger
+from fastapi import FastAPI
+app = FastAPI()
 logger = get_logger(__name__)
-dev_mode = os.environ.get("YOSAI_DEV") == "1" or "--dev" in sys.argv
-if dev_mode:
-    from yosai_intel_dashboard.src.core.app_factory import create_app as _create_app
-    application = _create_app()
-else:
-    from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app
-    application = create_api_app()
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+from fastapi.responses import RedirectResponse
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/docs")
