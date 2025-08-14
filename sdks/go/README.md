@@ -100,6 +100,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [Error](docs/Error.md)
  - [GetCsrfToken200Response](docs/GetCsrfToken200Response.md)
 
 

@@ -25,6 +25,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/getCsrfToken_200_response"
           description: CSRF token
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Rate limit exceeded
       summary: Get CSRF token
   /upload:
     post:
@@ -208,6 +214,29 @@ paths:
       summary: Get feature flag audit history
 components:
   schemas:
+    Error:
+      example:
+        code: invalid_input
+        details: ""
+        message: message
+      properties:
+        code:
+          enum:
+          - invalid_input
+          - unauthorized
+          - not_found
+          - internal
+          - unavailable
+          type: string
+        message:
+          type: string
+        details:
+          description: Additional error details
+          nullable: true
+      required:
+      - code
+      - message
+      type: object
     getCsrfToken_200_response:
       example:
         csrf_token: csrf_token

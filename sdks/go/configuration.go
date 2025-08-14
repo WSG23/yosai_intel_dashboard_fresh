@@ -1,7 +1,7 @@
 /*
 Yōsai Intel Dashboard API
 
-Physical security intelligence and access control API. 
+Physical security intelligence and access control API.
 
 API version: 1.0.0
 */
@@ -68,9 +68,9 @@ type ServerVariable struct {
 
 // ServerConfiguration stores the information about a server
 type ServerConfiguration struct {
-	URL string
+	URL         string
 	Description string
-	Variables map[string]ServerVariable
+	Variables   map[string]ServerVariable
 }
 
 // ServerConfigurations stores multiple ServerConfiguration items
@@ -91,25 +91,24 @@ type Configuration struct {
 // NewConfiguration returns a new Configuration object
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
-		DefaultHeader:    make(map[string]string),
-		UserAgent:        "OpenAPI-Generator/1.0.0/go",
-		Debug:            false,
-		Servers:          ServerConfigurations{
+		DefaultHeader: make(map[string]string),
+		UserAgent:     "OpenAPI-Generator/1.0.0/go",
+		Debug:         false,
+		Servers: ServerConfigurations{
 			{
-				URL: "https://api.yosai.com/v1",
+				URL:         "https://api.yosai.com/v1",
 				Description: "Production",
 			},
 			{
-				URL: "https://staging-api.yosai.com/v1",
+				URL:         "https://staging-api.yosai.com/v1",
 				Description: "Staging",
 			},
 			{
-				URL: "http://localhost:8080/v1",
+				URL:         "http://localhost:8080/v1",
 				Description: "Development",
 			},
 		},
-		OperationServers: map[string]ServerConfigurations{
-		},
+		OperationServers: map[string]ServerConfigurations{},
 	}
 	return cfg
 }
