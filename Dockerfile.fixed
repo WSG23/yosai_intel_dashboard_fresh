@@ -1,4 +1,4 @@
-FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee AS builder
+FROM python:3.13-slim@sha256:2a928e11761872b12003515ea59b3c40bb5340e2e5ecc1108e043f92be7e473d AS builder
 WORKDIR /app
 
 # Install system packages
@@ -27,7 +27,7 @@ RUN python -m venv /opt/venv && \
       /opt/venv/bin/pip install --no-cache-dir -r requirements.essential.txt; \
     fi
 
-FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee
+FROM python:3.13-slim@sha256:2a928e11761872b12003515ea59b3c40bb5340e2e5ecc1108e043f92be7e473d
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
 
