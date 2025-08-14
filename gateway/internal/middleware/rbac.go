@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 
+	authz "github.com/WSG23/auth"
 	"github.com/WSG23/yosai-gateway/internal/auth"
 	"github.com/WSG23/yosai-gateway/internal/rbac"
 	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
@@ -21,12 +22,24 @@ func RequirePermission(s *rbac.RBACService, perm string) func(http.Handler) http
 				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 				return
 			}
-			allowed, err := s.HasPermission(r.Context(), claims.Subject, perm)
-			if err != nil || !allowed {
-				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+			for _, p := range claims.Permissions {
+				if p == perm {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			if authz.RolesHavePermission(claims.Roles, perm) {
+				next.ServeHTTP(w, r)
 				return
 			}
-			next.ServeHTTP(w, r)
+			if s != nil {
+				allowed, err := s.HasPermission(r.Context(), claims.Subject, perm)
+				if err == nil && allowed {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
 		})
 	}
 }

@@ -1,0 +1,14 @@
+roles:
+  admin:
+    - doors.control
+    - analytics.read
+    - events.write
+    - admin
+  analyst:
+    - analytics.read
+    - analytics.write
+  viewer:
+    - analytics.read
+  service:
+    - tasks.enqueue
+    - tasks.dequeue
