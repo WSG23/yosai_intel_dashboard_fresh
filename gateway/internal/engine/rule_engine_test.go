@@ -56,7 +56,7 @@ func setupRedis(t *testing.T) (*miniredis.Miniredis, cache.CacheService) {
 	return srv, cache.NewRedisCache()
 }
 
-func TestCachedRuleEngineUsesCache(t *testing.T) {
+func TestCachedRuleEngineDegradedMode(t *testing.T) {
 	srv, c := setupRedis(t)
 	defer srv.Close()
 
@@ -75,16 +75,13 @@ func TestCachedRuleEngineUsesCache(t *testing.T) {
 	}
 
 	cre := &CachedRuleEngine{Engine: eng, Cache: c}
-	rows := sqlmock.NewRows([]string{"person_id", "door_id", "decision"}).AddRow("p", "d", "Granted")
-	mock.ExpectQuery(queryEvaluate).WithArgs("p", "d").WillReturnRows(rows)
-
 	ctx := context.Background()
-	if _, err := cre.EvaluateAccess(ctx, "p", "d"); err != nil {
-		t.Fatalf("first evaluate: %v", err)
+	d, err := cre.EvaluateAccess(ctx, "p", "d")
+	if err != nil {
+		t.Fatalf("evaluate: %v", err)
 	}
-	// second call should hit cache and not trigger DB query
-	if _, err := cre.EvaluateAccess(ctx, "p", "d"); err != nil {
-		t.Fatalf("second evaluate: %v", err)
+	if d.Decision != defaultDecision {
+		t.Fatalf("expected default decision, got %s", d.Decision)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -162,15 +159,76 @@ func TestCachedRuleEngineInvalidation(t *testing.T) {
 		t.Fatalf("invalidate: %v", err)
 	}
 
-	rows2 := sqlmock.NewRows([]string{"person_id", "door_id", "decision"}).AddRow("p", "d", "Denied")
-	mock.ExpectQuery(queryEvaluate).WithArgs("p", "d").WillReturnRows(rows2)
-
 	d, err := cre.EvaluateAccess(ctx, "p", "d")
 	if err != nil {
 		t.Fatalf("post-invalidate evaluate: %v", err)
 	}
-	if d.Decision != "Denied" {
-		t.Fatalf("expected Denied, got %s", d.Decision)
+	if d.Decision != defaultDecision {
+		t.Fatalf("expected default decision, got %s", d.Decision)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestRuleEngineBreakerOpens(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare(queryEvaluate)
+	mock.ExpectPrepare(queryWarm)
+
+	settings := gobreaker.Settings{
+		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
+	}
+	eng, err := NewRuleEngineWithSettings(db, settings, 2)
+	if err != nil {
+		t.Fatalf("NewRuleEngineWithSettings: %v", err)
+	}
+
+	mock.ExpectQuery(queryEvaluate).WithArgs("p", "d").WillReturnError(fmt.Errorf("500"))
+
+	if d, err := eng.EvaluateAccess(context.Background(), "p", "d"); err != nil || d.Decision != defaultDecision {
+		t.Fatalf("first evaluate: %v, %+v", err, d)
+	}
+	if eng.breaker.State() != gobreaker.StateOpen {
+		t.Fatalf("breaker not open: %v", eng.breaker.State())
+	}
+
+	// second call should not hit DB
+	if d, err := eng.EvaluateAccess(context.Background(), "p", "d"); err != nil || d.Decision != defaultDecision {
+		t.Fatalf("second evaluate: %v, %+v", err, d)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestRuleEngineTimeoutFallback(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare(queryEvaluate)
+	mock.ExpectPrepare(queryWarm)
+
+	settings := gobreaker.Settings{}
+	eng, err := NewRuleEngineWithSettings(db, settings, 2)
+	if err != nil {
+		t.Fatalf("NewRuleEngineWithSettings: %v", err)
+	}
+
+	mock.ExpectQuery(queryEvaluate).WithArgs("p", "d").WillReturnError(context.DeadlineExceeded)
+
+	if d, err := eng.EvaluateAccess(context.Background(), "p", "d"); err != nil || d.Decision != defaultDecision {
+		t.Fatalf("timeout evaluate: %v, %+v", err, d)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
