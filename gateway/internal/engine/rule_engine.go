@@ -33,10 +33,11 @@ type RuleEngine struct {
 	db      *sql.DB
 	stmts   *StmtCache
 	breaker *gobreaker.CircuitBreaker
+	outbox  *Outbox
 }
 
 // NewRuleEngine constructs a RuleEngine from an existing DB handle.
-func NewRuleEngine(db *sql.DB) (*RuleEngine, error) {
+func NewRuleEngine(db *sql.DB, ob *Outbox) (*RuleEngine, error) {
 	settings := gobreaker.Settings{
 		Name:        "rule-engine",
 		Timeout:     5 * time.Second,
@@ -48,11 +49,11 @@ func NewRuleEngine(db *sql.DB) (*RuleEngine, error) {
 			size = n
 		}
 	}
-	return NewRuleEngineWithSettings(db, settings, size)
+	return NewRuleEngineWithSettings(db, ob, settings, size)
 }
 
 // NewRuleEngineWithSettings constructs a RuleEngine using custom circuit breaker settings.
-func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings, cacheSize int) (*RuleEngine, error) {
+func NewRuleEngineWithSettings(db *sql.DB, ob *Outbox, settings gobreaker.Settings, cacheSize int) (*RuleEngine, error) {
 	stmtCache, err := NewStmtCache(db, cacheSize)
 	if err != nil {
 		return nil, err
@@ -64,7 +65,29 @@ func NewRuleEngineWithSettings(db *sql.DB, settings gobreaker.Settings, cacheSiz
 		return nil, err
 	}
 	cb := resilience.NewGoBreaker("rule-engine", settings)
-	return &RuleEngine{db: db, stmts: stmtCache, breaker: cb}, nil
+	return &RuleEngine{db: db, stmts: stmtCache, breaker: cb, outbox: ob}, nil
+}
+
+// RecordEvent performs dbOp within a transaction then enqueues payload for publishing.
+func (re *RuleEngine) RecordEvent(ctx context.Context, topic string, payload interface{}, dbOp func(*sql.Tx) error) error {
+	if re.outbox == nil {
+		return errors.New("outbox not configured")
+	}
+	tx, err := re.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if dbOp != nil {
+		if err := dbOp(tx); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+	if err := re.outbox.Enqueue(ctx, tx, topic, payload); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
 
 // EvaluateAccess evaluates the rules for a single person/door pair.

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"crypto/tls"
 	"crypto/x509"
@@ -15,11 +16,11 @@ import (
 	"syscall"
 	"time"
 
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	vault "github.com/hashicorp/vault/api"
 
 	_ "github.com/lib/pq"
 
-	"github.com/WSG23/yosai-gateway/events"
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	cbcfg "github.com/WSG23/yosai-gateway/internal/config"
 	gwconfig "github.com/WSG23/yosai-gateway/internal/config"
@@ -147,6 +148,12 @@ func main() {
 	if err != nil {
 		tracing.Logger.Fatalf("failed to connect db: %v", err)
 	}
+	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{"bootstrap.servers": brokers})
+	if err != nil {
+		tracing.Logger.Fatalf("failed to init kafka producer: %v", err)
+	}
+	defer producer.Close()
+	outbox := engine.NewOutbox(db)
 	dbSettings := gobreaker.Settings{
 		Name:    "rule-engine",
 		Timeout: cbConf.Database.Timeout(),
@@ -164,28 +171,13 @@ func main() {
 			cacheSize = n
 		}
 	}
-	engCore, err := engine.NewRuleEngineWithSettings(db, dbSettings, cacheSize)
+	engCore, err := engine.NewRuleEngineWithSettings(db, outbox, dbSettings, cacheSize)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to init rule engine: %v", err)
 	}
 	ruleEngine := &engine.CachedRuleEngine{Engine: engCore, Cache: cacheSvc}
-
-	epSettings := gobreaker.Settings{
-		Name:    "event-processor",
-		Timeout: cbConf.EventProcessor.Timeout(),
-		ReadyToTrip: func(c gobreaker.Counts) bool {
-			t := cbConf.EventProcessor.FailureThreshold
-			if t <= 0 {
-				t = 10
-			}
-			return c.ConsecutiveFailures >= uint32(t)
-		},
-	}
-	processor, err := events.NewEventProcessor(brokers, cacheSvc, ruleEngine, epSettings)
-	if err != nil {
-		tracing.Logger.Fatalf("failed to init event processor: %v", err)
-	}
-	defer processor.Close()
+	publisher := engine.NewOutboxPublisher(outbox, producer, time.Second)
+	go publisher.Run(context.Background())
 
 	registryAddr := os.Getenv("SERVICE_REGISTRY_URL")
 	r, err := reg.NewConsulRegistry(registryAddr)
