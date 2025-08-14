@@ -1,0 +1,22 @@
+name: k6 performance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install k6
+        uses: grafana/setup-k6@v1
+      - name: Run unlock path load test
+        run: k6 run load-tests/k6/scenarios/unlock-path-test.js --summary-export=summary.json
+      - name: Upload k6 summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary
+          path: summary.json
