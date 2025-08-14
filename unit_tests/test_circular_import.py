@@ -1,5 +1,5 @@
-from A import A
-from B import B, create_a
+from examples.A import A
+from examples.B import B, create_a
 
 
 def test_import_and_usage() -> None:
