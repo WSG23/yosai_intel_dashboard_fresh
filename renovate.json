@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": ["config:base", "schedule:weekly"],
   "github-actions": {
     "enabled": true
   },
@@ -16,6 +16,11 @@
     {
       "matchManagers": ["npm"],
       "groupName": "npm-packages"
+    },
+    {
+      "matchPackageNames": ["left-pad", "request"],
+      "enabled": false,
+      "description": "blocklist for abandoned packages"
     }
   ]
 }
