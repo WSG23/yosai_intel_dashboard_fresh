@@ -6,6 +6,7 @@ toolchain go1.23.8
 
 require (
 	github.com/WSG23/resilience v0.0.0
+	github.com/google/uuid v1.6.0
 	github.com/sony/gobreaker v1.0.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 )

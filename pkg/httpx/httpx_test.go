@@ -38,6 +38,28 @@ func TestDoJSON_Success(t *testing.T) {
 	}
 }
 
+func TestDoJSON_SetsCorrelationID(t *testing.T) {
+	var receivedID string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedID = r.Header.Get(CorrelationIDHeader)
+		_ = json.NewEncoder(w).Encode(map[string]string{"ok": "true"})
+	}))
+	defer srv.Close()
+
+	req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	ctx, _ := EnsureCorrelationID(context.Background())
+	var dst map[string]string
+	if err := DoJSON(ctx, req, &dst); err != nil {
+		t.Fatalf("do json: %v", err)
+	}
+	if receivedID == "" {
+		t.Fatal("expected correlation id header to be set")
+	}
+}
+
 func TestDoJSON_ContextCancel(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		<-r.Context().Done()

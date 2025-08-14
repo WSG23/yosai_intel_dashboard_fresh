@@ -2,13 +2,15 @@ package kafka
 
 import (
 	"context"
+	"sync"
 
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 // Consumer wraps a Kafka consumer using consumer groups.
 type Consumer struct {
-	c *ckafka.Consumer
+	c         *ckafka.Consumer
+	processed sync.Map
 }
 
 // NewConsumer creates a new Consumer connected to brokers with the given groupID.
@@ -39,6 +41,9 @@ func (c *Consumer) Consume(ctx context.Context, topics []string, handler func(co
 			if e, ok := err.(ckafka.Error); ok && (e.IsRetriable() || e.Code() == ckafka.ErrTimedOut) {
 				continue
 			}
+			continue
+		}
+		if _, ok := c.processed.LoadOrStore(string(msg.Key), struct{}{}); ok {
 			continue
 		}
 		if err := handler(ctx, msg); err == nil {

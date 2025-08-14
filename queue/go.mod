@@ -44,3 +44,4 @@ require (
 replace github.com/WSG23/resilience => ../resilience
 
 replace yourmodule => ..
+
