@@ -916,7 +916,7 @@ register_compliance_dashboard(app, container)
 # =============================================================================
 
 # WSGI/Gunicorn deployment:
-#   gunicorn wsgi:server --config gunicorn.conf.py
+#   gunicorn wsgi:create_app --config gunicorn.conf.py
 # The default gunicorn.conf.py binds to port 8050 and uses gevent workers.
 
 # Update your production configuration:

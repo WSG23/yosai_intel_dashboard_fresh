@@ -396,9 +396,9 @@ actions and role assignment.
    ```
    For production deployments start a WSGI server instead:
    ```bash
-   gunicorn wsgi:server
+   gunicorn wsgi:create_app
    # or
-   uwsgi --module wsgi:server
+   uwsgi --module wsgi:create_app
    ```
 8. **Access the dashboard:**
   Open http://127.0.0.1:8050 in your browser.
