@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -29,6 +30,8 @@ const (
 	queryWarm     = `SELECT person_id, door_id, decision FROM warm_cache($1)`
 )
 
+const defaultDecision = "Denied"
+
 // RuleEngine evaluates access control rules using a SQL backend.
 // It keeps prepared statements and protects queries with a circuit breaker.
 type RuleEngine struct {
@@ -42,8 +45,8 @@ type RuleEngine struct {
 func NewRuleEngine(db *sql.DB, ob *Outbox) (*RuleEngine, error) {
 	settings := gobreaker.Settings{
 		Name:        "rule-engine",
-		Timeout:     5 * time.Second,
-		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures > 5 },
+		Timeout:     time.Second + time.Duration(rand.Intn(1000))*time.Millisecond,
+		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 3 },
 	}
 	size := 64
 	if v := os.Getenv("RULE_ENGINE_STMT_CACHE_SIZE"); v != "" {
@@ -75,21 +78,26 @@ func (re *RuleEngine) RecordEvent(ctx context.Context, topic string, payload int
 	if re.outbox == nil {
 		return errors.New("outbox not configured")
 	}
-	tx, err := re.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	if dbOp != nil {
-		if err := dbOp(tx); err != nil {
-			_ = tx.Rollback()
-			return err
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
+	defer cancel()
+	_, err := re.breaker.Execute(func() (interface{}, error) {
+		tx, err := re.db.BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
 		}
-	}
-	if err := re.outbox.Enqueue(ctx, tx, topic, payload); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+		if dbOp != nil {
+			if err := dbOp(tx); err != nil {
+				_ = tx.Rollback()
+				return nil, err
+			}
+		}
+		if err := re.outbox.Enqueue(ctx, tx, topic, payload); err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+		return nil, tx.Commit()
+	})
+	return err
 }
 
 // EvaluateAccess evaluates the rules for a single person/door pair.
@@ -100,6 +108,8 @@ func (re *RuleEngine) EvaluateAccess(ctx context.Context, personID, doorID strin
 	_, err := re.breaker.Execute(func() (interface{}, error) {
 		ctxQuery, qSpan := otel.Tracer("rule-engine").Start(ctx, "db.query")
 		defer qSpan.End()
+		ctxQuery, cancel := context.WithTimeout(ctxQuery, 20*time.Millisecond)
+		defer cancel()
 		stmt, err := re.stmts.Get(ctxQuery, queryEvaluate)
 		if err != nil {
 			qSpan.RecordError(err)
@@ -112,11 +122,8 @@ func (re *RuleEngine) EvaluateAccess(ctx context.Context, personID, doorID strin
 		}
 		return nil, err
 	})
-	if err != nil {
-		return Decision{}, err
-	}
-	if d.PersonID == "" {
-		return Decision{}, errors.New("no decision")
+	if err != nil || d.PersonID == "" {
+		return Decision{PersonID: personID, DoorID: doorID, Decision: defaultDecision}, nil
 	}
 	return d, nil
 }
@@ -144,6 +151,8 @@ func (re *RuleEngine) WarmCache(ctx context.Context, facility string) error {
 	_, err := re.breaker.Execute(func() (interface{}, error) {
 		ctxExec, qSpan := otel.Tracer("rule-engine").Start(ctx, "db.exec")
 		defer qSpan.End()
+		ctxExec, cancel := context.WithTimeout(ctxExec, 20*time.Millisecond)
+		defer cancel()
 		stmt, err := re.stmts.Get(ctxExec, queryWarm)
 		if err != nil {
 			qSpan.RecordError(err)
