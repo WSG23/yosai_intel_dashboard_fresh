@@ -67,3 +67,13 @@ def register_error_handlers(app: Flask) -> None:
 
 
 __all__ = ["register_error_handlers"]
+
+
+# --- Added by local setup to satisfy imports ---
+def log_and_raise(exc, *, message=None, logger=None, status_code=None):
+    try:
+        if logger and hasattr(logger, "exception"):
+            logger.exception(message or str(exc))
+    except Exception:
+        pass
+    raise exc
