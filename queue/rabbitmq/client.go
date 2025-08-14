@@ -70,6 +70,7 @@ func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task)
 		ContentType:  "application/json",
 		Body:         body,
 		DeliveryMode: amqp.Persistent,
+		MessageId:    task.ID,
 		Priority:     task.Priority,
 		Timestamp:    time.Now(),
 		Headers:      headers,

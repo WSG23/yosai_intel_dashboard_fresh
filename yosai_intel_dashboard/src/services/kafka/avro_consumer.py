@@ -45,6 +45,7 @@ class AvroConsumer:
         self._registry = SchemaRegistryClient(schema_registry)
         self._dlq = Producer({"bootstrap.servers": brokers})
         self._dead_letter_topic = dead_letter_topic
+        self._processed_keys: set[bytes] = set()
 
     def _decode(self, data: bytes) -> Any:
         if not data or data[0] != 0:
@@ -61,6 +62,9 @@ class AvroConsumer:
         if msg.error():
             logger.error("Consumer error: %s", msg.error())
             return None
+        key = msg.key() or b""
+        if key in self._processed_keys:
+            return None
         try:
             msg.decoded = self._decode(msg.value())  # type: ignore[attr-defined]
         except Exception as exc:
@@ -73,6 +77,7 @@ class AvroConsumer:
             except Exception as dlq_exc:
                 logger.error("Failed to send to dead-letter topic: %s", dlq_exc)
             return None
+        self._processed_keys.add(key)
         return msg
 
     def close(self) -> None:
