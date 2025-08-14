@@ -8,6 +8,14 @@ import (
 )
 
 // BreakerMetrics returns the circuit breaker state transition counters as JSON.
+//
+// @Summary      Circuit breaker metrics
+// @Description  Returns Prometheus counters for circuit breaker state transitions
+// @Tags         system
+// @Produce      json
+// @Success      200  {object}  map[string]map[string]float64
+// @Failure      500  {string}  string  "internal server error"
+// @Router       /breaker [get]
 func BreakerMetrics(w http.ResponseWriter, r *http.Request) {
 	metrics, err := prometheus.DefaultGatherer.Gather()
 	if err != nil {

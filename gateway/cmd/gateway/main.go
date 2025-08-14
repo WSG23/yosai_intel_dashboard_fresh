@@ -87,6 +87,10 @@ func readVaultField(c *vault.Client, path string) (string, error) {
 	return val, nil
 }
 
+// @title           Yōsai Gateway API
+// @version         1.0
+// @description     API documentation for the Yōsai gateway service.
+// @BasePath        /
 func main() {
 	b, err := framework.NewServiceBuilder("gateway", "")
 	if err != nil {
