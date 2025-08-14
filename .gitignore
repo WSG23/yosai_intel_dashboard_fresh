@@ -76,6 +76,7 @@ data/learned_mappings.json
 !k8s/monitoring/dashboards/*.json
 !config/schema.json
 !gateway/internal/config/circuitbreakers_schema.json
+!deployment/rollback_state.json
 logs/
 # Temporary uploaded files
 temp/
