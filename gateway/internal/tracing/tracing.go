@@ -7,7 +7,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
-	zipkin "go.opentelemetry.io/otel/exporters/zipkin"
+	otlptracehttp "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -21,9 +21,9 @@ import (
 const (
 	ExporterEnv           = "TRACING_EXPORTER"
 	JaegerEndpointEnv     = "JAEGER_ENDPOINT"
-	ZipkinEndpointEnv     = "ZIPKIN_ENDPOINT"
+	OTLPEndpointEnv       = "OTLP_ENDPOINT"
 	DefaultJaegerEndpoint = "http://localhost:14268/api/traces"
-	DefaultZipkinEndpoint = "http://localhost:9411/api/v2/spans"
+	DefaultOTLPEndpoint   = "http://localhost:4318/v1/traces"
 	ServiceVersionEnv     = "SERVICE_VERSION"
 	EnvironmentEnv        = "APP_ENV"
 )
@@ -60,7 +60,7 @@ func (f *traceFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return f.JSONFormatter.Format(entry)
 }
 
-// InitTracing configures OpenTelemetry with a Jaeger or Zipkin exporter and returns
+// InitTracing configures OpenTelemetry with a Jaeger or OTLP exporter and returns
 // a shutdown function to flush spans.
 func InitTracing(name string) (func(context.Context) error, error) {
 	serviceName = name
@@ -70,13 +70,14 @@ func InitTracing(name string) (func(context.Context) error, error) {
 		err      error
 		exp      sdktrace.SpanExporter
 	)
-	if exporter == "zipkin" {
-		endpoint = os.Getenv(ZipkinEndpointEnv)
+	switch exporter {
+	case "otlp":
+		endpoint = os.Getenv(OTLPEndpointEnv)
 		if endpoint == "" {
-			endpoint = DefaultZipkinEndpoint
+			endpoint = DefaultOTLPEndpoint
 		}
-		exp, err = zipkin.New(endpoint)
-	} else {
+		exp, err = otlptracehttp.New(context.Background(), otlptracehttp.WithEndpoint(endpoint), otlptracehttp.WithInsecure())
+	default:
 		endpoint = os.Getenv(JaegerEndpointEnv)
 		if endpoint == "" {
 			endpoint = DefaultJaegerEndpoint

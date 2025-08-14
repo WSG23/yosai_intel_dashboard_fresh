@@ -114,10 +114,16 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 	}
 	eventsProcessed.Inc()
 	_, err = ep.breaker.Execute(func() (interface{}, error) {
-		return nil, ep.producer.Produce(&ckafka.Message{
+		_, pSpan := otel.Tracer("event-processor").Start(ctx, "kafka.produce")
+		defer pSpan.End()
+		err := ep.producer.Produce(&ckafka.Message{
 			TopicPartition: ckafka.TopicPartition{Topic: &accessEventsTopic, Partition: ckafka.PartitionAny},
 			Value:          data,
 		}, nil)
+		if err != nil {
+			pSpan.RecordError(err)
+		}
+		return nil, err
 	})
 	return err
 
@@ -141,8 +147,11 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 			return nil
 		}
 
+		_, rSpan := otel.Tracer("event-processor").Start(ctx, "kafka.read")
 		msg, err := ep.consumer.ReadMessage(500 * time.Millisecond)
 		if err != nil {
+			rSpan.RecordError(err)
+			rSpan.End()
 			if kerr, ok := err.(ckafka.Error); ok {
 				if kerr.IsFatal() {
 					return err
@@ -155,6 +164,7 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 			tracing.Logger.WithError(err).Error("consumer error")
 			continue
 		}
+		rSpan.End()
 
 		batch = append(batch, msg)
 		if len(batch) < batchSize {
