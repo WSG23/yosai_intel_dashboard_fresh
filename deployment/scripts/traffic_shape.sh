@@ -12,7 +12,7 @@ if [[ "$TARGET_ENV" == "production" ]]; then
   MANIFEST_DIR="k8s/bluegreen"
 fi
 
-kubectl apply -f "$MANIFEST_DIR" >/dev/null
+kubectl -n "$TARGET_ENV" apply -f "$MANIFEST_DIR" >/dev/null
 
 # Annotate service to shape traffic for canary deployments
 kubectl -n "$TARGET_ENV" annotate service "$DEPLOYMENT" \

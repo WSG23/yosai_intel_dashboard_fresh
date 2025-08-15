@@ -3,8 +3,8 @@
 ## Rollout Procedure
 1. Build and push container images.
 2. Trigger the `canary` stage in `deployment/pipeline.yaml` or run `deployment/scripts/traffic_shape.sh`.
-   The script honours `TARGET_ENV` (default `staging`) and `TRAFFIC_PERCENT` to control
-   the initial canary traffic share.
+   The script honours `TARGET_ENV` (default `staging`) and `TRAFFIC_PERCENT` to apply the manifests and
+   control the initial canary traffic share within that namespace.
 3. Verify metrics and logs for the canary pods. Readiness and liveness probes should remain green before continuing.
 4. Start `scripts/rollback.sh` to watch unlock latency and error SLOs. The script queries
    Prometheus and will undo the rollout if P95 latency exceeds **100 ms** for 5 minutes or
