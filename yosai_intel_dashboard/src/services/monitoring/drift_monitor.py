@@ -11,6 +11,28 @@ import logging
 from typing import Callable, Dict, List
 
 import pandas as pd
+try:  # pragma: no cover - optional dependency
+    import opentelemetry.trace as trace
+    tracer = trace.get_tracer(__name__)
+except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
+    class _DummySpan:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def set_attribute(self, *args, **kwargs):
+            return None
+
+    class _Tracer:
+        def start_as_current_span(self, *_a, **_k):
+            return _DummySpan()
+
+    tracer = _Tracer()
+
+from prometheus_client import REGISTRY, Gauge
+from prometheus_client.core import CollectorRegistry
 
 try:  # pragma: no cover - optional dependency
     from apscheduler.schedulers.background import BackgroundScheduler
@@ -20,6 +42,18 @@ except Exception:  # pragma: no cover
 from .drift import detect_drift
 
 logger = logging.getLogger(__name__)
+
+if "drift_monitor_metric" not in REGISTRY._names_to_collectors:
+    drift_monitor_metric = Gauge(
+        "drift_monitor_metric", "Latest drift metric", ["column", "metric"]
+    )
+else:  # pragma: no cover - defensive
+    drift_monitor_metric = Gauge(
+        "drift_monitor_metric",
+        "Latest drift metric",
+        ["column", "metric"],
+        registry=CollectorRegistry(),
+    )
 
 
 class DriftMonitor:
@@ -107,6 +141,12 @@ class DriftMonitor:
             logger.exception("Drift monitor evaluation failed")
             return
 
+        with tracer.start_as_current_span("drift_monitor_run") as span:
+            for col, values in metrics.items():
+                for metric_name, value in values.items():
+                    drift_monitor_metric.labels(col, metric_name).set(value)
+                    span.set_attribute(f"drift.{col}.{metric_name}", value)
+
         try:
             self.metric_store(metrics)
         except Exception:  # pragma: no cover - defensive
@@ -142,4 +182,4 @@ class DriftMonitor:
             self.scheduler.shutdown()
 
 
-__all__ = ["DriftMonitor"]
+__all__ = ["DriftMonitor", "drift_monitor_metric"]

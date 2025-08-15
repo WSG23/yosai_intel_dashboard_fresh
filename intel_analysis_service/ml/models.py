@@ -6,13 +6,26 @@ from dataclasses import dataclass, field
 from typing import Dict, Iterable, Protocol
 
 import logging
-from opentelemetry import trace
+try:  # pragma: no cover - optional dependency
+    import opentelemetry.trace as trace
+    tracer = trace.get_tracer(__name__)
+except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
+    class _DummySpan:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def set_attribute(self, *args, **kwargs):
+            return None
+
+    class _Tracer:
+        def start_as_current_span(self, *_a, **_k):
+            return _DummySpan()
+
+    tracer = _Tracer()
 import pandas as pd
-
-from .model_registry import ModelRegistry, ModelMetadata
-
-tracer = trace.get_tracer(__name__)
-
 
 class DriftDetector(Protocol):
     """Protocol describing drift detection behaviour."""

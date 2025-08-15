@@ -8,6 +8,7 @@ from .drift import (
     wasserstein_distance,
 )
 from .drift_monitor import DriftMonitor
+from .drift_detector import DriftDetector
 
 __all__ = [
     "compute_psi",
@@ -16,4 +17,5 @@ __all__ = [
     "population_stability_index",
     "wasserstein_distance",
     "DriftMonitor",
+    "DriftDetector",
 ]

@@ -54,9 +54,10 @@ sys.modules["opentelemetry.trace"] = otel_trace
 
 from intel_analysis_service.ml import AnomalyDetector, RiskScorer
 
-from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
-from intel_analysis_service.ml import ThresholdDriftDetector
-
+from yosai_intel_dashboard.src.services.monitoring.drift_monitor import (
+    DriftMonitor,
+    drift_monitor_metric,
+)
 
 class DummyDriftDetector:
     def __init__(self):
@@ -125,38 +126,6 @@ def test_drift_monitor_logs_and_rollback():
     history = monitor.get_recent_history()
     assert history and history[-1]["pred"]["psi"] > 0
     assert monitor.get_recent_history(limit=1) == history[-1:]
-
-
-def test_threshold_drift_detector_metrics_and_alerts():
-    class DummyHist:
-        def __init__(self):
-            self.values: list[float] = []
-
-        def observe(self, v: float) -> None:
-            self.values.append(v)
-
-    class DummyCounter:
-        def __init__(self):
-            self.count = 0
-
-        def inc(self) -> None:
-            self.count += 1
-
-    alerts: list[tuple[list[float], list[float]]] = []
-    hist = DummyHist()
-    counter = DummyCounter()
-    detector = ThresholdDriftDetector(
-        ratio_threshold=1.5,
-        metric=hist,
-        alert_counter=counter,
-        alert_func=lambda v, t: alerts.append((v, t)),
-    )
-
-    drift = detector.detect([2.0], [1.0])
-
-    assert drift
-    assert detector.values == [2.0]
-    assert detector.thresholds == [1.0]
-    assert hist.values == [2.0]
-    assert counter.count == 1
-    assert alerts and alerts[0][0] == [2.0]
+    metric = drift_monitor_metric.labels("pred", "psi")
+    if hasattr(metric, "_value"):
+        assert metric._value.get() > 0

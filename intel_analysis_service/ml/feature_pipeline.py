@@ -10,10 +10,26 @@ from __future__ import annotations
 from functools import reduce
 from typing import Iterable
 
-from opentelemetry import trace
-import pandas as pd
+try:  # pragma: no cover - optional dependency
+    import opentelemetry.trace as trace
+    tracer = trace.get_tracer(__name__)
+except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
+    class _DummySpan:
+        def __enter__(self):
+            return self
 
-tracer = trace.get_tracer(__name__)
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def set_attribute(self, *args, **kwargs):
+            return None
+
+    class _Tracer:
+        def start_as_current_span(self, *_a, **_k):
+            return _DummySpan()
+
+    tracer = _Tracer()
+import pandas as pd
 
 
 def _normalize(df: pd.DataFrame) -> pd.DataFrame:
