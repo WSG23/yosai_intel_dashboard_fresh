@@ -6,22 +6,35 @@ services:
     ports:
       - "8000:8000"
     environment:
-      ENABLE_METRICS: "0"
+      ENABLE_METRICS: "1"
       YOSAI_ENABLE_PROFILING: "0"
       SECRET_KEY: "dev-secret-change-me"
       PYTHONPATH: "/app"
     volumes:
       - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
 
   ui:
-    image: node:20-alpine
-    working_dir: /app/mvp-ui
-    environment:
-      API_URL: http://api:8000
+    image: node:20-bullseye
+    working_dir: /app
     volumes:
-      - .:/app
-    command: sh -lc "npm install && npm run dev -- --host --port 5173 --strictPort"
+      - ./mvp-ui:/app
     ports:
-      - "5173:5173"
+      - "5175:5175"
+    environment:
+      NODE_ENV: development
+      UI_PORT: "5175"
+      VITE_PROXY_TARGET: "http://api:8000"
+    command: sh -lc "npm install && npm run dev -- --host --port 5175 --strictPort"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5175"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
