@@ -1,79 +1,36 @@
-import { useEffect, useState } from "react";
-import Nav from "./components/Nav";
-import { MetricCard } from "./components/MetricCard";
-import { apiLogin, getSummary } from "./lib/api";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-
-type Summary = { total: number; trend: number[] };
-
+import { useEffect, useState } from 'react';
+import Nav from './components/Nav';
+import Dashboard from './pages/Dashboard';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
+import { apiLogin, getSummary, type Summary } from './lib/api';
 export default function App() {
+  const [page, setPage] = useState<'dashboard'|'analytics'|'settings'>('dashboard');
   const [token, setToken] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  async function refresh() {
-    try {
-      setError(null);
-      setLoading(true);
-      const data = await getSummary();
-      setSummary(data);
-    } catch (e: any) {
-      setError(e?.message || "failed");
-    } finally {
-      setLoading(false);
-    }
+  const [loading, setLoading] = useState(false);
+  useEffect(() => { getSummary().then(setSummary).catch(() => setSummary(null)); }, []);
+  async function login() {
+    setLoading(true);
+    try { const res = await apiLogin('demo', 'x'); setToken(res.token); }
+    finally { setLoading(false); }
   }
-
-  useEffect(() => { refresh(); }, []);
-
-  async function doLogin() {
-    try {
-      const res = await apiLogin("demo", "x");
-      setToken(res.token);
-    } catch (e: any) {
-      setError(e?.message || "login failed");
-    }
-  }
-
-  function doLogout() { setToken(null); }
-
-  const chartData = (summary?.trend || []).map((y, i) => ({ x: i + 1, y }));
-
+  function logout(){ setToken(null); }
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Nav onLogin={doLogin} onLogout={doLogout} authed={!!token} />
-      <main className="max-w-5xl mx-auto p-4 space-y-6">
-        <header className="mt-2">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-gray-600">MVP wired to /api</p>
-        </header>
-
-        {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
-
-        {loading ? (
-          <div className="text-gray-600">Loading…</div>
-        ) : (
-          <>
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <MetricCard label="Total" value={summary?.total ?? "—"} />
-              <MetricCard label="Authed" value={token ? "Yes" : "No"} />
-              <MetricCard label="API Base" value={(import.meta as any).env?.VITE_API_BASE || "/api"} />
-            </section>
-
-            <section className="rounded-2xl border bg-white p-4 shadow-sm h-64">
-              <div className="text-sm text-gray-500 mb-2">Trend</div>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <XAxis dataKey="x" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="y" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </section>
-          </>
-        )}
+    <div style={{ maxWidth: 1200, margin: '24px auto', padding: 16, display: 'grid', gap: 16 }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800 }}>Yōsai Intel</h1>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={login} disabled={loading} className="px-3 py-2 bg-black text-white rounded">
+            {token ? 'Re-Login' : 'Login'}
+          </button>
+        </div>
+      </header>
+      <Nav page={page} onNavigate={(p) => setPage(p as any)} />
+      <main>
+        {page === 'dashboard' && <Dashboard summary={summary} token={token} />}
+        {page === 'analytics' && <Analytics summary={summary} />}
+        {page === 'settings' && <Settings token={token} onLogout={logout} />}
       </main>
     </div>
   );

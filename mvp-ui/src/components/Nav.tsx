@@ -1,17 +1,15 @@
-type Props = { onLogin: () => void; onLogout: () => void; authed: boolean };
-export default function Nav({ onLogin, onLogout, authed }: Props) {
+type Props = { page: string; onNavigate: (p: string) => void };
+export default function Nav({ page, onNavigate }: Props) {
+  const Item = ({ id, label }: { id: string; label: string }) => (
+    <button onClick={() => onNavigate(id)}
+      className={`px-3 py-2 rounded ${page === id ? 'bg-black text-white' : 'bg-gray-200'}`}
+      aria-current={page === id ? 'page' : undefined}>{label}</button>
+  );
   return (
-    <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <div className="font-semibold">Yōsai Intel</div>
-        <div className="space-x-2">
-          {authed ? (
-            <button className="px-3 py-1 rounded-xl border shadow-sm" onClick={onLogout}>Logout</button>
-          ) : (
-            <button className="px-3 py-1 rounded-xl border shadow-sm" onClick={onLogin}>Login</button>
-          )}
-        </div>
-      </div>
+    <nav style={{ display: 'flex', gap: 8 }}>
+      <Item id="dashboard" label="Dashboard" />
+      <Item id="analytics" label="Analytics" />
+      <Item id="settings" label="Settings" />
     </nav>
   );
 }
