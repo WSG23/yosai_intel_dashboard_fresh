@@ -22,25 +22,24 @@ PY
 }
 
 run_app() {
-  local script="$1"
-  local module="${script%.py}"
-  log "Attempting to start ${script}"
+  local module="$1"
+  log "Attempting to start ${module}"
   if out=$(python - <<PY 2>&1
 import importlib
 importlib.import_module("${module}")
 PY
   ); then
-    exec python "${script}"
+    exec python -m "${module}"
   else
     log "$out"
     if echo "$out" | grep -qi "circular import"; then
-      log "Circular import detected in ${script}. Retrying with cleared PYTHONPATH."
+      log "Circular import detected in ${module}. Retrying with cleared PYTHONPATH."
       if out=$(PYTHONPATH="" python - <<PY 2>&1
 import importlib
 importlib.import_module("${module}")
 PY
       ); then
-        exec PYTHONPATH="" python "${script}"
+        exec PYTHONPATH="" python -m "${module}"
       else
         log "$out"
         return 1
@@ -51,4 +50,4 @@ PY
   fi
 }
 
-run_app wsgi.py || run_app start_api.py || start_fallback
+run_app services.api.wsgi || run_app services.api.start_api || start_fallback

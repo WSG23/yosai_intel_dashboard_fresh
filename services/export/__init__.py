@@ -1,5 +1,5 @@
-"""Lightweight export service package for tests."""
+from importlib import import_module
+import sys
 
-from .service import ExportService
-
-__all__ = ["ExportService"]
+_module = import_module('.src.export', __name__)
+sys.modules[__name__] = _module
