@@ -456,3 +456,67 @@ def mock_network_and_files(monkeypatch, tmp_path, request):
         return original_open(file, mode, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "open", _safe_open)
+
+
+# ---------------------------------------------------------------------------
+# External service fixtures
+
+try:  # pragma: no cover - optional dependency
+    from testcontainers.postgres import PostgresContainer
+except Exception:  # pragma: no cover - handled at runtime
+    PostgresContainer = None
+
+try:  # pragma: no cover - optional dependency
+    from testcontainers.kafka import KafkaContainer
+except Exception:  # pragma: no cover - handled at runtime
+    KafkaContainer = None
+
+
+@pytest.fixture(scope="session")
+def postgres_service() -> Iterator[str]:
+    """Spin up a temporary PostgreSQL database for tests.
+
+    Yields the connection URL for the ephemeral instance. Requires Docker and
+    the ``testcontainers`` package; the test is skipped if either is missing.
+    """
+
+    import shutil
+
+    if PostgresContainer is None or not shutil.which("docker"):
+        pytest.skip("docker or testcontainers not available")
+    with PostgresContainer("postgres:15-alpine") as pg:
+        yield pg.get_connection_url()
+
+
+@pytest.fixture(scope="session")
+def kafka_service() -> Iterator[str]:
+    """Provide a Kafka bootstrap server using ``testcontainers``."""
+
+    import shutil
+
+    if KafkaContainer is None or not shutil.which("docker"):
+        pytest.skip("docker or testcontainers not available")
+    with KafkaContainer() as kafka:
+        yield kafka.get_bootstrap_server()
+
+
+@pytest.fixture
+def in_memory_db():
+    """Lightweight in-memory SQLite database for fast tests."""
+
+    import sqlite3
+
+    conn = sqlite3.connect(":memory:")
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+@pytest.fixture
+def in_memory_queue():
+    """Simple in-memory stand-in for a message queue."""
+
+    from queue import Queue
+
+    return Queue()

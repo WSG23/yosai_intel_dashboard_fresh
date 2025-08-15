@@ -21,7 +21,28 @@ An AI-powered modular security intelligence dashboard for physical access contro
 
 ## Setup & Deployment
 
-See [Setup and Deployment Guide](docs/setup_and_deployment.md) for development, testing, and production deployment instructions.
+See [Getting Started](docs/getting-started.md) for Docker and local development instructions.
+
+## Project Layout
+
+```text
+.
+├── docs/                  # Documentation and guides
+├── services/              # Backend services and microservices
+├── src/                   # Shared framework code
+├── scripts/               # Maintenance and CLI utilities
+├── tests/                 # Test suites
+└── yosai_intel_dashboard/ # Clean Architecture application modules
+```
+
+| Directory | Purpose |
+|-----------|---------|
+| `docs/` | User and developer documentation |
+| `services/` | Standalone backend services |
+| `src/` | Shared core framework and libraries |
+| `scripts/` | Automation and helper scripts |
+| `tests/` | Unit and integration tests |
+| `yosai_intel_dashboard/` | Primary application package following Clean Architecture |
 
 ## Interactive Visualizations
 
@@ -167,7 +188,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Service Ownership Guide](docs/service_ownership.md)
 - [Runbooks](docs/runbooks)
 - [Training Overview](docs/training/overview.md)
-- [Developer Onboarding](docs/developer_onboarding.md)
+- [Getting Started](docs/getting-started.md)
 - [Architecture Decision Records](docs/adr)
 
 <p align="center">
@@ -276,7 +297,7 @@ See [docs/requirements.md](docs/requirements.md) for details on installing them.
 
 5. **Set up environment:**
     ```bash
-     cp .env.example .env
+     cp .env.local.example .env  # or copy .env.production.example for production
      # Generate random development secrets
      python scripts/generate_dev_secrets.py >> .env
     # Edit .env with your configuration (e.g. set HOST and database info)
@@ -290,7 +311,7 @@ See [docs/requirements.md](docs/requirements.md) for details on installing them.
       AUTH0_AUDIENCE=https://api.example.com
     ```
 `setup_dev_mode` checks for the `DB_PASSWORD` variable. The sample
-`.env.example` includes a placeholder value. If this variable is
+`.env.local.example` includes a placeholder value. If this variable is
 missing only a warning is emitted on startup, but database features
 may not function.
 
@@ -300,7 +321,9 @@ may not function.
 ### Required Environment Variables
 
 The application reads configuration from `.env` or your shell before
-startup. Ensure the following variables are set:
+startup. Refer to [docs/configuration_reference.md](docs/configuration_reference.md)
+for a complete list of supported variables. Ensure the following
+variables are set:
 
 - `SECRET_KEY` – session signing key
 - `DB_PASSWORD` – database user password
@@ -527,10 +550,10 @@ The gateway starts a Kafka-based `EventProcessor` for publishing `AccessEvent`
 messages. Configure brokers via `KAFKA_BROKERS` (defaults to `localhost:9092`).
 The processor shuts down gracefully together with the gateway service.
 
-## Developer Onboarding
+## Getting Started
 
-For a more detailed walkthrough of the environment setup and testing workflow,
-see [developer_onboarding.md](docs/developer_onboarding.md).
+For a detailed walkthrough of the environment setup and testing workflow,
+see [getting-started.md](docs/getting-started.md).
 
 ### Troubleshooting
 
@@ -1395,9 +1418,14 @@ of unstyled content. Use the new dropdown on the right side of the navbar to
 switch themes at runtime.
 
 ## <span aria-hidden="true">📚</span> Documentation
+Full documentation lives in the [`docs/`](docs/) directory and is built with
+[MkDocs](https://www.mkdocs.org/). The [API reference](docs/api_reference.md) is
+generated automatically from docstrings using
+[`mkdocstrings`](https://mkdocstrings.github.io/).
 
-See the [data model diagram](docs/data_model.md) for an overview of key entities.
-The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
+See the [data model diagram](docs/data_model.md) for an overview of key
+entities. The running application exposes Swagger-based API docs at
+`http://<host>:<port>/api/docs`.
 - Performance & log monitoring: [docs/performance_monitoring.md](docs/performance_monitoring.md)
 - Large file processing: [docs/performance_file_processor.md](docs/performance_file_processor.md)
 - Profiling the data processor: [docs/profile_data_processor.md](docs/profile_data_processor.md)
@@ -1706,7 +1734,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
 2. Ensure all tests pass: `pytest`
 3. Format code with `black` and run `flake8`
 4. Follow type safety guidelines and maintain the modular architecture
-5. Add tests for new functionality and update documentation when applicable
+5. Add tests for new functionality and update documentation when applicable.
+   Document new modules with docstrings and usage examples so the API
+   reference stays current.
 6. Run the built-in debugging CLI with `python -m tools.debug` to validate
    your environment and inspect callback dependencies.
 7. Set `SECRET_KEY` in your shell or `.env` file when running development

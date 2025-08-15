@@ -33,6 +33,7 @@ except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
 
     class _Tracer:
         def start_as_current_span(self, *_a: Any, **_k: Any) -> _DummySpan:
+
             return _DummySpan()
 
     tracer = _Tracer()
