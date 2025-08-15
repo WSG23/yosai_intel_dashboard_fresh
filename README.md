@@ -1,4 +1,6 @@
 # Yōsai Intel Dashboard
+All runtime modules belong under `src/`, while each deployable microservice should reside in its own `services/<service_name>/` directory using `snake_case` naming.
+
 
 [![CI](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml)
 [![CI/CD](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml)
@@ -32,12 +34,8 @@ deployable services.
 ```text
 .
 ├── docs/                  # Documentation and guides
-├── src/                   # Shared framework code reused across services
-├── services/              # Individual service packages
-│   └── example_service/   # Example service directory
-│       ├── src/
-│       │   └── example_service/  # Service package (matches service name)
-│       └── tests/                # Service-specific tests
+├── services/              # Deployable microservices
+├── src/                   # Runtime Python packages
 ├── scripts/               # Maintenance and CLI utilities
 ├── tests/                 # Repository-wide test suites
 └── yosai_intel_dashboard/ # Clean Architecture application modules
@@ -59,11 +57,13 @@ deployable services.
 | Directory | Purpose |
 |-----------|---------|
 | `docs/` | User and developer documentation |
-| `src/` | Shared core framework and libraries |
-| `services/` | Standalone backend services with their own `src/<name>/` packages |
+| `services/` | Standalone backend services (e.g., `gateway`, `intel_analysis_service`) |
+| `src/` | Shared core framework and libraries (e.g., `analytics`, `cli`, `intel_analysis_service`) |
 | `scripts/` | Automation and helper scripts |
 | `tests/` | Unit and integration tests |
 | `yosai_intel_dashboard/` | Primary application package following Clean Architecture |
+
+All runtime modules belong under `src/`, while each deployable microservice should reside in its own `services/<service_name>/` directory using `snake_case` naming.
 
 ## Interactive Visualizations
 
