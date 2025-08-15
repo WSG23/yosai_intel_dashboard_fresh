@@ -6,8 +6,10 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -74,6 +76,22 @@ func newToken(t *testing.T, priv *rsa.PrivateKey, sub, jti, aud string, exp time
 		t.Fatalf("sign: %v", err)
 	}
 	return s
+}
+
+func jwksFor(kid string, pub *rsa.PublicKey) string {
+	n := base64.RawURLEncoding.EncodeToString(pub.N.Bytes())
+	e := pub.E
+	eb := make([]byte, 0)
+	for e > 0 {
+		eb = append([]byte{byte(e % 256)}, eb...)
+		e /= 256
+	}
+	encE := base64.RawURLEncoding.EncodeToString(eb)
+	jwks := struct {
+		Keys []map[string]string `json:"keys"`
+	}{Keys: []map[string]string{{"kty": "RSA", "kid": kid, "n": n, "e": encE}}}
+	b, _ := json.Marshal(jwks)
+	return string(b)
 }
 
 func serve(t *testing.T, handler http.Handler, req *http.Request, tok string) (*httptest.ResponseRecorder, string) {
@@ -328,5 +346,53 @@ func TestAuthCORSPreflight(t *testing.T) {
 	handler.ServeHTTP(resp, req)
 	if resp.Code != http.StatusOK {
 		t.Fatalf("expected 200 got %d", resp.Code)
+	}
+}
+
+func TestJWKSRotationAndBlacklist(t *testing.T) {
+	srv, client := newRedis(t)
+	priv1, _ := genKeys(t)
+	priv2, _ := genKeys(t)
+
+	current := jwksFor("k1", &priv1.PublicKey)
+	jwksSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, current)
+	}))
+	t.Cleanup(jwksSrv.Close)
+
+	cache := NewTokenCache(client)
+	am := newMiddleware(t, cache, nil, JWTConfig{JWKSEndpoint: jwksSrv.URL, JWKRefreshInterval: 50 * time.Millisecond})
+	handler := am.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
+
+	tok1 := newToken(t, priv1, "alice", "rot1", "", time.Now().Add(time.Minute))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+tok1)
+	resp := httptest.NewRecorder()
+	handler.ServeHTTP(resp, req)
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected 200 got %d", resp.Code)
+	}
+
+	cache.Blacklist(context.Background(), "rot1", time.Hour)
+
+	current = jwksFor("k2", &priv2.PublicKey)
+	time.Sleep(120 * time.Millisecond)
+
+	tok2 := newToken(t, priv2, "alice", "rot1", "", time.Now().Add(time.Minute))
+	req.Header.Set("Authorization", "Bearer "+tok2)
+	resp, _ = serve(t, handler, req, tok2)
+	if resp.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 got %d", resp.Code)
+	}
+
+	tok3 := newToken(t, priv2, "alice", "rot2", "", time.Now().Add(time.Minute))
+	req.Header.Set("Authorization", "Bearer "+tok3)
+	resp = httptest.NewRecorder()
+	handler.ServeHTTP(resp, req)
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected 200 got %d", resp.Code)
+	}
+	if !srv.Exists("jwt:" + tok3) {
+		t.Fatalf("token not cached after rotation")
 	}
 }

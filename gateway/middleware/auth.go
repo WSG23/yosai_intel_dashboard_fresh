@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"io"
+	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,12 +30,14 @@ import (
 
 // JWTConfig holds configuration for JWT validation and refresh.
 type JWTConfig struct {
-	PublicKeys    []string      // PEM encoded RSA public keys
-	RefreshURL    string        // optional token refresh endpoint
-	RefreshBefore time.Duration // duration before expiry to trigger refresh
-	MaxJSONBytes  int64         // max bytes to read from JSON responses; 0 for unlimited
-	Client        *http.Client  // HTTP client used for refresh requests
-	Audience      string        // expected audience for tokens (optional)
+	PublicKeys         []string      // PEM encoded RSA public keys
+	JWKSEndpoint       string        // optional JWKS endpoint for dynamic keys
+	JWKRefreshInterval time.Duration // how often to refresh JWKS (default 1h)
+	RefreshURL         string        // optional token refresh endpoint
+	RefreshBefore      time.Duration // duration before expiry to trigger refresh
+	MaxJSONBytes       int64         // max bytes to read from JSON responses; 0 for unlimited
+	Client             *http.Client  // HTTP client used for refresh requests
+	Audience           string        // expected audience for tokens (optional)
 }
 
 // TokenCache caches validated tokens and tracks blacklisted JTIs.
@@ -122,7 +127,8 @@ func init() {
 // AuthMiddleware implements JWT authentication with caching and rate limiting.
 type AuthMiddleware struct {
 	cfg     JWTConfig
-	keys    []*rsa.PublicKey
+	keys    map[string]*rsa.PublicKey
+	mu      sync.RWMutex
 	cache   *TokenCache
 	limiter *RateLimiter
 	breaker *gobreaker.CircuitBreaker
@@ -133,8 +139,8 @@ func NewAuthMiddleware(cfg JWTConfig, cache *TokenCache, rl *RateLimiter, settin
 	if cfg.Client == nil {
 		cfg.Client = http.DefaultClient
 	}
-	am := &AuthMiddleware{cfg: cfg, cache: cache, limiter: rl, breaker: gobreaker.NewCircuitBreaker(settings)}
-	for _, pemStr := range cfg.PublicKeys {
+	am := &AuthMiddleware{cfg: cfg, cache: cache, limiter: rl, breaker: gobreaker.NewCircuitBreaker(settings), keys: make(map[string]*rsa.PublicKey)}
+	for i, pemStr := range cfg.PublicKeys {
 		block, _ := pem.Decode([]byte(pemStr))
 		if block == nil {
 			return nil, errors.New("invalid public key")
@@ -147,7 +153,17 @@ func NewAuthMiddleware(cfg JWTConfig, cache *TokenCache, rl *RateLimiter, settin
 		if !ok {
 			return nil, errors.New("not RSA public key")
 		}
-		am.keys = append(am.keys, rsaKey)
+		am.keys[strconv.Itoa(i)] = rsaKey
+	}
+	if cfg.JWKSEndpoint != "" {
+		if err := am.updateKeys(); err != nil {
+			return nil, err
+		}
+		interval := cfg.JWKRefreshInterval
+		if interval == 0 {
+			interval = time.Hour
+		}
+		go am.refreshKeys(interval)
 	}
 	if len(am.keys) == 0 {
 		return nil, errors.New("no public keys provided")
@@ -155,8 +171,78 @@ func NewAuthMiddleware(cfg JWTConfig, cache *TokenCache, rl *RateLimiter, settin
 	return am, nil
 }
 
-func (am *AuthMiddleware) keyFunc(_ *jwt.Token) (interface{}, error) {
-	return am.keys[0], nil
+func (am *AuthMiddleware) keyFunc(t *jwt.Token) (interface{}, error) {
+	am.mu.RLock()
+	defer am.mu.RUnlock()
+	if kid, ok := t.Header["kid"].(string); ok {
+		if k, ok := am.keys[kid]; ok {
+			return k, nil
+		}
+	}
+	for _, k := range am.keys {
+		return k, nil
+	}
+	return nil, errors.New("no keys available")
+}
+
+func (am *AuthMiddleware) updateKeys() error {
+	resp, err := am.cfg.Client.Get(am.cfg.JWKSEndpoint)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	var reader io.Reader = resp.Body
+	if am.cfg.MaxJSONBytes > 0 {
+		reader = io.LimitReader(resp.Body, am.cfg.MaxJSONBytes)
+	}
+	var jwks struct {
+		Keys []struct {
+			Kty string `json:"kty"`
+			Kid string `json:"kid"`
+			N   string `json:"n"`
+			E   string `json:"e"`
+		} `json:"keys"`
+	}
+	if err := json.NewDecoder(reader).Decode(&jwks); err != nil {
+		return err
+	}
+	newKeys := make(map[string]*rsa.PublicKey)
+	for _, k := range jwks.Keys {
+		if k.Kty != "RSA" {
+			continue
+		}
+		nBytes, err := base64.RawURLEncoding.DecodeString(k.N)
+		if err != nil {
+			continue
+		}
+		eBytes, err := base64.RawURLEncoding.DecodeString(k.E)
+		if err != nil {
+			continue
+		}
+		n := new(big.Int).SetBytes(nBytes)
+		e := 0
+		for _, b := range eBytes {
+			e = e<<8 + int(b)
+		}
+		newKeys[k.Kid] = &rsa.PublicKey{N: n, E: e}
+	}
+	if len(newKeys) == 0 {
+		return errors.New("no keys in JWKS")
+	}
+	am.mu.Lock()
+	am.keys = newKeys
+	am.mu.Unlock()
+	return nil
+}
+
+func (am *AuthMiddleware) refreshKeys(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for range ticker.C {
+		if err := am.updateKeys(); err != nil {
+			tracing.Logger.WithError(err).Warn("jwks refresh failed")
+		}
+	}
 }
 
 func (am *AuthMiddleware) parser() *jwt.Parser {
@@ -242,14 +328,14 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		if authHdr == "" {
 			authFailures.Inc()
 			tracing.Logger.WithField("reason", "missing").Warn("authorization failed")
-                    xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
+			xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
 			return
 		}
 		parts := strings.Fields(authHdr)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 			authFailures.Inc()
 			tracing.Logger.WithField("reason", "invalid_header").Warn("authorization failed")
-                    xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
+			xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
 
 			return
 		}
@@ -273,7 +359,7 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 			reason := reasonFromError(err)
 			tracing.Logger.WithContext(ctx).WithError(err).WithField("reason", reason).Warn("invalid token")
 			authFailures.Inc()
-                    xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": reason})
+			xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": reason})
 			return
 		}
 		if am.cache != nil {
@@ -281,7 +367,7 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 			if err == nil && black {
 				authFailures.Inc()
 				tracing.Logger.WithField("reason", "blacklisted").Warn("token blacklisted")
-                            xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", map[string]string{"reason": "blacklisted"})
+				xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", map[string]string{"reason": "blacklisted"})
 
 				return
 			}
