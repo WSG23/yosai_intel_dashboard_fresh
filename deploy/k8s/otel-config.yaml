@@ -5,7 +5,8 @@ receivers:
 
 exporters:
   otlp:
-    endpoint: "http://otel-collector:4318"
+    # The upstream collector or tracing backend endpoint.
+    endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT}"
     tls:
       insecure: true
 

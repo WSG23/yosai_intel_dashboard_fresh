@@ -10,6 +10,10 @@ import (
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type QueueClient struct {
@@ -26,6 +30,31 @@ type Task struct {
 	MaxRetries int             `json:"max_retries"`
 	RetryCount int             `json:"retry_count"`
 	CreatedAt  time.Time       `json:"created_at"`
+}
+
+// amqpHeadersCarrier adapts amqp.Table to a propagation carrier.
+// Only string values are used for trace propagation.
+type amqpHeadersCarrier amqp.Table
+
+func (c amqpHeadersCarrier) Get(key string) string {
+	if v, ok := amqp.Table(c)[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func (c amqpHeadersCarrier) Set(key, val string) {
+	amqp.Table(c)[key] = val
+}
+
+func (c amqpHeadersCarrier) Keys() []string {
+	keys := make([]string, 0, len(amqp.Table(c)))
+	for k := range amqp.Table(c) {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 func NewQueueClient(url string) (*QueueClient, error) {
@@ -69,16 +98,26 @@ func (q *QueueClient) DeclareQueue(name string, durable bool) error {
 }
 
 func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task) error {
+	ctx, span := otel.Tracer("queue").Start(ctx, "rabbitmq.publish", trace.WithAttributes(attribute.String("queue", queue)))
+	defer span.End()
 	body, err := json.Marshal(task)
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
-	return q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
+	headers := amqp.Table{}
+	otel.GetTextMapPropagator().Inject(ctx, amqpHeadersCarrier(headers))
+	err = q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
 		ContentType:  "application/json",
 		Body:         body,
 		DeliveryMode: amqp.Persistent,
 		Timestamp:    time.Now(),
+		Headers:      headers,
 	})
+	if err != nil {
+		span.RecordError(err)
+	}
+	return err
 }
 
 func (q *QueueClient) ConsumeQueue(ctx context.Context, queue string, handler func(context.Context, *Task) error) error {
@@ -96,11 +135,15 @@ func (q *QueueClient) ConsumeQueue(ctx context.Context, queue string, handler fu
 				msg.Nack(false, false)
 				continue
 			}
-			if err := handler(ctx, &t); err != nil {
+			mctx := otel.GetTextMapPropagator().Extract(ctx, amqpHeadersCarrier(msg.Headers))
+			cctx, span := otel.Tracer("queue").Start(mctx, "rabbitmq.consume", trace.WithAttributes(attribute.String("queue", queue)))
+			if err := handler(cctx, &t); err != nil {
+				span.RecordError(err)
 				msg.Nack(false, true)
 			} else {
 				msg.Ack(false)
 			}
+			span.End()
 		}
 	}
 }
