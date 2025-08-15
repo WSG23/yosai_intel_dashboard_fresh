@@ -16,6 +16,49 @@ sys.modules.setdefault(
     types.SimpleNamespace(record_error=lambda *a, **k: None),
 )
 
+# Stub error handling to avoid importing heavy dependencies
+error_handling_stub = types.ModuleType(
+    "yosai_intel_dashboard.src.error_handling"
+)
+error_handling_stub.ErrorCategory = types.SimpleNamespace(
+    UNAUTHORIZED="unauthorized"
+)
+class _Handler:
+    def handle(self, exc, category):
+        return {"code": str(category), "message": str(exc)}
+
+error_handling_stub.ErrorHandler = _Handler
+
+def _api_error_response(exc, category, handler=None):
+    return {"code": str(category), "message": str(exc)}, 401
+
+error_handling_stub.api_error_response = _api_error_response
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.error_handling", error_handling_stub
+)
+
+# Stub pydantic validators to no-ops
+decorators_stub = types.ModuleType(
+    "yosai_intel_dashboard.src.utils.pydantic_decorators"
+)
+
+def _validate_input(model):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            from flask import request
+
+            data = request.get_json() or {}
+            payload = types.SimpleNamespace(**data)
+            return func(payload)
+        return wrapper
+    return decorator
+
+decorators_stub.validate_input = _validate_input
+decorators_stub.validate_output = lambda model: (lambda func: func)
+sys.modules.setdefault(
+    "yosai_intel_dashboard.src.utils.pydantic_decorators", decorators_stub
+)
+
 # Stub error mapping to avoid importing yosai_framework
 sys.modules.setdefault(
     "yosai_framework.errors",
