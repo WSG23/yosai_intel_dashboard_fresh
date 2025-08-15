@@ -1,10 +1,10 @@
 """FastAPI middleware for unified error responses."""
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from shared.errors.types import ErrorResponse
+from shared.errors.helpers import ServiceError, fastapi_error_response
+from shared.errors.types import ErrorCode, ErrorResponse
 
 from .api_error_response import api_error_response
 from .core import ErrorHandler
@@ -26,7 +26,10 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                 exc, ErrorCategory.INTERNAL, handler=self.handler
             )
             body = payload.get_json() if hasattr(payload, "get_json") else payload
-            return JSONResponse(content=body, status_code=status)
+            err = ServiceError(
+                ErrorCode(body["code"]), body["message"], body.get("details")
+            )
+            return fastapi_error_response(err, status)
 
     @classmethod
     def setup(cls, app: FastAPI, handler: ErrorHandler | None = None) -> None:

@@ -5,6 +5,7 @@ from typing import Any
 from fastapi.responses import JSONResponse
 from flask import Response, jsonify
 
+from shared.errors.helpers import ServiceError, fastapi_error_response as build_json_response
 from shared.errors.types import CODE_TO_STATUS, ErrorCode
 
 from .core import ErrorHandler
@@ -46,8 +47,10 @@ def fastapi_error_response(
 ) -> JSONResponse:
     """Return a FastAPI ``JSONResponse`` for *exc* using ``ErrorHandler``."""
     payload, status = serialize_error(exc, category, handler=handler, details=details)
-    return JSONResponse(content=payload, status_code=status)
+    err = ServiceError(
+        ErrorCode(payload["code"]), payload["message"], payload.get("details")
+    )
+    return build_json_response(err, status)
 
 
 __all__ = ["serialize_error", "api_error_response", "fastapi_error_response"]
-
