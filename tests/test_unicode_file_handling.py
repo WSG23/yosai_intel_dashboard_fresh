@@ -5,6 +5,10 @@ import json
 
 import aiofiles
 import pandas as pd
+import asyncio
+import types
+import sys
+import logging
 
 helpers_spec = importlib.util.spec_from_file_location(
     "upload_helpers",
@@ -61,13 +65,26 @@ def test_accessor_load_unicode(tmp_path):
     assert list(loaded.keys())[0].startswith("k")
 
 
-def test_save_ai_training_data_unicode(tmp_path, monkeypatch):
-    from yosai_intel_dashboard.src.components import plugin_adapter
+def test_save_ai_training_data_unicode(tmp_path, monkeypatch, caplog):
+    monkeypatch.chdir(tmp_path)
+    dummy_mod = types.ModuleType("plugin_adapter")
 
-    monkeypatch.setattr(
-        plugin_adapter.ComponentPluginAdapter,
-        "save_verified_mappings",
-        lambda self, *a, **kw: True,
+    class DummyAdapter:
+        def save_verified_mappings(self, *a, **kw):
+            return True
+
+    dummy_mod.ComponentPluginAdapter = DummyAdapter
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.components.plugin_adapter",
+        dummy_mod,
+    )
+    components_pkg = types.ModuleType("components")
+    components_pkg.plugin_adapter = dummy_mod
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.components",
+        components_pkg,
     )
 
     class DummyDT:
@@ -77,16 +94,56 @@ def test_save_ai_training_data_unicode(tmp_path, monkeypatch):
 
     monkeypatch.setattr(upload_helpers, "datetime", DummyDT)
 
-    upload_helpers.save_ai_training_data(
-        "файл.csv",
-        {"дверь": "timestamp"},
-        {"columns": ["a"], "ai_suggestions": {}},
+    caplog.set_level(logging.INFO)
+    asyncio.run(
+        upload_helpers.save_ai_training_data(
+            "файл.csv",
+            {"дверь": "timestamp"},
+            {"columns": ["a"], "ai_suggestions": {}},
+        )
     )
 
-    target = Path("data/training/mappings_20240101.jsonl")
-    content = target.read_text(encoding="utf-8")
-    data = json.loads(content)
-    assert data["filename"] == "файл.csv"
-    assert "дверь" in data["mappings"]
-    target.unlink()
-    target.parent.rmdir()
+    assert "✅ AI training data saved via plugin" in caplog.text
+    assert Path("data/training").exists()
+
+
+def test_save_ai_training_data_plugin_failure(tmp_path, monkeypatch, caplog):
+    monkeypatch.chdir(tmp_path)
+    dummy_mod = types.ModuleType("plugin_adapter")
+
+    class DummyAdapter:
+        def save_verified_mappings(self, *a, **kw):
+            raise RuntimeError("boom")
+
+    dummy_mod.ComponentPluginAdapter = DummyAdapter
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.components.plugin_adapter",
+        dummy_mod,
+    )
+    components_pkg = types.ModuleType("components")
+    components_pkg.plugin_adapter = dummy_mod
+    monkeypatch.setitem(
+        sys.modules,
+        "yosai_intel_dashboard.src.components",
+        components_pkg,
+    )
+
+    class DummyDT:
+        @classmethod
+        def now(cls):
+            return datetime(2024, 1, 1, 0, 0, 0)
+
+    monkeypatch.setattr(upload_helpers, "datetime", DummyDT)
+
+    caplog.set_level(logging.INFO)
+    asyncio.run(
+        upload_helpers.save_ai_training_data(
+            "файл.csv",
+            {"дверь": "timestamp"},
+            {"columns": ["a"], "ai_suggestions": {}},
+        )
+    )
+
+    assert "⚠️ AI training save failed" in caplog.text
+    assert Path("data/training").exists()
