@@ -112,6 +112,8 @@ class SQLiteConnection:
                 self.db_path, timeout=self.config.connection_timeout
             )
             self._connection.row_factory = sqlite3.Row  # Enable dict-like access
+            # Ensure all text data is decoded as UTF-8
+            self._connection.text_factory = lambda b: str(b, "utf-8", "ignore")
             logger.info(f"SQLite connection created: {self.db_path}")
         except sqlite3.Error as e:
             sanitized = safe_text(e)
@@ -225,6 +227,8 @@ class PostgreSQLConnection:
                 cursor_factory=RealDictCursor,
                 connect_timeout=self.config.connection_timeout,
             )
+            # Explicitly use UTF-8 for all client communication
+            self._connection.set_client_encoding("UTF8")
             logger.info(
                 f"PostgreSQL connection created: {self.config.host}:{self.config.port}"
             )
