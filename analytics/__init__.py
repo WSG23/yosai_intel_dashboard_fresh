@@ -6,4 +6,5 @@ __all__ = [
     "risk_scoring",
     "context_providers",
     "context_storage",
+    "code_quality",
 ]
