@@ -3,6 +3,8 @@ from unittest.mock import patch
 
 import pytest
 
+pytest.importorskip("requests")
+
 from analytics.context_providers import (
     ContextProviderError,
     fetch_local_events,

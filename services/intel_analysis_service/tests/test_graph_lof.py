@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("networkx")
+
 import networkx as nx
 
 from analytics.graph_analysis.algorithms import graph_lof

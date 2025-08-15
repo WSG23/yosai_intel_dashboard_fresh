@@ -18,7 +18,7 @@ This document summarises the performance characteristics of the
 | Concurrent queries (1000 threads)     | all completed    | yes    |
 
 The benchmarks were executed via `pytest` in
-`intel_analysis_service/tests/performance/`.
+`services/intel_analysis_service/tests/performance/`.
 
 ## Recent optimizations
 

@@ -7,21 +7,15 @@ neighbourhood queries and real‑time updates.
 
 import time
 from concurrent.futures import ThreadPoolExecutor
-import pathlib
-import sys
 
-# ensure the graph_db module is importable
-SERVICE_DIR = (
-    pathlib.Path(__file__).resolve().parents[2]
-    / ".."
-    / "yosai_intel_dashboard"
-    / "src"
-    / "services"
-    / "intel_analysis_service"
+import pytest
+
+pytest.importorskip("pandas")
+pytest.importorskip("numpy")
+
+from yosai_intel_dashboard.src.services.intel_analysis_service.graph_db import (
+    GraphDB,
 )
-sys.path.append(str(SERVICE_DIR.resolve()))
-
-from graph_db import GraphDB  # noqa: E402
 
 
 def _build_graph() -> GraphDB:
