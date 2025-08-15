@@ -17,3 +17,7 @@ data_quality:
 
 model_monitor:
   evaluation_interval_minutes: 60
+
+archival:
+  success_rate_threshold: 0.99
+  max_storage_cost_usd: 100
