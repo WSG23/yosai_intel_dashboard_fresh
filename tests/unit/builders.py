@@ -15,7 +15,7 @@ from yosai_intel_dashboard.src.services.upload.protocols import (
     UploadStorageProtocol,
 )
 from startup.service_registration import register_all_services
-from tests.fakes import (
+from tests.unit.fakes import (
     FakeConfigurationService,
     FakeFileProcessor,
     FakeUnicodeProcessor,

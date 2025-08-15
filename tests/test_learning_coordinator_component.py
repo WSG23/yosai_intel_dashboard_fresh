@@ -1,5 +1,5 @@
 from yosai_intel_dashboard.src.services.upload.learning_coordinator import LearningCoordinator
-from tests.fakes import FakeDeviceLearningService
+from tests.unit.fakes import FakeDeviceLearningService
 from tests.utils.builders import DataFrameBuilder
 
 

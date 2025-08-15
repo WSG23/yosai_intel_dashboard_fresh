@@ -186,13 +186,26 @@ class FakeDeviceLearningService(DeviceLearningServiceProtocol):
         self.saved[filename] = user_mappings
         return True
 
+try:
+    class FakeColumnVerifier(ColumnVerifierProtocol):
+        def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any:
+            return {"modal": file_info}
 
-class FakeColumnVerifier(ColumnVerifierProtocol):
-    def create_column_verification_modal(self, file_info: Dict[str, Any]) -> Any:
-        return {"modal": file_info}
+        def register_callbacks(
+            self, manager: Any, controller: Any | None = None
+        ) -> None:
+            pass
+except TypeError:  # ColumnVerifierProtocol is not a class
+    class FakeColumnVerifier:  # type: ignore[too-few-public-methods]
+        def create_column_verification_modal(
+            self, file_info: Dict[str, Any]
+        ) -> Any:
+            return {"modal": file_info}
 
-    def register_callbacks(self, manager: Any, controller: Any | None = None) -> None:
-        pass
+        def register_callbacks(
+            self, manager: Any, controller: Any | None = None
+        ) -> None:
+            pass
 
 
 class FakeConfigurationService(ConfigurationServiceProtocol):

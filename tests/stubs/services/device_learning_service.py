@@ -1,4 +1,4 @@
-from tests.fakes import FakeDeviceLearningService
+from tests.unit.fakes import FakeDeviceLearningService
 
 
 def get_device_learning_service():
