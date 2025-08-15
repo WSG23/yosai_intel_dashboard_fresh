@@ -5,17 +5,17 @@ info:
   description: |
     Physical security intelligence and access control API.
 servers:
-  - url: https://api.yosai.com/v1
+  - url: https://api.yosai.com
     description: Production
-  - url: https://staging-api.yosai.com/v1
+  - url: https://staging-api.yosai.com
     description: Staging
-  - url: http://localhost:8080/v1
+  - url: http://localhost:8080
     description: Development
 security:
   - jwtAuth: []
   - csrfToken: []
 paths:
-  /csrf-token:
+  /api/v1/csrf-token:
     get:
       summary: Get CSRF token
       operationId: getCsrfToken
@@ -29,14 +29,21 @@ paths:
                 properties:
                   csrf_token:
                     type: string
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /upload:
+
     post:
       summary: Upload a file
       operationId: uploadFile
       responses:
         '200':
           description: Upload result
-  /settings:
+  /api/v1/settings:
     get:
       summary: Get user settings
       operationId: getSettings
@@ -49,35 +56,35 @@ paths:
       responses:
         '200':
           description: Successful response
-  /token/refresh:
+  /api/v1/token/refresh:
     post:
       summary: Refresh access token
       operationId: refreshToken
       responses:
         '200':
           description: New access token
-  /analytics/patterns:
+  /api/v1/analytics/patterns:
     get:
       summary: Summarize access patterns
       operationId: getPatterns
       responses:
         '200':
           description: Analytics summary
-  /analytics/sources:
+  /api/v1/analytics/sources:
     get:
       summary: List data sources
       operationId: getSources
       responses:
         '200':
           description: Data sources
-  /analytics/health:
+  /api/v1/analytics/health:
     get:
       summary: Analytics service health
       operationId: analyticsHealth
       responses:
         '200':
           description: Health status
-  /analytics/chart/{chart_type}:
+  /api/v1/analytics/chart/{chart_type}:
     get:
       summary: Retrieve chart data
       operationId: getChartData
@@ -90,7 +97,7 @@ paths:
       responses:
         '200':
           description: Chart data
-  /model-monitoring/{model_name}:
+  /api/v1/model-monitoring/{model_name}:
     get:
       summary: Get model monitoring events
       operationId: getModelMonitoringEvents
@@ -113,7 +120,7 @@ paths:
       responses:
         '200':
           description: Monitoring events
-  /explanations/{prediction_id}:
+  /api/v1/explanations/{prediction_id}:
     get:
       summary: Get prediction explanation
       operationId: getExplanation
@@ -126,7 +133,7 @@ paths:
       responses:
         '200':
           description: Explanation payload
-  /feature-flags:
+  /api/v1/feature-flags:
     get:
       summary: List feature flags
       operationId: listFeatureFlags
@@ -139,7 +146,7 @@ paths:
       responses:
         '201':
           description: Created
-  /feature-flags/{name}:
+  /api/v1/feature-flags/{name}:
     get:
       summary: Get feature flag
       operationId: getFeatureFlag
@@ -176,7 +183,7 @@ paths:
       responses:
         '204':
           description: Deleted
-  /feature-flags/{name}/audit:
+  /api/v1/feature-flags/{name}/audit:
     get:
       summary: Get feature flag audit history
       operationId: getFeatureFlagAudit
@@ -190,6 +197,21 @@ paths:
         '200':
           description: Audit history
 components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum: [invalid_input, unauthorized, not_found, internal, unavailable]
+        message:
+          type: string
+        details:
+          description: Additional error details
+          nullable: true
   securitySchemes:
     jwtAuth:
       type: http

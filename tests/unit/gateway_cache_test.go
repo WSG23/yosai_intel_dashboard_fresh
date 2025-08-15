@@ -20,7 +20,7 @@ import (
 	gw "github.com/WSG23/yosai-gateway/internal/gateway"
 	gm "github.com/WSG23/yosai-gateway/middleware"
 	"github.com/WSG23/yosai-gateway/plugins/cache"
-	serrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
+        serrors "github.com/WSG23/errors"
 )
 
 func TestGatewayCachePlugin(t *testing.T) {

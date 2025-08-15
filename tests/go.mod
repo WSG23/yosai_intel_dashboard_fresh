@@ -12,7 +12,6 @@ require (
 )
 
 require (
-	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 )
 
@@ -99,7 +98,6 @@ require (
 
 replace github.com/WSG23/yosai-gateway => ../gateway
 
-replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../shared/errors
 
 replace github.com/WSG23/errors => ../pkg/errors
 

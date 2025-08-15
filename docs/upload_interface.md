@@ -15,7 +15,7 @@ File previews are rendered as thumbnails for images or with a generic file icon 
 
 Behind the scenes the upload is handled by a background worker. A task ID is
 returned immediately and progress events are streamed over Server‑Sent Events at
-`/upload/progress/<task_id>`. When processing completes the UI refreshes the
+`/api/v1/upload/progress/<task_id>`. When processing completes the UI refreshes the
 `file-info-store` so analytics pages can use the new data without reloading the
 entire app.
 

@@ -1,0 +1,10 @@
+archival:
+  cold_data_path: /var/lib/app/data
+  retention_days: 30
+  object_storage:
+    provider: s3
+    bucket: intel-cold-data
+    region: us-east-1
+  retrieval:
+    restore_directory: /var/lib/app/restored
+    default_expiry_days: 7
