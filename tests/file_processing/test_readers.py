@@ -4,9 +4,13 @@ import pandas as pd
 import pytest
 
 from yosai_intel_dashboard.src.file_processing.readers import (
+    BaseReader,
     CSVReader,
     ExcelReader,
     JSONReader,
+)
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
 )
 
 
@@ -31,3 +35,10 @@ def test_cannot_parse(tmp_path: Path):
     path.write_text("")
     with pytest.raises(CSVReader.CannotParse):
         CSVReader().read(str(path))
+
+
+def test_readers_provide_unified_callbacks():
+    for cls in (CSVReader, JSONReader, ExcelReader):
+        reader = cls()
+        assert isinstance(reader, BaseReader)
+        assert isinstance(reader.unified_callbacks, TrulyUnifiedCallbacks)

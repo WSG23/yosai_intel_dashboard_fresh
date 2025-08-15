@@ -1,4 +1,4 @@
-import { fetchJson, FetchError } from '../utils/fetchJson';
+import { fetchJson, FetchError } from '../../../../../public/apiClient';
 import { log } from './logger';
 
 export interface ServiceError {

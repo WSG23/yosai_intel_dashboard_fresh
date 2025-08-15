@@ -17,9 +17,6 @@ except Exception:
 from yosai_intel_dashboard.src.core.app_factory.health import (
     register_health_endpoints,
 )
-from yosai_intel_dashboard.src.infrastructure.error_handling.handlers import (
-    register_error_handlers,
-)
 
 
 def create_app(mode=None, **kwargs):
@@ -34,7 +31,6 @@ def create_app(mode=None, **kwargs):
         assets_external_path=assets_external or None,
     )
 
-    register_error_handlers(app.server)
     register_health_endpoints(app.server)
 
     if not _NAVBAR_AVAILABLE:

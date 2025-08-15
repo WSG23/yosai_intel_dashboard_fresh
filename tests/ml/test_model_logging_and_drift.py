@@ -4,6 +4,9 @@ import importlib
 import logging
 import sys
 import types
+import intel_analysis_service.ml.drift as drift_module
+import intel_analysis_service.ml.models as models_module
+import yosai_intel_dashboard.src.services.monitoring.drift_monitor as drift_monitor_module
 
 # Load real numpy if a stub is present.
 np = importlib.import_module("numpy")
@@ -87,6 +90,20 @@ def test_anomaly_detector_logs_and_detects_drift(caplog):
     assert 'thresholds' in caplog.text
 
 
+def test_anomaly_detector_records_drift_metric(monkeypatch):
+    train_ts = pd.date_range('2024-01-01', periods=3, freq='D')
+    train_df = pd.DataFrame({'timestamp': train_ts, 'value': 1.0})
+    drift = DummyDriftDetector()
+    detector = AnomalyDetector(model_version="v-test", drift_detector=drift).fit(train_df)
+
+    called: list[bool] = []
+    monkeypatch.setattr(models_module, "log_drift_detection", lambda d: called.append(d))
+
+    test_df = pd.DataFrame({'timestamp': [pd.Timestamp('2024-01-04')], 'value': [5.0]})
+    detector.predict(test_df)
+    assert called == [True]
+
+
 def test_risk_scorer_logs_and_detects_drift(caplog):
     train_ts = pd.date_range('2024-01-01', periods=3, freq='D')
     train_df = pd.DataFrame({'timestamp': train_ts, 'a': 0.0})
@@ -103,12 +120,18 @@ def test_risk_scorer_logs_and_detects_drift(caplog):
     assert 'thresholds' in caplog.text
 
 
-def test_drift_monitor_logs_and_rollback():
+def test_drift_monitor_logs_and_rollback(monkeypatch):
     baseline = pd.DataFrame({"pred": [0] * 100 + [1] * 100})
     current = pd.DataFrame({"pred": [0] * 200})
 
     logs: list[str] = []
     alerts: list[tuple[str, dict]] = []
+
+    monkeypatch.setattr(
+        drift_monitor_module,
+        "BackgroundScheduler",
+        lambda: types.SimpleNamespace(start=lambda: None, add_job=lambda *a, **k: None),
+    )
 
     monitor = DriftMonitor(
         baseline_supplier=lambda: baseline,

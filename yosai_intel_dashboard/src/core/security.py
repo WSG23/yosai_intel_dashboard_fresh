@@ -553,17 +553,27 @@ def rate_limit_decorator(limit: int = 100, window_minutes: int = 1):
     def decorator(func):
         from functools import wraps
 
-        from flask import jsonify, make_response, request
+        from fastapi import Request
+        from fastapi.responses import JSONResponse, Response
 
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            request: Request | None = kwargs.get("request")
+            if request is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        request = arg
+                        break
+            if request is None:
+                raise RuntimeError("Request required for rate limiting")
             auth = request.headers.get("Authorization", "")
             identifier = (
                 auth.split(" ", 1)[1]
                 if auth.startswith("Bearer ")
-                else request.remote_addr
+                else (request.client.host if request.client else None)
             )
-            result = await limiter.is_allowed(identifier or "anonymous", request.remote_addr)
+            client_ip = request.client.host if request.client else None
+            result = await limiter.is_allowed(identifier or "anonymous", client_ip)
             headers = {
                 "X-RateLimit-Limit": str(result.get("limit", limit)),
                 "X-RateLimit-Remaining": str(result.get("remaining", 0)),
@@ -580,20 +590,22 @@ def rate_limit_decorator(limit: int = 100, window_minutes: int = 1):
                 retry = result.get("retry_after")
                 if retry is not None:
                     headers["Retry-After"] = str(int(retry))
-                response = jsonify({"detail": "rate limit exceeded"})
-                response.status_code = 429
-                for key, value in headers.items():
-                    response.headers[key] = value
-                return response
+                return JSONResponse(
+                    content={"detail": "rate limit exceeded"},
+                    status_code=429,
+                    headers=headers,
+                )
 
             if asyncio.iscoroutinefunction(func):
                 resp = await func(*args, **kwargs)
             else:
                 resp = func(*args, **kwargs)
-            response = make_response(resp)
-            for key, value in headers.items():
-                response.headers[key] = value
-            return response
+
+            if isinstance(resp, Response):
+                for key, value in headers.items():
+                    resp.headers[key] = value
+                return resp
+            return JSONResponse(content=resp, headers=headers)
 
         return wrapper
 

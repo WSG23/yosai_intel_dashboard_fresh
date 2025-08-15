@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import io
 import json
 import pickle
 import hashlib
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from hashlib import sha256
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Iterable, Tuple
 
 
 @dataclass
@@ -17,7 +19,6 @@ class ModelMetadata:
     timestamp: str
     parameters: Dict[str, Any]
     sha256: str
-
 
 class ModelRegistry:
     """Simple on-disk registry for storing and loading model artifacts."""
@@ -44,6 +45,7 @@ class ModelRegistry:
 
         data = pickle.dumps(model)
         sha256 = hashlib.sha256(data).hexdigest()
+
         metadata = ModelMetadata(
             version=version,
             timestamp=datetime.utcnow().isoformat(),
@@ -70,6 +72,7 @@ class ModelRegistry:
         if file_hash != metadata.sha256:
             raise ValueError("Model artifact hash mismatch")
         model = pickle.loads(data)
+
         return model, metadata
 
 

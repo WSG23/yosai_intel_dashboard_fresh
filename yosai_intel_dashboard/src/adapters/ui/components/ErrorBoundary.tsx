@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
-import { fetchJson } from '../utils/fetchJson';
+import { fetchJson } from '../public/apiClient';
 
 interface ErrorBoundaryState {
   hasError: boolean;

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Optional, Tuple
 
+from fastapi.responses import JSONResponse
+
 from .types import CODE_TO_STATUS, ErrorCode
 
 
@@ -50,4 +52,21 @@ def error_response(
     return error.to_dict(), status
 
 
-__all__ = ["ServiceError", "from_exception", "error_response"]
+def fastapi_error_response(
+    error: ServiceError, status_code: Optional[int] = None
+) -> JSONResponse:
+    """Return a FastAPI ``JSONResponse`` for *error*.
+
+    This wraps :func:`error_response` to ensure a consistent error payload and
+    HTTP status code across services.
+    """
+    body, status = error_response(error, status_code)
+    return JSONResponse(content=body, status_code=status)
+
+
+__all__ = [
+    "ServiceError",
+    "from_exception",
+    "error_response",
+    "fastapi_error_response",
+]
