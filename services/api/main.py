@@ -4,8 +4,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from api.middleware.body_size_limit import BodySizeLimitMiddleware
-from api.middleware.security_headers import SecurityHeadersMiddleware
+from services.api.middleware.body_size_limit import BodySizeLimitMiddleware
+from services.api.middleware.security_headers import SecurityHeadersMiddleware
 
 app = FastAPI()
 app.add_middleware(BodySizeLimitMiddleware, max_bytes=50 * 1024 * 1024)

@@ -13,7 +13,7 @@ from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Provide a lightweight stub for services.interfaces to avoid heavy imports
 stub_pkg = types.ModuleType("services")
-stub_interfaces = types.ModuleType("services.interfaces")
+stub_interfaces = types.ModuleType("src.services.interfaces")
 
 safe_import("services", lambda: stub_pkg)
 
@@ -70,7 +70,7 @@ class AnalyticsServiceProtocol:
 
 
 stub_interfaces.AnalyticsServiceProtocol = AnalyticsServiceProtocol
-safe_import("services.interfaces", lambda: stub_interfaces)
+safe_import("src.services.interfaces", lambda: stub_interfaces)
 
 spec = importlib.util.spec_from_file_location(
     "migration_adapter",

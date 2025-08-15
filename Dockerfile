@@ -27,7 +27,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
+ENV PYTHONPATH=/app:/app/src:/app/yosai_intel_dashboard/src
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
@@ -51,5 +51,5 @@ RUN chmod 0755 docker-entrypoint.sh \
 USER appuser
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["start_api.py"]
+CMD ["src/start_api.py"]
 HEALTHCHECK --interval=30s --timeout=10s CMD curl --fail http://localhost:8000/health || exit 1

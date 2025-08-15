@@ -3,6 +3,6 @@
 
 def test_main_callable():
     """Ensure the start_api.main function is callable."""
-    from api import start_api
+    from services.api import start_api
 
     assert callable(start_api.main)

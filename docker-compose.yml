@@ -30,7 +30,7 @@ services:
       context: .
       dockerfile: api/Dockerfile
 
-    command: ["python", "start_api.py"]
+    command: ["python", "src/start_api.py"]
     ports:
       - "8000:8000"
     volumes:

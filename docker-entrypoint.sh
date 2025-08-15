@@ -24,6 +24,7 @@ PY
 run_app() {
   local script="$1"
   local module="${script%.py}"
+  module="${module//\//.}"
   log "Attempting to start ${script}"
   if out=$(python - <<PY 2>&1
 import importlib
@@ -51,4 +52,4 @@ PY
   fi
 }
 
-run_app wsgi.py || run_app start_api.py || start_fallback
+run_app wsgi.py || run_app src/start_api.py || start_fallback

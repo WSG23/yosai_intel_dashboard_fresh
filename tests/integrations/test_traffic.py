@@ -7,7 +7,7 @@ from integrations.traffic import (
     parse_here_traffic,
     parse_transit_feed,
 )
-from yosai_intel_dashboard.src.services.arrival_estimator import ArrivalEstimator
+from yosai_intel_dashboard.src.common.arrival_estimator import ArrivalEstimator
 from yosai_intel_dashboard.src.database import transport_events
 
 

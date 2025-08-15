@@ -3,7 +3,7 @@
 import asyncio
 import pytest
 
-from services.common.healthcheck import aggregate, check_with_timeout
+from src.services.healthcheck import aggregate, check_with_timeout
 
 
 async def ok_probe() -> None:

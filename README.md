@@ -82,6 +82,24 @@ yosai_intel_dashboard/
 
 This separation improves testability, maintainability, and deployment flexibility.
 
+## Repository Layout
+
+Runtime Python modules are grouped under the top-level `src/` directory.  Deployable
+microservices live in `services/`, each within its own folder named after the
+service:
+
+```
+project/
+├── src/                # Shared runtime code
+└── services/           # Deployable microservices
+    ├── api/
+    ├── analytics/
+    └── ...
+```
+
+Add new shared modules under `src/` and create a `services/<service_name>/`
+directory for new microservices.
+
 ### Migration Notes
 
 Top-level packages such as `core` and `services` have been removed in favor of the unified `yosai_intel_dashboard/src` hierarchy. Update any legacy imports like:
@@ -163,7 +181,7 @@ Additional architecture diagrams are available under `docs/architecture/`:
 - [Repository interfaces](docs/architecture/repositories.svg)
 - [Event processing sequence](docs/architecture/event_processing_sequence.svg)
 
-Core service protocols live in `services/interfaces.py`. Components obtain
+Core service protocols live in `src/services/interfaces.py`. Components obtain
 implementations from the `ServiceContainer` when an explicit instance is not
 provided, allowing tests to supply lightweight mocks. See
 [docs/service_container.md](docs/service_container.md) for registration
@@ -389,7 +407,7 @@ actions and role assignment.
 7. **Run the application (development only):**
    The unified startup script warms the cache and loads variables from `.env` automatically.
    ```bash
-   python start_api.py  # use only for local development
+   python src/start_api.py  # use only for local development
    ```
    For production deployments start a WSGI server instead:
    ```bash
@@ -419,7 +437,7 @@ To spin up the microservices stack run:
 docker compose up --build
 ```
 
-`python start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python start_api.py` so the variables are loaded correctly.
+`python src/start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python src/start_api.py` so the variables are loaded correctly.
 
 The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules. This brings up the web UI on `http://localhost:8080` and the API gateway on `http://localhost:8081`.
 
@@ -559,7 +577,7 @@ following steps:
    plain HTTP version from loading. Use the browser's development settings to
    clear site data, including service workers and caches, and remove any HSTS
    entries before reloading the page.
-7. If `python start_api.py` fails with `NameError: name '_env_file_callback' is not defined`,
+7. If `python src/start_api.py` fails with `NameError: name '_env_file_callback' is not defined`,
    Flask was likely installed incorrectly. Reinstall it to restore the missing
    function:
    ```bash
@@ -575,9 +593,9 @@ Using Docker Compose to start the microservices stack:
 ```bash
 docker compose up -d
 ```
-The container entrypoint runs `python start_api.py`, which loads the `.env` file before
+The container entrypoint runs `python src/start_api.py`, which loads the `.env` file before
 starting the server. Make sure the file exists or supply one via Docker's
-`--env-file` option. When deploying manually or via Kubernetes, run `python start_api.py` to ensure
+`--env-file` option. When deploying manually or via Kubernetes, run `python src/start_api.py` to ensure
 environment variables from `.env` are available to the app. The script also
 adds `yosai_intel_dashboard/src` to `PYTHONPATH` so the application can locate
 modules in the clean architecture layout.
@@ -1017,7 +1035,7 @@ DB_HOST=localhost
 DB_USER=postgres
 REDIS_HOST=localhost
 SECRET_KEY=supersecret
-python start_api.py
+python src/start_api.py
 ```
 
 These values override `database.host`, `database.user`, `cache.host` and
@@ -1041,10 +1059,10 @@ Set `YOSAI_SCHEMA_PATH` to override this schema location when needed.
 Example:
 
 ```bash
-YOSAI_ENV=production python start_api.py
+YOSAI_ENV=production python src/start_api.py
 # or
-YOSAI_CONFIG_FILE=/path/to/custom.yaml python start_api.py
-YOSAI_APP_MODE=simple python start_api.py
+YOSAI_CONFIG_FILE=/path/to/custom.yaml python src/start_api.py
+YOSAI_APP_MODE=simple python src/start_api.py
 ```
 
 #### Dynamic Constants
