@@ -263,6 +263,29 @@ class TimescaleDBManager:
             )
         return int(count)
 
+    async def unprocessed_outbox_events(self) -> list[asyncpg.Record]:
+        """Return unprocessed outbox rows for reconciliation."""
+
+        if self.pool is None:
+            await self.connect()
+        assert self.pool is not None
+        async with self.pool.acquire() as conn:
+            return await conn.fetch(
+                "SELECT id, payload FROM outbox_events WHERE processed = FALSE",
+            )
+
+    async def mark_outbox_processed(self, event_id: object) -> None:
+        """Mark the outbox row identified by ``event_id`` as processed."""
+
+        if self.pool is None:
+            await self.connect()
+        assert self.pool is not None
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE outbox_events SET processed = TRUE WHERE id = $1",
+                event_id,
+            )
+
     # ------------------------------------------------------------------
     async def close(self) -> None:
         if self.pool is not None:
