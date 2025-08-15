@@ -71,3 +71,51 @@ linkerd tap deploy/yosai-dashboard -n yosai-prod
 Linkerd automatically rotates issuer certificates before expiry (24&nbsp;hours by
 default). Check the current expiry time with `linkerd identity` and monitor the
 `linkerd-identity` pod logs to ensure new certificates are issued regularly.
+
+## Gaps After mTLS and Tracing
+
+Implementing mutual TLS and distributed tracing outside of a mesh improves
+security and observability but still leaves several capabilities unmanaged:
+
+- Traffic policies and rate limiting are configured manually per service.
+- Circuit breaking and retries are not uniformly enforced.
+- Metrics collection lacks a consistent mesh-wide view.
+- Progressive delivery (canary/blue‑green) requires custom scripting.
+
+These gaps motivate evaluating a service mesh to centralize runtime policy and
+telemetry.
+
+## Linkerd vs. Istio Decision
+
+| Capability | Linkerd | Istio |
+|------------|---------|-------|
+| Sidecar resource cost | Lower | Higher |
+| Traffic management | Basic | Advanced (VirtualService, DestinationRule) |
+| Policy enforcement | Limited | Rich RBAC and authorization policies |
+| Ecosystem | Lean and simple | Extensive integrations and add‑ons |
+
+Given the need for advanced traffic management and policy control, the project
+will prototype **Istio** in the next phase.
+
+## Non‑production Prototype and Benchmarking
+
+1. Install Istio into a staging namespace:
+   ```bash
+   istioctl install --set profile=default
+   kubectl label namespace staging istio-injection=enabled
+   ```
+2. Deploy a subset of services and generate load with tools like `k6` or `wrk`.
+3. Record baseline latency and resource usage, then compare with mesh-enabled
+   pods using Prometheus and `kubectl top`.
+4. Document CPU, memory and p95 latency overhead to determine acceptable limits.
+
+## Adoption Plan and Rollback Strategy
+
+1. Gradually enable sidecar injection in staging and validate behaviour.
+2. Promote to production via canary releases; monitor metrics and tracing.
+3. If SLOs regress, disable injection with
+   `kubectl label namespace <ns> istio-injection-` and run
+   `istioctl uninstall --purge` to remove the control plane.
+4. Revert affected deployments following the steps in
+   [rollback_plan.md](rollback_plan.md).
+
