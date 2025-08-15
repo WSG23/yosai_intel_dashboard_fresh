@@ -25,15 +25,13 @@ def test_upload_and_analytics():
     data_url = f"data:text/csv;base64,{b64}"
 
     resp = requests.post(
-        f"{gateway_url}/v1/upload",
+        f"{gateway_url}/api/v1/upload",
         json={"contents": [data_url], "filenames": ["test.csv"]},
         timeout=30,
     )
     assert resp.status_code == 200
 
-    resp = requests.get(
-        f"{gateway_url}/v1/analytics/dashboard-summary", timeout=30
-    )
+    resp = requests.get(f"{gateway_url}/api/v1/analytics/dashboard-summary", timeout=30)
     assert resp.status_code == 200
     data = resp.json()
     assert data.get("status") == "success"

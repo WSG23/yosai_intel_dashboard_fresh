@@ -56,7 +56,7 @@ def build_context_features(
             infrastructure_events,
         )
 
-        normalized = [_normalize(df) for df in dataframes]
+        normalized: list[pd.DataFrame] = [_normalize(df) for df in dataframes]
 
         # Perform an outer join across all data sources on timestamp.
         features = reduce(

@@ -4,9 +4,16 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
-    record_error,
-)
+# ``record_error`` depends on optional monitoring libraries. During tests those
+# dependencies may not be installed, so fall back to a no-op implementation.
+try:
+    from yosai_intel_dashboard.src.infrastructure.monitoring.error_budget import (
+        record_error,
+    )
+except Exception:  # pragma: no cover - best effort when monitoring is absent
+    def record_error(service: str) -> None:  # type: ignore[no-redef]
+        """Fallback no-op used when monitoring dependencies are missing."""
+        return None
 
 from .exceptions import ErrorCategory, YosaiException
 

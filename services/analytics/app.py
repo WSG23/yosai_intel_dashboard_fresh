@@ -1,10 +1,10 @@
 """Compatibility wrapper for tests.
 
-The test-suite expects the analytics microservice to be importable from the
-``services`` package.  The actual implementation lives in
-``yosai_intel_dashboard.src.services.analytics_microservice``.  This module
-re-exports the FastAPI ``app`` object from the real implementation so that both
-import locations behave the same.
+This module exposes the FastAPI ``app`` object from the real analytics
+microservice implementation located in
+``yosai_intel_dashboard.src.services.analytics_microservice``.  It allows
+imports to use ``services.analytics.app`` uniformly for both service and
+CLI contexts.
 """
 
 from importlib import import_module

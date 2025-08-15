@@ -32,6 +32,13 @@ from .config import (
     DynamicConfigurationService,
 )
 
+from .callback_helpers import (
+    create_building_analysis_display,
+    create_building_summary_report,
+    process_uploaded_file,
+    session_data,
+)
+
 if CONTAINER_AVAILABLE:
     from yosai_intel_dashboard.src.infrastructure.di.service_container import (
         ServiceContainer,
@@ -497,21 +504,6 @@ CUSTOM_STYLE = {
     "padding": "20px",
 }
 
-CARD_STYLE = {
-    "margin": "10px 0",
-    "boxShadow": "0 6px 12px rgba(0, 0, 0, 0.15)",
-    "borderRadius": "15px",
-    "border": "1px solid rgba(255, 255, 255, 0.1)",
-}
-
-# Global storage for session data
-session_data = {
-    "uploaded_df": None,
-    "column_mappings": {},
-    "device_mappings": {},
-    "enhanced_df": None,
-    "current_step": 1,
-    "building_analysis": {},
     "service_status": {
         "ai_column": AI_COLUMN_SERVICE_AVAILABLE,
         "ai_door": AI_DOOR_SERVICE_AVAILABLE,
@@ -890,25 +882,11 @@ app.layout = html.Div(
 )
 def handle_file_upload_enhanced(contents, filename):
     """Enhanced file upload with building analysis"""
-    if contents is None:
-        return "", "", "", 20
-
-    # Process file
-    df, status_msg = EnhancedFileProcessor.decode_contents(contents, filename)
-
+    df, status_msg, building_analysis = process_uploaded_file(contents, filename)
     if df is None:
-        status_alert = dbc.Alert(status_msg, color="danger")
+        status_alert = dbc.Alert(status_msg, color="danger") if status_msg else ""
         return status_alert, "", "", 20
 
-    # Store in session
-    session_data["uploaded_df"] = df
-    session_data["current_step"] = 2
-
-    # Analyze buildings in the data
-    building_analysis = analyze_buildings_in_data(df)
-    session_data["building_analysis"] = building_analysis
-
-    # Create status message
     status_alert = dbc.Alert(
         [
             html.H5("Upload Successful!", className="mb-2"),
@@ -919,7 +897,6 @@ def handle_file_upload_enhanced(contents, filename):
         color="success",
     )
 
-    # Create preview
     preview_content = [
         html.H6("Column Information:"),
         html.P(f"Total Columns: {len(df.columns)} | Total Rows: {len(df):,}"),
@@ -936,113 +913,9 @@ def handle_file_upload_enhanced(contents, filename):
         ),
     ]
 
-    # Create building analysis display
     building_content = create_building_analysis_display(building_analysis)
 
     return status_alert, preview_content, building_content, 40
-
-
-def analyze_buildings_in_data(df: pd.DataFrame) -> Dict[str, Any]:
-    """Analyze building distribution in the uploaded data"""
-    analysis = {
-        "total_unique_doors": 0,
-        "building_distribution": {},
-        "floor_distribution": {},
-        "potential_buildings": [],
-    }
-
-    if "door_id" not in df.columns:
-        return analysis
-
-    unique_doors = df["door_id"].unique()
-    analysis["total_unique_doors"] = len(unique_doors)
-
-    # Analyze building patterns
-    building_types = {}
-    floor_numbers = {}
-
-    for door in unique_doors:
-        door_str = str(door).lower()
-
-        # Detect building type
-        building_type = MultiBuildingDataEnhancer._detect_building_type(door_str)
-        building_types[building_type] = building_types.get(building_type, 0) + 1
-
-        # Detect floor
-        floor_num = MultiBuildingDataEnhancer._detect_floor_advanced(door_str)
-        floor_numbers[floor_num] = floor_numbers.get(floor_num, 0) + 1
-
-    analysis["building_distribution"] = building_types
-    analysis["floor_distribution"] = dict(sorted(floor_numbers.items()))
-
-    # Identify potential building names
-    potential_buildings = []
-    for building_type, count in building_types.items():
-        building_name = MultiBuildingDataEnhancer._generate_building_name(
-            building_type, ""
-        )
-        potential_buildings.append(
-            {"name": building_name, "type": building_type, "door_count": count}
-        )
-
-    analysis["potential_buildings"] = potential_buildings
-
-    return analysis
-
-
-def create_building_analysis_display(analysis: Dict[str, Any]) -> html.Div:
-    """Create building analysis display component"""
-    if not analysis or analysis["total_unique_doors"] == 0:
-        return html.P("No building analysis available", className="text-muted")
-
-    # Building distribution cards
-    building_cards = []
-    for building_info in analysis["potential_buildings"]:
-        card = dbc.Card(
-            [
-                dbc.CardBody(
-                    [
-                        html.H6(building_info["name"], className="card-title"),
-                        html.P(
-                            f"Type: {building_info['type']}",
-                            className="text-muted small",
-                        ),
-                        html.P(
-                            f"Doors: {building_info['door_count']}", className="mb-0"
-                        ),
-                    ]
-                )
-            ],
-            className="mb-2",
-            style={"backgroundColor": "#f8f9fa"},
-        )
-        building_cards.append(dbc.Col(card, width=3))
-
-    # Floor distribution
-    floor_items = []
-    for floor, count in analysis["floor_distribution"].items():
-        floor_name = (
-            f"Floor {floor}" if floor > 0 else "Basement" if floor < 0 else "Ground"
-        )
-        floor_items.append(html.Li(f"{floor_name}: {count} doors"))
-
-    return html.Div(
-        [
-            html.H6("🏢 Multi-Building Analysis Results:"),
-            html.P(
-                f"Total Unique Doors: {analysis['total_unique_doors']}",
-                className="mb-3",
-            ),
-            html.H6("Building Distribution:"),
-            dbc.Row(building_cards, className="mb-3"),
-            html.H6("Floor Distribution:"),
-            (
-                html.Ul(floor_items)
-                if floor_items
-                else html.P("No floor data detected", className="text-muted")
-            ),
-        ]
-    )
 
 
 @callbacks.callback(
@@ -1572,108 +1445,3 @@ def handle_enhanced_downloads(csv_clicks, json_clicks, summary_clicks):
     return None, None, None
 
 
-def create_building_summary_report() -> str:
-    """Create a comprehensive building summary report"""
-    if session_data["enhanced_df"] is None:
-        return "No data available for summary"
-
-    df = session_data["enhanced_df"]
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    report_lines = [
-        f"""
-MULTI-BUILDING ACCESS CONTROL DATA ANALYSIS SUMMARY
-Generated: {timestamp}
-================================================
-
-DATA OVERVIEW:
-- Total Records: {len(df):,}
-- Total Columns: {len(df.columns)}
-- Date Range: {df['timestamp'].min() if 'timestamp' in df.columns else 'N/A'} to {df['timestamp'].max() if 'timestamp' in df.columns else 'N/A'}
-
-"""
-    ]
-
-    # Building analysis
-    if "building" in df.columns:
-        building_stats = df["building"].value_counts()
-        report_lines.append("BUILDING DISTRIBUTION:\n")
-        for building, count in building_stats.items():
-            percentage = (count / len(df)) * 100
-            report_lines.append(f"  {building}: {count:,} events ({percentage:.1f}%)\n")
-        report_lines.append("\n")
-
-    # Floor analysis
-    if "floor_number" in df.columns:
-        floor_stats = df["floor_number"].value_counts().sort_index()
-        report_lines.append("FLOOR DISTRIBUTION:\n")
-        for floor, count in floor_stats.items():
-            floor_name = (
-                f"Floor {floor}"
-                if floor > 0
-                else "Basement" if floor < 0 else "Ground Floor"
-            )
-            percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"  {floor_name}: {count:,} events ({percentage:.1f}%)\n"
-            )
-        report_lines.append("\n")
-
-    # Security level analysis
-    if "security_level" in df.columns:
-        security_stats = df["security_level"].value_counts().sort_index()
-        report_lines.append("SECURITY LEVEL DISTRIBUTION:\n")
-        for level, count in security_stats.items():
-            percentage = (count / len(df)) * 100
-            report_lines.append(
-                f"  Level {level}: {count:,} events ({percentage:.1f}%)\n"
-            )
-        report_lines.append("\n")
-
-    # Access result analysis
-    if "access_result" in df.columns:
-        result_stats = df["access_result"].value_counts()
-        report_lines.append("ACCESS RESULT DISTRIBUTION:\n")
-        for result, count in result_stats.items():
-            percentage = (count / len(df)) * 100
-            report_lines.append(f"  {result}: {count:,} events ({percentage:.1f}%)\n")
-        report_lines.append("\n")
-
-    # Door analysis
-    if "door_id" in df.columns:
-        total_doors = df["door_id"].nunique()
-        most_active_doors = df["door_id"].value_counts().head(10)
-        report_lines.append("DOOR ANALYSIS:\n")
-        report_lines.append(f"  Total Unique Doors: {total_doors}\n")
-        report_lines.append("  Most Active Doors:\n")
-        for door, count in most_active_doors.items():
-            percentage = (count / len(df)) * 100
-            report_lines.append(f"    {door}: {count:,} events ({percentage:.1f}%)\n")
-        report_lines.append("\n")
-
-    # Special properties summary
-    special_props = [
-        "is_entry",
-        "is_exit",
-        "is_elevator",
-        "is_stairwell",
-        "is_fire_escape",
-        "is_restricted",
-    ]
-    available_props = [prop for prop in special_props if prop in df.columns]
-
-    if available_props:
-        report_lines.append("SPECIAL PROPERTIES SUMMARY:\n")
-        for prop in available_props:
-            count = df[df[prop] == True][prop].count() if prop in df.columns else 0
-            percentage = (count / len(df)) * 100 if len(df) > 0 else 0
-            prop_name = prop.replace("is_", "").replace("_", " ").title()
-            report_lines.append(
-                f"  {prop_name}: {count:,} events ({percentage:.1f}%)\n"
-            )
-        report_lines.append("\n")
-
-    report_lines.append("================================================\n")
-    report_lines.append("Report generated by MVP Data Enhancement Tool\n")
-
-    return "".join(report_lines)

@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - graphene optional in test env
 app = FastAPI(title="Intel Analysis Service")
 
 
-@app.get("/status")
+@app.get("/api/v1/status")
 def status() -> dict[str, str]:
     """Basic health endpoint for REST clients."""
 
@@ -31,6 +31,7 @@ def status() -> dict[str, str]:
 
 
 if graphene is not None:
+
     class Query(graphene.ObjectType):
         """GraphQL schema exposing a simple hello field."""
 
@@ -39,4 +40,7 @@ if graphene is not None:
         def resolve_hello(self, info):  # pragma: no cover - thin wrapper
             return "Hello from GraphQL"
 
-    app.include_router(GraphQLRouter(schema=graphene.Schema(query=Query)), prefix="/graphql")
+    app.include_router(
+        GraphQLRouter(schema=graphene.Schema(query=Query)),
+        prefix="/api/v1/graphql",
+    )

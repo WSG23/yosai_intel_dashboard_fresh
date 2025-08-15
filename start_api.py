@@ -13,6 +13,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any, Callable, Type
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +22,34 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 def _noop_loader(key: str) -> None:
-    """Default cache loader used during warmup."""
+    """Default cache loader used during warmup.
+
+    Args:
+        key: Cache key being loaded.
+
+    Returns:
+        None
+    """
     return None
 
 
-def _warm_cache(cache_manager, cache_cfg, warmer_cls, load_fn) -> None:
-    """Warm cache from usage stats and configured warm keys."""
+def _warm_cache(
+    cache_manager: Any,
+    cache_cfg: Any,
+    warmer_cls: Type[Any],
+    load_fn: Callable[[str], None],
+) -> None:
+    """Warm cache from usage stats and configured warm keys.
+
+    Args:
+        cache_manager: Cache manager instance used for warmup.
+        cache_cfg: Cache configuration object.
+        warmer_cls: Class implementing the warmup strategy.
+        load_fn: Function used to populate a missing cache entry.
+
+    Returns:
+        None
+    """
     usage_path = getattr(cache_cfg, "usage_stats_path", os.getenv("CACHE_USAGE_FILE"))
     if usage_path and hasattr(cache_manager, "get"):
         warmer = warmer_cls(cache_manager, load_fn)
@@ -37,18 +60,29 @@ def _warm_cache(cache_manager, cache_cfg, warmer_cls, load_fn) -> None:
         asyncio.run(cache_manager.warm(warm_keys, load_fn))
 
 
-def _ensure_health_endpoint(app) -> None:
-    """Add a /health route to ``app`` if missing."""
+def _ensure_health_endpoint(app: Any) -> None:
+    """Add a `/health` route to ``app`` if missing.
+
+    Args:
+        app: FastAPI application instance to modify.
+
+    Returns:
+        None
+    """
     if any(getattr(r, "path", "") == "/health" for r in app.routes):
         return
 
-    @app.get("/health")
+    @app.get("/health")  # type: ignore[misc]
     async def _health() -> dict[str, str]:
         return {"status": "ok"}
 
 
 def main() -> None:
-    """Warm the cache and start the API server."""
+    """Warm the cache and start the API server.
+
+    Returns:
+        None
+    """
     try:
         import uvicorn
 

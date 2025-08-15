@@ -14,8 +14,8 @@ SERVICES_PATH = pathlib.Path(__file__).resolve().parents[2] / "services"
 
 # Load the FastAPI analytics microservice
 app_spec = importlib.util.spec_from_file_location(
-    "services.analytics_microservice.app",
-    SERVICES_PATH / "analytics_microservice" / "app.py",
+    "services.analytics.app",
+    SERVICES_PATH / "analytics" / "app.py",
 )
 app_module = importlib.util.module_from_spec(app_spec)
 app_spec.loader.exec_module(app_module)
@@ -46,7 +46,7 @@ def test_analytics_service_adapter_microservice(monkeypatch):
     """Adapter should return the same data as the microservice."""
     monkeypatch.setenv("USE_GO_ANALYTICS", "true")
     monkeypatch.setitem(
-        migration_adapter.feature_flags._flags, "use_analytics_microservice", True
+        migration_adapter.feature_flags._flags, "use_analytics_service", True
     )
 
     client = TestClient(app_module.app)

@@ -6,19 +6,19 @@ services:
       context: ..
       dockerfile: api/Dockerfile
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/yosai_intel
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: yosai_intel
-      REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: integration-secret
-      AUTH0_CLIENT_ID: dummy
-      AUTH0_CLIENT_SECRET: dummy
-      AUTH0_DOMAIN: example.com
-      AUTH0_AUDIENCE: dummy
-      JWT_SECRET: dummy
+      DATABASE_URL: ${DATABASE_URL}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      REDIS_URL: ${REDIS_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8000:8000"
     depends_on:
@@ -35,9 +35,9 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_DB: yosai_intel
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     healthcheck:

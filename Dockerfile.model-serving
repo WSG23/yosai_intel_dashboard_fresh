@@ -1,0 +1,17 @@
+# Simple container for the model serving FastAPI application
+ARG PYTHON_IMAGE="python:3.11-slim"
+FROM ${PYTHON_IMAGE}
+
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+ENV PYTHONPATH=/app:/app/yosai_intel_dashboard/src
+
+EXPOSE 8000
+CMD ["uvicorn", "yosai_intel_dashboard.src.services.model_serving.app:app", "--host", "0.0.0.0", "--port", "8000"]

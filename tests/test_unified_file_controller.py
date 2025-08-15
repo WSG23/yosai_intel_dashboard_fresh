@@ -1,18 +1,28 @@
 from __future__ import annotations
 
 import os
+import asyncio
+import inspect
 import sys
 import types
 from enum import Enum, auto
 from pathlib import Path
+import base64
+import io
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
+os.environ.setdefault("DB_HOST", "localhost")
+os.environ.setdefault("DB_PORT", "5432")
+os.environ.setdefault("DB_USER", "user")
+os.environ.setdefault("DB_PASSWORD", "pass")
+os.environ.setdefault("DB_NAME", "test")
+os.environ.setdefault("ANALYTICS_API_KEY", "dummy")
 
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import  # noqa: E402
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder  # noqa: E402
-from yosai_intel_dashboard.src.utils.upload_store import UploadedDataStore  # noqa: E402
+from tests.fixtures import MockUploadDataStore  # noqa: E402
 
 callback_events_stub = types.ModuleType("core.callback_events")
 
@@ -25,6 +35,36 @@ class CallbackEvent(Enum):
 callback_events_stub.CallbackEvent = CallbackEvent
 safe_import("core.callback_events", callback_events_stub)
 
+# Stub heavy dependencies used during module import
+sys.modules[
+    "yosai_intel_dashboard.src.core.unicode"
+] = types.SimpleNamespace(UnicodeProcessor=types.SimpleNamespace(sanitize_dataframe=lambda df: df))
+sys.modules[
+    "yosai_intel_dashboard.src.infrastructure.config.dynamic_config"
+] = types.SimpleNamespace(dynamic_config=types.SimpleNamespace(security=types.SimpleNamespace(max_upload_mb=10)))
+sys.modules[
+    "yosai_intel_dashboard.src.utils.sanitization"
+] = types.SimpleNamespace(sanitize_text=lambda x: x)
+
+afh = types.ModuleType("yosai_intel_dashboard.src.services.data_processing.file_handler")
+
+class FileHandler:
+    def validate_file(self, contents, filename):
+        import pandas as pd
+        csv_bytes = base64.b64decode(contents.split(",", 1)[1])
+        return pd.read_csv(io.BytesIO(csv_bytes))
+
+afh.FileHandler = FileHandler
+sys.modules[
+    "yosai_intel_dashboard.src.services.data_processing.file_handler"
+] = afh
+
+upload_stub = types.ModuleType("yosai_intel_dashboard.src.utils.upload_store")
+upload_stub.UploadedDataStore = MockUploadDataStore
+sys.modules[
+    "yosai_intel_dashboard.src.utils.upload_store"
+] = upload_stub
+
 
 class DummyManager:
     def __init__(self) -> None:
@@ -34,7 +74,22 @@ class DummyManager:
         self.events.setdefault(event, []).append(func)
 
     def trigger(self, event, *args, **kwargs):
-        return [cb(*args, **kwargs) for cb in self.events.get(event, [])]
+        results = []
+        for cb in self.events.get(event, []):
+            if inspect.iscoroutinefunction(cb):
+                results.append(asyncio.run(cb(*args, **kwargs)))
+            else:
+                results.append(cb(*args, **kwargs))
+        return results
+
+    async def trigger_async(self, event, *args, **kwargs):
+        tasks = []
+        for cb in self.events.get(event, []):
+            if inspect.iscoroutinefunction(cb):
+                tasks.append(asyncio.create_task(cb(*args, **kwargs)))
+            else:
+                tasks.append(asyncio.to_thread(cb, *args, **kwargs))
+        return await asyncio.gather(*tasks)
 
 
 tuc_stub = types.ModuleType(
@@ -53,7 +108,7 @@ from yosai_intel_dashboard.src.services.unified_file_controller import (  # noqa
 
 def test_register_callbacks_processes_upload(tmp_path):
     manager = DummyManager()
-    store = UploadedDataStore(storage_dir=tmp_path)
+    store = MockUploadDataStore(storage_dir=tmp_path)
     df = DataFrameBuilder().add_column("a", [1, 2]).build()
     content = UploadFileBuilder().with_dataframe(df).as_base64()
 

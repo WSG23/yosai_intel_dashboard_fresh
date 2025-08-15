@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { graphsAPI, AvailableChart } from '../api/graphs';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-
 // In-memory cache for chart data
 const chartCache = new Map<string, any>();
 
@@ -70,15 +68,7 @@ const useGraphsData = (): UseGraphsDataResult => {
           setIsLoading(false);
           return;
         }
-        const res = await fetch(`${API_BASE_URL}/graphs/chart/${chart}`, {
-          signal,
-          credentials: 'include',
-        });
-        if (!res.ok) {
-          throw new Error('Failed to fetch chart data');
-        }
-        const payload = await res.json();
-        const chartData = payload.data ? payload.data : payload;
+        const chartData = await graphsAPI.getChartData(chart, signal);
         chartCache.set(chart, chartData);
         if (!signal.aborted) {
           setData(chartData);

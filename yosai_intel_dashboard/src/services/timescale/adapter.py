@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from yosai_intel_dashboard.src.services.analytics_microservice import queries
+from yosai_intel_dashboard.src.services.analytics import queries
 
 from .manager import TimescaleDBManager
 

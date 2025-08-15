@@ -3,18 +3,32 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-yaml
-        files: ^\.github/workflows/
+        exclude: ^deploy/helm/
       - id: end-of-file-fixer
-        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py|requirements.txt|pyproject.toml|\.github/workflows/)
       - id: trailing-whitespace
-        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py|requirements.txt|pyproject.toml|\.github/workflows/)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.7
-    hooks:
-      - id: ruff
-        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)
   - repo: https://github.com/psf/black
-    rev: 25.1.0
+    rev: 24.10.0
     hooks:
       - id: black
-        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)
+        language_version: python3
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        language_version: python3
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: ["--convention=google"]
+        files: ^start_api\.py$
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        args: [--config-file=mypy.ini, --follow-imports=skip, --ignore-missing-imports]
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+      - id: bandit
+        args: [-ll]
