@@ -36,6 +36,7 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
     setup_health_checks,
 )
+from yosai_intel_dashboard.src.services.analytics import async_repository
 from shared.errors.types import ErrorCode, ErrorResponse
 
 from yosai_intel_dashboard.src.services.intel_analysis_service.core import (
@@ -118,6 +119,7 @@ async def _shutdown() -> None:
     await cache_manager.stop()
     if ws_server is not None:
         ws_server.stop()
+    await async_repository.shutdown()
 
 
 # ---------------------------------------------------------------------------
