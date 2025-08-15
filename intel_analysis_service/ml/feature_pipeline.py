@@ -8,6 +8,7 @@ contain a ``timestamp`` column which will be used for alignment.
 from __future__ import annotations
 
 from functools import reduce
+from pathlib import Path
 from typing import Iterable
 
 try:  # pragma: no cover - optional dependency
@@ -31,6 +32,13 @@ except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
     tracer = _Tracer()
 import pandas as pd
 
+try:  # pragma: no cover - optional dependency
+    import pyarrow as pa
+    _HAVE_ARROW = hasattr(pa, "Table")
+except Exception:  # pragma: no cover - pyarrow not installed or stubbed
+    pa = None
+    _HAVE_ARROW = False
+
 
 def _normalize(df: pd.DataFrame) -> pd.DataFrame:
     """Ensure a DataFrame has a ``timestamp`` column and is sorted."""
@@ -47,6 +55,9 @@ def build_context_features(
     transport_events: pd.DataFrame,
     social_signals: pd.DataFrame,
     infrastructure_events: pd.DataFrame,
+    *,
+    cache_path: str | Path | None = None,
+    use_pyarrow: bool = True,
 ) -> pd.DataFrame:
     """Combine heterogeneous event streams into a single feature set.
 
@@ -74,11 +85,22 @@ def build_context_features(
 
         normalized: list[pd.DataFrame] = [_normalize(df) for df in dataframes]
 
-        # Perform an outer join across all data sources on timestamp.
-        features = reduce(
-            lambda left, right: pd.merge(left, right, on="timestamp", how="outer"),
-            normalized,
-        )
+        cache_file = Path(cache_path) if cache_path else None
+        if cache_file and cache_file.exists():
+            return pd.read_parquet(cache_file)
+
+        if use_pyarrow and _HAVE_ARROW:
+            tables = [pa.Table.from_pandas(df, preserve_index=False) for df in normalized]
+            merged = reduce(
+                lambda left, right: left.join(right, keys="timestamp", join_type="full outer"),
+                tables,
+            )
+            features = merged.to_pandas()
+        else:
+            features = reduce(
+                lambda left, right: pd.merge(left, right, on="timestamp", how="outer"),
+                normalized,
+            )
 
         features = features.sort_values("timestamp").fillna(0)
 
@@ -90,5 +112,9 @@ def build_context_features(
             features["social_sentiment"] = (
                 features["social"].rolling(window=3, min_periods=1).mean()
             )
+
+        if cache_file:
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            features.to_parquet(cache_file)
 
         return features
