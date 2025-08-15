@@ -1395,9 +1395,14 @@ of unstyled content. Use the new dropdown on the right side of the navbar to
 switch themes at runtime.
 
 ## <span aria-hidden="true">📚</span> Documentation
+Full documentation lives in the [`docs/`](docs/) directory and is built with
+[MkDocs](https://www.mkdocs.org/). The [API reference](docs/api_reference.md) is
+generated automatically from docstrings using
+[`mkdocstrings`](https://mkdocstrings.github.io/).
 
-See the [data model diagram](docs/data_model.md) for an overview of key entities.
-The running application exposes Swagger-based API docs at `http://<host>:<port>/api/docs`.
+See the [data model diagram](docs/data_model.md) for an overview of key
+entities. The running application exposes Swagger-based API docs at
+`http://<host>:<port>/api/docs`.
 - Performance & log monitoring: [docs/performance_monitoring.md](docs/performance_monitoring.md)
 - Large file processing: [docs/performance_file_processor.md](docs/performance_file_processor.md)
 - Profiling the data processor: [docs/profile_data_processor.md](docs/profile_data_processor.md)
@@ -1706,7 +1711,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
 2. Ensure all tests pass: `pytest`
 3. Format code with `black` and run `flake8`
 4. Follow type safety guidelines and maintain the modular architecture
-5. Add tests for new functionality and update documentation when applicable
+5. Add tests for new functionality and update documentation when applicable.
+   Document new modules with docstrings and usage examples so the API
+   reference stays current.
 6. Run the built-in debugging CLI with `python -m tools.debug` to validate
    your environment and inspect callback dependencies.
 7. Set `SECRET_KEY` in your shell or `.env` file when running development
