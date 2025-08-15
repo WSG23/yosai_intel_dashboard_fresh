@@ -52,6 +52,11 @@ if Histogram and Counter:
         feature_alerts = Counter(
             "feature_drift_alerts_total", "Number of feature drift alerts", ["feature"]
         )
+        drift_results = Counter(
+            "drift_detection_results_total",
+            "Count of drift detection outcomes",
+            ["detected"],
+        )
     else:  # pragma: no cover - defensive for test stubs
         _reg = CollectorRegistry() if CollectorRegistry else None
         prediction_ratio = Histogram(
@@ -76,11 +81,18 @@ if Histogram and Counter:
             ["feature"],
             registry=_reg,
         )
+        drift_results = Counter(
+            "drift_detection_results_total",
+            "Count of drift detection outcomes",
+            ["detected"],
+            registry=_reg,
+        )
 else:  # pragma: no cover - metrics unavailable
     prediction_ratio = None
     drift_alerts = None
     feature_zscores = None
     feature_alerts = None
+    drift_results = None
 
 
 @dataclass
@@ -219,8 +231,20 @@ class FeatureDriftDetector:
         return False
 
 
+def log_drift_detection(detected: bool) -> None:
+    """Record the drift detection *detected* outcome to Prometheus."""
+
+    if drift_results is None:
+        return
+    try:
+        drift_results.labels(str(bool(detected)).lower()).inc()
+    except Exception:  # pragma: no cover - metrics stub
+        pass
+
+
 __all__ = [
     "ThresholdDriftDetector",
     "FeatureStats",
     "FeatureDriftDetector",
+    "log_drift_detection",
 ]

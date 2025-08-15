@@ -26,6 +26,7 @@ except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
 
     tracer = _Tracer()
 import pandas as pd
+from .drift import log_drift_detection
 
 class DriftDetector(Protocol):
     """Protocol describing drift detection behaviour."""
@@ -120,6 +121,7 @@ class AnomalyDetector:
                 drift = self.drift_detector.detect(
                     result[value_col], result["threshold"]
                 )
+                log_drift_detection(drift)
                 result["drift_detected"] = drift
             return result
 
