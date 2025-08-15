@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:1.5
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PYTHONPATH=/app
+WORKDIR /app
+RUN pip install --upgrade pip setuptools wheel
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/pip pip install "uvicorn[standard]" fastapi itsdangerous "dask[distributed]" sqlalchemy python-multipart
+EXPOSE 8000
+COPY docker/dev-entrypoint.sh /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
