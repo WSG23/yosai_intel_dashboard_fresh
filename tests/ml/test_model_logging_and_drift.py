@@ -33,7 +33,10 @@ if not hasattr(pd, "date_range"):
 
 from intel_analysis_service.ml import AnomalyDetector, RiskScorer
 
-from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
+from yosai_intel_dashboard.src.services.monitoring.drift_monitor import (
+    DriftMonitor,
+    drift_monitor_metric,
+)
 
 
 class DummyDriftDetector:
@@ -103,3 +106,6 @@ def test_drift_monitor_logs_and_rollback():
     history = monitor.get_recent_history()
     assert history and history[-1]["pred"]["psi"] > 0
     assert monitor.get_recent_history(limit=1) == history[-1:]
+    metric = drift_monitor_metric.labels("pred", "psi")
+    if hasattr(metric, "_value"):
+        assert metric._value.get() > 0
