@@ -1329,7 +1329,7 @@ async with factory.get_async_connection() as conn:
   Run the analytics microservice via the unified BaseService:
 
   ```bash
-  python -m uvicorn services.analytics_microservice.app:app --host 0.0.0.0 --port 8001
+  python -m uvicorn services.analytics.app:app --host 0.0.0.0 --port 8001
   ```
 
 - **Async analytics microservice**: FastAPI implementation using an async
