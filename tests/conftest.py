@@ -85,6 +85,36 @@ for _mod, _stub in [
     ("opentelemetry.instrumentation.fastapi", None),
     ("structlog", None),
     ("sklearn", None),
+    (
+        "sklearn.linear_model",
+        SimpleNamespace(
+            LogisticRegression=type(
+                "LogisticRegression", (), {"fit": lambda self, X, y: self}
+            )
+        ),
+    ),
+    (
+        "sklearn.preprocessing",
+        SimpleNamespace(
+            StandardScaler=type(
+                "StandardScaler",
+                (),
+                {
+                    "fit": lambda self, X: self,
+                    "transform": lambda self, X: X,
+                    "fit_transform": lambda self, X: X,
+                },
+            )
+        ),
+    ),
+    (
+        "sklearn.inspection",
+        SimpleNamespace(
+            permutation_importance=lambda model, X, y, n_jobs=None: SimpleNamespace(
+                importances_mean=[0] * len(X.columns)
+            )
+        ),
+    ),
     ("sklearn.ensemble", SimpleNamespace(IsolationForest=object())),
     (
         "yosai_intel_dashboard.src.infrastructure.security.query_builder",
@@ -122,6 +152,7 @@ for _mod, _stub in [
         _stub.Counter = _Metric
         _stub.Gauge = _Metric
         _stub.Histogram = _Metric
+        _stub.CollectorRegistry = object
         _stub.REGISTRY = SimpleNamespace(_names_to_collectors={})
     _register_stub(_mod, _stub)
 
