@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api.middleware.body_size_limit import BodySizeLimitMiddleware
+from services.api.middleware.body_size_limit import BodySizeLimitMiddleware
 
 
 def create_app(limit: int = 10) -> FastAPI:

@@ -20,7 +20,7 @@ from fastapi.responses import FileResponse
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from api.middleware.body_size_limit import BodySizeLimitMiddleware
+from services.api.middleware.body_size_limit import BodySizeLimitMiddleware
 from middleware.performance import TimingMiddleware
 from middleware.rate_limit import RateLimitMiddleware, RedisRateLimiter
 from middleware.security_headers import SecurityHeadersMiddleware

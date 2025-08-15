@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from importlib import import_module
 
-from services.arrival_estimator import ArrivalEstimator
+from src.common.arrival_estimator import ArrivalEstimator
 
 transport_events = import_module("yosai_intel_dashboard.src.database.transport_events")
 

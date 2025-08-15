@@ -10,7 +10,7 @@ services_path = pathlib.Path(__file__).resolve().parents[2] / "services"
 stub_pkg = types.ModuleType("services")
 stub_pkg.__path__ = [str(services_path)]
 safe_import('services', stub_pkg)
-stub_interfaces = types.ModuleType("services.interfaces")
+stub_interfaces = types.ModuleType("src.services.interfaces")
 
 
 class AnalyticsServiceProtocol:
@@ -18,7 +18,7 @@ class AnalyticsServiceProtocol:
 
 
 stub_interfaces.AnalyticsServiceProtocol = AnalyticsServiceProtocol
-safe_import('services.interfaces', stub_interfaces)
+safe_import('src.services.interfaces', stub_interfaces)
 safe_import('kafka', types.ModuleType("kafka"))
 setattr(sys.modules["kafka"], "KafkaProducer", object)
 

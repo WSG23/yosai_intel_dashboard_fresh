@@ -21,10 +21,10 @@ stub_services = types.ModuleType("services")
 stub_services.__path__ = [str(services_path)]
 safe_import('services', stub_services)
 
-interfaces_mod = types.ModuleType("services.interfaces")
+interfaces_mod = types.ModuleType("src.services.interfaces")
 class AnalyticsServiceProtocol: pass
 interfaces_mod.AnalyticsServiceProtocol = AnalyticsServiceProtocol
-safe_import('services.interfaces', interfaces_mod)
+safe_import('src.services.interfaces', interfaces_mod)
 
 feat_mod = types.ModuleType("services.feature_flags")
 class FeatureFlags:
