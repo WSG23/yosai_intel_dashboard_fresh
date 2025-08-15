@@ -297,12 +297,6 @@ class JsonSerializationPlugin(BaseModel):
             # Apply global JSON patch
             self._apply_global_json_patch()
 
-            # Patch Flask JSON if available
-            self._patch_flask_json()
-
-            # Patch Dash serialization if available
-            self._patch_dash_serialization()
-
             self._started = True
             self.logger.info("✅ JSON Serialization Plugin started with babel handling")
             return True
@@ -335,72 +329,9 @@ class JsonSerializationPlugin(BaseModel):
             json.dumps = safe_dumps
             self.logger.info("Applied global JSON.dumps patch")
 
-    def _patch_flask_json(self):
-        """Patch Flask JSON provider if available"""
-        try:
-            # Create custom JSON provider class
-            class YosaiJSONProvider:
-                def __init__(self, app):
-                    self.app = app
-                    self.service = self.serialization_service
-
-                def dumps(self, obj, **kwargs):
-                    return self.service.serialize(obj)
-
-                def loads(self, s, **kwargs):
-                    return json.loads(s)
-
-                def response(self, obj):
-                    return self.app.response_class(
-                        self.dumps(obj), mimetype="application/json"
-                    )
-
-            # Store for later use
-            self._yosai_json_provider_class = YosaiJSONProvider
-            self.logger.info("Flask JSON provider patch ready")
-
-        except ImportError:
-            pass
-
-    def _patch_dash_serialization(self):
-        """Patch Dash serialization if available"""
-        try:
-            import dash
-
-            # Store reference for Dash apps to use
-            if not hasattr(dash, "_yosai_json_service"):
-                dash._yosai_json_service = self.serialization_service
-                self.logger.info("Dash serialization service registered")
-
-        except ImportError:
-            pass
-
-    def apply_to_app(self, app):
-        """Apply JSON serialization to a specific Flask/Dash app"""
-        try:
-            if hasattr(self, "serialization_service"):
-                if hasattr(app, "server") and hasattr(
-                    self, "_yosai_json_provider_class"
-                ):
-                    # This is a Dash app
-                    app.server.json_provider_class = self._yosai_json_provider_class
-                    app.server.json = self._yosai_json_provider_class(app.server)
-                    cast(Any, app)._yosai_json_plugin = self
-                    self.logger.info("Applied JSON serialization to Dash app")
-                elif hasattr(app, "json_provider_class") and hasattr(
-                    self, "_yosai_json_provider_class"
-                ):
-                    # This is a Flask app
-                    app.json_provider_class = self._yosai_json_provider_class
-                    app.json = self._yosai_json_provider_class(app)
-                    self.logger.info("Applied JSON serialization to Flask app")
-            else:
-                logger.info("Using fallback JSON serialization")
-                # Fallback implementation
-        except AttributeError as e:
-            logger.warning(f"JSON plugin fallback: {e}")
-        except Exception as e:
-            self.logger.warning(f"Could not apply to app: {e}")
+            self._started = True
+            self.logger.info("✅ JSON Serialization Plugin started with babel handling")
+            return True
 
     def stop(self) -> bool:
         """Stop the plugin and restore original JSON functions"""

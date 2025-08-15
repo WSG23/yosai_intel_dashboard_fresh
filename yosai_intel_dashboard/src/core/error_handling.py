@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Deque, Dict, List, Optional
 
+from fastapi import Request
 from prometheus_client import REGISTRY, Counter
 from prometheus_client.core import CollectorRegistry
 
@@ -298,16 +299,16 @@ def handle_errors(
             except Exception as exc:
                 user_id = None
                 request_id = None
-                try:
-                    from flask import g, has_request_context
-
-                    if has_request_context():
-                        user_id = getattr(g, "user_id", None) or getattr(
-                            g, "current_user_id", None
-                        )
-                        request_id = getattr(g, "request_id", None)
-                except Exception:
-                    pass
+                request: Request | None = kwargs.get("request")
+                if request is None:
+                    for arg in args:
+                        if isinstance(arg, Request):
+                            request = arg
+                            break
+                if request is not None:
+                    state = getattr(request, "state", None)
+                    user_id = getattr(state, "user_id", None) if state else None
+                    request_id = getattr(state, "request_id", None) if state else None
 
                 error_handler.handle_error(
                     exc,
