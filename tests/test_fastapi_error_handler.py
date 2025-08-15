@@ -20,4 +20,8 @@ client = TestClient(app)
 def test_fastapi_error_format():
     resp = client.get("/fail")
     assert resp.status_code == 400
-    assert resp.json() == {"code": "invalid_input", "message": "bad"}
+    assert resp.json() == {
+        "code": "invalid_input",
+        "message": "bad",
+        "details": None,
+    }

@@ -21,10 +21,10 @@ var _ MappedNullable = &Error{}
 
 // Error struct for Error
 type Error struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	// Additional error details
-	Details interface{} `json:"details,omitempty"`
+        Code    string `json:"code"`
+        Message string `json:"message"`
+        // Additional error details
+        Details interface{} `json:"details"`
 }
 
 type _Error Error
@@ -139,12 +139,10 @@ func (o Error) MarshalJSON() ([]byte, error) {
 
 func (o Error) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["code"] = o.Code
-	toSerialize["message"] = o.Message
-	if o.Details != nil {
-		toSerialize["details"] = o.Details
-	}
-	return toSerialize, nil
+        toSerialize["code"] = o.Code
+        toSerialize["message"] = o.Message
+        toSerialize["details"] = o.Details
+        return toSerialize, nil
 }
 
 func (o *Error) UnmarshalJSON(data []byte) (err error) {

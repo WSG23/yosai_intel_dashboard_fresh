@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -16,5 +17,6 @@ class ErrorCode(str, Enum):
 class ErrorResponse(BaseModel):
     """Standard error response model."""
 
-    code: ErrorCode | None = None
-    detail: str
+    code: ErrorCode
+    message: str
+    details: Any | None = None

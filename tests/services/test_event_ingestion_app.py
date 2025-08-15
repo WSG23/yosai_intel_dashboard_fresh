@@ -63,7 +63,12 @@ def load_module():
                 return await call_next(request)
             except Exception as exc:  # noqa: BLE001
                 return JSONResponse(
-                    {"code": "internal", "message": str(exc)}, status_code=500
+                    {
+                        "code": "internal",
+                        "message": str(exc),
+                        "details": None,
+                    },
+                    status_code=500,
                 )
 
     err_mw.ErrorHandlingMiddleware = DummyMW
@@ -173,7 +178,11 @@ def load_module():
             self.message = message
 
         def to_dict(self):
-            return {"code": self.code, "message": self.message}
+            return {
+                "code": self.code,
+                "message": self.message,
+                "details": None,
+            }
 
     errors_stub.ServiceError = ServiceError
     safe_import("yosai_framework.errors", errors_stub)
@@ -249,7 +258,7 @@ async def test_error_handling_middleware():
     ) as client:
         resp = await client.get("/boom")
     assert resp.status_code == 500
-    assert resp.json() == {"code": "internal", "message": "fail"}
+    assert resp.json() == {"code": "internal", "message": "fail", "details": None}
 
 
 @pytest.mark.asyncio

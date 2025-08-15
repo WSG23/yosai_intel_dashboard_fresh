@@ -22,10 +22,7 @@ _CODE_TO_STATUS: dict[ErrorCode, int] = {
 def _json_body(code: ErrorCode | str, message: str, details: Optional[Any] = None):
     if isinstance(code, ErrorCode):
         code = code.value
-    body = {"code": code, "message": message}
-    if details is not None:
-        body["details"] = details
-    return jsonify(body)
+    return jsonify({"code": code, "message": message, "details": details})
 
 
 def register_error_handlers(app: Flask) -> None:

@@ -20,7 +20,7 @@ const (
 type Error struct {
     Code    Code        `json:"code"`
     Message string      `json:"message"`
-    Details interface{} `json:"details,omitempty"`
+    Details interface{} `json:"details"`
 }
 
 // WriteJSON writes the error as JSON to the http.ResponseWriter.
