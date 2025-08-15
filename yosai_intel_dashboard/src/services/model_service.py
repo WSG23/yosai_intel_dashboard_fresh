@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Tuple
 
@@ -30,8 +31,12 @@ class ModelService:
                 self._models[name][ver] = lambda x, factor=factor: x * factor
 
     def register_model(self, name: str, version: str, metadata: Dict[str, Any]) -> None:
-        meta = self._registry.setdefault(name, {"versions": {}, "active": version, "rollout": {}})
-        meta["versions"][version] = metadata
+        meta = self._registry.setdefault(
+            name, {"versions": {}, "active": version, "rollout": {}}
+        )
+        entry = dict(metadata)
+        entry.setdefault("timestamp", datetime.utcnow().isoformat())
+        meta["versions"][version] = entry
         meta["rollout"].setdefault(version, 1.0)
         self._save()
         self._load_registry()
@@ -75,4 +80,3 @@ class ModelService:
 
     def list_models(self) -> Dict[str, Any]:
         return self._registry
-
