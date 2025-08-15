@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import logging
+import time
 import weakref
 from typing import Any
 
 from flask_caching import Cache
 
 from .registry import ServiceRegistry
+from .performance import cache_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -41,21 +43,36 @@ def _fallback_init(app) -> None:
 
     class _DictCache:
         def __init__(self) -> None:
-            self._data: dict[str, Any] = {}
+            self._data: dict[str, tuple[Any, float | None]] = {}
 
         def get(self, key: str) -> Any:
-            value = self._data.get(key)
+            item = self._data.get(key)
+            if not item:
+                cache_monitor.record_cache_miss("memory")
+                return None
+            value, expiry = item
+            if expiry is not None and time.time() > expiry:
+                self._data.pop(key, None)
+                cache_monitor.record_cache_miss("memory")
+                return None
             if isinstance(value, weakref.ReferenceType):
                 value = value()
+                if value is None:
+                    self._data.pop(key, None)
+                    cache_monitor.record_cache_miss("memory")
+                    return None
+            cache_monitor.record_cache_hit("memory")
             return value
 
         def set(self, key: str, value: Any, timeout: int | None = None) -> None:
+            expiry = time.time() + timeout if timeout else None
             try:
-                self._data[key] = weakref.ref(
-                    value, lambda _, k=key: self._data.pop(k, None)
+                self._data[key] = (
+                    weakref.ref(value, lambda _, k=key: self._data.pop(k, None)),
+                    expiry,
                 )
             except TypeError:
-                self._data[key] = value
+                self._data[key] = (value, expiry)
 
         def delete(self, key: str) -> None:
             self._data.pop(key, None)
