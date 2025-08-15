@@ -12,6 +12,7 @@ An AI-powered modular security intelligence dashboard for physical access contro
 - Deployments use immutable image tags for reproducible builds.
 - CI and test status are surfaced via the badges above.
 - Services expose `/health` endpoints for basic liveness checks.
+- Code quality analyzers now live under `analytics.code_quality`.
 
 ## Quick Start for End Users
 
