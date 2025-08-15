@@ -49,11 +49,11 @@ After starting the development servers you can manually confirm that the upload 
    ```
 2. Confirm the Flask API is serving requests (default port **5001**):
    ```bash
-   curl -I http://localhost:5001/v1/health
+   curl -I http://localhost:5001/api/v1/health
    ```
 3. Verify CORS is enabled on the upload endpoint:
    ```bash
-   curl -I -X OPTIONS http://localhost:5001/v1/upload \
+   curl -I -X OPTIONS http://localhost:5001/api/v1/upload \
      -H "Origin: http://localhost:3000" \
      -H "Access-Control-Request-Method: POST"
    ```

@@ -11,7 +11,7 @@ sequenceDiagram
     participant AS as AnalyticsService
 
     U->>B: Drag or select file, click Upload
-    B->>S: POST /upload
+    B->>S: POST /api/v1/upload
     S->>V: Validate file
     V-->>S: Clean data
     S->>AS: analyze(data)

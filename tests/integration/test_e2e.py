@@ -167,7 +167,7 @@ def _create_app(db: Any, broker: redis.Redis) -> tuple[FastAPI, Callable[[], boo
             raise HTTPException(status_code=401)
         return role
 
-    @app.post("/upload")
+    @app.post("/api/v1/upload")
     async def upload_file(
         file: UploadFile = File(...),
         role: str = Depends(auth),
@@ -196,7 +196,7 @@ def _create_app(db: Any, broker: redis.Redis) -> tuple[FastAPI, Callable[[], boo
         app.state.db.commit()
         return True
 
-    @app.get("/analytics")
+    @app.get("/api/v1/analytics")
     def get_analytics(role: str = Depends(auth)):
         if role not in {"analyst", "admin"}:
             raise HTTPException(status_code=403)
@@ -218,7 +218,7 @@ def test_upload_process_and_analytics(app_client):
     client, app = app_client
     files = {"file": ("data.csv", "a,b\n1,2\n3,4\n")}
     resp = client.post(
-        "/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
+        "/api/v1/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
     )
     assert resp.status_code == 200
 
@@ -226,7 +226,7 @@ def test_upload_process_and_analytics(app_client):
         pass
 
     resp = client.get(
-        "/analytics", headers={"Authorization": "Bearer token-analyst"}
+        "/api/v1/analytics", headers={"Authorization": "Bearer token-analyst"}
     )
     assert resp.status_code == 200
     assert resp.json()["rows"] == 2
@@ -237,11 +237,11 @@ def test_authentication_and_rbac(app_client):
     client, _ = app_client
     files = {"file": ("data.csv", "a,b\n1,2\n")}
 
-    resp = client.post("/upload", files=files)
+    resp = client.post("/api/v1/upload", files=files)
     assert resp.status_code == 401
 
     resp = client.get(
-        "/analytics", headers={"Authorization": "Bearer token-uploader"}
+        "/api/v1/analytics", headers={"Authorization": "Bearer token-uploader"}
     )
     assert resp.status_code == 403
 
@@ -253,7 +253,7 @@ def test_corrupted_upload_and_retry(app_client, monkeypatch):
     # Corrupted upload (missing comma)
     files = {"file": ("data.csv", "invalid data")}
     resp = client.post(
-        "/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
+        "/api/v1/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
     )
     assert resp.status_code == 400
 
@@ -271,7 +271,7 @@ def test_corrupted_upload_and_retry(app_client, monkeypatch):
 
     files = {"file": ("data.csv", "a,b\n1,2\n")}
     resp = client.post(
-        "/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
+        "/api/v1/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
     )
     assert resp.status_code == 200
     assert calls["n"] >= 2  # retried
@@ -280,7 +280,7 @@ def test_corrupted_upload_and_retry(app_client, monkeypatch):
         pass
 
     resp = client.get(
-        "/analytics", headers={"Authorization": "Bearer token-analyst"}
+        "/api/v1/analytics", headers={"Authorization": "Bearer token-analyst"}
     )
     assert resp.json()["rows"] >= 1
 
@@ -293,7 +293,7 @@ def test_load_concurrency(app_client):
         content = f"a,b\n{idx},2\n"
         files = {"file": (f"data{idx}.csv", content)}
         return client.post(
-            "/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
+            "/api/v1/upload", files=files, headers={"Authorization": "Bearer token-uploader"}
         )
 
     start = time.perf_counter()
@@ -307,6 +307,6 @@ def test_load_concurrency(app_client):
         pass
 
     resp = client.get(
-        "/analytics", headers={"Authorization": "Bearer token-analyst"}
+        "/api/v1/analytics", headers={"Authorization": "Bearer token-analyst"}
     )
     assert resp.json()["rows"] == 5

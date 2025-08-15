@@ -9,4 +9,4 @@ class UploadUser(HttpUser):
     @task
     def upload_file(self):
         data = {"file": ("data.csv", "a,b\n1,2\n")}
-        self.client.post("/upload", files=data)
+        self.client.post("/api/v1/upload", files=data)
