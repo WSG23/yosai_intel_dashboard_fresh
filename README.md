@@ -19,16 +19,9 @@ An AI-powered modular security intelligence dashboard for physical access contro
 2. Use the navigation menu to access analytics, real-time monitoring, uploads, and settings.
 3. For tips on working with alerts and customizing your view, see the [User Guide](docs/user_guide.md).
 
-## Developer Quickstart
+## Setup & Deployment
 
-```bash
-docker compose -f docker-compose.dev.yml up --build
-make test-quick    # run unit tests
-make test-cov      # run tests with coverage
-pytest tests/test_integration.py  # integration smoke test
-```
-
-See the [Observability guide](docs/observability.md) and the [Testing guide](docs/testing.md) for additional details.
+See [Setup and Deployment Guide](docs/setup_and_deployment.md) for development, testing, and production deployment instructions.
 
 ## Interactive Visualizations
 
@@ -1329,7 +1322,7 @@ async with factory.get_async_connection() as conn:
   Run the analytics microservice via the unified BaseService:
 
   ```bash
-  python -m uvicorn services.analytics_microservice.app:app --host 0.0.0.0 --port 8001
+  python -m uvicorn services.analytics.app:app --host 0.0.0.0 --port 8001
   ```
 
 - **Async analytics microservice**: FastAPI implementation using an async
@@ -1767,44 +1760,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines. In short:
     removed from the repository.
 9. The original MVP demo modules have also been deleted and are no longer
     part of the codebase.
-
-## Development
-
-### Install
-```bash
-python -m pip install -r requirements-dev.txt
-npm ci
-```
-
-### Lint
-```bash
-black . --check
-isort . --check-only
-flake8 .
-npm run lint
-```
-
-### Testing
-Install development dependencies and run the test suite:
-
-```bash
-pip install -r requirements-dev.txt
-make test-quick  # run tests without coverage
-make test-cov    # run tests with coverage report
-```
-
-For frontend UI tests:
-
-```bash
-npm test          # run all Vitest tests
-npm run test:watch  # watch mode
-npm run test:ui     # run tests in src directory
-```
-
-### Docker
-```bash
-docker compose up --build
-```
 
 ## <span aria-hidden="true">📦</span> Versioning
 

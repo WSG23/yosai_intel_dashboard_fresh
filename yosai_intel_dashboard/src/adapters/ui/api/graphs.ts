@@ -12,8 +12,8 @@ export const graphsAPI = {
     return res.charts;
   },
 
-  async getChartData(chartType: string): Promise<any> {
-    const res = await api.get<{ type: string; data: any }>(`/graphs/chart/${chartType}`);
+  async getChartData(chartType: string, signal?: AbortSignal): Promise<any> {
+    const res = await api.get<{ type: string; data: any }>(`/graphs/chart/${chartType}`, { signal });
     return res.data;
   },
 };

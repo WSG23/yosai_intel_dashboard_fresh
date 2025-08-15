@@ -72,7 +72,7 @@ analytics_stub = types.ModuleType("services.analytics_service")
 analytics_stub.create_analytics_service = lambda: DummyAnalytics()
 safe_import('services.analytics_service', analytics_stub)
 
-async_queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
+async_queries_stub = types.ModuleType("services.analytics.async_queries")
 
 
 async def _fetch_summary(pool):
@@ -85,7 +85,7 @@ async def _fetch_patterns(pool, days):
 
 async_queries_stub.fetch_dashboard_summary = _fetch_summary
 async_queries_stub.fetch_access_patterns = _fetch_patterns
-safe_import('services.analytics_microservice.async_queries', async_queries_stub)
+safe_import('services.analytics.async_queries', async_queries_stub)
 
 dummy_tracing = types.ModuleType("tracing")
 called = {}
@@ -103,8 +103,8 @@ safe_import('tracing', dummy_tracing)
 def test_metrics_and_tracing():
 
     app_spec = importlib.util.spec_from_file_location(
-        "services.analytics_microservice.app",
-        SERVICES_PATH / "analytics_microservice" / "app.py",
+        "services.analytics.app",
+        SERVICES_PATH / "analytics" / "app.py",
     )
     app_module = importlib.util.module_from_spec(app_spec)
     app_spec.loader.exec_module(app_module)

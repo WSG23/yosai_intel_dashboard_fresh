@@ -48,6 +48,32 @@ bandit -r .
 
 Run `isort .` to automatically sort imports before committing changes.
 
+### Docstring Style
+
+Use Google-style docstrings for all new Python code. The [pydocstyle](https://pypi.org/project/pydocstyle/)
+pre-commit hook enforces this convention and runs in CI. A basic example:
+
+```python
+def add(a: int, b: int) -> int:
+    """Add two numbers.
+
+    Args:
+        a: First value.
+        b: Second value.
+
+    Returns:
+        The sum of ``a`` and ``b``.
+    """
+    return a + b
+```
+
+API reference documentation is generated with [mkdocs](https://www.mkdocs.org/) and
+[mkdocstrings](https://mkdocstrings.github.io/). Build the docs locally with:
+
+```bash
+mkdocs build
+```
+
 ### Database Query Helpers
 
 When executing SQL, always acquire connections using the factory context manager:
@@ -78,6 +104,13 @@ See [docs/test_architecture.md](docs/test_architecture.md) and
 the testing protocols, container builder and available test doubles.
 
 Please ensure tests and linters pass before opening a pull request.
+
+### Test Types and Expected Runtime
+
+| Type | Description | Approx. runtime | Command |
+| ---- | ----------- | --------------- | ------- |
+| Unit tests | No external services, network and file I/O are mocked. | < 5 minutes | `pytest -m "not integration"` |
+| Integration tests | Spin up ephemeral services (Kafka, Postgres, Redis) via Docker. Skipped when Docker is unavailable. | ~10 minutes | `pytest -m integration` |
 
 ## Dependency Updates
 

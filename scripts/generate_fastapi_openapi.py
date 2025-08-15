@@ -95,10 +95,10 @@ def _stub_analytics_deps() -> None:
     sys.modules.setdefault("redis", redis_stub)
     sys.modules.setdefault("redis.asyncio", redis_async)
 
-    queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
+    queries_stub = types.ModuleType("services.analytics.async_queries")
     queries_stub.fetch_dashboard_summary = lambda *a, **k: {}
     queries_stub.fetch_access_patterns = lambda *a, **k: {}
-    sys.modules["services.analytics_microservice.async_queries"] = queries_stub
+    sys.modules["services.analytics.async_queries"] = queries_stub
 
     yd_models = types.ModuleType("yosai_intel_dashboard.models")
     ml_stub = types.ModuleType("yosai_intel_dashboard.models.ml")
@@ -198,18 +198,31 @@ def main() -> None:
     os.environ.setdefault("LIGHTWEIGHT_SERVICES", "1")
     analytics_path = ROOT / "services" / "analytics_microservice" / "app.py"
     ingestion_path = ROOT / "services" / "event-ingestion" / "app.py"
+    intel_path = (
+        ROOT
+        / "yosai_intel_dashboard"
+        / "src"
+        / "services"
+        / "intel_analysis_service"
+        / "api"
+        / "service.py"
+    )
 
     _stub_analytics_deps()
     _stub_ingestion_deps()
 
     analytics_app = load_app(analytics_path, "analytics_app")
     ingestion_app = load_app(ingestion_path, "ingestion_app")
+    intel_app = load_app(intel_path, "intel_app")
 
     (ROOT / "docs" / "analytics_microservice_openapi.json").write_text(
         json.dumps(analytics_app.openapi(), indent=2)
     )
     (ROOT / "docs" / "event_ingestion_openapi.json").write_text(
         json.dumps(ingestion_app.openapi(), indent=2)
+    )
+    (ROOT / "docs" / "intel_analysis_service_openapi.json").write_text(
+        json.dumps(intel_app.openapi(), indent=2)
     )
 
 

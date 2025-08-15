@@ -9,7 +9,7 @@ from yosai_intel_dashboard.src.services.common.analytics_utils import (
 )
 
 warnings.warn(
-    "services.analytics_microservice.model_loader is deprecated; use"
+    "services.analytics.model_loader is deprecated; use"
     " services.common.analytics_utils.preload_active_models",
     DeprecationWarning,
     stacklevel=2,

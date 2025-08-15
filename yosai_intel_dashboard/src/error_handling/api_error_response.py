@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any
 
 from flask import Response, jsonify
 
-from shared.errors.types import ErrorCode
-
-CODE_TO_STATUS: dict[ErrorCode, int] = {
-    ErrorCode.INVALID_INPUT: 400,
-    ErrorCode.UNAUTHORIZED: 401,
-    ErrorCode.NOT_FOUND: 404,
-    ErrorCode.INTERNAL: 500,
-    ErrorCode.UNAVAILABLE: 503,
-}
+from shared.errors.types import CODE_TO_STATUS, ErrorCode
 
 from .core import ErrorHandler
 from .exceptions import ErrorCategory

@@ -9,7 +9,7 @@ created on application startup.
 
 - New module `services/common/async_db.py` provides pool creation,
   teardown and a simple health check.
-- `services/analytics_microservice/async_queries.py` contains the
+ - `services/analytics/async_queries.py` contains the
   SQL helpers used by the FastAPI services.
 - Microservice endpoints call these async functions directly rather
   than executing blocking code in a thread executor.

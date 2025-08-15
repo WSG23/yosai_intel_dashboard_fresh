@@ -20,7 +20,12 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - fallback when security extras missing
     UnicodeValidator = None  # type: ignore
 
-from .helpers import UnicodeHandler, UnicodeQueryHandler, decode_upload_content
+from .helpers import (
+    UnicodeHandler,
+    UnicodeQueryHandler,
+    decode_upload_content,
+    sanitize_input,
+)
 
 __all__ = [
     "UnicodeProcessor",
@@ -34,4 +39,5 @@ __all__ = [
     "sanitize_dataframe",
     "sanitize_unicode_input",
     "UnicodeHandler",
+    "sanitize_input",
 ]

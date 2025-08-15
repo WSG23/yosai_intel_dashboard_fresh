@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from yosai_intel_dashboard.src.core.secret_manager import SecretsManager
+
 
 def _env_required(name: str) -> str:
     value = os.getenv(name)
@@ -40,7 +42,8 @@ class SecuritySettings:
     """Security related configuration."""
 
     def _load_secret_key() -> str:
-        key = os.getenv("SECRET_KEY", "")
+        manager = SecretsManager()
+        key = manager.get("SECRET_KEY") or ""
         if not key or key == "change-me":
             raise RuntimeError("SECRET_KEY environment variable must be set")
         return key

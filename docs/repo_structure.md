@@ -15,7 +15,7 @@ repositories to simplify development and deployment.
   - Standalone upload interface written in React/TypeScript.
 - **plugins/** → `yosai-plugins`
   - Collection of first‑party plugins and plugin manager helpers.
-- **services/analytics_microservice/** → `analytics-service`
+  - **services/analytics/** → `analytics-service`
   - Independent analytics engine with TimescaleDB integration.
 - **services/security/** → `security-service`
   - Security and authentication logic for downstream services.

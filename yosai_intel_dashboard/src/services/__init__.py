@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Simplified Services Package"""
+"""Service layer coordinating analytics and data processing.
+
+Ingress: invoked by API endpoints and callbacks.
+Egress: publishes Kafka events and feeds callback responses.
+"""
 import logging
 import os
 import sys

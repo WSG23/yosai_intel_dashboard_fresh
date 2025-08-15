@@ -95,3 +95,23 @@ def on_processed(data):
 
 callbacks.register_event(CallbackEvent.PROCESSED, on_processed)
 ```
+
+## Asynchronous Event Handlers
+
+Callbacks that perform I/O should be declared with ``async def`` to avoid
+blocking the event loop.  Multiple I/O bound tasks can run concurrently with
+``asyncio.gather``:
+
+```python
+import asyncio
+
+async def store_and_notify(data):
+    write = asyncio.to_thread(write_to_disk, data)
+    notify = callbacks.trigger_event_async(CallbackEvent.STORED, data)
+    await asyncio.gather(write, notify)
+
+callbacks.register_event(CallbackEvent.SAVE_REQUEST, store_and_notify)
+```
+
+The ``trigger_event_async`` API ensures event callbacks run concurrently when
+possible, making it easier to build responsive handlers.

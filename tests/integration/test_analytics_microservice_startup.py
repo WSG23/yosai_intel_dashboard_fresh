@@ -41,10 +41,10 @@ async_db_stub.close_pool = lambda: None
 safe_import('services.common.async_db', async_db_stub)
 
 # Stub analytics queries
-async_queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
+async_queries_stub = types.ModuleType("services.analytics.async_queries")
 async_queries_stub.fetch_dashboard_summary = lambda *a, **k: {}
 async_queries_stub.fetch_access_patterns = lambda *a, **k: {}
-safe_import('services.analytics_microservice.async_queries', async_queries_stub)
+safe_import('services.analytics.async_queries', async_queries_stub)
 
 # Stub tracing
 tracing_stub = types.ModuleType("tracing")
@@ -74,8 +74,8 @@ async def test_startup_requires_jwt_secret(monkeypatch):
     monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
 
     app_spec = importlib.util.spec_from_file_location(
-        "services.analytics_microservice.app",
-        SERVICES_PATH / "analytics_microservice" / "app.py",
+        "services.analytics.app",
+        SERVICES_PATH / "analytics" / "app.py",
     )
     app_module = importlib.util.module_from_spec(app_spec)
     app_spec.loader.exec_module(app_module)

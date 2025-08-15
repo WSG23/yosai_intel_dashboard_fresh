@@ -1,4 +1,8 @@
-"""Central callback registration for dashboard pages."""
+"""Central callback registration for dashboard pages.
+
+Ingress: consumes user interactions and service events.
+Egress: emits UI updates and invokes service-layer calls via callbacks.
+"""
 
 from .controller import (
     register_callbacks,

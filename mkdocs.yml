@@ -1,0 +1,10 @@
+site_name: Yosai Intel Dashboard
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+nav:
+  - Home: index.md
+  - API Reference: api_reference.md
