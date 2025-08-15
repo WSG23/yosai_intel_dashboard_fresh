@@ -16,8 +16,7 @@ class DriftDetector(Protocol):
     """Protocol describing drift detection behaviour."""
 
     def detect(self, values: Iterable[float], thresholds: Iterable[float]) -> bool:
-        """Return ``True`` if drift is detected for ``values`` against ``thresholds``."""
-
+        """Return True if drift is detected for ``values`` vs ``thresholds``."""
 
 
 @dataclass
@@ -39,7 +38,12 @@ class AnomalyDetector:
     logger: logging.Logger = field(default_factory=lambda: logging.getLogger(__name__))
     drift_detector: DriftDetector | None = None
 
-    def fit(self, df: pd.DataFrame, value_col: str = "value", timestamp_col: str = "timestamp") -> "AnomalyDetector":
+    def fit(
+        self,
+        df: pd.DataFrame,
+        value_col: str = "value",
+        timestamp_col: str = "timestamp",
+    ) -> "AnomalyDetector":
         if value_col not in df or timestamp_col not in df:
             raise KeyError("DataFrame must contain value and timestamp columns")
         ts = pd.to_datetime(df[timestamp_col])
@@ -48,21 +52,23 @@ class AnomalyDetector:
         self.global_std = float(values.std(ddof=0) or 1e-9)
         grouped = df.groupby(ts.dt.month)[value_col]
         self.thresholds = {
-            month: float(g.mean() + self.factor * g.std(ddof=0))
-            for month, g in grouped
+            month: float(g.mean() + self.factor * g.std(ddof=0)) for month, g in grouped
         }
 
         if self.context_weights:
             self.context_means = {
-                col: float(df[col].mean())
-                for col in self.context_weights
-                if col in df
+                col: float(df[col].mean()) for col in self.context_weights if col in df
             }
         else:
             self.context_means = {}
         return self
 
-    def predict(self, df: pd.DataFrame, value_col: str = "value", timestamp_col: str = "timestamp") -> pd.DataFrame:
+    def predict(
+        self,
+        df: pd.DataFrame,
+        value_col: str = "value",
+        timestamp_col: str = "timestamp",
+    ) -> pd.DataFrame:
         if self.thresholds is None:
             raise RuntimeError("Model must be fitted before prediction")
         with tracer.start_as_current_span("anomaly_predict"):
@@ -81,12 +87,14 @@ class AnomalyDetector:
 
             values = df[value_col]
             anomalies = values > thresholds
-            result = pd.DataFrame({
-                timestamp_col: ts,
-                value_col: values,
-                "threshold": thresholds,
-                "is_anomaly": anomalies,
-            })
+            result = pd.DataFrame(
+                {
+                    timestamp_col: ts,
+                    value_col: values,
+                    "threshold": thresholds,
+                    "is_anomaly": anomalies,
+                }
+            )
             self.logger.info(
                 "model=%s predictions=%s thresholds=%s",
                 self.model_version,
@@ -94,7 +102,9 @@ class AnomalyDetector:
                 result["threshold"].tolist(),
             )
             if self.drift_detector:
-                drift = self.drift_detector.detect(result[value_col], result["threshold"])
+                drift = self.drift_detector.detect(
+                    result[value_col], result["threshold"]
+                )
                 result["drift_detected"] = drift
             return result
 
@@ -116,14 +126,16 @@ class RiskScorer:
         ts = pd.to_datetime(df[timestamp_col])
         scores = self._score_features(df)
         grouped = scores.groupby(ts.dt.month)
-        self.thresholds = {month: float(g.quantile(self.quantile)) for month, g in grouped}
+        self.thresholds = {
+            month: float(g.quantile(self.quantile)) for month, g in grouped
+        }
         return self
 
     def _score_features(self, df: pd.DataFrame) -> pd.Series:
         missing = set(self.weights) - set(df)
         if missing:
             raise KeyError(f"Missing features for scoring: {missing}")
-        score = pd.Series(0.0, index=df.index)
+        score: pd.Series = pd.Series(0.0, index=df.index)
         for feature, weight in self.weights.items():
             score += df[feature] * weight
         return score
@@ -138,12 +150,14 @@ class RiskScorer:
             default_threshold = pd.Series(self.thresholds.values()).mean()
             thresholds = season.map(self.thresholds).fillna(default_threshold)
             risk = scores > thresholds
-            result = pd.DataFrame({
-                timestamp_col: ts,
-                "score": scores,
-                "threshold": thresholds,
-                "is_risky": risk,
-            })
+            result = pd.DataFrame(
+                {
+                    timestamp_col: ts,
+                    "score": scores,
+                    "threshold": thresholds,
+                    "is_risky": risk,
+                }
+            )
             self.logger.info(
                 "model=%s predictions=%s thresholds=%s",
                 self.model_version,
