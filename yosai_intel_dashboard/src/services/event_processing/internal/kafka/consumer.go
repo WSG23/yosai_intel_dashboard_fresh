@@ -1,30 +1,41 @@
 package kafka
 
 import (
-	"context"
-	"sync"
+        "context"
+        "sync"
 
-	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
+        ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 // Consumer wraps a Kafka consumer using consumer groups.
+type kafkaClient interface {
+        SubscribeTopics([]string, ckafka.RebalanceCb) error
+        ReadMessage(int) (*ckafka.Message, error)
+        CommitMessage(*ckafka.Message) ([]ckafka.TopicPartition, error)
+        Close()
+}
+
 type Consumer struct {
-	c         *ckafka.Consumer
-	processed sync.Map
+        c         kafkaClient
+        processed sync.Map
+}
+
+var newClient = func(cfg *ckafka.ConfigMap) (kafkaClient, error) {
+        return ckafka.NewConsumer(cfg)
 }
 
 // NewConsumer creates a new Consumer connected to brokers with the given groupID.
 func NewConsumer(brokers, groupID string) (*Consumer, error) {
-	cfg := &ckafka.ConfigMap{
-		"bootstrap.servers": brokers,
-		"group.id":          groupID,
-		"auto.offset.reset": "earliest",
-	}
-	c, err := ckafka.NewConsumer(cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &Consumer{c: c}, nil
+        cfg := &ckafka.ConfigMap{
+                "bootstrap.servers": brokers,
+                "group.id":          groupID,
+                "auto.offset.reset": "earliest",
+        }
+        c, err := newClient(cfg)
+        if err != nil {
+                return nil, err
+        }
+        return &Consumer{c: c}, nil
 }
 
 // Consume subscribes to topics and invokes handler for each message until ctx is cancelled.
@@ -46,9 +57,9 @@ func (c *Consumer) Consume(ctx context.Context, topics []string, handler func(co
 		if _, ok := c.processed.LoadOrStore(string(msg.Key), struct{}{}); ok {
 			continue
 		}
-		if err := handler(ctx, msg); err == nil {
-			_, _ = c.c.CommitMessage(msg)
-		}
+                if err := handler(ctx, msg); err == nil {
+                        _, _ = c.c.CommitMessage(msg)
+                }
 	}
 }
 

@@ -30,9 +30,13 @@ jobs:
       - name: Run unit tests
         run: |
           pytest tests/unit tests/integration --cov=repositories --cov=yosai_intel_dashboard/src/services/kafka_consumer.py --cov-fail-under=80
-      - name: Go handler tests
+      - name: Go tests
         run: |
-          cd gateway && go test ./internal/handlers -coverprofile=coverage.out
+          cd gateway && go test ./internal/handlers ./internal/rbac -coverprofile=coverage.out
           cov=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3,1,length($3)-1)}')
-          echo "Go coverage: $cov%"
+          echo "Gateway coverage: $cov%"
+          awk -v cov="$cov" 'BEGIN { if (cov+0 < 80) exit 1 }'
+          cd ../yosai_intel_dashboard/src/services/event_processing && go test ./internal/kafka -coverprofile=coverage.out
+          cov=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3,1,length($3)-1)}')
+          echo "Kafka coverage: $cov%"
           awk -v cov="$cov" 'BEGIN { if (cov+0 < 80) exit 1 }'
