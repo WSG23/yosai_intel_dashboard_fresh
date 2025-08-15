@@ -1,3 +1,5 @@
-from .circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+from importlib import import_module
+import sys
 
-__all__ = ["CircuitBreaker", "CircuitBreakerOpen"]
+_module = import_module('.src.resilience', __name__)
+sys.modules[__name__] = _module

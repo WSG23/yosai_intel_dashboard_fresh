@@ -45,4 +45,4 @@ RUN chmod 0755 docker-entrypoint.sh \
 USER appuser
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["start_api.py"]
+CMD ["services.api.start_api"]
