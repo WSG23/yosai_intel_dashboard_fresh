@@ -5,10 +5,13 @@ from __future__ import annotations
 from base64 import b64decode
 from typing import Any, Iterable, Mapping, Optional, Tuple
 
-from yosai_intel_dashboard.src.core.unicode import UnicodeSQLProcessor
-from yosai_intel_dashboard.src.core.unicode import clean_unicode_surrogates as _clean_unicode_surrogates
+from yosai_intel_dashboard.src.core.unicode import (
+    UnicodeSQLProcessor,
+    UnicodeSecurityProcessor,
+    clean_unicode_surrogates as _clean_unicode_surrogates,
+    sanitize_dataframe,
+)
 from yosai_intel_dashboard.src.core.base_utils import safe_encode_text as _safe_encode_text
-from yosai_intel_dashboard.src.core.unicode import sanitize_dataframe
 
 
 def clean_unicode_text(text: Any) -> str:
@@ -70,6 +73,11 @@ class UnicodeHandler:
         return obj
 
 
+def sanitize_input(text: Any) -> str:
+    """Sanitize user input for safe storage or display."""
+    return UnicodeSecurityProcessor.sanitize_input(text)
+
+
 __all__ = [
     "clean_unicode_surrogates",
     "clean_unicode_text",
@@ -77,5 +85,6 @@ __all__ = [
     "UnicodeQueryHandler",
     "decode_upload_content",
     "sanitize_dataframe",
+    "sanitize_input",
     "UnicodeHandler",
 ]
