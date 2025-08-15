@@ -39,7 +39,7 @@ def test_publish_event_via_gateway(tmp_path, kafka_service):
         wait_for_service("http://localhost:5000/health")
 
         gateway_image = DockerContainer.from_dockerfile(
-            Path(".").resolve(), dockerfile="Dockerfile.gateway"
+            Path(".").resolve(), dockerfile="docker/Dockerfile.gateway"
         ).build()
         gateway = (
             DockerContainer(gateway_image)

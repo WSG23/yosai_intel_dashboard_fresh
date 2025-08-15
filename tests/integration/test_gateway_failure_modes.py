@@ -29,7 +29,7 @@ def test_gateway_breaker_counts_on_downtime(tmp_path):
         redis_port = redis.get_exposed_port(redis.port_to_expose)
 
         gateway_image = DockerContainer.from_dockerfile(
-            ".", dockerfile="Dockerfile.gateway"
+            ".", dockerfile="docker/Dockerfile.gateway"
         ).build()
         gateway = (
             DockerContainer(gateway_image)
