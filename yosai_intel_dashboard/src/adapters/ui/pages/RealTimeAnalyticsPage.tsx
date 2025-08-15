@@ -13,6 +13,7 @@ import { AccessibleVisualization } from '../components/accessibility';
 import { ChunkGroup } from '../components/layout';
 import usePrefersReducedMotion from '../hooks/usePrefersReducedMotion';
 import useIsMobile from '../hooks/useIsMobile';
+import { requestIdleCallback } from '../utils/idleCallback';
 
 
 const MAX_BUFFER = 100;
@@ -24,10 +25,7 @@ const RealTimeAnalyticsPage: React.FC = () => {
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<RealTimeAnalyticsPayload[]>([]);
   const [pending, setPending] = useState(0);
-  const scheduler: (cb: () => void) => void =
-    typeof window !== 'undefined' && (window as any).requestIdleCallback
-      ? (cb) => (window as any).requestIdleCallback(cb)
-      : (cb) => setTimeout(cb, 0);
+  const scheduler = requestIdleCallback;
 
   useEffect(() => {
     if (liveData) {
