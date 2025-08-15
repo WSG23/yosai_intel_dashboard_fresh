@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+
+ARG PYTHON_IMAGE="python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d84b39c48976ee"
+FROM ${PYTHON_IMAGE} AS builder
+WORKDIR /app
+# Install build dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
+# Install Python dependencies
+COPY requirements.txt ./
+RUN python -m venv /opt/venv \
+    && grep -v '^apache-flink' requirements.txt > requirements.filtered \
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.filtered
+
+# Final base image with runtime deps
+FROM ${PYTHON_IMAGE}
+# Install runtime packages
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+# Copy prebuilt virtualenv
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
