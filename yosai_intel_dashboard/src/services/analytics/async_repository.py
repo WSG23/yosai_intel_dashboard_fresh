@@ -90,9 +90,15 @@ async def init_models() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
+async def shutdown() -> None:
+    """Dispose the shared :class:`~sqlalchemy.ext.asyncio.AsyncEngine` instance."""
+    await engine.dispose()
+
+
 __all__ = [
     "AsyncEventRepository",
     "engine",
     "SessionFactory",
     "init_models",
+    "shutdown",
 ]

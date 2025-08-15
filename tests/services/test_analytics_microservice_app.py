@@ -90,7 +90,10 @@ def app_fixture(monkeypatch):
     )
     module, dummy = load_app()
     client = TestClient(module.app)
-    return client, dummy, vault.secret
+    try:
+        yield client, dummy, vault.secret
+    finally:
+        client.close()
 
 
 def _token(secret: str) -> str:
