@@ -7,12 +7,13 @@ from typing import Callable
 
 from flask import jsonify, request
 
-from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (
+from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (  # noqa: E501
     UnicodeSecurityValidator as SecurityValidator,
 )
 
 from .behavioral_biometrics import verify_behavioral_biometrics
 from .jwt_service import (
+    TokenValidationError,
     generate_refresh_jwt,
     generate_service_jwt,
     generate_token_pair,
@@ -21,6 +22,7 @@ from .jwt_service import (
     verify_refresh_jwt,
     verify_service_jwt,
 )
+from .rbac_adapter import has_permission as _rbac_has_permission
 from .protocols import AuthenticationProtocol, SecurityServiceProtocol
 
 
@@ -89,17 +91,21 @@ def require_token(func: Callable) -> Callable:
 
 
 def require_permission(permission: str) -> Callable:
-    """Flask decorator enforcing a permission header."""
+    """Flask decorator enforcing RBAC using JWT roles."""
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
-            perms = [
-                p.strip()
-                for p in request.headers.get("X-Permissions", "").split(",")
-                if p.strip()
-            ]
-            if permission not in perms:
+            auth = request.headers.get("Authorization", "")
+            if not auth.startswith("Bearer "):
+                return jsonify({"error": "unauthorized"}), 401
+            token = auth.split(" ", 1)[1]
+            try:
+                claims = verify_service_jwt(token)
+            except TokenValidationError:
+                return jsonify({"error": "unauthorized"}), 401
+            role = claims.get("role")
+            if role is None or not _rbac_has_permission(role, permission):
                 return jsonify({"error": "forbidden"}), 403
             if not verify_behavioral_biometrics(request):
                 return jsonify({"error": "biometric-anomaly"}), 403
