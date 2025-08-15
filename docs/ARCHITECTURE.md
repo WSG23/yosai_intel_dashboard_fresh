@@ -208,6 +208,30 @@ sequenceDiagram
     REG-->>CB: confirmation
 ```
 
+## Event Publish/Subscribe Flow
+
+The event bus in `shared/events` delivers messages to the callback infrastructure.
+
+```mermaid
+flowchart LR
+    subgraph S[shared/events]
+        EN[EventName]
+        EB[EventBus]
+    end
+    subgraph I[infrastructure/callbacks]
+        D[dispatcher.register_callback]
+        UC[TrulyUnifiedCallbacks]
+        H[Callback Handlers]
+    end
+    MP[MetricsProvider] -->|METRICS_UPDATE| EB
+    AS[AnalyticsService] -->|ANALYTICS_UPDATE| EB
+    EB --> UC
+    D --> UC
+    UC --> H
+```
+
+> **Maintenance**: Update this diagram whenever new events or callbacks are introduced.
+
 ## Threat Intelligence Integration
 
 Security callbacks can subscribe to updates from `ThreatIntelligenceSystem`.
