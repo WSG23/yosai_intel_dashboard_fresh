@@ -1,0 +1,10 @@
+{
+  "demo": {
+    "versions": {
+      "1": {"factor": 1.0},
+      "2": {"factor": 2.0}
+    },
+    "active": "1",
+    "rollout": {"1": 1.0}
+  }
+}
