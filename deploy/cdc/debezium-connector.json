@@ -1,0 +1,16 @@
+{
+  "name": "timescale-cdc",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "cdc_replication",
+    "database.password": "CHANGE_ME",
+    "database.dbname": "app",
+    "plugin.name": "pgoutput",
+    "slot.name": "cdc_slot",
+    "slot.drop.on.stop": "false",
+    "publication.autocreate.mode": "filtered",
+    "schema.include.list": "public"
+  }
+}
