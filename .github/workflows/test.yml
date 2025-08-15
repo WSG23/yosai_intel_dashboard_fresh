@@ -27,6 +27,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
+      - name: Start Kafka
+        run: docker compose -f docker-compose.kafka.yml up -d
+      - name: Wait for Kafka
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 9092; then
+              break
+            fi
+            sleep 1
+          done
       - name: Run unit tests
         run: |
           pytest tests/unit tests/integration --cov=repositories --cov=yosai_intel_dashboard/src/services/kafka_consumer.py --cov-fail-under=80
@@ -40,3 +50,9 @@ jobs:
           cov=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3,1,length($3)-1)}')
           echo "Kafka coverage: $cov%"
           awk -v cov="$cov" 'BEGIN { if (cov+0 < 80) exit 1 }'
+      - name: Show Kafka logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.kafka.yml logs
+      - name: Stop Kafka
+        if: always()
+        run: docker compose -f docker-compose.kafka.yml down
