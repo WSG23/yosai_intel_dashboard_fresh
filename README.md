@@ -26,21 +26,41 @@ See [Getting Started](docs/getting-started.md) for Docker and local development 
 
 ## Project Layout
 
+The repository follows a `src/`-based layout that separates reusable modules from
+deployable services.
+
 ```text
 .
 ├── docs/                  # Documentation and guides
-├── services/              # Backend services and microservices
-├── src/                   # Shared framework code
+├── src/                   # Shared framework code reused across services
+├── services/              # Individual service packages
+│   └── example_service/   # Example service directory
+│       ├── src/
+│       │   └── example_service/  # Service package (matches service name)
+│       └── tests/                # Service-specific tests
 ├── scripts/               # Maintenance and CLI utilities
-├── tests/                 # Test suites
+├── tests/                 # Repository-wide test suites
 └── yosai_intel_dashboard/ # Clean Architecture application modules
 ```
+
+**Shared vs. service-specific code**
+
+- Place code intended for reuse under `src/` or `yosai_intel_dashboard/src/`.
+- Code that is only used by a single service lives under
+  `services/<service_name>/src/<service_name>/`.
+
+**Transitional shims and deprecated paths**
+
+- The root-level `wsgi_shim.py` exists for legacy deployment scripts and will be
+  removed in a future release.
+- Previous top-level packages such as `core` or `models` are deprecated. Import
+  modules via the canonical `yosai_intel_dashboard.src.*` path instead.
 
 | Directory | Purpose |
 |-----------|---------|
 | `docs/` | User and developer documentation |
-| `services/` | Standalone backend services |
 | `src/` | Shared core framework and libraries |
+| `services/` | Standalone backend services with their own `src/<name>/` packages |
 | `scripts/` | Automation and helper scripts |
 | `tests/` | Unit and integration tests |
 | `yosai_intel_dashboard/` | Primary application package following Clean Architecture |
