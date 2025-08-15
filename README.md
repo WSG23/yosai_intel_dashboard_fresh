@@ -156,6 +156,8 @@ This project follows a fully modular design built around a dependency injection 
 - [Disaster Recovery](docs/disaster_recovery.md)
 - [Service Ownership Guide](docs/service_ownership.md)
 - [Runbooks](docs/runbooks)
+- [Training Overview](docs/training/overview.md)
+- [Developer Onboarding](docs/developer_onboarding.md)
 - [Architecture Decision Records](docs/adr)
 
 <p align="center">

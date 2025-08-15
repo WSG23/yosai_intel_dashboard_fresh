@@ -10,4 +10,18 @@ deserialization_errors_total = Counter(
     "Total Avro deserialization errors",
 )
 
-__all__ = ["serialization_errors_total", "deserialization_errors_total"]
+delivery_success_total = Counter(
+    "kafka_delivery_success_total",
+    "Total successfully delivered Kafka messages",
+)
+
+delivery_failure_total = Counter(
+    "kafka_delivery_failure_total",
+    "Total Kafka messages that failed delivery",
+)
+__all__ = [
+    "serialization_errors_total",
+    "deserialization_errors_total",
+    "delivery_success_total",
+    "delivery_failure_total",
+]

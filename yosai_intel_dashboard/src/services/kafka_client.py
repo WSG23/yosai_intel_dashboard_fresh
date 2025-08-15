@@ -54,6 +54,7 @@ class KafkaClient:
                 headers=list(headers.items()) or None,
             )
             self._producer.flush()
+
         except Exception:
             logger.exception("Failed to publish to Kafka")
             raise
@@ -62,6 +63,14 @@ class KafkaClient:
     def close(self) -> None:
         """Flush outstanding messages and close producer."""
         self._producer.flush()
+
+    @staticmethod
+    def _delivery_callback(err, msg) -> None:  # pragma: no cover - signature defined by library
+        """Track delivery results via Prometheus counters."""
+        if err is not None:
+            delivery_failure_total.inc()
+        else:
+            delivery_success_total.inc()
 
 
 __all__ = ["KafkaClient"]

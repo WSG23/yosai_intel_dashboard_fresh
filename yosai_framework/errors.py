@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any, Optional, Tuple
 
 from shared.errors.types import ErrorCode
@@ -22,13 +22,11 @@ class ServiceError(Exception):
     details: Optional[Any] = None
 
     def to_dict(self) -> dict[str, Any]:
-        data = {
+        return {
             "code": self.code.value if isinstance(self.code, ErrorCode) else self.code,
             "message": self.message,
+            "details": self.details,
         }
-        if self.details is not None:
-            data["details"] = self.details
-        return data
 
 
 def from_exception(exc: Exception) -> "ServiceError":

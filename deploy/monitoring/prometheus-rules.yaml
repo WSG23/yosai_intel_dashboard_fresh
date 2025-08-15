@@ -22,3 +22,10 @@ groups:
       severity: page
     annotations:
       summary: Kafka consumer lag > 1000 messages
+  - alert: ReplicationSlotLag
+    expr: replication_lag_bytes > 10000000
+    for: 10m
+    labels:
+      severity: page
+    annotations:
+      summary: Logical replication lag exceeds 10MB

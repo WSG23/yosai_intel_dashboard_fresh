@@ -1,20 +1,14 @@
 package framework
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
+        "encoding/json"
+        "net/http"
+        "net/http/httptest"
+        "strings"
+        "testing"
 
         sharederrors "github.com/WSG23/errors"
 )
-
-type body struct {
-	Code    string      `json:"code"`
-	Message string      `json:"message"`
-	Details interface{} `json:"details,omitempty"`
-}
 
 func TestErrorHandler(t *testing.T) {
 	h := NewErrorHandler()
@@ -26,11 +20,14 @@ func TestErrorHandler(t *testing.T) {
 	if rr.Code != http.StatusUnauthorized {
 		t.Fatalf("expected %d got %d", http.StatusUnauthorized, rr.Code)
 	}
-	var b body
-	if err := json.NewDecoder(strings.NewReader(rr.Body.String())).Decode(&b); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if b.Code != string(sharederrors.Unauthorized) || b.Message != "unauthorized" {
-		t.Fatalf("unexpected body: %+v", b)
-	}
+        var m map[string]interface{}
+        if err := json.NewDecoder(strings.NewReader(rr.Body.String())).Decode(&m); err != nil {
+                t.Fatalf("decode: %v", err)
+        }
+        if m["code"] != string(sharederrors.Unauthorized) || m["message"] != "unauthorized" {
+                t.Fatalf("unexpected body: %+v", m)
+        }
+        if _, ok := m["details"]; !ok {
+                t.Fatalf("missing details field")
+        }
 }

@@ -11,6 +11,7 @@ import '@fortawesome/fontawesome-svg-core/styles.css';
 import useIsMobile from './hooks/useIsMobile';
 import ErrorBoundary from './components/ErrorBoundary';
 import CenteredSpinner from './components/shared/CenteredSpinner';
+import { requestIdleCallback } from './utils/idleCallback';
 
 type PreloadableComponent<T = {}> = React.LazyExoticComponent<React.FC<T>> & {
   preload?: () => void;
@@ -164,9 +165,7 @@ if (rootEl) {
     LearnMore,
   ];
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() =>
-      pages.forEach((p) => p.preload?.()),
-    );
+    requestIdleCallback(() => pages.forEach((p) => p.preload?.()));
   } else {
     setTimeout(() => pages.forEach((p) => p.preload?.()), 2000);
   }
