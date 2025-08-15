@@ -1,7 +1,7 @@
 """Smoke tests for the services package."""
 
 
-def test_package_import():
+def test_package_import() -> None:
     """Import the services package and ensure it has documentation."""
     import yosai_intel_dashboard.src.services as services
 
