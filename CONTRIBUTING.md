@@ -35,15 +35,22 @@ have not already run the setup script:
 ## Running Tests
 
 After installing the dependencies (including those from
-`requirements-dev.txt`) you can run the tests and code quality checks:
+`requirements-dev.txt`) you can run the quick test suite and code quality checks:
 
 ```bash
-pytest
+pytest -m "not slow"
 mypy --strict .
 flake8 .
 isort --check .
 black --check .
 bandit -r .
+```
+
+To execute the slower tests that start Docker containers for Postgres, Kafka,
+and Redis use:
+
+```bash
+pytest -m slow
 ```
 
 Run `isort .` to automatically sort imports before committing changes.
@@ -109,8 +116,8 @@ Please ensure tests and linters pass before opening a pull request.
 
 | Type | Description | Approx. runtime | Command |
 | ---- | ----------- | --------------- | ------- |
-| Unit tests | No external services, network and file I/O are mocked. | < 5 minutes | `pytest -m "not integration"` |
-| Integration tests | Spin up ephemeral services (Kafka, Postgres, Redis) via Docker. Skipped when Docker is unavailable. | ~10 minutes | `pytest -m integration` |
+| Unit tests | No external services, network and file I/O are mocked. | < 5 minutes | `pytest -m "not slow"` |
+| Slow tests | Spin up ephemeral services (Kafka, Postgres, Redis) via Docker. Skipped when Docker is unavailable. | ~10 minutes | `pytest -m slow` |
 
 ## Dependency Updates
 
