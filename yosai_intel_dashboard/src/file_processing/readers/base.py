@@ -6,6 +6,9 @@ import pandas as pd
 
 from yosai_intel_dashboard.src.core.container import get_unicode_processor
 from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
+from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import (
+    TrulyUnifiedCallbacks,
+)
 
 
 class BaseReader:
@@ -17,9 +20,13 @@ class BaseReader:
         """Raised when a reader cannot parse a file."""
 
     def __init__(
-        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
+        self,
+        *,
+        unicode_processor: UnicodeProcessorProtocol | None = None,
+        callbacks: TrulyUnifiedCallbacks | None = None,
     ) -> None:
         self.unicode_processor = unicode_processor or get_unicode_processor()
+        self.unified_callbacks = callbacks or TrulyUnifiedCallbacks()
 
     def read(self, file_path: str, hint: Optional[Dict] = None) -> pd.DataFrame:
         raise NotImplementedError

@@ -35,7 +35,7 @@ def test_gateway_end_to_end(tmp_path):
         redis_port = redis.get_exposed_port(redis.port_to_expose)
 
         analytics_image = DockerContainer.from_dockerfile(
-            ".", dockerfile="Dockerfile"
+            ".", dockerfile="docker/Dockerfile.app"
         ).build()
         analytics = (
             DockerContainer(analytics_image)
@@ -57,7 +57,7 @@ def test_gateway_end_to_end(tmp_path):
         a_port = analytics.get_exposed_port(8001)
 
         gateway_image = DockerContainer.from_dockerfile(
-            ".", dockerfile="Dockerfile.gateway"
+            ".", dockerfile="docker/Dockerfile.gateway"
         ).build()
         gateway = (
             DockerContainer(gateway_image)

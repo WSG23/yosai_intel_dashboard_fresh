@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from analyzers.ast_analyzer import ASTAnalyzer
-from analyzers.base_analyzer import IssueType
-from analyzers.style_analyzer import StyleAnalyzer
+from analytics.code_quality.ast_analyzer import ASTAnalyzer
+from analytics.code_quality.base_analyzer import IssueType
+from analytics.code_quality.style_analyzer import StyleAnalyzer
 
 
 class TestASTAnalyzer:
@@ -27,7 +27,7 @@ def complex_function(x):
 """
         )
 
-        analyzer = ASTAnalyzer(max_complexity=5)
+        analyzer = ASTAnalyzer(max_complexity=4)
         issues = analyzer.analyze(test_file)
 
         complexity_issues = [i for i in issues if i.issue_type == IssueType.COMPLEXITY]

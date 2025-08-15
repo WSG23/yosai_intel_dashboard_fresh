@@ -22,7 +22,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as exc:  # noqa: BLE001
-            payload, status = api_error_response(
+            payload, status = serialize_error(
                 exc, ErrorCategory.INTERNAL, handler=self.handler
             )
             body = payload.get_json() if hasattr(payload, "get_json") else payload
@@ -35,31 +35,6 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     def setup(cls, app: FastAPI, handler: ErrorHandler | None = None) -> None:
         """Add the middleware to *app* and document the error schema."""
         app.add_middleware(cls, handler=handler)
-        _ensure_error_schema(app)
-
-
-def _ensure_error_schema(app: FastAPI) -> None:
-    """Ensure the ``ErrorResponse`` schema is present in the OpenAPI spec."""
-
-    if hasattr(app, "_error_schema_registered"):
-        return
-
-    original_openapi = app.openapi
-
-    def custom_openapi() -> dict:  # pragma: no cover - executed when generating docs
-        if app.openapi_schema is not None:
-            return app.openapi_schema
-        schema = original_openapi()
-        components = schema.setdefault("components", {}).setdefault("schemas", {})
-        components.setdefault(
-            "ErrorResponse",
-            ErrorResponse.model_json_schema(ref_template="#/components/schemas/{model}"),
-        )
-        app.openapi_schema = schema
-        return app.openapi_schema
-
-    app.openapi = custom_openapi  # type: ignore[assignment]
-    setattr(app, "_error_schema_registered", True)
 
 
 __all__ = ["ErrorHandlingMiddleware"]

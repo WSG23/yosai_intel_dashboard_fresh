@@ -32,7 +32,7 @@ services:
   analytics-service:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile.app
     command: ["python", "-m", "uvicorn", "services.analytics_microservice.app:app", "--host", "0.0.0.0", "--port", "8001"]
     depends_on:
       - kafka
@@ -41,7 +41,7 @@ services:
   api-gateway:
     build:
       context: ..
-      dockerfile: Dockerfile.gateway
+      dockerfile: docker/Dockerfile.gateway
     ports:
       - "8080:8080"
     depends_on:

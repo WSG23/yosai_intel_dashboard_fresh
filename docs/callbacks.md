@@ -1,8 +1,8 @@
-# Callback Registration and Metrics
+# Callback Registration, Security, and Metrics
 
 `TrulyUnifiedCallbacks` centralizes Dash and event callback management. This guide
-covers registration flows, thread-safety and metrics collection, and shows how
-Dash callbacks can trigger events.
+covers registration flows, built-in security validation, and metrics collection,
+and shows how Dash callbacks can trigger events.
 
 ## Registration Flow
 
@@ -47,6 +47,32 @@ def on_query(data):
 
 callbacks.register_event(CallbackEvent.QUERY_SUBMITTED, on_query)
 ```
+
+## Security Checks
+
+Every `TrulyUnifiedCallbacks` instance embeds a `SecurityValidator` that scans
+callback inputs and event payloads for common attacks such as XSS, SQL injection
+and SSRF. The validator runs automatically when callbacks execute.
+
+```python
+from validation.security_validator import SecurityValidator
+
+secure_callbacks = TrulyUnifiedCallbacks(app, security_validator=SecurityValidator())
+
+@secure_callbacks.callback(
+    Output("status", "children"),
+    Input("name", "value"),
+    callback_id="sanitize_name",
+    component_name="profile",
+)
+def sanitize_name(name):
+    # name has already been validated; additional checks can be applied manually
+    secure_callbacks.security.validate_input(name, "name")
+    return f"Hello {name}"
+```
+
+Validation failures raise exceptions before the handler runs, preventing unsafe
+data from propagating.
 
 ## Thread-Safety
 

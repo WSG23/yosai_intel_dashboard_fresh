@@ -12,6 +12,7 @@ An AI-powered modular security intelligence dashboard for physical access contro
 - Deployments use immutable image tags for reproducible builds.
 - CI and test status are surfaced via the badges above.
 - Services expose `/health` endpoints for basic liveness checks.
+- Code quality analyzers now live under `analytics.code_quality`.
 
 ## Quick Start for End Users
 
@@ -462,7 +463,7 @@ docker compose up --build
 
 `python src/start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python src/start_api.py` so the variables are loaded correctly.
 
-The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules. This brings up the web UI on `http://localhost:8080` and the API gateway on `http://localhost:8081`.
+The service Dockerfiles in `docker/` add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules. This brings up the web UI on `http://localhost:8080` and the API gateway on `http://localhost:8081`.
 
 ### Supported Container Configurations
 
@@ -470,13 +471,21 @@ The repository maintains a curated set of Dockerfiles and a single Compose defin
 
 **Dockerfiles**
 
-- `Dockerfile` – base Python service image used by the dashboard and analytics service
-- `Dockerfile.gateway` – Go API gateway
+- `docker/Dockerfile.base` – shared Python base image
+- `docker/Dockerfile.app` – Python service image used by the dashboard and analytics service
+- `docker/Dockerfile.gateway` – Go API gateway
+- `docker/Dockerfile.model-serving` – model serving service
 - `yosai_intel_dashboard/src/services/event_processing/Dockerfile` – Go event processor
 
 **Docker Compose**
 
 All services are defined in `docker-compose.yml` and parameterized via `.env` files.
+
+Build images consistently with the `docker/Makefile`:
+
+```bash
+make -C docker all
+```
 
 Launch the stack:
 
@@ -1431,7 +1440,7 @@ entities. The running application exposes Swagger-based API docs at
 - Profiling the data processor: [docs/profile_data_processor.md](docs/profile_data_processor.md)
 - Upload progress SSE: `/upload/progress/<task_id>` streams `data: <progress>` events roughly 60 times per second.
 - Callback design: [docs/callback_architecture.md](docs/callback_architecture.md)
-- Callback registration & metrics: [docs/callbacks.md](docs/callbacks.md)
+- Callback registration, security checks & metrics: [docs/callbacks.md](docs/callbacks.md)
 - State stores: [docs/state_management.md](docs/state_management.md)
 - Ops reference: [docs/operations_guide.md](docs/operations_guide.md)
 - Callback migration: [docs/migration_callback_system.md](docs/migration_callback_system.md)

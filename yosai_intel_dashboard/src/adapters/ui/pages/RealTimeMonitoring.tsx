@@ -12,7 +12,7 @@ import useResponsiveChart from '../hooks/useResponsiveChart';
 import { ChunkGroup } from '../components/layout';
 import { Link } from 'react-router-dom';
 import { requestIdleCallback, type CancelablePromise } from '../utils/idleCallback';
-import { fetchJson } from '../utils/fetchJson';
+import { fetchJson } from '../public/apiClient';
 
 interface AccessEvent {
   eventId: string;
