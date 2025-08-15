@@ -14,6 +14,10 @@ from yosai_intel_dashboard.src.error_handling import (
     api_error_response,
     register_error_handlers,
 )
+from yosai_intel_dashboard.src.error_handling import core as error_core
+
+# Disable error budget metrics during tests to avoid requiring Prometheus internals
+error_core.record_error = lambda service: None
 
 
 def test_api_error_response_generates_json_and_status():
@@ -53,7 +57,7 @@ def test_fastapi_middleware_returns_standard_schema():
         pytest.skip("fastapi not available")
 
     app = FastAPI()
-    app.add_middleware(ErrorHandlingMiddleware)
+    ErrorHandlingMiddleware.setup(app)
 
     @app.get("/boom")
     async def boom():  # pragma: no cover - executed by TestClient
@@ -67,3 +71,14 @@ def test_fastapi_middleware_returns_standard_schema():
             "message": "boom",
             "details": None,
         }
+
+
+def test_error_schema_present_in_openapi():
+    if not _FASTAPI_AVAILABLE:
+        pytest.skip("fastapi not available")
+
+    app = FastAPI()
+    ErrorHandlingMiddleware.setup(app)
+
+    schema = app.openapi()
+    assert "ErrorResponse" in schema["components"]["schemas"]
