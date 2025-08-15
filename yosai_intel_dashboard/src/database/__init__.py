@@ -3,6 +3,7 @@
 from .mock_database import MockDatabase
 from .protocols import ConnectionProtocol
 from .shard_resolver import ShardResolver
+from .transaction import with_transaction
 
 __all__ = [
     "DatabaseManager",
@@ -10,6 +11,7 @@ __all__ = [
     "MockDatabase",
     "ConnectionProtocol",
     "ShardResolver",
+    "with_transaction",
 ]
 
 
