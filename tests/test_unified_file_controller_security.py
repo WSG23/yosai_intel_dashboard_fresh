@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import importlib.util
 import sys
@@ -40,4 +41,8 @@ def test_disallowed_extension(tmp_path):
     b64 = base64.b64encode(csv_bytes).decode()
     content = f"data:text/csv;base64,{b64}"
     with pytest.raises(ValueError):
-        ufc.process_file_upload(content, "bad.exe", callback_manager=manager, storage=store)
+        asyncio.run(
+            ufc.process_file_upload(
+                content, "bad.exe", callback_manager=manager, storage=store
+            )
+        )

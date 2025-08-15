@@ -1,5 +1,6 @@
 """Handle file uploads with validation and basic metrics."""
 
+import asyncio
 import base64
 import io
 import logging
@@ -56,7 +57,7 @@ def _scan_for_malware(data: bytes) -> None:
         return
 
 
-def process_file_upload(
+async def process_file_upload(
     contents: str,
     filename: str,
     *,
@@ -64,6 +65,10 @@ def process_file_upload(
     storage: Optional[UploadedDataStore] = None,
 ) -> dict:
     """Validate ``contents``, sanitize with :class:`UnicodeProcessor` and save.
+
+    This asynchronous variant offloads blocking operations like file validation
+    and disk writes to worker threads.  Event callbacks are dispatched using the
+    async interface and executed in parallel with storage operations.
 
     Parameters
     ----------
@@ -79,6 +84,7 @@ def process_file_upload(
     dict
         Information about the processed file.
     """
+
     storage = storage or UploadedDataStore()
     validator = FileHandler()
     start = time.perf_counter()
@@ -89,7 +95,6 @@ def process_file_upload(
     except ValueError:
         raise ValueError("Invalid file contents")
     file_bytes = base64.b64decode(data)
-    _scan_for_malware(file_bytes)
     max_bytes = dynamic_config.security.max_upload_mb * 1024 * 1024
     if len(file_bytes) > max_bytes:
         raise ValueError("File too large")
@@ -100,17 +105,22 @@ def process_file_upload(
     if mime not in ALLOWED_MIME_TYPES:
         raise ValueError("Invalid MIME type")
 
-    df = validator.validate_file(contents, filename)
+    # Scan for malware and validate file contents concurrently since both may
+    # involve I/O or heavy processing.
+    scan_task = asyncio.to_thread(_scan_for_malware, file_bytes)
+    validate_task = asyncio.to_thread(validator.validate_file, contents, filename)
+    _, df = await asyncio.gather(scan_task, validate_task)
     df = UnicodeProcessor.sanitize_dataframe(df)
 
     base = Path(filename).stem
-    storage.add_file(base, df)
-
-    callback_manager.trigger(
+    # Persist file and publish event concurrently.
+    add_file = asyncio.to_thread(storage.add_file, base, df)
+    dispatch = callback_manager.trigger_async(
         CallbackEvent.DATA_PROCESSED,
         "unified_file_controller",
         {"filename": filename, "rows": len(df)},
     )
+    await asyncio.gather(add_file, dispatch)
 
     _metrics["uploaded_files"] += 1
     _metrics["total_rows"] += len(df)
@@ -132,13 +142,13 @@ def get_processing_metrics() -> dict:
 def register_callbacks(callbacks: TrulyUnifiedCallbacks) -> None:
     """Register event callbacks for file uploads using *callbacks* manager."""
 
-    def _handle_upload(
+    async def _handle_upload(
         contents: str,
         filename: str,
         *,
         storage: Optional[UploadedDataStore] = None,
     ) -> dict:
-        return process_file_upload(
+        return await process_file_upload(
             contents,
             filename,
             callback_manager=callbacks,
