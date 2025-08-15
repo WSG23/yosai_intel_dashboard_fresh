@@ -49,6 +49,10 @@ class MockCallbackManager:
     def trigger(self, event: Any, source: str, payload: dict[str, Any]) -> None:
         self.events.append((event, source, payload))
 
+    async def trigger_async(self, event: Any, source: str, payload: dict[str, Any]) -> None:
+        """Async-compatible wrapper mirroring :meth:`trigger`."""
+        self.trigger(event, source, payload)
+
 
 class MockUploadDataStore:
     """In-memory storage used for upload tests."""
@@ -59,4 +63,7 @@ class MockUploadDataStore:
 
     def add_file(self, name: str, df: Any) -> None:
         self.files[name] = df
+
+    def load_dataframe(self, name: str) -> Any:
+        return self.files.get(name)
 
