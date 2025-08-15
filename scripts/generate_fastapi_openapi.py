@@ -95,10 +95,10 @@ def _stub_analytics_deps() -> None:
     sys.modules.setdefault("redis", redis_stub)
     sys.modules.setdefault("redis.asyncio", redis_async)
 
-    queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
+    queries_stub = types.ModuleType("services.analytics.async_queries")
     queries_stub.fetch_dashboard_summary = lambda *a, **k: {}
     queries_stub.fetch_access_patterns = lambda *a, **k: {}
-    sys.modules["services.analytics_microservice.async_queries"] = queries_stub
+    sys.modules["services.analytics.async_queries"] = queries_stub
 
     yd_models = types.ModuleType("yosai_intel_dashboard.models")
     ml_stub = types.ModuleType("yosai_intel_dashboard.models.ml")
