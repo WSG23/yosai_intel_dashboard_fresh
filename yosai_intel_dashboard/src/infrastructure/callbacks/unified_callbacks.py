@@ -148,6 +148,50 @@ class TrulyUnifiedCallbacks(EventPublisher):
         Thread-safe via an internal ``RLock``.
         """
 
+        (
+            outputs_tuple,
+            inputs_tuple,
+            states_tuple,
+            inputs_arg,
+            states_arg,
+        ) = self._validate_registration(outputs, inputs, states)
+
+        def decorator(func: CallbackHandler) -> CallbackHandler:
+            with self._lock:
+                self._resolve_conflicts(callback_id, outputs_tuple, allow_duplicate)
+                wrapped = self._wrap_callback(
+                    func,
+                    outputs,
+                    inputs_arg,
+                    inputs_tuple,
+                    states_arg,
+                    states_tuple,
+                    outputs_tuple,
+                    **kwargs,
+                )
+
+                reg = DashCallbackRegistration(
+                    callback_id=callback_id,
+                    component_name=component_name,
+                    outputs=tuple(outputs_tuple),
+                    inputs=inputs_tuple,
+                    states=states_tuple,
+                )
+                self._dash_callbacks[callback_id] = reg
+                for o in outputs_tuple:
+                    key = f"{o.component_id}.{o.component_property}"
+                    self._output_map.setdefault(key, callback_id)
+                self._namespaces[component_name].append(callback_id)
+                return wrapped
+
+        return decorator
+
+    # ------------------------------------------------------------------
+    def _validate_registration(
+        self, outputs: Outputs, inputs: Inputs, states: States
+    ) -> tuple[tuple[Output, ...], tuple[Input, ...], tuple[State, ...], Inputs, States]:
+        """Validate and normalize Dash callback arguments."""
+
         if self.app is None:
             raise RuntimeError("Dash app not configured for TrulyUnifiedCallbacks")
 
@@ -172,45 +216,49 @@ class TrulyUnifiedCallbacks(EventPublisher):
             states_arg = states
 
         outputs_tuple = outputs if isinstance(outputs, (list, tuple)) else (outputs,)
+        return outputs_tuple, inputs_tuple, states_tuple, inputs_arg, states_arg
 
-        def decorator(func: CallbackHandler) -> CallbackHandler:
-            with self._lock:
-                if callback_id in self._dash_callbacks:
-                    raise ValueError(f"Callback ID '{callback_id}' already registered")
+    # ------------------------------------------------------------------
+    def _resolve_conflicts(
+        self,
+        callback_id: str,
+        outputs_tuple: tuple[Output, ...],
+        allow_duplicate: bool,
+    ) -> None:
+        """Check for duplicate callback IDs or output conflicts."""
 
-                for o in outputs_tuple:
-                    key = f"{o.component_id}.{o.component_property}"
-                    allow_dup_output = allow_duplicate or getattr(
-                        o, "allow_duplicate", False
-                    )
-                    if key in self._output_map and not allow_dup_output:
-                        logger.warning(f"Output '{key}' conflict - allowing duplicate")
+        if callback_id in self._dash_callbacks:
+            raise ValueError(f"Callback ID '{callback_id}' already registered")
 
-                from ...core.dash_callback_middleware import wrap_callback
+        for o in outputs_tuple:
+            key = f"{o.component_id}.{o.component_property}"
+            allow_dup_output = allow_duplicate or getattr(o, "allow_duplicate", False)
+            if key in self._output_map and not allow_dup_output:
+                logger.warning(f"Output '{key}' conflict - allowing duplicate")
 
-                wrapped_callback = wrap_callback(func, outputs_tuple, self.security)
-                wrapped = self.app.callback(
-                    outputs,
-                    inputs_arg if inputs_arg is not None else inputs_tuple,
-                    states_arg if states_arg is not None else states_tuple,
-                    **kwargs,
-                )(wrapped_callback)
+    # ------------------------------------------------------------------
+    def _wrap_callback(
+        self,
+        func: CallbackHandler,
+        outputs: Outputs,
+        inputs_arg: Inputs,
+        inputs_tuple: tuple[Input, ...],
+        states_arg: States,
+        states_tuple: tuple[State, ...],
+        outputs_tuple: tuple[Output, ...],
+        **kwargs: Any,
+    ) -> CallbackHandler:
+        """Apply middleware wrapping and register callback with Dash."""
 
-                reg = DashCallbackRegistration(
-                    callback_id=callback_id,
-                    component_name=component_name,
-                    outputs=tuple(outputs_tuple),
-                    inputs=inputs_tuple,
-                    states=states_tuple,
-                )
-                self._dash_callbacks[callback_id] = reg
-                for o in outputs_tuple:
-                    key = f"{o.component_id}.{o.component_property}"
-                    self._output_map.setdefault(key, callback_id)
-                self._namespaces[component_name].append(callback_id)
-                return wrapped
+        from ...core.dash_callback_middleware import wrap_callback
 
-        return decorator
+        wrapped_callback = wrap_callback(func, outputs_tuple, self.security)
+        return self.app.callback(
+            outputs,
+            inputs_arg if inputs_arg is not None else inputs_tuple,
+            states_arg if states_arg is not None else states_tuple,
+            **kwargs,
+        )(wrapped_callback)
 
     # ------------------------------------------------------------------
     def register_callback(
