@@ -29,6 +29,7 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/tracing"
 	mw "github.com/WSG23/yosai-gateway/middleware"
 	apicache "github.com/WSG23/yosai-gateway/plugins/cache"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
 	framework "github.com/WSG23/yosai-framework"
@@ -37,6 +38,70 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
+
+const connectionTimeout = 5 * time.Second
+
+var (
+	dbConnectionFailures = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "gateway_db_connection_failures_total",
+		Help: "Number of database connection failures",
+	})
+	kafkaConnectionFailures = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "gateway_kafka_connection_failures_total",
+		Help: "Number of Kafka producer connection failures",
+	})
+)
+
+func init() {
+	prometheus.MustRegister(dbConnectionFailures, kafkaConnectionFailures)
+}
+
+func validateRequiredEnv(vars []string) {
+	missing := []string{}
+	for _, v := range vars {
+		if os.Getenv(v) == "" {
+			missing = append(missing, v)
+		}
+	}
+	if len(missing) > 0 {
+		tracing.Logger.Fatalf("missing required environment variables: %s", strings.Join(missing, ", "))
+	}
+}
+
+func newVaultClient() (*vault.Client, error) {
+	cfg := vault.DefaultConfig()
+	if err := cfg.ReadEnvironment(); err != nil {
+		return nil, err
+	}
+	c, err := vault.NewClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+	token := os.Getenv("VAULT_TOKEN")
+	if token == "" {
+		return nil, xerrors.Errorf("VAULT_TOKEN not set")
+	}
+	c.SetToken(token)
+	return c, nil
+}
+
+func readVaultField(c *vault.Client, path string) (string, error) {
+	parts := strings.SplitN(path, "#", 2)
+	if len(parts) != 2 {
+		return "", xerrors.Errorf("invalid vault path %q", path)
+	}
+	p, field := parts[0], parts[1]
+	secretPath := strings.TrimPrefix(p, "secret/data/")
+	s, err := c.KVv2("secret").Get(context.Background(), secretPath)
+	if err != nil {
+		return "", err
+	}
+	val, ok := s.Data[field].(string)
+	if !ok {
+		return "", xerrors.Errorf("field %s not found at %s", field, p)
+	}
+	return val, nil
+}
 
 // @title           Yōsai Gateway API
 // @version         1.0
@@ -75,22 +140,56 @@ func main() {
 	}
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBName, cfg.DBPassword, cfg.DBSSLMode)
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		tracing.Logger.Fatalf("failed to connect db: %v", err)
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, dbPassword, sslMode)
+
+	dbCtx, dbCancel := context.WithTimeout(context.Background(), connectionTimeout)
+	defer dbCancel()
+	dbCh := make(chan struct{})
+	var db *sql.DB
+	var dbErr error
+	go func() {
+		db, dbErr = sql.Open("postgres", dsn)
+		close(dbCh)
+	}()
+	select {
+	case <-dbCtx.Done():
+		dbConnectionFailures.Inc()
+		tracing.Logger.Fatalf("db connection timeout: %v", dbCtx.Err())
+	case <-dbCh:
+		if dbErr != nil {
+			dbConnectionFailures.Inc()
+			tracing.Logger.Fatalf("failed to connect db: %v", dbErr)
+		}
 	}
-	if err := db.PingContext(context.Background()); err != nil {
+	if err := db.PingContext(dbCtx); err != nil {
+		dbConnectionFailures.Inc()
 		tracing.Logger.Fatalf("failed to ping db: %v", err)
 	}
-	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{
-		"bootstrap.servers":  brokers,
-		"enable.idempotence": true,
-		"acks":               "all",
-		"transactional.id":   "gateway-outbox",
-	})
-	if err != nil {
-		tracing.Logger.Fatalf("failed to init kafka producer: %v", err)
+
+	prodCtx, prodCancel := context.WithTimeout(context.Background(), connectionTimeout)
+	defer prodCancel()
+	prodCh := make(chan struct{})
+	var producer *ckafka.Producer
+	var prodErr error
+	go func() {
+		producer, prodErr = ckafka.NewProducer(&ckafka.ConfigMap{
+			"bootstrap.servers":  brokers,
+			"enable.idempotence": true,
+			"acks":               "all",
+			"transactional.id":   "gateway-outbox",
+		})
+		close(prodCh)
+	}()
+	select {
+	case <-prodCtx.Done():
+		kafkaConnectionFailures.Inc()
+		tracing.Logger.Fatalf("kafka producer init timeout: %v", prodCtx.Err())
+	case <-prodCh:
+		if prodErr != nil {
+			kafkaConnectionFailures.Inc()
+			tracing.Logger.Fatalf("failed to init kafka producer: %v", prodErr)
+		}
+
 	}
 	defer producer.Close()
 	outbox := engine.NewOutbox(db)
