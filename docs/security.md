@@ -37,6 +37,13 @@ Routes require specific permissions which are granted to roles via the matrix.
 Requests presenting an `X-Roles` header with an appropriate role, or an
 `X-Permissions` header with the explicit permission, are allowed.
 
+Key gateway routes and their required roles are:
+
+- `/api/v1/doors` – `admin`
+- `/api/v1/analytics` – `admin`, `analyst`, or `viewer`
+- `/api/v1/events` – `admin`
+- `/admin` – `admin`
+
 ## Sensitive Data Exposure
 
 Secrets and personal data are stored using encrypted channels and secret management tooling. Configuration files avoid embedding credentials directly and rely on secure storage.
