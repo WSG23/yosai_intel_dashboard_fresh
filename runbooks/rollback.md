@@ -21,3 +21,5 @@ bash deployment/scripts/rollback.sh
 
 Before running the script manually, ensure that `deployment/rollback_state.json`
 contains the desired image tag and migration state.
+Set `TARGET_ENV` when rolling back non-default namespaces to route traffic away
+from the faulty version before restoring the database.

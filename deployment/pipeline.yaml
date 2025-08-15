@@ -1,7 +1,12 @@
 stages:
   - build
   - canary
+  - traffic_shift
   - blue_green
+
+variables:
+  TARGET_ENV: "staging"
+  TRAFFIC_PERCENT: "10"
 
 build:
   stage: build
@@ -11,10 +16,20 @@ build:
 canary:
   stage: canary
   script:
-    - kubectl apply -f k8s/canary
+    - TARGET_ENV=$TARGET_ENV TRAFFIC_PERCENT=$TRAFFIC_PERCENT \
+      deployment/scripts/traffic_shape.sh
   when: manual
   needs:
     - build
+
+traffic_shift:
+  stage: traffic_shift
+  script:
+    - TARGET_ENV=$TARGET_ENV TRAFFIC_PERCENT=50 \
+      deployment/scripts/traffic_shape.sh
+  when: manual
+  needs:
+    - canary
 
 blue_green:
   stage: blue_green
@@ -22,4 +37,4 @@ blue_green:
     - kubectl apply -f k8s/bluegreen
   when: manual
   needs:
-    - canary
+    - traffic_shift
