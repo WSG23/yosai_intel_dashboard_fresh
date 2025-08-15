@@ -1,0 +1,17 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: dashboard-network-loss
+  namespace: chaos-testing
+spec:
+  action: loss
+  mode: all
+  selector:
+    namespaces:
+      - dashboard
+    labelSelectors:
+      app: dashboard
+  loss:
+    loss: '100'
+    correlation: '0'
+  duration: '1m'
