@@ -125,7 +125,6 @@ def create_flask_app() -> Flask:
     from yosai_intel_dashboard.src.services.mappings_endpoint import (
         create_mappings_blueprint,
     )
-    from yosai_intel_dashboard.src.services.token_endpoint import create_token_blueprint
     from yosai_intel_dashboard.src.services.upload.upload_endpoint import (
         create_upload_blueprint,
     )
@@ -167,7 +166,6 @@ def create_flask_app() -> Flask:
         container.get("consolidated_learning_service"),
         handler=err_handler,
     )
-    token_bp = create_token_blueprint(handler=err_handler)
     flags_bp = create_feature_flags_blueprint(handler=err_handler)
 
     app.register_blueprint(upload_bp)
@@ -175,7 +173,6 @@ def create_flask_app() -> Flask:
     app.register_blueprint(mappings_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(flags_bp)
-    app.register_blueprint(token_bp)
     app.register_blueprint(compliance_bp)
 
     # Attach additional routes that expect a global ``app`` variable.

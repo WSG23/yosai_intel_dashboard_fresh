@@ -111,8 +111,6 @@ def _create_app(monkeypatch, origins):
     mappings_stub.create_mappings_blueprint = lambda *a, **k: Blueprint(
         "mappings", __name__
     )
-    token_stub = types.ModuleType("yosai_intel_dashboard.src.services.token_endpoint")
-    token_stub.create_token_blueprint = lambda *a, **k: Blueprint("token", __name__)
     settings_stub = types.ModuleType("api.settings_endpoint")
 
     class _SettingsSchema(BaseModel):
@@ -122,6 +120,18 @@ def _create_app(monkeypatch, origins):
     settings_stub._load_settings = lambda: {}
     settings_stub._save_settings = lambda data: None
     from fastapi import APIRouter
+
+    token_stub = types.ModuleType("yosai_intel_dashboard.src.services.token_endpoint")
+
+    class RefreshRequest(BaseModel):
+        refresh_token: str
+
+    class AccessTokenResponse(BaseModel):
+        access_token: str
+
+    token_stub.RefreshRequest = RefreshRequest
+    token_stub.AccessTokenResponse = AccessTokenResponse
+    token_stub.create_token_router = lambda *a, **k: APIRouter()
 
     analytics_stub = types.ModuleType("api.analytics_router")
     analytics_stub.router = APIRouter()
@@ -133,7 +143,6 @@ def _create_app(monkeypatch, origins):
     upload_upload_stub = types.ModuleType(
         "yosai_intel_dashboard.src.services.upload.upload_endpoint"
     )
-    from pydantic import BaseModel
 
     class UploadRequestSchema(BaseModel):
         contents: list[str] | None = None
