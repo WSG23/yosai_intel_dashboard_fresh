@@ -1,7 +1,7 @@
 stages:
   - build
   - canary
-  - promote
+  - blue_green
 
 build:
   stage: build
@@ -16,8 +16,8 @@ canary:
   needs:
     - build
 
-promote_blue_green:
-  stage: promote
+blue_green:
+  stage: blue_green
   script:
     - kubectl apply -f k8s/bluegreen
   when: manual
