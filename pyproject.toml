@@ -32,3 +32,6 @@ skip_gitignore = true
 
 [tool.setuptools.packages.find]
 include = ["core", "yosai_intel_dashboard", "yosai_intel_dashboard.*"]
+
+[tool.pydocstyle]
+convention = "google"

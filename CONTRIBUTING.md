@@ -48,6 +48,32 @@ bandit -r .
 
 Run `isort .` to automatically sort imports before committing changes.
 
+### Docstring Style
+
+Use Google-style docstrings for all new Python code. The [pydocstyle](https://pypi.org/project/pydocstyle/)
+pre-commit hook enforces this convention and runs in CI. A basic example:
+
+```python
+def add(a: int, b: int) -> int:
+    """Add two numbers.
+
+    Args:
+        a: First value.
+        b: Second value.
+
+    Returns:
+        The sum of ``a`` and ``b``.
+    """
+    return a + b
+```
+
+API reference documentation is generated with [mkdocs](https://www.mkdocs.org/) and
+[mkdocstrings](https://mkdocstrings.github.io/). Build the docs locally with:
+
+```bash
+mkdocs build
+```
+
 ### Database Query Helpers
 
 When executing SQL, always acquire connections using the factory context manager:
