@@ -1,12 +1,11 @@
-"""Token refresh API endpoint."""
+"""Token refresh API endpoint using FastAPI."""
 
-from flask import Blueprint, jsonify
-from flask_apispec import doc
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from shared.errors.types import CODE_TO_STATUS, ErrorCode
 
-from yosai_intel_dashboard.src.error_handling import ErrorCategory, ErrorHandler, api_error_response
 from yosai_intel_dashboard.src.services.security import refresh_access_token
-from yosai_intel_dashboard.src.utils.pydantic_decorators import validate_input, validate_output
 
 
 class RefreshRequest(BaseModel):
@@ -20,29 +19,29 @@ class AccessTokenResponse(BaseModel):
     access_token: str
 
 
-def create_token_blueprint(*, handler: ErrorHandler | None = None) -> Blueprint:
-    """Return a blueprint for refreshing access tokens."""
+def create_token_router(*, handler: object | None = None) -> APIRouter:
+    """Return an APIRouter for refreshing access tokens."""
 
-    token_bp = Blueprint("token", __name__)
-    err_handler = handler or ErrorHandler()
+    router = APIRouter()
 
-    @token_bp.route("/v1/token/refresh", methods=["POST"])
-    @validate_input(RefreshRequest)
-    @validate_output(AccessTokenResponse)
-    @doc(
-        description="Refresh access token",
-        tags=["token"],
-        responses={200: "Success", 401: "Unauthorized"},
+    @router.post(
+        "/v1/token/refresh",
+        response_model=AccessTokenResponse,
+        responses={401: {"description": "Unauthorized"}},
     )
-    def refresh_token_endpoint(payload: RefreshRequest):
+    async def refresh_token_endpoint(payload: RefreshRequest):  # noqa: D401
         """Refresh the access token using the provided refresh token."""
         new_token = refresh_access_token(payload.refresh_token)
         if not new_token:
-            return api_error_response(
-                PermissionError("invalid refresh token"),
-                ErrorCategory.UNAUTHORIZED,
-                handler=err_handler,
+            status = CODE_TO_STATUS.get(ErrorCode.UNAUTHORIZED, 401)
+            return JSONResponse(
+                status_code=status,
+                content={
+                    "code": ErrorCode.UNAUTHORIZED.value,
+                    "message": "invalid refresh token",
+                    "details": None,
+                },
             )
         return {"access_token": new_token}
 
-    return token_bp
+    return router
