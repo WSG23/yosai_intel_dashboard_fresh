@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-import io
 import tarfile
 import zipfile
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 
-from yosai_intel_dashboard.src.infrastructure.callbacks.events import CallbackEvent
-from yosai_intel_dashboard.src.infrastructure.callbacks.unified_callbacks import TrulyUnifiedCallbacks
-from yosai_intel_dashboard.src.core.protocols import UnicodeProcessorProtocol
 from ..format_detector import FormatDetector
 
 from .base import BaseReader
@@ -24,12 +19,6 @@ class ArchiveReader(BaseReader):
     """Read archives containing a single supported file."""
 
     format_name = "archive"
-
-    def __init__(
-        self, *, unicode_processor: UnicodeProcessorProtocol | None = None
-    ) -> None:
-        super().__init__(unicode_processor=unicode_processor)
-        self.callback_controller = TrulyUnifiedCallbacks()
 
     def read(self, file_path: str, hint: dict | None = None) -> pd.DataFrame:
         path = Path(file_path)
