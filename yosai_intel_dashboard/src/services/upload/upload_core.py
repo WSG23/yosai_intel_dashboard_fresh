@@ -17,13 +17,11 @@ from yosai_intel_dashboard.src.services.task_queue import (
     TaskQueue,
     TaskQueueProtocol,
 )
-from yosai_intel_dashboard.src.services.upload import (
-    AISuggestionService,
-    ChunkedUploadManager,
-    ClientSideValidator,
-    ModalService,
-    get_trigger_id,
-)
+from .ai import AISuggestionService
+from .chunked_upload_manager import ChunkedUploadManager  # fixed circular import
+from .validators import ClientSideValidator
+from .modal import ModalService
+from .helpers import get_trigger_id
 from yosai_intel_dashboard.src.services.upload.protocols import (
     DeviceLearningServiceProtocol,
     UploadProcessingServiceProtocol,
