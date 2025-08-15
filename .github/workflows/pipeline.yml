@@ -185,7 +185,7 @@ jobs:
       run: 'echo "Fork PR: secret-protected step skipped (Trivy)."'
     - name: Scan with Trivy
       if: ${{ github.event.pull_request.head.repo.fork == false }}
-      uses: aquasecurity/trivy-action@0.11.2
+      uses: aquasecurity/trivy-action@0.32.0
       with:
         scan-type: fs
         format: sarif
@@ -229,7 +229,7 @@ jobs:
       if: ${{ github.event.pull_request.head.repo.fork == false }}
     - name: OWASP ZAP baseline scan
       if: ${{ github.event.pull_request.head.repo.fork == false }}
-      uses: zaproxy/action-baseline@v0.10.0
+      uses: zaproxy/action-baseline@v0.14.0
       with:
         target: http://localhost:8000
         fail_action: true

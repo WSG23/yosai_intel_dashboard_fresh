@@ -363,7 +363,7 @@ jobs:
         with:
           fail-on-severity: critical
       - name: Scan with Trivy
-        uses: aquasecurity/trivy-action@0.11.2
+        uses: aquasecurity/trivy-action@0.32.0
         with:
           scan-type: fs
           severity: CRITICAL
