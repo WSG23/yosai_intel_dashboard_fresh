@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi.responses import JSONResponse
-from flask import Response, jsonify
 
 from shared.errors.types import CODE_TO_STATUS, ErrorCode
 
@@ -31,10 +30,9 @@ def api_error_response(
     *,
     handler: ErrorHandler | None = None,
     details: Any | None = None,
-) -> tuple[Response, int]:
-    """Return a Flask ``Response`` for *exc* using ``ErrorHandler``."""
-    payload, status = serialize_error(exc, category, handler=handler, details=details)
-    return jsonify(payload), status
+) -> tuple[dict[str, Any], int]:
+    """Return a serialized payload for *exc* using ``ErrorHandler``."""
+    return serialize_error(exc, category, handler=handler, details=details)
 
 
 def fastapi_error_response(

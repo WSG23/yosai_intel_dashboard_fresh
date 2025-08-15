@@ -3,18 +3,18 @@ from __future__ import annotations
 """Simple RBAC service and decorators."""
 
 import asyncio
+import importlib.util
 import inspect
 import logging
 import os
 import threading
 from functools import wraps
-from typing import Callable, List, Optional
-import importlib.util
 from pathlib import Path
+from typing import Callable, List, Optional
 
 import asyncpg
 import redis.asyncio as redis
-from flask import current_app, request, session
+from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -170,12 +170,20 @@ def require_role(role: str) -> Callable[[Callable[..., any]], Callable[..., any]
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
-                if not _verify_behavioral_biometrics(request):
+                req: Request | None = kwargs.get("request")
+                if req is None:
+                    for arg in args:
+                        if isinstance(arg, Request):
+                            req = arg
+                            break
+                if req is None:
                     return _fail_response()
-                service: RBACService | None = current_app.config.get("RBAC_SERVICE")
+                if not _verify_behavioral_biometrics(req):
+                    return _fail_response()
+                service: RBACService | None = getattr(req.app.state, "RBAC_SERVICE", None)
                 if service is None:
                     return await func(*args, **kwargs)
-                user_id = session.get("user_id")
+                user_id = getattr(req, "session", {}).get("user_id")
                 if not user_id or not await service.has_role(user_id, role):
                     return _fail_response()
                 return await func(*args, **kwargs)
@@ -184,12 +192,18 @@ def require_role(role: str) -> Callable[[Callable[..., any]], Callable[..., any]
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
-            if not _verify_behavioral_biometrics(request):
+            req: Request | None = kwargs.get("request")
+            if req is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        req = arg
+                        break
+            if req is None or not _verify_behavioral_biometrics(req):
                 return _fail_response()
-            service: RBACService | None = current_app.config.get("RBAC_SERVICE")
+            service: RBACService | None = getattr(req.app.state, "RBAC_SERVICE", None)
             if service is None:
                 return func(*args, **kwargs)
-            user_id = session.get("user_id")
+            user_id = getattr(req, "session", {}).get("user_id")
             if not user_id or not _run_sync(service.has_role(user_id, role)):
                 return _fail_response()
             return func(*args, **kwargs)
@@ -209,12 +223,20 @@ def require_permission(
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
-                if not _verify_behavioral_biometrics(request):
+                req: Request | None = kwargs.get("request")
+                if req is None:
+                    for arg in args:
+                        if isinstance(arg, Request):
+                            req = arg
+                            break
+                if req is None:
                     return _fail_response()
-                service: RBACService | None = current_app.config.get("RBAC_SERVICE")
+                if not _verify_behavioral_biometrics(req):
+                    return _fail_response()
+                service: RBACService | None = getattr(req.app.state, "RBAC_SERVICE", None)
                 if service is None:
                     return await func(*args, **kwargs)
-                user_id = session.get("user_id")
+                user_id = getattr(req, "session", {}).get("user_id")
                 if not user_id or not await service.has_permission(user_id, permission):
                     return _fail_response()
                 return await func(*args, **kwargs)
@@ -223,12 +245,18 @@ def require_permission(
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
-            if not _verify_behavioral_biometrics(request):
+            req: Request | None = kwargs.get("request")
+            if req is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        req = arg
+                        break
+            if req is None or not _verify_behavioral_biometrics(req):
                 return _fail_response()
-            service: RBACService | None = current_app.config.get("RBAC_SERVICE")
+            service: RBACService | None = getattr(req.app.state, "RBAC_SERVICE", None)
             if service is None:
                 return func(*args, **kwargs)
-            user_id = session.get("user_id")
+            user_id = getattr(req, "session", {}).get("user_id")
             if not user_id or not _run_sync(
                 service.has_permission(user_id, permission)
             ):
