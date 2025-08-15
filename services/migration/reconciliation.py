@@ -27,12 +27,10 @@ async def reconcile_outbox(manager: TimescaleDBManager) -> int:
     """
 
     await manager.connect()
-    assert manager.pool is not None
+    rows = await manager.unprocessed_outbox_events()
     divergences = 0
+    assert manager.pool is not None
     async with manager.pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT id, payload FROM outbox_events WHERE processed = FALSE"
-        )
         for row in rows:
             payload: Mapping[str, object] = row["payload"]
             event_id = payload.get("event_id")
@@ -40,9 +38,7 @@ async def reconcile_outbox(manager: TimescaleDBManager) -> int:
                 "SELECT 1 FROM access_events WHERE event_id = $1", event_id
             )
             if exists:
-                await conn.execute(
-                    "UPDATE outbox_events SET processed = TRUE WHERE id = $1", row["id"]
-                )
+                await manager.mark_outbox_processed(row["id"])
             else:
                 divergences += 1
     return divergences

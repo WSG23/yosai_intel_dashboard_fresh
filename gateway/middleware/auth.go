@@ -242,14 +242,14 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		authHdr := r.Header.Get("Authorization")
 		if authHdr == "" {
 			authFailures.Inc()
-			tracing.Logger.WithField("reason", "missing").Warn("authorization failed")
+			tracing.Logger.WithContext(r.Context()).WithField("reason", "missing").Warn("authorization failed")
 			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
 			return
 		}
 		parts := strings.Fields(authHdr)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 			authFailures.Inc()
-			tracing.Logger.WithField("reason", "invalid_header").Warn("authorization failed")
+			tracing.Logger.WithContext(r.Context()).WithField("reason", "invalid_header").Warn("authorization failed")
 			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
 			return
 		}
@@ -271,7 +271,7 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		token, err := parser.ParseWithClaims(tokenStr, claims, am.keyFunc)
 		if err != nil || !token.Valid {
 			reason := reasonFromError(err)
-			tracing.Logger.WithError(err).WithField("reason", reason).Warn("invalid token")
+			tracing.Logger.WithContext(ctx).WithError(err).WithField("reason", reason).Warn("invalid token")
 			authFailures.Inc()
 			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": reason})
 			return
@@ -280,7 +280,7 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 			black, err := am.cache.IsBlacklisted(ctx, claims.ID)
 			if err == nil && black {
 				authFailures.Inc()
-				tracing.Logger.WithField("reason", "blacklisted").Warn("token blacklisted")
+				tracing.Logger.WithContext(ctx).WithField("reason", "blacklisted").Warn("token blacklisted")
 				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", map[string]string{"reason": "blacklisted"})
 				return
 			}
@@ -291,7 +291,7 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 				tokenStr = newTok
 				claims = newClaims
 			} else if err != nil {
-				tracing.Logger.WithError(err).Warn("token refresh failed")
+				tracing.Logger.WithContext(ctx).WithError(err).Warn("token refresh failed")
 			}
 		}
 

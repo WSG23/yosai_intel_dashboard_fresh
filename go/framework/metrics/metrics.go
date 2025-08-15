@@ -87,14 +87,14 @@ func (p *PrometheusCollector) Start(ctx context.Context) error {
 	}
 	if err := p.init(); err != nil {
 		if p.logger != nil {
-			p.logger.Error("metrics listener error", zap.Error(err))
+			p.logger.Error(ctx, "metrics listener error", zap.Error(err))
 		}
 		return fmt.Errorf("init metrics: %w", err)
 	}
 	go func() {
 		if err := p.srv.Serve(p.ln); err != nil && err != http.ErrServerClosed {
 			if p.logger != nil {
-				p.logger.Error("metrics server error", zap.Error(err))
+				p.logger.Error(context.Background(), "metrics server error", zap.Error(err))
 			}
 		}
 	}()

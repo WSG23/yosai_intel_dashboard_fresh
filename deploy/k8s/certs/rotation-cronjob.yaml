@@ -14,9 +14,10 @@ data:
     fi
     for svc in gateway queue resilience httpx; do
       if [ ! -f "$DIR/${svc}.key" ]; then
-        openssl req -new -nodes -newkey rsa:2048 -keyout "$DIR/${svc}.key" -subj "/CN=${svc}" -out "$DIR/${svc}.csr"
-        openssl x509 -req -in "$DIR/${svc}.csr" -CA "$DIR/ca.crt" -CAkey "$DIR/ca.key" -CAcreateserial -out "$DIR/${svc}.crt" -days 365
-        rm "$DIR/${svc}.csr"
+        openssl req -new -nodes -newkey rsa:2048 -keyout "$DIR/${svc}.key" -subj "/CN=${svc}" -addext "subjectAltName=DNS:${svc},IP:127.0.0.1" -out "$DIR/${svc}.csr"
+        printf "[v3_req]\nsubjectAltName=DNS:${svc},IP:127.0.0.1" > "$DIR/${svc}.ext"
+        openssl x509 -req -in "$DIR/${svc}.csr" -CA "$DIR/ca.crt" -CAkey "$DIR/ca.key" -CAcreateserial -out "$DIR/${svc}.crt" -days 365 -extfile "$DIR/${svc}.ext" -extensions v3_req
+        rm "$DIR/${svc}.csr" "$DIR/${svc}.ext"
       fi
     done
 ---

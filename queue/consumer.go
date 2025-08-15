@@ -1,13 +1,14 @@
 package queue
 
 import (
-	"context"
-	"encoding/json"
-	"sync"
+        "context"
+        "encoding/json"
+        "sync"
 
-	"github.com/prometheus/client_golang/prometheus"
+        "github.com/google/uuid"
+        "github.com/prometheus/client_golang/prometheus"
 
-	"github.com/WSG23/queue/rabbitmq"
+        "github.com/WSG23/queue/rabbitmq"
 )
 
 // DLQMessages counts messages published to a dead-letter queue.
@@ -63,13 +64,13 @@ func NewConsumer(queue, dlq string, producer DLQProducer) *Consumer {
 // Process handles a raw message, invoking handler and routing failures to the DLQ.
 func (c *Consumer) Process(ctx context.Context, msg []byte, handler func(context.Context, *rabbitmq.Task) error) error {
 	var t rabbitmq.Task
-	if err := json.Unmarshal(msg, &t); err != nil {
-		DLQMessages.WithLabelValues(c.queue).Inc()
-		if c.p != nil {
-			_ = c.p.Publish(ctx, c.dlq, &rabbitmq.Task{Payload: msg})
-		}
-		return err
-	}
+        if err := json.Unmarshal(msg, &t); err != nil {
+                DLQMessages.WithLabelValues(c.queue).Inc()
+                if c.p != nil {
+                        _ = c.p.Publish(ctx, c.dlq, &rabbitmq.Task{ID: uuid.NewString(), Payload: msg})
+                }
+                return err
+        }
 	if _, ok := c.processed.LoadOrStore(t.ID, struct{}{}); ok {
 		return nil
 	}

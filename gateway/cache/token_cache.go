@@ -31,18 +31,26 @@ func tokenKey(id string) string     { return "token:" + id }
 func blacklistKey(id string) string { return "blacklist:" + id }
 
 var (
-	tokenCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "gateway_token_cache_hits_total",
-		Help: "Number of token cache hits",
-	})
-	tokenCacheMisses = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "gateway_token_cache_misses_total",
-		Help: "Number of token cache misses",
-	})
+        tokenCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+                Name: "gateway_token_cache_hits_total",
+                Help: "Number of token cache hits",
+        })
+        tokenCacheMisses = prometheus.NewCounter(prometheus.CounterOpts{
+                Name: "gateway_token_cache_misses_total",
+                Help: "Number of token cache misses",
+        })
+       blacklistCacheHits = prometheus.NewCounter(prometheus.CounterOpts{
+               Name: "gateway_blacklist_cache_hits_total",
+               Help: "Number of blacklist cache hits",
+       })
+       blacklistCacheMisses = prometheus.NewCounter(prometheus.CounterOpts{
+               Name: "gateway_blacklist_cache_misses_total",
+               Help: "Number of blacklist cache misses",
+       })
 )
 
 func init() {
-	prometheus.MustRegister(tokenCacheHits, tokenCacheMisses)
+       prometheus.MustRegister(tokenCacheHits, tokenCacheMisses, blacklistCacheHits, blacklistCacheMisses)
 }
 
 // Get retrieves cached claims for a token ID. Missing keys and timeouts are not treated as errors.
@@ -105,12 +113,18 @@ func (t *TokenCache) IsBlacklisted(ctx context.Context, tokenID string) (bool, e
 	if !inFilter {
 		return false, nil
 	}
-	exists, err := t.client.Exists(ctx, blacklistKey(tokenID)).Result()
-	if err != nil {
-		if err == redis.Nil || errors.Is(err, context.DeadlineExceeded) {
-			return false, nil
-		}
-		return false, err
-	}
-	return exists == 1, nil
+       exists, err := t.client.Exists(ctx, blacklistKey(tokenID)).Result()
+       if err != nil {
+               if err == redis.Nil || errors.Is(err, context.DeadlineExceeded) {
+                       blacklistCacheMisses.Inc()
+                       return false, nil
+               }
+               return false, err
+       }
+       if exists == 1 {
+               blacklistCacheHits.Inc()
+       } else {
+               blacklistCacheMisses.Inc()
+       }
+       return exists == 1, nil
 }

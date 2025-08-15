@@ -2,6 +2,7 @@ package logging
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -21,7 +22,7 @@ func TestZapLoggerJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	lg.Info("hello")
+	lg.Info(context.Background(), "hello")
 	if err := lg.Sync(); err != nil && !errors.Is(err, syscall.ENOTTY) && !errors.Is(err, syscall.EINVAL) {
 
 		t.Fatal(err)

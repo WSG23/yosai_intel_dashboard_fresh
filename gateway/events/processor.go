@@ -18,7 +18,6 @@ import (
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	ikafka "github.com/WSG23/yosai-gateway/internal/kafka"
-
 )
 
 var accessEventsTopic = "access-events"
@@ -36,29 +35,29 @@ func init() {
 }
 
 type EventProcessor struct {
-        producer *ckafka.Producer
-        consumer *ckafka.Consumer
-        cache    cache.CacheService
-        engine   *engine.CachedRuleEngine
-        registry *ikafka.SchemaRegistry
-        breaker  *gobreaker.CircuitBreaker
+	producer *ckafka.Producer
+	consumer *ckafka.Consumer
+	cache    cache.CacheService
+	engine   *engine.CachedRuleEngine
+	registry *ikafka.SchemaRegistry
+	breaker  *gobreaker.CircuitBreaker
 }
 
 func producerConfig(brokers, transactionalID string) ckafka.ConfigMap {
-        return ckafka.ConfigMap{
-                "bootstrap.servers": brokers,
-                "enable.idempotence": true,
-                "acks":              "all",
-                "transactional.id":  transactionalID,
-        }
+	return ckafka.ConfigMap{
+		"bootstrap.servers":  brokers,
+		"enable.idempotence": true,
+		"acks":               "all",
+		"transactional.id":   transactionalID,
+	}
 }
 
 func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRuleEngine, settings gobreaker.Settings) (*EventProcessor, error) {
-        cfg := producerConfig(brokers, "gateway-event-processor")
-        producer, err := ckafka.NewProducer(&cfg)
-        if err != nil {
-                return nil, err
-        }
+	cfg := producerConfig(brokers, "gateway-event-processor")
+	producer, err := ckafka.NewProducer(&cfg)
+	if err != nil {
+		return nil, err
+	}
 	consumer, err := ckafka.NewConsumer(&ckafka.ConfigMap{
 		"bootstrap.servers": brokers,
 		"group.id":          "gateway",
@@ -107,7 +106,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 			Decision: event.AccessResult,
 		}); err != nil {
 			// log failure but continue so access events are not lost
-			tracing.Logger.WithError(err).Warn("failed to cache decision")
+			tracing.Logger.WithContext(ctx).WithError(err).Warn("failed to cache decision")
 		}
 
 	}
@@ -117,7 +116,7 @@ func (ep *EventProcessor) ProcessAccessEvent(ctx context.Context, event AccessEv
 	if ep.registry != nil {
 		record, err := ep.registry.Serialize("access-events-value", event)
 		if err != nil {
-			tracing.Logger.WithError(err).Warn("schema serialization failed")
+			tracing.Logger.WithContext(ctx).WithError(err).Warn("schema serialization failed")
 			data, _ = json.Marshal(event)
 		} else {
 			data = record
@@ -178,7 +177,7 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 					continue
 				}
 			}
-			tracing.Logger.WithError(err).Error("consumer error")
+			tracing.Logger.WithContext(ctx).WithError(err).Error("consumer error")
 			continue
 		}
 		rSpan.End()
@@ -188,28 +187,28 @@ func (ep *EventProcessor) Run(ctx context.Context) error {
 			continue
 		}
 
-                for _, m := range batch {
-                        spanCtx, span := otel.Tracer("event-processor").Start(ctx, "process_event")
-                        var ev AccessEvent
-                        if err := json.Unmarshal(m.Value, &ev); err != nil {
-                                tracing.Logger.WithContext(spanCtx).WithError(err).Warn("malformed access event")
-                                // send to DLQ and commit offset
-                                _ = ep.producer.Produce(&ckafka.Message{TopicPartition: ckafka.TopicPartition{Topic: &accessEventsDLQ, Partition: ckafka.PartitionAny}, Key: m.Key, Value: m.Value}, nil)
-                                _, _ = ep.consumer.CommitMessage(m)
-                                span.End()
-                                continue
-                        }
-                        if err := engine.Evaluate(spanCtx, &ev); err != nil {
-                                tracing.Logger.WithContext(spanCtx).WithError(err).Warn("rule evaluation error")
-                                _ = ep.producer.Produce(&ckafka.Message{TopicPartition: ckafka.TopicPartition{Topic: &accessEventsDLQ, Partition: ckafka.PartitionAny}, Key: m.Key, Value: m.Value}, nil)
-                                _, _ = ep.consumer.CommitMessage(m)
-                                span.End()
-                                continue
-                        }
-                        eventsProcessed.Inc()
-                        _, _ = ep.consumer.CommitMessage(m)
-                        span.End()
-                }
+		for _, m := range batch {
+			spanCtx, span := otel.Tracer("event-processor").Start(ctx, "process_event")
+			var ev AccessEvent
+			if err := json.Unmarshal(m.Value, &ev); err != nil {
+				tracing.Logger.WithContext(spanCtx).WithError(err).Warn("malformed access event")
+				// send to DLQ and commit offset
+				_ = ep.producer.Produce(&ckafka.Message{TopicPartition: ckafka.TopicPartition{Topic: &accessEventsDLQ, Partition: ckafka.PartitionAny}, Key: m.Key, Value: m.Value}, nil)
+				_, _ = ep.consumer.CommitMessage(m)
+				span.End()
+				continue
+			}
+			if err := engine.Evaluate(spanCtx, &ev); err != nil {
+				tracing.Logger.WithContext(spanCtx).WithError(err).Warn("rule evaluation error")
+				_ = ep.producer.Produce(&ckafka.Message{TopicPartition: ckafka.TopicPartition{Topic: &accessEventsDLQ, Partition: ckafka.PartitionAny}, Key: m.Key, Value: m.Value}, nil)
+				_, _ = ep.consumer.CommitMessage(m)
+				span.End()
+				continue
+			}
+			eventsProcessed.Inc()
+			_, _ = ep.consumer.CommitMessage(m)
+			span.End()
+		}
 
 		batch = batch[:0]
 	}

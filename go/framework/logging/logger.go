@@ -1,15 +1,18 @@
 package logging
 
 import (
+	"context"
 	"strings"
 
+	httpx "github.com/WSG23/httpx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Logger abstracts logging implementation.
 type Logger interface {
-	Info(msg string, fields ...zap.Field)
-	Error(msg string, fields ...zap.Field)
+	Info(ctx context.Context, msg string, fields ...zap.Field)
+	Error(ctx context.Context, msg string, fields ...zap.Field)
 }
 
 // ZapLogger is a zap based implementation of Logger.
@@ -19,6 +22,16 @@ type ZapLogger struct{ *zap.Logger }
 func NewZapLogger(name, level string) (*ZapLogger, error) {
 	cfg := zap.NewProductionConfig()
 	cfg.OutputPaths = []string{"stdout"}
+	cfg.EncoderConfig = zapcore.EncoderConfig{
+		TimeKey:      "time",
+		LevelKey:     "level",
+		NameKey:      "logger",
+		CallerKey:    "caller",
+		MessageKey:   "msg",
+		EncodeTime:   zapcore.ISO8601TimeEncoder,
+		EncodeLevel:  zapcore.LowercaseLevelEncoder,
+		EncodeCaller: zapcore.ShortCallerEncoder,
+	}
 	lvl := zap.InfoLevel
 	if v := strings.ToUpper(level); v != "" {
 		if parsed, err := zap.ParseAtomicLevel(v); err == nil {
@@ -30,8 +43,21 @@ func NewZapLogger(name, level string) (*ZapLogger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ZapLogger{lg.Named(name)}, nil
+	lg = lg.With(zap.String("service", name))
+	return &ZapLogger{lg}, nil
 }
 
-func (l *ZapLogger) Info(msg string, fields ...zap.Field)  { l.Logger.Info(msg, fields...) }
-func (l *ZapLogger) Error(msg string, fields ...zap.Field) { l.Logger.Error(msg, fields...) }
+func withCorrelation(ctx context.Context, fields []zap.Field) []zap.Field {
+	if cid, ok := httpx.CorrelationIDFromContext(ctx); ok {
+		fields = append(fields, zap.String("correlation_id", cid))
+	}
+	return fields
+}
+
+func (l *ZapLogger) Info(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Info(msg, withCorrelation(ctx, fields)...)
+}
+
+func (l *ZapLogger) Error(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Error(msg, withCorrelation(ctx, fields)...)
+}

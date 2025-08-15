@@ -130,7 +130,7 @@ func (c *CachePlugin) Process(ctx context.Context, req *http.Request, resp http.
 			res.Body.Close()
 
 			if execErr != nil {
-				tracing.Logger.WithError(execErr).Error("analytics service request failed")
+				tracing.Logger.WithContext(ctx).WithError(execErr).Error("analytics service request failed")
 				analyticsFallbacks.Inc()
 				// attempt to serve stale cache again (if any)
 				if err == nil {

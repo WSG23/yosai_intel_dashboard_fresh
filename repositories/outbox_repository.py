@@ -29,3 +29,13 @@ class OutboxRepository:
         """Return number of events waiting in the outbox."""
 
         return await self.manager.pending_outbox_events()
+
+    async def unprocessed_events(self) -> list[Mapping[str, Any]]:
+        """Fetch unprocessed outbox events."""
+
+        return [dict(r) for r in await self.manager.unprocessed_outbox_events()]
+
+    async def mark_processed(self, event_id: Any) -> None:
+        """Mark a previously fetched event as processed."""
+
+        await self.manager.mark_outbox_processed(event_id)

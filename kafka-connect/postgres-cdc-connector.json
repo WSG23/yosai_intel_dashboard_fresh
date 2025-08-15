@@ -19,6 +19,7 @@
     "transforms.timescaledb.database.dbname": "postgres",
     "errors.tolerance": "all",
     "errors.deadletterqueue.topic.name": "dead-letter",
-    "errors.deadletterqueue.topic.replication.factor": 1
+    "errors.deadletterqueue.topic.replication.factor": 1,
+    "errors.deadletterqueue.context.headers.enable": true
   }
 }
