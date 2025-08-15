@@ -74,6 +74,10 @@ API reference documentation is generated with [mkdocs](https://www.mkdocs.org/) 
 mkdocs build
 ```
 
+When creating a new module, include a module-level docstring and at least one
+usage example in public function docstrings. These examples appear in the
+generated API reference and help others understand how to use your code.
+
 ### Database Query Helpers
 
 When executing SQL, always acquire connections using the factory context manager:
