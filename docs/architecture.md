@@ -155,6 +155,39 @@ graph TB
     G --> F
 ```
 
+## REST, Queue, and Callback Flow
+
+The following diagram shows the high-level flow between REST endpoints, the
+message queue, and callback handlers. Each service lists its incoming and
+outgoing data paths along with its dependencies.
+
+```mermaid
+flowchart LR
+    Client[[Client]] -->|HTTP request| API[REST API Service]
+    API -->|enqueue| MQ[Message Queue]
+    API -->|write| DB[(Database)]
+    MQ -->|deliver| Worker[Worker Service]
+    Worker -->|invoke| CB[Callback Service]
+    Worker -->|write| DB
+    CB -->|HTTP callback| Client
+```
+
+- **REST API Service**
+  - Ingress: HTTP requests from clients.
+  - Egress: messages to **Message Queue**, writes to **Database**.
+  - Dependencies: **Message Queue**, **Database**.
+- **Worker Service**
+  - Ingress: messages from **Message Queue**.
+  - Egress: events to **Callback Service**, writes to **Database**.
+  - Dependencies: **Message Queue**, **Callback Service**, **Database**.
+- **Callback Service**
+  - Ingress: events from **Worker Service**.
+  - Egress: HTTP callbacks to clients.
+  - Dependencies: **Worker Service**.
+
+> **Maintenance**: Update this diagram and the notes above whenever
+> cross-service interactions change.
+
 ## Callback Registration Sequence
 
 The callback manager registers Dash callbacks and tracks them in the global
