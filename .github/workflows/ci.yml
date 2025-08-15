@@ -10,6 +10,26 @@ env:
   PYTHONPATH: "${{ github.workspace }}:${{ github.workspace }}/src:${{ github.workspace }}/yosai_intel_dashboard:${{ github.workspace }}/yosai_intel_dashboard/src"
 
 jobs:
+  build-test:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - context: .
+            dockerfile: Dockerfile
+          - context: .
+            dockerfile: Dockerfile.gateway
+          - context: dashboard
+            dockerfile: dashboard/Dockerfile
+          - context: api
+            dockerfile: api/Dockerfile
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker build -f ${{ matrix.dockerfile }} ${{ matrix.context }}
+
   python-lint:
     name: Python Lint
     runs-on: ubuntu-latest

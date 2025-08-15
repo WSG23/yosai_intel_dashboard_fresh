@@ -17,7 +17,7 @@ cd yosai_intel_dashboard_fresh
 python -m venv .venv && source .venv/bin/activate
 ./scripts/setup.sh && npm install
 cp .env.example .env  # set SECRET_KEY and DB_PASSWORD
-docker compose -f docker-compose.dev.yml up --build
+docker compose up --build
 ```
 
 ## Verify Setup
@@ -58,4 +58,3 @@ Fix any failures before continuing.
 - Skipping `npm install` breaks the CSS build.
 - Docker not running results in services being unreachable.
 - Forgetting to activate the virtual environment leads to missing packages.
-
