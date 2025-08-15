@@ -28,11 +28,17 @@ var (
 		Name: "event_processor_events_processed_total",
 		Help: "Number of access events processed",
 	})
+	kafkaConnectionFailures = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "event_processor_kafka_connection_failures_total",
+		Help: "Number of Kafka producer connection failures",
+	})
 )
 
 func init() {
-	prometheus.MustRegister(eventsProcessed)
+	prometheus.MustRegister(eventsProcessed, kafkaConnectionFailures)
 }
+
+const connectionTimeout = 5 * time.Second
 
 type EventProcessor struct {
 	producer *ckafka.Producer
@@ -54,9 +60,24 @@ func producerConfig(brokers, transactionalID string) ckafka.ConfigMap {
 
 func NewEventProcessor(brokers string, c cache.CacheService, e *engine.CachedRuleEngine, settings gobreaker.Settings) (*EventProcessor, error) {
 	cfg := producerConfig(brokers, "gateway-event-processor")
-	producer, err := ckafka.NewProducer(&cfg)
-	if err != nil {
-		return nil, err
+	prodCtx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
+	defer cancel()
+	prodCh := make(chan struct{})
+	var producer *ckafka.Producer
+	var err error
+	go func() {
+		producer, err = ckafka.NewProducer(&cfg)
+		close(prodCh)
+	}()
+	select {
+	case <-prodCtx.Done():
+		kafkaConnectionFailures.Inc()
+		return nil, prodCtx.Err()
+	case <-prodCh:
+		if err != nil {
+			kafkaConnectionFailures.Inc()
+			return nil, err
+		}
 	}
 	consumer, err := ckafka.NewConsumer(&ckafka.ConfigMap{
 		"bootstrap.servers": brokers,

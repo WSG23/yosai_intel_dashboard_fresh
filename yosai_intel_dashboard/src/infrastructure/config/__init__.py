@@ -1,164 +1,38 @@
-"""Configuration module with proper imports and error handling."""
+"""
+Central export point for configuration helpers.
 
-import logging
-from typing import Any, Dict, Optional
+- If a real get_cache_config() exists in a submodule (e.g., .cache), re-export it.
+- Otherwise, provide a minimal, environment-driven fallback so the API can boot.
+"""
 
-from .app_config import UploadConfig
-from .base import Config, RetrainingConfig
-from .config_manager import ConfigManager, get_config, reload_config
-from .config_transformer import ConfigTransformer
-from .config_validator import ConfigValidator, ValidationResult
-from .configuration_loader import ConfigurationLoader
-from .constants import CSSConstants, PerformanceConstants, SecurityConstants
-from .database_connection_factory import DatabaseConnectionFactory, RetryStrategy
-from .dynamic_config import DynamicConfigManager, dynamic_config
-from .environment_processor import EnvironmentProcessor
-from .hierarchical_loader import HierarchicalLoader
-from .loader import ConfigurationLoader, ServiceSettings
-from .proto_adapter import to_dataclasses
-from .protocols import (
-    ConfigLoaderProtocol,
-    ConfigTransformerProtocol,
-    ConfigValidatorProtocol,
-)
-from .pydantic_models import DatabaseConnectionFactoryConfig
-from .schema import (
-    AppSettings,
-    ConfigSchema,
-    DatabaseSettings,
-    RetrainingSettings,
-    SecuritySettings,
-)
-from .secure_config_manager import SecureConfigManager
-from .secure_db import execute_secure_query
-from .unicode_handler import UnicodeHandler
-from .unified_loader import UnifiedLoader
+from __future__ import annotations
 
+import os
+from typing import Any, Dict
 
-def create_config_manager(
-    config_path: Optional[str] = None,
-    *,
-    container: Optional[Any] = None,
-) -> ConfigManager:
-    """Factory that wires core config components."""
-    loader: ConfigLoaderProtocol | None
-    validator: ConfigValidatorProtocol | None
-    transformer: ConfigTransformerProtocol | None
+# Try to import the real implementation if present.
+try:
+    from .cache import get_cache_config as _real_get_cache_config  # type: ignore[attr-defined]
+except Exception:
+    _real_get_cache_config = None  # type: ignore[assignment]
 
-    if container is not None:
-        loader = (
-            container.get("config_loader") if container.has("config_loader") else None
-        )
-        validator = (
-            container.get("config_validator")
-            if container.has("config_validator")
-            else None
-        )
-        transformer = (
-            container.get("config_transformer")
-            if container.has("config_transformer")
-            else None
-        )
-    else:
-        loader = validator = transformer = None
+def get_cache_config() -> Dict[str, Any]:
+    """
+    Return cache configuration as a dict. Prefer project-defined implementation;
+    otherwise fall back to env vars so the container can start.
+    """
+    if _real_get_cache_config is not None:
+        return _real_get_cache_config()
 
-    loader = loader or UnifiedLoader()
-    validator = validator or ConfigValidator()
-    transformer = transformer or ConfigTransformer()
+    # Fallback: Redis if REDIS_URL set; otherwise in-memory
+    backend = os.getenv("CACHE_BACKEND")
+    if not backend:
+        backend = "redis" if os.getenv("REDIS_URL") else "memory"
 
-    return SecureConfigManager(
-        config_path=config_path,
-        loader=loader,
-        validator=validator,
-        transformer=transformer,
-    )
+    return {
+        "backend": backend,
+        "url": os.getenv("REDIS_URL", "redis://redis:6379/0"),
+        "ttl": int(os.getenv("CACHE_TTL", "300")),
+    }
 
-
-# Convenience functions
-def get_app_config() -> AppSettings:
-    """Get app configuration"""
-    return get_config().get_app_config()
-
-
-def get_database_config() -> DatabaseSettings:
-    """Get database configuration"""
-    return get_config().get_database_config()
-
-
-def get_database_connection_factory_config() -> DatabaseConnectionFactoryConfig:
-    """Get database connection factory configuration"""
-    return get_config().get_database_connection_factory_config()
-
-
-def get_security_config() -> SecuritySettings:
-    """Get security configuration"""
-    return get_config().get_security_config()
-
-
-def get_plugin_config(name: str) -> Dict[str, Any]:
-    """Get configuration for a specific plugin"""
-    return get_config().get_plugin_config(name)
-
-
-logger = logging.getLogger(__name__)
-
-__all__ = [
-    # Core configuration classes
-    "Config",
-    "ConfigSchema",
-    "AppSettings",
-    "DatabaseSettings",
-    "DatabaseConnectionFactoryConfig",
-    "SecuritySettings",
-    "RetrainingSettings",
-    "UploadConfig",
-    "ConfigManager",
-    "SecureConfigManager",
-    "EnvironmentProcessor",
-    "ConfigValidator",
-    "ValidationResult",
-    "HierarchicalLoader",
-    "ConfigTransformer",
-    "UnifiedLoader",
-    "ConfigurationLoader",
-    "ServiceSettings",
-    "to_dataclasses",
-    "ConfigLoaderProtocol",
-    "ConfigValidatorProtocol",
-    "ConfigTransformerProtocol",
-    # Factory and management functions
-    "create_config_manager",
-    "get_config",
-    "reload_config",
-    # Convenience getters
-    "get_app_config",
-    "get_database_config",
-    "get_database_connection_factory_config",
-    "get_security_config",
-    "get_plugin_config",
-    # Dynamic configuration
-    "dynamic_config",
-    "DynamicConfigManager",
-    "ConfigurationLoader",
-    # Constants
-    "SecurityConstants",
-    "PerformanceConstants",
-    "CSSConstants",
-    "RetrainingConfig",
-    "execute_secure_query",
-    "UnicodeHandler",
-    "DatabaseConnectionFactory",
-]
-
-
-def get_monitoring_config() -> Dict[str, Any]:
-    """Get monitoring configuration."""
-    try:
-        return get_app_config().monitoring
-    except AttributeError:
-        # Return default monitoring config
-        return {
-            "enabled": True,
-            "data_quality_checks": True,
-            "alert_thresholds": {"error_rate": 0.05, "processing_time": 30},
-        }
+__all__ = ["get_cache_config"]

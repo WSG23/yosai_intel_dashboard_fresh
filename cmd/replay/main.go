@@ -53,6 +53,19 @@ func replay(ctx context.Context, c Consumer, p Producer, topic string) error {
 	}
 }
 
+var (
+	kafkaConnectionFailures = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "replay_kafka_connection_failures_total",
+		Help: "Number of Kafka producer connection failures",
+	})
+)
+
+func init() {
+	prometheus.MustRegister(kafkaConnectionFailures)
+}
+
+const connectionTimeout = 5 * time.Second
+
 func main() {
 	brokers := flag.String("brokers", "localhost:9092", "Kafka brokers")
 	topic := flag.String("topic", "access-events", "Base topic name")
@@ -82,6 +95,7 @@ func main() {
 		producer.Flush(5000)
 		producer.Close()
 	}()
+
 
 	if err := consumer.Subscribe(dlq, nil); err != nil {
 		log.Fatalf("subscribe: %v", err)

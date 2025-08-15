@@ -10,6 +10,7 @@ import { useWebSocket } from '../hooks';
 import { useEventStream } from '../hooks/useEventStream';
 import { ChunkGroup } from '../components/layout';
 import { Link } from 'react-router-dom';
+import { requestIdleCallback, type CancelablePromise } from '../utils/idleCallback';
 
 interface AccessEvent {
   eventId: string;
@@ -134,10 +135,7 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<AccessEvent[]>([]);
   const [pending, setPending] = useState(0);
-  const scheduler: (cb: () => void) => void =
-    typeof window !== 'undefined' && (window as any).requestIdleCallback
-      ? (cb) => (window as any).requestIdleCallback(cb)
-      : (cb) => setTimeout(cb, 0);
+  const scheduler = requestIdleCallback;
 
   const metricsPrev = useRef<{ totalEvents: number; timestamp: number }>();
 
@@ -145,8 +143,8 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
     const controller = new AbortController();
     const promise = fetch(url, { signal: controller.signal }).then((res) =>
       res.json(),
-    );
-    (promise as any).cancel = () => controller.abort();
+    ) as CancelablePromise<MetricsResponse>;
+    promise.cancel = () => controller.abort();
     return promise;
   };
 

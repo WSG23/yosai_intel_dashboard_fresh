@@ -8,6 +8,11 @@ from typing import Any
 
 from confluent_kafka import Producer
 
+from yosai_intel_dashboard.src.services.kafka.metrics import (
+    delivery_failure_total,
+    delivery_success_total,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,9 +43,19 @@ class KafkaClient:
             "max_retries": max_retries,
             "retry_count": 0,
         }
+        payload_str = json.dumps(message)
         try:
-            self._producer.produce(topic, json.dumps(message))
-            self._producer.flush()
+            while True:
+                try:
+                    self._producer.produce(
+                        topic, payload_str, on_delivery=self._delivery_callback
+                    )
+                    break
+                except BufferError:
+                    # Local buffer is full, let the producer flush pending events
+                    self._producer.poll(0.1)
+            # Serve delivery callbacks for previously produced messages
+            self._producer.poll(0)
         except Exception:
             logger.exception("Failed to publish to Kafka")
             raise
@@ -49,6 +64,14 @@ class KafkaClient:
     def close(self) -> None:
         """Flush outstanding messages and close producer."""
         self._producer.flush()
+
+    @staticmethod
+    def _delivery_callback(err, msg) -> None:  # pragma: no cover - signature defined by library
+        """Track delivery results via Prometheus counters."""
+        if err is not None:
+            delivery_failure_total.inc()
+        else:
+            delivery_success_total.inc()
 
 
 __all__ = ["KafkaClient"]
