@@ -79,6 +79,13 @@ the testing protocols, container builder and available test doubles.
 
 Please ensure tests and linters pass before opening a pull request.
 
+### Test Types and Expected Runtime
+
+| Type | Description | Approx. runtime | Command |
+| ---- | ----------- | --------------- | ------- |
+| Unit tests | No external services, network and file I/O are mocked. | < 5 minutes | `pytest -m "not integration"` |
+| Integration tests | Spin up ephemeral services (Kafka, Postgres, Redis) via Docker. Skipped when Docker is unavailable. | ~10 minutes | `pytest -m integration` |
+
 ## Dependency Updates
 
 Automated pull requests labeled `deps` are created by Dependabot to keep
