@@ -12,18 +12,17 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
-	vault "github.com/hashicorp/vault/api"
 
 	_ "github.com/lib/pq"
 
 	"github.com/WSG23/yosai-gateway/internal/cache"
 	cbcfg "github.com/WSG23/yosai-gateway/internal/config"
 	gwconfig "github.com/WSG23/yosai-gateway/internal/config"
+	rtconfig "github.com/WSG23/yosai-gateway/internal/config"
 	"github.com/WSG23/yosai-gateway/internal/engine"
 	"github.com/WSG23/yosai-gateway/internal/gateway"
 	reg "github.com/WSG23/yosai-gateway/internal/registry"
@@ -36,57 +35,8 @@ import (
 
 	"github.com/sony/gobreaker"
 
-	xerrors "github.com/WSG23/errors"
-
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
-
-func validateRequiredEnv(vars []string) {
-	missing := []string{}
-	for _, v := range vars {
-		if os.Getenv(v) == "" {
-			missing = append(missing, v)
-		}
-	}
-	if len(missing) > 0 {
-		tracing.Logger.Fatalf("missing required environment variables: %s", strings.Join(missing, ", "))
-	}
-}
-
-func newVaultClient() (*vault.Client, error) {
-	cfg := vault.DefaultConfig()
-	if err := cfg.ReadEnvironment(); err != nil {
-		return nil, err
-	}
-	c, err := vault.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-	token := os.Getenv("VAULT_TOKEN")
-	if token == "" {
-		return nil, xerrors.Errorf("VAULT_TOKEN not set")
-	}
-	c.SetToken(token)
-	return c, nil
-}
-
-func readVaultField(c *vault.Client, path string) (string, error) {
-	parts := strings.SplitN(path, "#", 2)
-	if len(parts) != 2 {
-		return "", xerrors.Errorf("invalid vault path %q", path)
-	}
-	p, field := parts[0], parts[1]
-	secretPath := strings.TrimPrefix(p, "secret/data/")
-	s, err := c.KVv2("secret").Get(context.Background(), secretPath)
-	if err != nil {
-		return "", err
-	}
-	val, ok := s.Data[field].(string)
-	if !ok {
-		return "", xerrors.Errorf("field %s not found at %s", field, p)
-	}
-	return val, nil
-}
 
 // @title           Yōsai Gateway API
 // @version         1.0
@@ -104,19 +54,9 @@ func main() {
 	go svc.Start()
 	defer svc.Stop()
 
-	validateRequiredEnv([]string{"DB_HOST", "DB_PORT", "DB_USER", "DB_GATEWAY_NAME"})
-
-	vclient, err := newVaultClient()
+	cfg, err := rtconfig.Load()
 	if err != nil {
-		tracing.Logger.Fatalf("failed to init vault client: %v", err)
-	}
-	dbPassword, err := readVaultField(vclient, "secret/data/db#password")
-	if err != nil {
-		tracing.Logger.Fatalf("failed to read db password: %v", err)
-	}
-	jwtSecret, err := readVaultField(vclient, "secret/data/jwt#secret")
-	if err != nil {
-		tracing.Logger.Fatalf("failed to read jwt secret: %v", err)
+		tracing.Logger.Fatalf("failed to load runtime config: %v", err)
 	}
 
 	shutdown, err := tracing.InitTracing("gateway")
@@ -125,42 +65,33 @@ func main() {
 	}
 	defer shutdown(context.Background())
 
-	brokers := os.Getenv("KAFKA_BROKERS")
-	if brokers == "" {
-		brokers = "localhost:9092"
-
-	}
+	brokers := cfg.KafkaBrokers
 	cacheSvc := cache.NewRedisCache()
 
-	cbConf, err := cbcfg.Load(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
+	cbConf, err := cbcfg.LoadCircuitBreakers(os.Getenv("CIRCUIT_BREAKER_CONFIG"))
 	if err != nil {
 		tracing.Logger.WithError(err).Warn("failed to load circuit breaker config, using defaults")
 		cbConf = &cbcfg.Config{}
 	}
 
-	dbName := os.Getenv("DB_GATEWAY_NAME")
-	if dbName == "" {
-		dbName = os.Getenv("DB_NAME")
-	}
-	sslMode := os.Getenv("DB_SSLMODE")
-	if sslMode == "" {
-		sslMode = "require"
-	}
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, dbPassword, sslMode)
+		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBName, cfg.DBPassword, cfg.DBSSLMode)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		tracing.Logger.Fatalf("failed to connect db: %v", err)
 	}
-        producer, err := ckafka.NewProducer(&ckafka.ConfigMap{
-                "bootstrap.servers": brokers,
-                "enable.idempotence": true,
-                "acks":              "all",
-                "transactional.id":  "gateway-outbox",
-        })
-        if err != nil {
-                tracing.Logger.Fatalf("failed to init kafka producer: %v", err)
-        }
+	if err := db.PingContext(context.Background()); err != nil {
+		tracing.Logger.Fatalf("failed to ping db: %v", err)
+	}
+	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{
+		"bootstrap.servers":  brokers,
+		"enable.idempotence": true,
+		"acks":               "all",
+		"transactional.id":   "gateway-outbox",
+	})
+	if err != nil {
+		tracing.Logger.Fatalf("failed to init kafka producer: %v", err)
+	}
 	defer producer.Close()
 	outbox := engine.NewOutbox(db)
 	dbSettings := gobreaker.Settings{
@@ -241,7 +172,7 @@ func main() {
 
 	// enable middleware based on env vars
 	if os.Getenv("ENABLE_AUTH") == "1" {
-		g.UseAuth([]byte(jwtSecret))
+		g.UseAuth([]byte(cfg.JWTSecret))
 
 	}
 
