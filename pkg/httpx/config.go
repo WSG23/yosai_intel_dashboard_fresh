@@ -12,8 +12,8 @@ type Config struct {
 // DefaultConfig provides sane defaults for HTTP clients.
 func DefaultConfig() Config {
 	return Config{
-		Timeout: 10 * time.Second,
-		Backoff: 50 * time.Millisecond,
+		Timeout: 5 * time.Second,
+		Backoff: 100 * time.Millisecond,
 		Retries: 3,
 	}
 }

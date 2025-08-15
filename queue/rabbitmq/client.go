@@ -103,14 +103,17 @@ func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task)
 	if task.Delay > 0 {
 		headers["x-delay"] = task.Delay
 	}
-	return q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
-		ContentType:  "application/json",
-		Body:         body,
-		DeliveryMode: amqp.Persistent,
-		MessageId:    task.ID,
-		Priority:     task.Priority,
-		Timestamp:    time.Now(),
-		Headers:      headers,
+	_, err = q.breaker.Execute(func() (interface{}, error) {
+		e := q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
+			ContentType:  "application/json",
+			Body:         body,
+			DeliveryMode: amqp.Persistent,
+			MessageId:    task.ID,
+			Priority:     task.Priority,
+			Timestamp:    time.Now(),
+			Headers:      headers,
+		})
+		return nil, e
 	})
 	if err != nil {
 		span.RecordError(err)
