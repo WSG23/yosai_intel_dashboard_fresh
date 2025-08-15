@@ -41,6 +41,8 @@ from yosai_intel_dashboard.src.adapters.api.monitoring_router import (
 from yosai_intel_dashboard.src.adapters.api.routes.feature_flags import (
     router as feature_flags_router,
 )
+from yosai_intel_dashboard.src.adapters.api.model_router import create_model_router
+from yosai_intel_dashboard.src.services.model_service import ModelService
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
@@ -62,6 +64,8 @@ from yosai_intel_dashboard.src.core.logging import get_logger
 
 
 logger = get_logger(__name__)
+
+model_router = create_model_router(ModelService())
 
 def _configure_app(service: BaseService) -> Path:
     """Initialize the FastAPI app, base service and middleware."""
@@ -138,7 +142,20 @@ def _register_routes(
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)
     api_v1.include_router(feature_flags_router)
+    api_v1.include_router(model_router)
     service.app.include_router(api_v1, dependencies=[Depends(require_service_token)])
+
+    legacy_router = APIRouter()
+    legacy_router.include_router(analytics_router)
+    legacy_router.include_router(monitoring_router)
+    legacy_router.include_router(explanations_router)
+    legacy_router.include_router(feature_flags_router)
+    legacy_router.include_router(model_router)
+    service.app.include_router(
+        legacy_router,
+        dependencies=[Depends(require_service_token), Depends(add_deprecation_warning)],
+        deprecated=True,
+    )
 
     @service.app.get("/", include_in_schema=False)
     def root_index() -> FileResponse:
