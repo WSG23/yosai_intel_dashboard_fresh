@@ -1,9 +1,9 @@
 package test
 
 import (
-	"context"
-	"errors"
-	"testing"
+        "context"
+        "errors"
+        "testing"
 
 	q "github.com/WSG23/queue"
 	"github.com/WSG23/queue/rabbitmq"
@@ -55,4 +55,18 @@ func TestConsumerIdempotency(t *testing.T) {
 	if count != 1 {
 		t.Fatalf("handler called %d times, want 1", count)
 	}
+}
+
+func TestDLQInvalidMessage(t *testing.T) {
+        mp := &mockProducer{}
+        c := q.NewConsumer("jobs", "jobs-dlq", mp)
+        if err := c.Process(context.Background(), []byte("not-json"), func(context.Context, *rabbitmq.Task) error { return nil }); err == nil {
+                t.Fatal("expected unmarshal error")
+        }
+        if len(mp.tasks) != 1 {
+                t.Fatalf("expected 1 DLQ message, got %d", len(mp.tasks))
+        }
+        if mp.tasks[0].ID == "" {
+                t.Fatal("dlq message missing id")
+        }
 }
