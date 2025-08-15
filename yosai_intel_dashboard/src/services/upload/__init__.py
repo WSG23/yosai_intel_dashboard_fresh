@@ -29,7 +29,7 @@ if not os.getenv("LIGHTWEIGHT_SERVICES"):
     from .controllers.upload_controller import (
         UnifiedUploadController as UploadController,
     )
-    from .helpers import save_ai_training_data
+    from .helpers import save_ai_training_data, save_ai_training_data_sync
     from .processor import UploadProcessingService
     from .upload_core import UploadCore
     from .upload_types import UploadResult, ValidationResult
@@ -40,6 +40,7 @@ if not os.getenv("LIGHTWEIGHT_SERVICES"):
         "AISuggestionService",
         "analyze_device_name_with_ai",
         "save_ai_training_data",
+        "save_ai_training_data_sync",
         "UploadCore",
         "ValidationResult",
         "UploadResult",

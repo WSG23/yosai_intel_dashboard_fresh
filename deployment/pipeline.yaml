@@ -4,11 +4,17 @@ variables:
   STATEFUL_SERVICE: "dashboard-db"
 
 stages:
+  - preflight
   - build
   - canary
   - traffic_shaping
   - verify_stateful
   - blue_green
+
+rotation_check:
+  stage: preflight
+  script:
+    - python deployment/scripts/check_secret_rotation.py
 
 build:
   stage: build

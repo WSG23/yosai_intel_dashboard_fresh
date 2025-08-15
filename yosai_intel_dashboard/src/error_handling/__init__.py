@@ -1,6 +1,6 @@
 """Unified error handling utilities."""
 
-from .api_error_response import api_error_response
+from .api_error_response import api_error_response, fastapi_error_response, serialize_error
 from .api_errors import http_error
 from .core import ErrorContext, ErrorHandler
 from .decorators import handle_errors
@@ -15,6 +15,8 @@ __all__ = [
     "YosaiException",
     "ErrorCategory",
     "api_error_response",
+    "fastapi_error_response",
+    "serialize_error",
     "http_error",
     "ErrorHandlingMiddleware",
     "register_error_handlers",

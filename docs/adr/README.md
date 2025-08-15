@@ -17,4 +17,4 @@ This directory collects notable architecture decisions. Each ADR captures a spec
 
 - [Runbooks](../runbooks/README.md)
 - [Training Overview](../training/overview.md)
-- [Developer Onboarding](../developer_onboarding.md)
+- [Getting Started](../getting-started.md)

@@ -9,10 +9,13 @@ the public API similar to the real service.
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Any, Dict
 import os
+from time import perf_counter
+import logging
 
 from fastapi import Depends, FastAPI
+from yosai_intel_dashboard.src.services.security import requires_role
 
 from yosai_intel_dashboard.src.services.analytics_service import (
     create_analytics_service,
@@ -30,6 +33,19 @@ try:  # pragma: no cover - optional dependency in tests
 except Exception:  # pragma: no cover - instrumentation is optional
     Instrumentator = None  # type: ignore
 
+try:  # pragma: no cover - optional dependency
+    from prometheus_client import Histogram, Gauge
+
+    _INFERENCE_LATENCY = Histogram(
+        "inference_latency_seconds", "Latency of model predictions", ["model"]
+    )
+    _INFERENCE_ACCURACY = Gauge(
+        "inference_accuracy", "Accuracy of model predictions", ["model"]
+    )
+except Exception:  # pragma: no cover - allow running without Prometheus
+    _INFERENCE_LATENCY = None  # type: ignore
+    _INFERENCE_ACCURACY = None  # type: ignore
+
 try:
     # Prefer the real security utilities when they are available.
     from yosai_intel_dashboard.src.core.security import (
@@ -41,6 +57,8 @@ except Exception:  # pragma: no cover - fall back to local stubs
 
 
 app = FastAPI()
+
+logger = logging.getLogger(__name__)
 
 # Instrumentation.  These libraries are optional and may be replaced by
 # test doubles, so we guard their use with runtime checks.
@@ -67,8 +85,43 @@ async def _configure_discovery() -> None:
 service = create_analytics_service()
 
 
+def _run_prediction(
+    model: Any, data: list[Any], actual: list[Any] | None = None
+) -> tuple[Any, float]:
+    """Execute ``model.predict`` recording latency and optional accuracy."""
+
+    start = perf_counter()
+    try:
+        prediction = model.predict(data)
+    except Exception:  # pragma: no cover - defensive
+        logger.debug("Prediction failed", exc_info=True)
+        return http_error(ErrorCode.INTERNAL)
+    latency = perf_counter() - start
+    try:
+        if _INFERENCE_LATENCY is not None:
+            _INFERENCE_LATENCY.labels(model.__class__.__name__).observe(latency)
+    except Exception:  # pragma: no cover - metrics stub
+        logger.debug("Latency metric recording failed")
+
+    if actual is not None:
+        try:
+            total = len(actual)
+            if total:
+                correct = sum(1 for p, a in zip(prediction, actual) if p == a)
+                metric = globals().get("_INFERENCE_ACCURACY")
+                if metric is not None:
+                    metric.labels(model.__class__.__name__).set(correct / total)
+        except Exception:  # pragma: no cover - metrics stub
+            logger.debug("Accuracy metric recording failed")
+
+    return prediction, latency
+
+
 @app.get("/api/v1/analytics/dashboard-summary")
-async def dashboard_summary(_: dict = Depends(verify_token)) -> Dict[str, object]:
+async def dashboard_summary(
+    _: dict = Depends(verify_token),
+    __: None = Depends(requires_role("analyst")),
+) -> Dict[str, object]:
     """Return a summary of analytics data."""
     return service.get_dashboard_summary()
 
@@ -78,6 +131,7 @@ async def dashboard_summary(_: dict = Depends(verify_token)) -> Dict[str, object
 async def access_patterns(
     days: int = 7,
     _: dict = Depends(verify_token),
+    __: None = Depends(requires_role("analyst")),
 ) -> Dict[str, object]:
     """Return access pattern analytics.
 
@@ -93,4 +147,4 @@ async def access_patterns(
     return data
 
 
-__all__ = ["app"]
+__all__ = ["app", "_run_prediction"]

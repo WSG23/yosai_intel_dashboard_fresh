@@ -23,5 +23,12 @@ repos:
     rev: v1.10.0
     hooks:
       - id: mypy
-        files: ^(services/|intel_analysis_service/)
-        args: [--ignore-missing-imports, --follow-imports=skip]
+        files: ^(services/|src/)
+        args: [--strict, --ignore-missing-imports, --follow-imports=skip]
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        name: bandit
+        files: ^(services/|src/)
+        args: [-q]

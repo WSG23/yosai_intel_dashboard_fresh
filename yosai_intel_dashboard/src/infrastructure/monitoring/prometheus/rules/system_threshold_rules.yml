@@ -17,6 +17,14 @@ groups:
         annotations:
           summary: Memory usage above 90%
           description: High memory consumption detected
+      - alert: ProcessHighMemory
+        expr: process_resident_memory_bytes > 500 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Process RSS above 500MB
+          description: Individual service memory usage exceeds 500MB
       - alert: HighErrorRate
         expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
         for: 5m
@@ -25,4 +33,3 @@ groups:
         annotations:
           summary: Error rate above 5%
           description: High HTTP error rate detected
-
