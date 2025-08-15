@@ -23,7 +23,7 @@ from yosai_intel_dashboard.src.infrastructure.config.constants import (
 )
 
 from .base import BaseModel
-from .enums import AccessResult, BadgeStatus
+from ..value_objects.enums import AccessResult, BadgeStatus
 
 _sql_validator = SecurityValidator()
 
