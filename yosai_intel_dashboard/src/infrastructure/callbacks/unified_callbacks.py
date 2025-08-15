@@ -188,9 +188,13 @@ class TrulyUnifiedCallbacks(EventPublisher):
 
     # ------------------------------------------------------------------
     def _validate_registration(
-        self, outputs: Outputs, inputs: Inputs, states: States
+        self,
+        callback_id: str,
+        outputs: Outputs,
+        inputs: Inputs,
+        states: States,
     ) -> tuple[tuple[Output, ...], tuple[Input, ...], tuple[State, ...], Inputs, States]:
-        """Validate and normalize Dash callback arguments."""
+        """Validate and normalize Dash callback arguments and ensure ID uniqueness."""
 
         if self.app is None:
             raise RuntimeError("Dash app not configured for TrulyUnifiedCallbacks")
@@ -284,16 +288,22 @@ class TrulyUnifiedCallbacks(EventPublisher):
                     **kwargs,
                 )(wrapped_callback)
 
+                reg = DashCallbackRegistration(
+                    callback_id=callback_id,
+                    component_name=component_name,
+                    outputs=tuple(outputs_tuple),
+                    inputs=inputs_tuple,
+                    states=states_tuple,
+                )
+                self._dash_callbacks[callback_id] = reg
+                for o in outputs_tuple:
+                    key = f"{o.component_id}.{o.component_property}"
+                    self._output_map.setdefault(key, callback_id)
+                self._namespaces[component_name].append(callback_id)
 
-        from ...core.dash_callback_middleware import wrap_callback
+                return wrapped
 
-        wrapped_callback = wrap_callback(func, outputs_tuple, self.security)
-        return self.app.callback(
-            outputs,
-            inputs_arg if inputs_arg is not None else inputs_tuple,
-            states_arg if states_arg is not None else states_tuple,
-            **kwargs,
-        )(wrapped_callback)
+        return decorator
 
     # ------------------------------------------------------------------
     def register_callback(
