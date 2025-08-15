@@ -10,4 +10,4 @@ cleanup() {
 }
 trap cleanup EXIT
 
-pytest integration_tests
+pytest tests/integration
