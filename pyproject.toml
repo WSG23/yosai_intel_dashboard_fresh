@@ -31,7 +31,15 @@ line_length = 88
 skip_gitignore = true
 
 [tool.setuptools.packages.find]
-include = ["core", "yosai_intel_dashboard", "yosai_intel_dashboard.*"]
+# Include all runtime packages under ``src/``.
+include = [
+    "analytics",
+    "cli",
+    "intel_analysis_service",
+    "core",
+    "yosai_intel_dashboard",
+    "yosai_intel_dashboard.*",
+]
 
 [tool.pydocstyle]
 convention = "google"

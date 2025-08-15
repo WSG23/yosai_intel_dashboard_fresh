@@ -9,9 +9,16 @@ from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 # Dynamically load the ModelRegistry implementation while providing lightweight
 # stubs for heavy optional dependencies. ``tests.conftest`` already injects
 # dummy ``boto3`` and ``mlflow`` modules when they are not available.
-path = Path(__file__).resolve().parents[2] / "models" / "ml" / "model_registry.py"
+path = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "intel_analysis_service"
+    / "ml"
+    / "model_registry.py"
+)
 spec = importlib.util.spec_from_file_location("model_registry", path)
 mr = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = mr
 assert spec.loader
 spec.loader.exec_module(mr)
 ModelRegistry = mr.ModelRegistry
@@ -28,9 +35,15 @@ class DummyS3:
 @pytest.fixture
 def cli_module(monkeypatch: pytest.MonkeyPatch):
     path = Path(__file__).resolve().parents[2] / "scripts" / "model_registry_cli.py"
-    safe_import('models', types.ModuleType("models"))
-    safe_import('models.ml', types.ModuleType("models.ml"))
-    safe_import('models.ml.model_registry', mr)
+    safe_import(
+        "yosai_intel_dashboard.models",
+        types.ModuleType("yosai_intel_dashboard.models"),
+    )
+    safe_import(
+        "yosai_intel_dashboard.models.ml",
+        types.ModuleType("yosai_intel_dashboard.models.ml"),
+    )
+    safe_import("yosai_intel_dashboard.models.ml.model_registry", mr)
     spec = importlib.util.spec_from_file_location("model_registry_cli", path)
     mod = importlib.util.module_from_spec(spec)
     assert spec.loader

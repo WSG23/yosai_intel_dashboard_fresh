@@ -1,4 +1,6 @@
 # Yōsai Intel Dashboard
+All runtime modules belong under `src/`, while each deployable microservice should reside in its own `services/<service_name>/` directory using `snake_case` naming.
+
 
 [![CI](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci.yml)
 [![CI/CD](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/WSG23/yosai_intel_dashboard_fresh/actions/workflows/ci-cd.yml)
@@ -29,8 +31,8 @@ See [Getting Started](docs/getting-started.md) for Docker and local development 
 ```text
 .
 ├── docs/                  # Documentation and guides
-├── services/              # Backend services and microservices
-├── src/                   # Shared framework code
+├── services/              # Deployable microservices
+├── src/                   # Runtime Python packages
 ├── scripts/               # Maintenance and CLI utilities
 ├── tests/                 # Test suites
 └── yosai_intel_dashboard/ # Clean Architecture application modules
@@ -39,11 +41,13 @@ See [Getting Started](docs/getting-started.md) for Docker and local development 
 | Directory | Purpose |
 |-----------|---------|
 | `docs/` | User and developer documentation |
-| `services/` | Standalone backend services |
-| `src/` | Shared core framework and libraries |
+| `services/` | Standalone backend services (e.g., `gateway`, `intel_analysis_service`) |
+| `src/` | Shared core framework and libraries (e.g., `analytics`, `cli`, `intel_analysis_service`) |
 | `scripts/` | Automation and helper scripts |
 | `tests/` | Unit and integration tests |
 | `yosai_intel_dashboard/` | Primary application package following Clean Architecture |
+
+All runtime modules belong under `src/`, while each deployable microservice should reside in its own `services/<service_name>/` directory using `snake_case` naming.
 
 ## Interactive Visualizations
 
