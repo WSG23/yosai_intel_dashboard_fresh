@@ -1,21 +1,22 @@
 # Template for blue/green deployment using Istio routing
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-service-blue
+  name: example_service-blue
   labels:
-    app: example-service
+    app: example_service
     color: blue
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: example-service
+      app: example_service
       color: blue
   template:
     metadata:
       labels:
-        app: example-service
+        app: example_service
         color: blue
     spec:
       securityContext:
@@ -23,7 +24,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-        - name: example-service
+        - name: example_service
           image: example:${IMAGE_TAG:-v0.1.0}
           imagePullPolicy: IfNotPresent
           ports:
@@ -44,20 +45,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-service-green
+  name: example_service-green
   labels:
-    app: example-service
+    app: example_service
     color: green
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: example-service
+      app: example_service
       color: green
   template:
     metadata:
       labels:
-        app: example-service
+        app: example_service
         color: green
     spec:
       securityContext:
@@ -65,7 +66,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-        - name: example-service
+        - name: example_service
           image: example:${IMAGE_TAG:-v0.1.0}
           imagePullPolicy: IfNotPresent
           ports:
@@ -86,10 +87,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: example-service
+  name: example_service
 spec:
   selector:
-    app: example-service
+    app: example_service
     color: blue
   ports:
     - port: 80
@@ -98,9 +99,9 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: example-service
+  name: example_service
 spec:
-  host: example-service
+  host: example_service
   subsets:
     - name: blue
       labels:
@@ -115,17 +116,17 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: example-service
+  name: example_service
 spec:
   hosts:
-    - example-service
+    - example_service
   http:
     - route:
         - destination:
-            host: example-service
+            host: example_service
             subset: blue
           weight: 100
         - destination:
-            host: example-service
+            host: example_service
             subset: green
           weight: 0

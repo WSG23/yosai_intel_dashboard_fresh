@@ -2,10 +2,10 @@
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: example-service
+  name: example_service
   namespace: yosai-dev
 spec:
-  host: example-service.yosai-dev.svc.cluster.local
+  host: example_service.yosai-dev.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL

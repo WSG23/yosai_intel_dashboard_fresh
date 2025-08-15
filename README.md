@@ -19,6 +19,11 @@ An AI-powered modular security intelligence dashboard for physical access contro
 2. Use the navigation menu to access analytics, real-time monitoring, uploads, and settings.
 3. For tips on working with alerts and customizing your view, see the [User Guide](docs/user_guide.md).
 
+## Project Layout
+
+- `src/` – shared runtime Python code
+- `services/<service_name>/` – deployable microservices
+
 ## Setup & Deployment
 
 See [Setup and Deployment Guide](docs/setup_and_deployment.md) for development, testing, and production deployment instructions.
@@ -57,34 +62,26 @@ Benchmark different settings with tools like `time`; keeping `NUM_WORKERS=1` ret
 
 ## Migration Status
 
-The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
+The clean architecture migration is **COMPLETE**. Shared runtime code lives under `src/` and deployable services are found in `services/<name>/`, all requiring **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
 
 ## Clean Architecture Structure
 
 ```
-yosai_intel_dashboard/
-└── src/
-    ├── core/              # Business logic & domain models
-    │   ├── domain/        # Entities, value objects
-    │   ├── use_cases/     # Application business rules
-    │   └── interfaces/    # Repository interfaces
-    ├── adapters/          # Interface adapters
-    │   ├── api/           # REST controllers
-    │   ├── ui/            # Web UI components
-    │   └── persistence/   # Database implementations
-    ├── infrastructure/    # External frameworks & tools
-    │   ├── config/        # Configuration management
-    │   ├── security/      # Auth & security
-    │   ├── monitoring/    # Metrics & logging
-    │   └── validation/    # Input validation
-    └── services/          # Deployable microservices
+project_root/
+├── src/                   # Runtime Python code
+│   ├── core/              # Business logic & domain models
+│   ├── adapters/          # Interface adapters
+│   └── infrastructure/    # External frameworks & tools
+└── services/              # Deployable microservices
+    ├── api/
+    └── dashboard/
 ```
 
 This separation improves testability, maintainability, and deployment flexibility.
 
 ### Migration Notes
 
-Top-level packages such as `core` and `services` have been removed in favor of the unified `yosai_intel_dashboard/src` hierarchy. Update any legacy imports like:
+Legacy top-level packages have been removed in favor of the unified `src` hierarchy. Update any legacy imports like:
 
 ```python
 from core.performance import PerformanceMonitor

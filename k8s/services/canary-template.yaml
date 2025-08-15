@@ -1,21 +1,22 @@
 # Template for canary deployment using Istio weight-based routing
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-service-stable
+  name: example_service-stable
   labels:
-    app: example-service
+    app: example_service
     track: stable
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: example-service
+      app: example_service
       track: stable
   template:
     metadata:
       labels:
-        app: example-service
+        app: example_service
         track: stable
     spec:
       securityContext:
@@ -23,7 +24,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-        - name: example-service
+        - name: example_service
           image: example:${IMAGE_TAG:-v0.1.0}
           imagePullPolicy: IfNotPresent
           ports:
@@ -44,20 +45,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-service-canary
+  name: example_service-canary
   labels:
-    app: example-service
+    app: example_service
     track: canary
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: example-service
+      app: example_service
       track: canary
   template:
     metadata:
       labels:
-        app: example-service
+        app: example_service
         track: canary
     spec:
       securityContext:
@@ -65,7 +66,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-        - name: example-service
+        - name: example_service
           image: example:${CANARY_IMAGE_TAG:-v0.1.0}
           imagePullPolicy: IfNotPresent
           ports:
@@ -86,9 +87,9 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: example-service
+  name: example_service
 spec:
-  host: example-service
+  host: example_service
   subsets:
     - name: stable
       labels:
@@ -103,17 +104,17 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: example-service
+  name: example_service
 spec:
   hosts:
-    - example-service
+    - example_service
   http:
     - route:
         - destination:
-            host: example-service
+            host: example_service
             subset: stable
           weight: 90
         - destination:
-            host: example-service
+            host: example_service
             subset: canary
           weight: 10

@@ -18,7 +18,7 @@ from typing import Any, Callable, Type
 logger = logging.getLogger(__name__)
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def _noop_loader(key: str) -> None:

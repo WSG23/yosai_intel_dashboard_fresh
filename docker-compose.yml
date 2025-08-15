@@ -2,7 +2,7 @@ services:
   dashboard:
     build:
       context: .
-      dockerfile: dashboard/Dockerfile
+      dockerfile: services/dashboard/Dockerfile
 
     command: ["python", "-m", "yosai_intel_dashboard.src.app"]
     ports:
@@ -28,9 +28,9 @@ services:
   api:
     build:
       context: .
-      dockerfile: api/Dockerfile
+      dockerfile: services/api/Dockerfile
 
-    command: ["python", "start_api.py"]
+    command: ["python", "src/start_api.py"]
     ports:
       - "8000:8000"
     volumes:
