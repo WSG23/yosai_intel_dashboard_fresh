@@ -66,6 +66,8 @@ jobs:
           if [ "${#files[@]}" -gt 0 ]; then shellcheck -x "${files[@]}"; else echo "No shell scripts found."; fi
       - name: Pre-commit
         run: pre-commit run --all-files
+      - name: Bandit
+        run: bandit -r src yosai_intel_dashboard/src -ll
       - name: Dependency check
         env:
           PYTHONPATH: yosai_intel_dashboard/src

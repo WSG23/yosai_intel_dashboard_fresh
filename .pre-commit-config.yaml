@@ -27,3 +27,8 @@ repos:
     hooks:
       - id: mypy
         args: [--config-file=mypy.ini, --follow-imports=skip, --ignore-missing-imports]
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+      - id: bandit
+        args: [-ll]
