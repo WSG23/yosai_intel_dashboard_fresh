@@ -5,7 +5,23 @@ services:
       dockerfile: docker/Dockerfile.dev
     ports:
       - "8000:8000"
+    environment:
+      ENABLE_METRICS: "0"
+      YOSAI_ENABLE_PROFILING: "0"
+      SECRET_KEY: "dev-secret-change-me"
+      PYTHONPATH: "/app"
     volumes:
       - .:/app
+
+  ui:
+    image: node:20-alpine
+    working_dir: /app/mvp-ui
     environment:
-      - PYTHONPATH=/app
+      API_URL: http://api:8000
+    volumes:
+      - .:/app
+    command: sh -lc "npm install && npm run dev -- --host --port 5173 --strictPort"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
