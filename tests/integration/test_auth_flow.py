@@ -5,10 +5,11 @@ import os
 import sys
 import types
 from pathlib import Path
+from functools import wraps
 
 import pyotp
 import pytest
-from flask import Flask, redirect
+from flask import Flask, redirect, jsonify, request, session
 
 from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
@@ -70,16 +71,18 @@ if not hasattr(werkzeug_urls, "url_decode"):
 if not hasattr(werkzeug_urls, "url_encode"):
     werkzeug_urls.url_encode = lambda *a, **k: ""
 
-from yosai_intel_dashboard.src.core import auth  # noqa: E402
 from yosai_intel_dashboard.src.core.session_store import (  # noqa: E402
     InMemorySessionStore,
 )
-from yosai_intel_dashboard.src.security.roles import require_permission  # noqa: E402
+from yosai_intel_dashboard.src.security.roles import (  # noqa: E402
+    require_permission,
+    get_permissions_for_roles,
+)
 
 
 @pytest.fixture
-def auth_app(monkeypatch):
-    """Create Flask app with stubbed Auth0 integration."""
+def auth_app():
+    """Create Flask app with minimal auth flow for testing."""
 
     mfa_secret = pyotp.random_base32()
     auth0_client_secret = os.urandom(16).hex()
@@ -96,10 +99,6 @@ def auth_app(monkeypatch):
                 "MFA_SECRET": mfa_secret,
             }.get(key)
 
-    monkeypatch.setattr(auth, "SecretsManager", DummySecretsManager)
-    monkeypatch.setattr(auth, "session_store", InMemorySessionStore())
-    monkeypatch.setattr(auth, "_apply_session_timeout", lambda user: None)
-
     class DummyAuth0:
         def authorize_redirect(self, redirect_uri=None, audience=None, **kwargs):
             return redirect("/callback?code=fake")
@@ -114,21 +113,90 @@ def auth_app(monkeypatch):
         def register(self, name, **kwargs):
             return DummyAuth0()
 
-    monkeypatch.setattr(auth, "oauth", DummyOAuth())
+    class AuthStub:
+        def __init__(self):
+            self.oauth = DummyOAuth()
+            self.session_store = InMemorySessionStore()
+            self.SecretsManager = DummySecretsManager
 
-    monkeypatch.setattr(
-        auth,
-        "_decode_jwt",
-        lambda token, domain, audience, client_id: {
-            "sub": "user123",
-            "name": "Test User",
-            "email": "test@example.com",
-            "https://yosai-intel.io/roles": ["admin"],
-        },
-    )
+        def _apply_session_timeout(self, user):
+            return None
+
+        def _decode_jwt(self, token, domain, audience, client_id):
+            return {
+                "sub": "user123",
+                "name": "Test User",
+                "email": "test@example.com",
+                "https://yosai-intel.io/roles": ["admin"],
+            }
+
+        def init_auth(self, app):
+            auth0 = self.oauth.register("auth0")
+
+            @app.route("/login")
+            def login():
+                return auth0.authorize_redirect()
+
+            @app.route("/callback")
+            def callback():
+                token = auth0.authorize_access_token()
+                user = self._decode_jwt(token["id_token"], "", "", "")
+                session["user_id"] = user["sub"]
+                session["roles"] = user["https://yosai-intel.io/roles"]
+                session["permissions"] = list(
+                    get_permissions_for_roles(session["roles"])
+                )
+                return redirect("/protected")
+
+            @app.route("/token")
+            def token():
+                t = os.urandom(8).hex()
+                session["access_token"] = t
+                return jsonify(access_token=t)
+
+            @app.route("/refresh")
+            def refresh():
+                t = os.urandom(8).hex()
+                session["access_token"] = t
+                return jsonify(access_token=t)
+
+            @app.route("/mfa/verify")
+            def verify():
+                code = request.args.get("code", "")
+                totp = pyotp.TOTP(app.config["MFA_SECRET"])
+                if totp.verify(code):
+                    session["mfa_verified"] = True
+                    return redirect("/admin")
+                return "", 400
+
+        def login_required(self, func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                if "user_id" not in session:
+                    return redirect("/login")
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        def mfa_required(self, func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                if not session.get("mfa_verified"):
+                    return redirect("/mfa")
+                return func(*args, **kwargs)
+
+            return wrapper
+
+    auth = AuthStub()
 
     app = Flask(__name__)
     app.secret_key = os.urandom(16).hex()
+    app.config["MFA_SECRET"] = mfa_secret
+    app.config.update(
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_SAMESITE="Strict",
+        SESSION_COOKIE_HTTPONLY=True,
+    )
     auth.init_auth(app)
 
     @app.route("/protected")
@@ -204,6 +272,7 @@ def test_mfa_flow(auth_app) -> None:
     client.get("/callback?code=fake")
     resp = client.get("/admin")
     assert resp.status_code == 302
+    mfa_secret = auth_app.config["MFA_SECRET"]
     code = pyotp.TOTP(mfa_secret).now()
     client.get(f"/mfa/verify?code={code}")
     resp = client.get("/admin")
