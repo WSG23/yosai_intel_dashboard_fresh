@@ -83,7 +83,7 @@ compliance_plugin:
 ```
 
 ## Testing Guidelines
-- Run `pytest tests/compliance_plugin`.
+- Run `pytest tests/unit/plugins`.
 - Verify API endpoints with integration tests.
 - Confirm database migrations apply cleanly in staging.
 
@@ -91,4 +91,3 @@ compliance_plugin:
 - **Missing Tables**: Ensure migrations ran successfully.
 - **Permission Errors**: Verify service accounts have access to compliance tables.
 - **Incorrect Exports**: Check audit logs for data processing steps.
-

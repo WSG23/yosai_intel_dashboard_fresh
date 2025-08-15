@@ -8,7 +8,7 @@ import pytest
 Flask = None
 stub_path = None
 for p in list(sys.path):
-    if p.endswith("tests/stubs"):
+    if p.endswith("tests/unit/stubs"):
         sys.path.remove(p)
         stub_path = p
         break

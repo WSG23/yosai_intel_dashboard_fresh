@@ -30,8 +30,8 @@ EXPECTED_UPLOAD_METHODS = [
 CALLBACK_ATTRS = ["callback", "unified_callback"]
 TEST_CMD = [
     "pytest",
-    "tests/test_upload_processing_module.py",
-    "tests/test_callback_manager_events.py",
+    "tests/unit/test_upload_processing_module.py",
+    "tests/unit/test_callback_manager_events.py",
     "-q",
 ]
 

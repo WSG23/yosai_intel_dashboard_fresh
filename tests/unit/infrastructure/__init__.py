@@ -187,7 +187,7 @@ class TestInfrastructure:
     def setup_environment(self) -> MockFactory:
         """Install stub packages and tweak runtime settings for tests.
 
-        The method appends ``tests/stubs`` to :data:`sys.path` and ensures
+        The method appends ``tests/unit/stubs`` to :data:`sys.path` and ensures
         placeholder modules for heavy optional dependencies are present in
         :data:`sys.modules`.  It returns the global :class:`MockFactory` so
         additional stubs may be registered by tests when required.
@@ -280,4 +280,3 @@ __all__ = [
     "mock_factory",
     "test_env",
 ]
-

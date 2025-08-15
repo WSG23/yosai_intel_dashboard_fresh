@@ -49,7 +49,7 @@ Step 4: Test the plugin
 =======================
 
 # Run the plugin tests:
-python -m pytest tests/test_json_serialization_plugin.py -v
+python -m pytest tests/unit/test_json_serialization_plugin.py -v
 
 # Start your app:
 python3 app.py

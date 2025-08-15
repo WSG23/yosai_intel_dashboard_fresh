@@ -7,7 +7,7 @@ injection patterns as the production code.
 
 ## TestContainerBuilder
 
-`TestContainerBuilder` lives in `tests/builders.py`. It constructs a
+`TestContainerBuilder` lives in `tests/unit/builders.py`. It constructs a
 `ServiceContainer` pre-populated with lightweight module stubs so importing heavy
 packages like Dash or SQL parsing libraries is not required. Environment
 variables commonly needed by the services can be initialised with
@@ -15,7 +15,7 @@ variables commonly needed by the services can be initialised with
 `with_all_services()`.
 
 ```python
-from tests.builders import TestContainerBuilder
+from tests.unit.builders import TestContainerBuilder
 
 container = (
     TestContainerBuilder()
@@ -43,7 +43,7 @@ container = (
 
 ## Available Test Doubles
 
-Several fake implementations reside in `tests/fakes.py`:
+Several fake implementations reside in `tests/unit/fakes.py`:
 
 - `FakeUploadStore` – in-memory `UploadStorageProtocol`
 - `FakeUploadDataService` – minimal `UploadDataServiceProtocol`

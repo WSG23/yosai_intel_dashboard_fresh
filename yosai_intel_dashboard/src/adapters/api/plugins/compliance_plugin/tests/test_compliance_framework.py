@@ -1,4 +1,4 @@
-# tests/compliance/test_compliance_framework.py
+# tests/unit/plugins/test_compliance_framework.py
 """Comprehensive test suite for GDPR/APPI compliance framework"""
 
 import json
@@ -473,19 +473,19 @@ class ComplianceUsageExamples:
         from flask_login import current_user
         from yosai_intel_dashboard.src.core.container import Container
         from yosai_intel_dashboard.models.compliance import ConsentType
-        
+
         @app.route('/api/users/register', methods=['POST'])
         def register_user():
             data = request.get_json()
-            
+
             # Get compliance services
             container = Container()
             consent_service = container.get('consent_service')
             audit_logger = container.get('audit_logger')
-            
+
             # Register user (your existing logic)
             user_id = create_user_account(data)
-            
+
             # Grant required consents if provided
             consents = data.get('consents', [])
             for consent_type_str in consents:
@@ -498,7 +498,7 @@ class ComplianceUsageExamples:
                     )
                 except ValueError:
                     logger.warning(f"Invalid consent type: {consent_type_str}")
-            
+
             # Audit the registration
             audit_logger.log_action(
                 actor_user_id=user_id,
@@ -507,7 +507,7 @@ class ComplianceUsageExamples:
                 description='New user account created',
                 legal_basis='contract'
             )
-            
+
             return jsonify({'user_id': user_id, 'status': 'registered'})
         """
         return example_code
@@ -518,21 +518,21 @@ class ComplianceUsageExamples:
         from yosai_intel_dashboard.src.services.compliance.consent_service import ConsentService
         from yosai_intel_dashboard.models.compliance import ConsentType
         from yosai_intel_dashboard.src.core.audit_logger import ComplianceAuditLogger
-        
+
         def process_facial_recognition(user_id: str, image_data: bytes):
             """Process facial recognition with consent verification"""
-            
+
             # Check consent before processing
             container = Container()
             consent_service = container.get('consent_service')
             audit_logger = container.get('audit_logger')
-            
+
             has_consent = consent_service.check_consent(
                 user_id=user_id,
                 consent_type=ConsentType.FACIAL_RECOGNITION,
                 jurisdiction='EU'
             )
-            
+
             if not has_consent:
                 # Log denied access
                 audit_logger.log_action(
@@ -544,10 +544,10 @@ class ComplianceUsageExamples:
                     legal_basis='consent_required'
                 )
                 raise PermissionError("Consent required for facial recognition")
-            
+
             # Process biometric data
             biometric_template = extract_biometric_features(image_data)
-            
+
             # Audit the processing
             audit_logger.log_biometric_processing(
                 actor_user_id='system',
@@ -555,7 +555,7 @@ class ComplianceUsageExamples:
                 processing_type='facial_recognition',
                 consent_verified=True
             )
-            
+
             return biometric_template
         '''
         return example_code
@@ -567,30 +567,30 @@ class ComplianceUsageExamples:
         import time
         from threading import Thread
         from yosai_intel_dashboard.src.core.container import Container
-        
+
         def setup_automated_retention():
             """Setup automated data retention processing"""
-            
+
             def process_data_retention():
                 container = Container()
                 retention_service = container.get('data_retention_service')
-                
+
                 # Process scheduled deletions
                 processed_count = retention_service.process_scheduled_deletions()
                 logger.info(f"Processed {processed_count} scheduled deletions")
-                
+
                 # Generate retention report
                 report = retention_service.generate_retention_report(days_ahead=30)
                 logger.info(f"Upcoming deletions: {len(report.get('upcoming_deletions', []))}")
-            
+
             # Schedule daily at 2 AM
             schedule.every().day.at("02:00").do(process_data_retention)
-            
+
             def run_scheduler():
                 while True:
                     schedule.run_pending()
                     time.sleep(3600)  # Check every hour
-            
+
             # Run in background thread
             scheduler_thread = Thread(target=run_scheduler, daemon=True)
             scheduler_thread.start()
@@ -604,7 +604,7 @@ if __name__ == "__main__":
     print("Running compliance framework tests...")
 
     # In a real scenario, you'd use:
-    # pytest tests/compliance/test_compliance_framework.py -v
+    # pytest tests/unit/plugins/test_compliance_framework.py -v
 
     # Example usage
     factory = ComplianceTestDataFactory()
@@ -612,7 +612,7 @@ if __name__ == "__main__":
 
     print("Test data factory available")
     print("Usage examples available")
-    print("Run with: pytest tests/compliance/ -v --cov=services/compliance")
+    print("Run with: pytest tests/unit/plugins -v --cov=services/compliance")
 
 
 # Compliance checklist for developers

@@ -1,4 +1,4 @@
-# tests/test_json_serialization_plugin.py
+# tests/unit/test_json_serialization_plugin.py
 """
 Comprehensive tests for the JSON Serialization Plugin
 """

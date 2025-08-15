@@ -18,4 +18,4 @@ These helpers use your configured environment for secrets. Set `SECRET_KEY` in
 your shell or secret manager before running them. The utilities no longer
 inject a default value.
 
-Test stubs under `tests/utils/` and `tests/stubs/utils/` also provide simplified assets for debugging in the test suite.
+Test stubs under `tests/unit/utils/` and `tests/unit/stubs/utils/` also provide simplified assets for debugging in the test suite.

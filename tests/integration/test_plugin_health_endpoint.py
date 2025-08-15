@@ -11,7 +11,7 @@ from yosai_intel_dashboard.src.core.imports.resolver import safe_import
 
 # Minimal services stubs
 spec = importlib.util.spec_from_file_location(
-    "core.protocols.plugin", "tests/stubs/protocols_stub.py"
+    "core.protocols.plugin", "tests/unit/stubs/protocols_stub.py"
 )
 protocols_mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(protocols_mod)

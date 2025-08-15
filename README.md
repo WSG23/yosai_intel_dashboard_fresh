@@ -41,7 +41,7 @@ See [Getting Started](docs/getting-started.md) for Docker and local development 
 | `services/` | Standalone backend services |
 | `src/` | Shared core framework and libraries |
 | `scripts/` | Automation and helper scripts |
-| `tests/` | Unit and integration tests |
+| `tests/` | Consolidated test suite with `unit` and `integration` subfolders |
 | `yosai_intel_dashboard/` | Primary application package following Clean Architecture |
 
 ## Interactive Visualizations
@@ -719,10 +719,10 @@ black . --check
 flake8 .
 ```
 
-The `tests/` directory contains the integration and unit tests for the
-dashboard. Key entry points include `tests/test_integration.py`,
-`tests/test_analytics_integration.py`, `tests/test_ai_device_generator.py` and
-`tests/test_security_service.py`.
+The `tests/` directory contains the consolidated test suite. Unit tests live under
+`tests/unit` and integration tests under `tests/integration`. Key entry points include
+`tests/integration/test_e2e.py`, `tests/unit/test_analytics_integration.py`,
+`tests/unit/test_ai_device_generator.py` and `tests/unit/test_security_service.py`.
 
 Most asynchronous tests rely on a reusable `async_runner` fixture that
 executes coroutines on a dedicated event loop. If you need to run an async

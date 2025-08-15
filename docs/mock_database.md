@@ -18,4 +18,4 @@ actual database server.
   affected rows.
 - The mock is not thread-safe and should not be used in production.
 
-Refer to `tests/database/test_mock_database.py` for basic usage examples.
+Refer to `tests/unit/database/test_mock_database.py` for basic usage examples.

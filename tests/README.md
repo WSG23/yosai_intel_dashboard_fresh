@@ -101,7 +101,7 @@ more queries than expected are issued.
 Run them with:
 
 ```bash
-pytest tests/database/test_query_limits.py
+pytest tests/unit/database/test_query_limits.py
 ```
 
 ## Load Testing

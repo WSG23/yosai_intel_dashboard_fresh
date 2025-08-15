@@ -37,7 +37,7 @@ Tests then retrieve `upload_validator` from the container and pass it to the com
 
 ## Sample Test Doubles
 
-Several tests provide custom stubs that implement these protocols. They avoid heavy dependencies like Dash or database connections. See `tests/test_service_integration.py` and `tests/test_protocol_compliance.py` for examples of simple stubs providing the minimum required behaviour.
+Several tests provide custom stubs that implement these protocols. They avoid heavy dependencies like Dash or database connections. See `tests/unit/test_service_integration.py` and `tests/unit/test_protocol_compliance.py` for examples of simple stubs providing the minimum required behaviour.
 
 Use this approach to isolate units under test and speed up execution.
 
@@ -73,7 +73,7 @@ can be attached via `register_health_check()`.
 
 ## Builder Utilities
 
-The `tests/utils` package provides helpers for assembling complex objects:
+The `tests/unit/utils` package provides helpers for assembling complex objects:
 
 - `DataFrameBuilder` – quick creation of pandas DataFrames
 - `UploadFileBuilder` – encode DataFrames as upload content
@@ -87,7 +87,7 @@ Tests typically create a fresh container with fakes registered:
 
 ```python
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
-from tests.fakes import FakeUploadStore, FakeDeviceLearningService
+from tests.unit.fakes import FakeUploadStore, FakeDeviceLearningService
 
 @pytest.fixture
 def container():
@@ -138,4 +138,3 @@ python tools/migrate_tests.py --apply path/to/test_file.py
 
 comments out the old `sys.modules` lines and imports protocol test doubles from
 `tests.stubs` so tests run against the lightweight implementations.
-
