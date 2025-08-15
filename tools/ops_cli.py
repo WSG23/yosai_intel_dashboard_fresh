@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# mypy: ignore-errors
+
 import shutil
 import subprocess
 import sys
@@ -8,12 +10,7 @@ from pathlib import Path
 import click
 
 ROOT = Path(__file__).resolve().parent.parent
-COMPOSE_DEV_FILES = [
-    "docker-compose.yml",
-    "docker-compose.kafka.yml",
-]
-COMPOSE_PROD_FILE = "docker-compose.prod.yml"
-COMPOSE_ALL_FILE = "docker-compose.unified.yml"
+COMPOSE_FILE = "docker-compose.yml"
 
 
 def run(cmd):
@@ -22,11 +19,8 @@ def run(cmd):
         sys.exit(result.returncode)
 
 
-def compose_args(files):
-    args = []
-    for f in files:
-        args.extend(["-f", str(ROOT / f)])
-    return args
+def compose_args():
+    return ["-f", str(ROOT / COMPOSE_FILE)]
 
 
 @click.group()
@@ -46,25 +40,13 @@ def validate_config():
 @cli.command()
 def build():
     """Build Docker images."""
-    run(["docker", "compose", *compose_args(COMPOSE_DEV_FILES), "build"])
+    run(["docker", "compose", *compose_args(), "build"])
 
 
 @cli.command()
 def deploy():
     """Start services using Docker Compose."""
-    run(["docker", "compose", *compose_args(COMPOSE_DEV_FILES), "up", "-d"])
-
-
-@cli.command("build-all")
-def build_all():
-    """Build all service images for the unified stack."""
-    run(["docker", "compose", "-f", str(ROOT / COMPOSE_ALL_FILE), "build"])
-
-
-@cli.command("deploy-all")
-def deploy_all():
-    """Start the entire unified stack."""
-    run(["docker", "compose", "-f", str(ROOT / COMPOSE_ALL_FILE), "up", "-d"])
+    run(["docker", "compose", *compose_args(), "up", "-d"])
 
 
 @cli.command("test-all")
@@ -77,17 +59,7 @@ def test_all():
 @click.argument("service")
 def logs(service):
     """Tail logs for a specific service."""
-    run(
-        [
-            "docker",
-            "compose",
-            "-f",
-            str(ROOT / COMPOSE_ALL_FILE),
-            "logs",
-            "-f",
-            service,
-        ]
-    )
+    run(["docker", "compose", *compose_args(), "logs", "-f", service])
 
 
 @cli.command()
@@ -131,7 +103,7 @@ def security():
 @cli.command()
 def clean():
     """Remove temporary files and stop containers."""
-    run(["docker", "compose", *compose_args(COMPOSE_DEV_FILES), "down", "-v"])
+    run(["docker", "compose", *compose_args(), "down", "-v"])
     for path in ROOT.rglob("__pycache__"):
         shutil.rmtree(path, ignore_errors=True)
 

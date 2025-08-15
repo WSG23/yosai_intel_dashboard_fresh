@@ -116,7 +116,6 @@ This project follows a fully modular design built around a dependency injection 
 - [Deployment Diagram](docs/deployment_diagram.md)
 - [Analytics Upload Sequence](docs/analytics_sequence.md)
 - [Roadmap](docs/roadmap.md)
-- [Unified Platform](docs/unified_platform.md)
 - [Sequence Diagrams](docs/sequence_diagrams.md)
 - [UI Flows](docs/ui_flows.md)
 - [Upload Interface Guide](docs/upload_interface.md)
@@ -417,9 +416,7 @@ Refer to the [Clean Architecture Guide](docs/developer_guide_clean_arch.md) for 
 To spin up the microservices stack run:
 
 ```bash
-docker-compose \
-  -f docker-compose.yml \
-  -f docker-compose.kafka.yml up --build
+docker compose up --build
 ```
 
 `python start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python start_api.py` so the variables are loaded correctly.
@@ -428,7 +425,7 @@ The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so
 
 ### Supported Container Configurations
 
-The repository maintains a curated set of Dockerfiles and Compose definitions:
+The repository maintains a curated set of Dockerfiles and a single Compose definition:
 
 **Dockerfiles**
 
@@ -436,35 +433,15 @@ The repository maintains a curated set of Dockerfiles and Compose definitions:
 - `Dockerfile.gateway` – Go API gateway
 - `yosai_intel_dashboard/src/services/event_processing/Dockerfile` – Go event processor
 
-**Docker Compose files**
+**Docker Compose**
 
-- `docker-compose.yml` – core development stack (dashboard, analytics, gateway, event processor)
-- `docker-compose.dev.yml` – development overrides with debugging and live reload
-- `docker-compose.kafka.yml` – three-node Kafka cluster with Schema Registry
-- `docker-compose.prod.yml` – production stack with Postgres, PgBouncer and Redis
-- `docker-compose.unified.yml` – full local stack with observability tools (Jaeger, Prometheus, Grafana and Loki)
+All services are defined in `docker-compose.yml` and parameterized via `.env` files.
 
-#### Supported container configurations
-
-The repository maintains a small set of Docker Compose files for common scenarios:
-
-- `docker-compose.yml` – core services for local development.
-- `docker-compose.dev.yml` – adds debugging ports and mounts for rapid iteration.
-- `docker-compose.kafka.yml` – standalone Kafka and Schema Registry cluster.
-- `docker-compose.unified.yml` – runs the full stack for demos and integration testing.
-- `docker-compose.prod.yml` – example production deployment.
-
-Launch the development stack with debugging enabled:
+Launch the stack:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+docker compose up --build
 ```
-
-Dockerfiles are provided for the active services:
-
-- `Dockerfile` – base Python service image.
-- `yosai_intel_dashboard/src/services/event_processing/Dockerfile` – Go event processor.
-- `Dockerfile.gateway` – Go API gateway.
 
 Legacy container definitions have been removed to avoid confusion.
 
@@ -492,20 +469,7 @@ go run ./cmd/gateway
 
 The service listens on port `8080` inside the container. You can reach it at
 `http://localhost:8081` when running via Docker Compose.
-Stop all containers with `docker-compose down` when finished.
-
-### Unified Local Stack
-
-To launch all Python and Go services along with Jaeger, Prometheus, Grafana and Loki run:
-
-```bash
-docker compose -f docker-compose.unified.yml up --build
-```
-
-Prometheus will listen on [localhost:9090](http://localhost:9090) and Grafana on [localhost:3000].
-The file mounts `monitoring/prometheus.yml` and the `unified-platform.json` dashboard
-under `monitoring/grafana/dashboards/` so metrics are available immediately.
-Stop the stack with `docker compose down` when done.
+Stop all containers with `docker compose down` when finished.
 
 ### Unified Operations CLI
 
@@ -609,7 +573,7 @@ following steps:
 
 Using Docker Compose to start the microservices stack:
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker compose up -d
 ```
 The container entrypoint runs `python start_api.py`, which loads the `.env` file before
 starting the server. Make sure the file exists or supply one via Docker's
@@ -617,7 +581,7 @@ starting the server. Make sure the file exists or supply one via Docker's
 environment variables from `.env` are available to the app. The script also
 adds `yosai_intel_dashboard/src` to `PYTHONPATH` so the application can locate
 modules in the clean architecture layout.
-Whenever you modify the code, rebuild the Docker image with `docker-compose build` (or `docker-compose up --build`) so the running container picks up your changes.
+Whenever you modify the code, rebuild the Docker image with `docker compose build` (or `docker compose up --build`) so the running container picks up your changes.
 Docker Compose expects the database password and Flask secret key to be
 provided via Docker secrets or environment variables. Create
 `secrets/db_password.txt` and `secrets/secret_key.txt` locally if you use
@@ -863,33 +827,6 @@ Set the following variables to configure tracing and metrics endpoints:
   `http://localhost:9411/api/v2/spans`).
 - `REPLICATION_METRICS_PORT` – Port used by `scripts/replicate_to_timescale.py` to expose Prometheus metrics (defaults to `8004`).
 - All services expose Prometheus metrics at the `/metrics` endpoint. No additional configuration is required.
-
-## Kafka Setup
-
-`docker-compose.kafka.yml` spins up a three-node Kafka cluster with Schema Registry
-and a Kafka UI. A `kafka-init` service automatically creates the required topics.
-The helper script `start_kafka.sh` launches the stack and detaches from the terminal:
-
-```bash
-./scripts/start_kafka.sh
-```
-
-Monitor the brokers at <http://localhost:8080> while services are running.
-Run the health check tool to verify that all brokers are reachable:
-
-```bash
-python tools/cli_kafka_health.py --brokers localhost:9092
-```
-
-Stop the cluster when finished:
-
-```bash
-docker-compose -f docker-compose.kafka.yml down
-```
-
-Broker data is persisted in named volumes so messages survive container restarts.
-The configuration sets a replication factor of **3** and enables health checks
-for all components.
 
 ## <span aria-hidden="true">⚡</span> Performance Optimization
 

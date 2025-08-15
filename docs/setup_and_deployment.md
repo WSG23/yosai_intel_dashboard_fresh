@@ -27,7 +27,7 @@ This guide consolidates local development, Docker, and production deployment ins
    ```
 4. **Start the stack**
    ```bash
-   docker compose -f docker-compose.dev.yml up --build
+   docker compose up --build
    ```
 5. **Seed the database with sample data**
    ```bash
@@ -53,7 +53,7 @@ This guide consolidates local development, Docker, and production deployment ins
    ```
 3. **Deploy with Docker Compose**
    ```bash
-   docker compose -f docker-compose.prod.yml up -d
+   docker compose up -d
    ```
 4. **Deploy to Kubernetes with ArgoCD and Helm**
    ```bash
@@ -98,4 +98,3 @@ This guide consolidates local development, Docker, and production deployment ins
   docker build --platform=linux/amd64 -t yosai-api -f Dockerfile .
   ```
 - See [docs/troubleshooting.md](troubleshooting.md) for more guidance.
-
