@@ -1,0 +1,32 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Intel Analysis Service",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/status": {
+      "get": {
+        "summary": "Status",
+        "description": "Basic health endpoint for REST clients.",
+        "operationId": "status_api_v1_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Status Api V1 Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
