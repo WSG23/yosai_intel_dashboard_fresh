@@ -2,6 +2,8 @@
 
 Thank you for considering a contribution! Follow these steps to get the development environment ready.
 
+Before you start, review the repository [Project Layout](README.md#project-layout) to orient yourself to key directories.
+
 ## Setup
 
 Install the core and development dependencies:
