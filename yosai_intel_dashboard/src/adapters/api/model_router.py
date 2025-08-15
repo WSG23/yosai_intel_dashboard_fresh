@@ -1,6 +1,15 @@
 from __future__ import annotations
 
+"""Routing helpers for the lightweight model serving service.
+
+The routers expose ``/predict`` style endpoints and execute the underlying
+model asynchronously.  Running the model call in a thread pool keeps the API
+responsive and allows multiple requests to be served concurrently, utilising
+multiple CPU cores or an available GPU.
+"""
+
 from typing import Dict
+import asyncio
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -22,7 +31,10 @@ def create_model_router(service: ModelService) -> APIRouter:
     @router.post("/{model_name}/predict")
     async def predict(model_name: str, req: PredictRequest) -> Dict[str, float | str]:
         model, version = service.get_model(model_name)
-        result = model(req.value)
+        # ``asyncio.to_thread`` offloads the heavy computation to a worker
+        # thread.  This keeps the event loop free while still allowing the
+        # underlying model code to run on a separate CPU core or GPU.
+        result = await asyncio.to_thread(model, req.value)
         return {"version": version, "result": result}
 
     @router.post("/{model_name}/v{version}/predict")
@@ -30,7 +42,7 @@ def create_model_router(service: ModelService) -> APIRouter:
         model_name: str, version: str, req: PredictRequest
     ) -> Dict[str, float | str]:
         model, _ = service.get_model(model_name, version)
-        result = model(req.value)
+        result = await asyncio.to_thread(model, req.value)
         return {"version": version, "result": result}
 
     @router.post("/{model_name}/rollout")

@@ -35,7 +35,7 @@ async def heartbeat_stream(
         await asyncio.sleep(interval)
 
 
-@router.websocket("/ws/analytics")
+@router.websocket("/api/v1/ws/analytics")
 async def analytics_endpoint(websocket: WebSocket) -> None:
     """Websocket endpoint that streams analytics events to the client."""
 

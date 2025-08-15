@@ -22,9 +22,9 @@
   JSON messages for each `analytics_update` event published on the internal
   event bus.
 
-## `/ws/analytics`
+## `/api/v1/ws/analytics`
 
-- **Path:** `/ws/analytics`
+- **Path:** `/api/v1/ws/analytics`
 - **Message schema:**
   ```json
   {
@@ -44,4 +44,3 @@
   `X-Permissions: analytics.read` during the WebSocket handshake. Each
   `analytics_update` event from the internal event bus is forwarded to the
   connected client as a JSON message.
-

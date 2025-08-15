@@ -58,8 +58,8 @@ def load_app():
     safe_import('tracing', tracing_stub)
 
     spec = importlib.util.spec_from_file_location(
-        "services.analytics_microservice.app",
-        SERVICES_PATH / "analytics_microservice" / "app.py",
+        "services.analytics.app",
+        SERVICES_PATH / "analytics" / "app.py",
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)  # type: ignore[arg-type]

@@ -4,8 +4,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from shared.errors.types import ErrorCode
-from yosai_framework.errors import CODE_TO_STATUS
+from shared.errors.types import CODE_TO_STATUS, ErrorCode
 
 from .core import ErrorHandler
 from .exceptions import ErrorCategory

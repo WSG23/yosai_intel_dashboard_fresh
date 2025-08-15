@@ -16,6 +16,7 @@ if "services.resilience.metrics" not in sys.modules:
     safe_import('services.resilience.metrics', metrics_stub)
 
 import pandas as pd
+import pytest
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
@@ -126,3 +127,27 @@ def test_versioning_and_rollback(tmp_path):
     assert pipe.version == ver
     rec = registry.get_model("m", ver)
     assert rec.feature_defs_version == FEATURE_DEF["version"]
+
+
+def test_dataframe_validation(tmp_path):
+    path = tmp_path / "defs.json"
+    path.write_text(json.dumps(FEATURE_DEF))
+    from yosai_intel_dashboard.models.ml.feature_pipeline import FeaturePipeline
+
+    data = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=1, freq="H"),
+            "person_id": ["u1"],
+            "door_id": ["d1"],
+            # missing access_result
+        }
+    )
+
+    pipe = FeaturePipeline(path)
+    pipe.load_definitions()
+    with pytest.raises(ValueError) as exc:
+        pipe.fit(data)
+    assert "access_result" in str(exc.value)
+
+    with pytest.raises(ValueError):
+        pipe.transform(data)

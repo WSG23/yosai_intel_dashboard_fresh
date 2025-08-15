@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Dict
 
 from fastapi import (
     Depends,
@@ -15,19 +15,22 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
 
-from yosai_intel_dashboard.src.core.cache_manager import CacheConfig, InMemoryCacheManager
+from yosai_intel_dashboard.src.core.cache_manager import (
+    CacheConfig,
+    InMemoryCacheManager,
+)
 from yosai_intel_dashboard.src.error_handling import http_error
-from yosai_intel_dashboard.src.services.analytics.analytics_service import get_analytics_service
+from yosai_intel_dashboard.src.services.analytics.analytics_service import (
+    get_analytics_service,
+)
 from yosai_intel_dashboard.src.services.cached_analytics import CachedAnalyticsService
 from yosai_intel_dashboard.src.core import registry
 from yosai_intel_dashboard.src.services.common.async_db import get_pool
 from yosai_intel_dashboard.src.services.security import require_permission
-from yosai_intel_dashboard.src.services.summary_report_generator import SummaryReportGenerator
 from yosai_intel_dashboard.src.services.websocket_server import AnalyticsWebSocketServer
 from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
     register_health_check,
@@ -36,9 +39,6 @@ from yosai_intel_dashboard.src.infrastructure.discovery.health_check import (
 from shared.errors.types import ErrorCode, ErrorResponse
 
 from yosai_intel_dashboard.src.services.intel_analysis_service.core import (
-    AccessRecord,
-    Interaction,
-    TrustLink,
     cluster_users_by_coaccess,
     detect_behavioral_deviations,
     detect_power_structures,
@@ -49,6 +49,12 @@ from yosai_intel_dashboard.src.infrastructure.callbacks import (
     CallbackType,
     register_callback,
     unregister_callback,
+)
+from shared.models.analytics import (
+    AccessLogRequest,
+    ReportRequest,
+    RiskPropagationRequest,
+    SocialNetworkRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -149,37 +155,6 @@ class AnalyticsQuery:
     ) -> None:
         self.facility_id = facility_id
         self.range = range
-
-
-class ReportRequest(BaseModel):
-    """Parameters for report generation."""
-
-    type: str
-    timeframe: str | None = None
-    format: str | None = "json"
-    params: dict[str, Any] | None = None
-
-
-class SocialNetworkRequest(BaseModel):
-    """Interaction data for social network analysis."""
-
-    interactions: list[Interaction]
-    min_occurrences: int = 3
-
-
-class AccessLogRequest(BaseModel):
-    """Access log for behavioural clique analysis."""
-
-    records: list[AccessRecord]
-
-
-class RiskPropagationRequest(BaseModel):
-    """Parameters for risk propagation analysis."""
-
-    base_risks: Dict[str, float]
-    links: list[TrustLink]
-    iterations: int = 1
-    decay: float = 0.5
 
 
 @app.get("/api/v1/analytics/patterns", responses=ERROR_RESPONSES)
@@ -287,9 +262,7 @@ async def investigate_social_network(req: SocialNetworkRequest) -> JSONResponse:
     unusual = find_unusual_collaborations(
         req.interactions, min_occurrences=req.min_occurrences
     )
-    return JSONResponse(
-        content={"power": power, "unusual": [list(p) for p in unusual]}
-    )
+    return JSONResponse(content={"power": power, "unusual": [list(p) for p in unusual]})
 
 
 @app.post("/api/v1/investigate/cliques", responses=ERROR_RESPONSES)
@@ -298,7 +271,9 @@ async def investigate_cliques(req: AccessLogRequest) -> JSONResponse:
 
     clusters = cluster_users_by_coaccess(req.records)
     deviations = detect_behavioral_deviations(req.records, clusters)
-    clusters_serialisable = {"|".join(sorted(k)): sorted(v) for k, v in clusters.items()}
+    clusters_serialisable = {
+        "|".join(sorted(k)): sorted(v) for k, v in clusters.items()
+    }
     deviations_serialisable = {user: sorted(res) for user, res in deviations.items()}
     return JSONResponse(
         content={
@@ -326,7 +301,7 @@ async def investigate_risk(req: RiskPropagationRequest) -> JSONResponse:
 # ---------------------------------------------------------------------------
 
 
-@app.websocket("/ws/analytics")
+@app.websocket("/api/v1/ws/analytics")
 async def analytics_ws(websocket: WebSocket) -> None:
     await websocket.accept()
     queue: asyncio.Queue[str] = asyncio.Queue()
@@ -349,7 +324,7 @@ async def analytics_ws(websocket: WebSocket) -> None:
         unregister_callback(CallbackType.ANALYTICS_UPDATE, _handler)
 
 
-@app.get("/sse/analytics")
+@app.get("/api/v1/sse/analytics")
 async def analytics_sse() -> StreamingResponse:
     queue: asyncio.Queue[str] = asyncio.Queue()
 

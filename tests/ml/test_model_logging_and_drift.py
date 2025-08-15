@@ -31,13 +31,33 @@ if not hasattr(pd, "date_range"):
     sys.modules.pop("pandas", None)
     pd = importlib.import_module("pandas")  # type: ignore
 
+# Minimal OpenTelemetry stub providing ``get_tracer`` and span context manager.
+from contextlib import contextmanager
+
+
+@contextmanager
+def _noop_span(*a, **k):
+    class _Span:
+        def set_attribute(self, *aa, **kk):
+            pass
+
+    yield _Span()
+
+
+otel_trace = types.SimpleNamespace(
+    get_tracer=lambda *a, **k: types.SimpleNamespace(
+        start_as_current_span=lambda *aa, **kk: _noop_span()
+    )
+)
+sys.modules["opentelemetry"] = types.SimpleNamespace(trace=otel_trace)
+sys.modules["opentelemetry.trace"] = otel_trace
+
 from intel_analysis_service.ml import AnomalyDetector, RiskScorer
 
 from yosai_intel_dashboard.src.services.monitoring.drift_monitor import (
     DriftMonitor,
     drift_monitor_metric,
 )
-
 
 class DummyDriftDetector:
     def __init__(self):

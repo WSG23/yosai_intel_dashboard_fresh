@@ -3,20 +3,25 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-yaml
+        exclude: ^deploy/helm/
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/psf/black
     rev: 24.10.0
     hooks:
       - id: black
-        language_version: python3
+        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)
+      - id: black
+        name: black-services
+        files: ^(services/|intel_analysis_service/)
   - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: flake8
-        language_version: python3
+        files: ^(services/|intel_analysis_service/)
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.10.0
     hooks:
       - id: mypy
-        args: [--config-file=mypy.ini, --follow-imports=skip, --ignore-missing-imports]
+        files: ^(services/|intel_analysis_service/)
+        args: [--ignore-missing-imports, --follow-imports=skip]

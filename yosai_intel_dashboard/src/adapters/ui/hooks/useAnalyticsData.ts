@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAnalyticsStore } from '../state/store';
 import { AnalyticsData } from '../state/analyticsSlice';
-
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
+import { api } from '../api/client';
 
 export const useAnalyticsData = (sourceType: string) => {
   const { analyticsCache, setAnalytics } = useAnalyticsStore();
@@ -15,15 +13,9 @@ export const useAnalyticsData = (sourceType: string) => {
     async (signal: AbortSignal) => {
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/analytics/${sourceType}`, {
+        const data = await api.get<AnalyticsData>(`/analytics/${sourceType}`, {
           signal,
-          credentials: 'include',
         });
-        if (!res.ok) {
-          throw new Error('Failed to fetch analytics');
-        }
-        const payload = await res.json();
-        const data: AnalyticsData = payload.data ? payload.data : payload;
         setAnalytics(sourceType, data);
       } catch (err: unknown) {
         if (signal.aborted) return;

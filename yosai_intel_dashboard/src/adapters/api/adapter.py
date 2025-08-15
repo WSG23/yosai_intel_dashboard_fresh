@@ -13,7 +13,6 @@ from fastapi import (
     Request,
     Response,
     UploadFile,
-    status,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -46,6 +45,7 @@ from yosai_intel_dashboard.src.services.model_service import ModelService
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
+from yosai_intel_dashboard.src.core.secret_manager import SecretsManager
 from yosai_intel_dashboard.src.infrastructure.config import get_security_config
 from yosai_intel_dashboard.src.infrastructure.config.constants import API_PORT
 from yosai_intel_dashboard.src.infrastructure.config.app_config import UploadConfig
@@ -66,6 +66,7 @@ from yosai_intel_dashboard.src.core.logging import get_logger
 logger = get_logger(__name__)
 
 model_router = create_model_router(ModelService())
+
 
 def _configure_app(service: BaseService) -> Path:
     """Initialize the FastAPI app, base service and middleware."""
@@ -113,14 +114,8 @@ def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, calla
 
     service.app.add_event_handler("startup", init_rbac_service)
 
-    secret_key = os.getenv("SECRET_KEY")
-    if not secret_key:
-        try:  # pragma: no cover - best effort
-            from yosai_intel_dashboard.src.services.common.secrets import get_secret
-
-            secret_key = get_secret("SECRET_KEY")
-        except Exception:
-            secret_key = None
+    manager = SecretsManager()
+    secret_key = manager.get("SECRET_KEY")
     if not secret_key:
         raise RuntimeError(
             "SECRET_KEY is not set; configure it via environment or Vault"
@@ -131,9 +126,7 @@ def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, calla
     return serializer
 
 
-def _register_routes(
-    service: BaseService, build_dir: Path
-) -> None:
+def _register_routes(service: BaseService, build_dir: Path) -> None:
     """Register routers and static file handlers."""
     service.app.add_event_handler("startup", init_cache_manager)
 
@@ -153,7 +146,7 @@ def _register_routes(
     legacy_router.include_router(model_router)
     service.app.include_router(
         legacy_router,
-        dependencies=[Depends(require_service_token), Depends(add_deprecation_warning)],
+        dependencies=[Depends(require_service_token)],
         deprecated=True,
     )
 
@@ -213,7 +206,6 @@ def _register_upload_endpoints(
                 raise HTTPException(status_code=400, detail="Invalid CSRF token")
         return await call_next(request)
 
-
     @service.app.get("/api/v1/csrf-token")
     def get_csrf_token(response: Response) -> dict:
         token = serializer.dumps("csrf")
@@ -249,11 +241,9 @@ def _register_upload_endpoints(
         if file_handler is not None:
             validator = getattr(file_handler, "validator", None)
         if validator is None:
-            from yosai_intel_dashboard.src.services.data_processing.file_handler import (
-                FileHandler,
-            )
+            from yosai_intel_dashboard.src.services.data_processing import file_handler
 
-            validator = FileHandler().validator
+            validator = file_handler.FileHandler().validator
 
         results: list[dict[str, str]] = []
         storage_dir = Path(cfg.folder)
@@ -343,7 +333,6 @@ def _register_upload_endpoints(
         if not new_token:
             raise HTTPException(status_code=401, detail="invalid refresh token")
         return {"access_token": new_token}
-
 
 
 def create_api_app() -> "FastAPI":
