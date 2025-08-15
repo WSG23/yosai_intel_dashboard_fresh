@@ -12,16 +12,20 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Callable, Iterator, List
 from unittest import mock
+import builtins
+import requests
 
 # Make project package importable
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from yosai_intel_dashboard.src.core.imports import fallbacks as _fallbacks
+from yosai_intel_dashboard.src.core.imports import (
+    fallbacks as _fallbacks,
+)  # noqa: F401,E402
 
-import pytest
+import pytest  # noqa: E402
 
-from yosai_intel_dashboard.src.database.types import DatabaseConnection
+from yosai_intel_dashboard.src.database.types import DatabaseConnection  # noqa: E402
 
 try:
     from memory_profiler import memory_usage  # type: ignore
@@ -392,3 +396,32 @@ def postgres_connection_factory() -> Iterator[DatabaseConnectionFactory]:
                 pass
         _close_pool(pool)
         manager.close()
+
+
+@pytest.fixture(autouse=True)
+def mock_network_and_files(monkeypatch, tmp_path, request):
+    """Disable real network calls and restrict file writes in unit tests.
+
+    Integration tests opt-out by using the ``integration`` marker.
+    """
+    if "integration" in request.keywords:
+        return
+
+    def _blocked(*_a, **_k):
+        raise RuntimeError("Network access disabled during unit tests")
+
+    try:
+        monkeypatch.setattr(requests.sessions.Session, "request", _blocked)
+    except Exception:
+        pass
+
+    original_open = builtins.open
+
+    def _safe_open(file, mode="r", *args, **kwargs):
+        if any(m in mode for m in ("w", "a", "x")):
+            path = Path(file).resolve()
+            if not str(path).startswith(str(tmp_path)):
+                raise RuntimeError("File write outside tmp path disabled in unit tests")
+        return original_open(file, mode, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", _safe_open)
