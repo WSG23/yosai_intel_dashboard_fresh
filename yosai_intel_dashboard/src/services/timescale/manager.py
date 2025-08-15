@@ -41,7 +41,17 @@ class TimescaleDBManager:
 
     # ------------------------------------------------------------------
     async def connect(self, retries: int = 3, backoff: float = 0.5) -> None:
-        """Initialise the connection pool with retry/backoff."""
+        """Initialise the connection pool with retry/backoff.
+
+        Parameters
+        ----------
+        retries:
+            Number of connection attempts before giving up.
+        backoff:
+            Initial delay in seconds used for exponential backoff.  Each
+            subsequent retry doubles this delay.  The strategy helps absorb
+            transient network hiccups during start-up.
+        """
         if self.pool is not None:
             return
 
@@ -71,6 +81,9 @@ class TimescaleDBManager:
                 logger.error(
                     "Timescale connection failed (attempt %s): %s", attempt, exc
                 )
+                if self.pool is not None:
+                    await self.pool.close()
+                    self.pool = None
                 if attempt >= retries:
                     raise
                 await asyncio.sleep(delay)

@@ -25,3 +25,8 @@ repos:
       - id: mypy
         files: ^(services/|intel_analysis_service/)
         args: [--ignore-missing-imports, --follow-imports=skip]
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]

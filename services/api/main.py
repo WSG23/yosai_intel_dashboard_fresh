@@ -13,6 +13,7 @@ except Exception:  # pragma: no cover
 
 from services.api.middleware.body_size_limit import BodySizeLimitMiddleware
 from services.api.middleware.security_headers import SecurityHeadersMiddleware
+from yosai_intel_dashboard.src.services.security import requires_role
 
 app = FastAPI()
 app.add_middleware(BodySizeLimitMiddleware, max_bytes=50 * 1024 * 1024)
@@ -65,7 +66,6 @@ if ExceptionGroup is not None:
     async def exception_group_handler(request: Request, exc: ExceptionGroup) -> JSONResponse:
         return _build_error_response(ErrorCode.INTERNAL, "Internal Server Error", status_code=500)
 
-
 @app.route("/health")
 async def health(request: Request) -> JSONResponse:
     return JSONResponse({"status": "ok"})
@@ -80,5 +80,7 @@ class EchoResponse(BaseModel):
 
 
 @app.post("/api/v1/echo", response_model=EchoResponse)
-async def echo(body: EchoRequest) -> EchoResponse:
+async def echo(
+    body: EchoRequest, _: None = Depends(requires_role("admin"))
+) -> EchoResponse:
     return EchoResponse(message=body.message)

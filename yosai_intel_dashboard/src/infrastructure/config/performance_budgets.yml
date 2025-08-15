@@ -9,6 +9,10 @@ endpoints:
     p50: 200
     p95: 500
     p99: 800
+  /api/v1/analytics/threat_assessment:
+    p50: 200
+    p95: 500
+    p99: 800
   /health:
     p50: 50
     p95: 100

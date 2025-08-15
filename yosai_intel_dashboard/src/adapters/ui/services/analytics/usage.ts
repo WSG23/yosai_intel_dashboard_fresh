@@ -1,3 +1,5 @@
+import { fetchJson } from '../../utils/fetchJson';
+
 interface TipInteraction {
   id: string;
   action: 'view' | 'click';
@@ -5,12 +7,11 @@ interface TipInteraction {
 }
 
 export const logTipInteraction = async (
-  interaction: TipInteraction
+  interaction: TipInteraction,
 ): Promise<void> => {
   try {
-    await fetch('/api/analytics/tip', {
+    await fetchJson('/api/analytics/tip', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...interaction, timestamp: Date.now() }),
     });
   } catch (err) {
@@ -21,11 +22,7 @@ export const logTipInteraction = async (
 
 export const getLearningSuggestions = async (): Promise<string[]> => {
   try {
-    const res = await fetch('/api/analytics/suggestions');
-    if (!res.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return await res.json();
+    return await fetchJson<string[]>('/api/analytics/suggestions');
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('Failed to fetch learning suggestions', err);

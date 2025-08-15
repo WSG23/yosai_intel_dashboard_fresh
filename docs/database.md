@@ -1,40 +1,19 @@
 # Database Schema Overview
 
-This document summarises the lightweight in-memory schemas used by the dashboard and the indexing strategies applied for efficient queries.
+This document summarises the relational schema used by the dashboard and records the indexing strategies applied for efficient queries.
 
 ## Entity Relationship Diagram
 
-The diagram below reflects the structures defined in `yosai_intel_dashboard/src/database` and was generated from the dataclass definitions in `migrations.py`.
-
-```mermaid
-erDiagram
-    EventRecord {
-        string name
-        datetime start
-        string category
-    }
-    TrafficEvent {
-        string event_type
-        string location
-        int delay_minutes
-        string source
-        datetime timestamp
-    }
-    InfrastructureEvent {
-        string source
-        string description
-        datetime start_time
-        datetime end_time
-    }
-```
-
-## Normalization
-
-Each table contains atomic values and has a clear primary key candidate, meeting third normal form. The separation of event types avoids update anomalies and keeps the schema extensible.
+See [database/er_diagram.md](database/er_diagram.md) for an up-to-date diagram generated from the SQL migrations.
 
 ## Indexing Strategy
 
-- **Events**: events are indexed by `category` to support frequent category filtering.
-- **Transport Events**: transport events maintain an index by `location` for fast lookup and aggregation.
+The schema defines several indexes to optimise common lookups:
 
-These in-memory indexes provide near constant-time access without the overhead of scanning entire collections, aligning the implementation with common database indexing practices.
+- `idx_access_events_person_timestamp` on `access_events(person_id, timestamp)` accelerates person-based history queries.
+- `idx_access_events_door_timestamp` on `access_events(door_id, timestamp)` improves door-centric range scans.
+- `idx_access_events_person_id` and `idx_access_events_door_id` support direct filtering when only a single column is provided.
+- `idx_anomaly_detections_detected_at` and `idx_anomaly_detections_type` speed up anomaly searches by time and type.
+- `idx_incident_tickets_status` enables efficient ticket queue processing by status.
+
+These indexes reduce table scans and help prevent N+1 query patterns by ensuring that frequent join and filter operations are covered.
