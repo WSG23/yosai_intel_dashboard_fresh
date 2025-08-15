@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 import pandas as pd
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from yosai_intel_dashboard.src.services.analytics_summary import (
     summarize_dataframe as _summarize_dataframe,
@@ -16,10 +17,32 @@ from validation.data_validator import DataValidator, DataValidatorProtocol
 from .unicode import normalize_text
 
 
+class _EventsFrameModel(BaseModel):
+    """Schema for required dataframe columns used in analytics."""
+
+    timestamp: pd.Series
+    events: pd.Series
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+
+def _validate_events_frame(df: pd.DataFrame) -> None:
+    """Ensure ``df`` contains required columns prior to normalization."""
+
+    try:
+        _EventsFrameModel(**df.to_dict(orient="series"))
+    except ValidationError as exc:  # pragma: no cover - explicit error
+        missing = {err["loc"][0] for err in exc.errors()}
+        cols = ", ".join(sorted(missing))
+        raise ValueError(f"missing required columns: {cols}") from exc
+
+
 def summarize_dataframes(dfs: List[pd.DataFrame]) -> Dict[str, Any]:
     """Combine ``dfs`` and return a summary dictionary."""
     if not dfs:
         return {"status": "no_data"}
+    for df in dfs:
+        _validate_events_frame(df)
     combined = pd.concat(dfs, ignore_index=True)
     summary = _summarize_dataframe(combined)
     summary.update({"status": "success", "files_processed": len(dfs)})
