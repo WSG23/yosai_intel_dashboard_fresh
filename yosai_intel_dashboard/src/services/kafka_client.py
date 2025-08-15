@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import uuid
 from typing import Any, MutableMapping
 
 from confluent_kafka import Producer
+from .kafka.metrics import delivery_failure_total, delivery_success_total
 
 try:  # pragma: no cover - tracing optional
     from tracing import propagate_context
@@ -24,6 +26,9 @@ class KafkaClient:
     def __init__(self, brokers: str) -> None:
         """Create a new client using the Kafka *brokers* string."""
         self._producer = Producer({"bootstrap.servers": brokers})
+        self._running = True
+        self._poll_thread = threading.Thread(target=self._poll_loop, daemon=True)
+        self._poll_thread.start()
 
     def publish(
         self,
@@ -52,8 +57,8 @@ class KafkaClient:
                 topic,
                 json.dumps(message),
                 headers=list(headers.items()) or None,
+                callback=self._delivery_callback,
             )
-            self._producer.flush()
 
         except Exception:
             logger.exception("Failed to publish to Kafka")
@@ -62,7 +67,14 @@ class KafkaClient:
 
     def close(self) -> None:
         """Flush outstanding messages and close producer."""
-        self._producer.flush()
+        self._running = False
+        self._poll_thread.join(timeout=1)
+        self._producer.flush(10)
+
+    def _poll_loop(self) -> None:
+        """Poll producer in background to trigger delivery callbacks."""
+        while self._running:
+            self._producer.poll(0.1)
 
     @staticmethod
     def _delivery_callback(err, msg) -> None:  # pragma: no cover - signature defined by library
