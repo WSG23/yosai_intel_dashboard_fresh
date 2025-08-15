@@ -1,5 +1,6 @@
 schemas:
   ErrorResponse:
+    description: Standard error response returned by services
     type: object
     required:
       - code

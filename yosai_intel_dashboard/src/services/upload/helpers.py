@@ -20,7 +20,7 @@ def get_trigger_id() -> str:
     return ctx.triggered[0]["prop_id"] if ctx.triggered else ""
 
 
-async def save_ai_training_data_async(
+async def save_ai_training_data(
     filename: str, mappings: Dict[str, str], file_info: Dict
 ) -> None:
     """Asynchronously save confirmed mappings for AI training."""
@@ -40,38 +40,45 @@ async def save_ai_training_data_async(
             ComponentPluginAdapter,
         )
 
-        # Run potentially blocking plugin operations in a thread
-        try:
-            saved = await asyncio.to_thread(
-                ComponentPluginAdapter().save_verified_mappings,
-                filename,
-                mappings,
-                {},
+        async def _save_with_plugin() -> bool:
+            try:
+                return await asyncio.to_thread(
+                    ComponentPluginAdapter().save_verified_mappings,
+                    filename,
+                    mappings,
+                    {},
+                )
+            except Exception:
+                return False
+
+        async def _save_locally() -> str:
+            await asyncio.to_thread(os.makedirs, "data/training", True)
+            file_name = (
+                f"data/training/mappings_{datetime.now().strftime('%Y%m%d')}.jsonl"
             )
-            if saved:
-                logger.info("✅ AI training data saved via plugin")
-            else:
-                logger.info("⚠️ AI training save failed")
-        except Exception:
+            async with aiofiles.open(
+                file_name, "a", encoding="utf-8", errors="replace"
+            ) as f:
+                await f.write(json.dumps(training_data) + "\n")
+            return file_name
+
+        saved, _ = await asyncio.gather(
+            _save_with_plugin(), _save_locally(), return_exceptions=True
+        )
+        if isinstance(saved, Exception) or not saved:
             logger.info("⚠️ AI training save failed")
-
-        await asyncio.to_thread(os.makedirs, "data/training", True)
-        file_name = f"data/training/mappings_{datetime.now().strftime('%Y%m%d')}.jsonl"
-        async with aiofiles.open(
-            file_name, "a", encoding="utf-8", errors="replace"
-        ) as f:
-            await f.write(json.dumps(training_data) + "\n")
-
+        else:
+            logger.info("✅ AI training data saved via plugin")
         logger.info("✅ Training data saved locally")
     except Exception as e:  # pragma: no cover - best effort
         logger.info("❌ Error saving training data: %s", e)
 
 
-def save_ai_training_data(
+def save_ai_training_data_sync(
     filename: str, mappings: Dict[str, str], file_info: Dict
 ) -> None:
-    """Synchronous wrapper around :func:`save_ai_training_data_async`."""
-    asyncio.run(save_ai_training_data_async(filename, mappings, file_info))
+    """Synchronous wrapper around :func:`save_ai_training_data`."""
+    asyncio.run(save_ai_training_data(filename, mappings, file_info))
 
 
-__all__ = ["get_trigger_id", "save_ai_training_data", "save_ai_training_data_async"]
+__all__ = ["get_trigger_id", "save_ai_training_data", "save_ai_training_data_sync"]

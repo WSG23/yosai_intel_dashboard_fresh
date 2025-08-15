@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections import defaultdict
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Dict, Iterable, List, Type
@@ -11,6 +10,7 @@ from dash import Dash
 from dash.dependencies import Input, Output, State
 
 from src.common.meta import AutoRegister
+from .helpers import safe_execute
 
 if TYPE_CHECKING:  # pragma: no cover
     from .unified_callbacks import CallbackHandler
@@ -95,10 +95,6 @@ class ComponentCallbackManager(metaclass=AutoRegister):
     ) -> Dict[str, CallbackHandler]:  # pragma: no cover - interface
         raise NotImplementedError
 
-
-logger = logging.getLogger(__name__)
-
-
 class CallbackType(str, Enum):
     """Enumeration of supported callback types."""
 
@@ -156,14 +152,16 @@ class UnifiedCallbackRegistry:
             )
 
         for cb in callbacks:
-            try:
-                cb(*args, **kwargs)
-            except Exception:  # pragma: no cover - logging side effect
-                logger.exception(
-                    "Error in callback %s for %s",
-                    getattr(cb, "__name__", cb),
-                    callback_type,
-                )
+            safe_execute(
+                cb,
+                *args,
+                context={
+                    "callback": getattr(cb, "__name__", "<anonymous>"),
+                    "type": callback_type,
+                    "component": component,
+                },
+                **kwargs,
+            )
 
     # ------------------------------------------------------------------
     def unregister_component(self, component: str) -> None:

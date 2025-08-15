@@ -1,3 +1,4 @@
+import { fetchJson, FetchError } from '../utils/fetchJson';
 import { log } from './logger';
 
 export interface ServiceError {
@@ -6,13 +7,20 @@ export interface ServiceError {
   details?: any;
 }
 
-export async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const response = await fetch(input, init);
-  const data = await response.json().catch(() => undefined);
-  if (!response.ok) {
-    const err: ServiceError = data || { code: 'internal', message: 'Unknown error' };
-    log('error', 'API request failed', { url: String(input), ...err });
-    throw err;
+export async function request<T>(
+  input: RequestInfo,
+  init?: RequestInit,
+): Promise<T> {
+  try {
+    return await fetchJson<T>(input, init);
+  } catch (err) {
+    const error = err as FetchError;
+    const serviceError: ServiceError =
+      (error.data as ServiceError) || {
+        code: 'internal',
+        message: error.message,
+      };
+    log('error', 'API request failed', { url: String(input), ...serviceError });
+    throw serviceError;
   }
-  return data as T;
 }

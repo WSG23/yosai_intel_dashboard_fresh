@@ -3,6 +3,8 @@ from __future__ import annotations
 """Runtime secrets validation utilities."""
 
 import logging
+import os
+from datetime import datetime
 from typing import Dict, Optional
 
 from yosai_intel_dashboard.src.core.exceptions import ConfigurationError
@@ -21,6 +23,11 @@ class SecretsValidator:
         "AUTH0_DOMAIN",
         "AUTH0_AUDIENCE",
     ]
+
+    ROTATION_DAYS = {
+        "SECRET_KEY": 90,
+        "DB_PASSWORD": 30,
+    }
 
     def __init__(self, manager: Optional[SecretsManager] = None) -> None:
         self.manager = manager or SecretsManager()
@@ -78,6 +85,18 @@ class SecretsValidator:
             result = quality.validate_secret(value, environment="production")
             if result["errors"]:
                 invalid.append(name)
+
+            rotation_days = self.ROTATION_DAYS.get(name)
+            if rotation_days is not None:
+                last_rotated_raw = os.getenv(f"{name}_LAST_ROTATED")
+                if last_rotated_raw:
+                    try:
+                        last_rotated = datetime.fromisoformat(last_rotated_raw)
+                    except ValueError:
+                        invalid.append(name)
+                    else:
+                        if SecretsManager.needs_rotation(last_rotated, rotation_days):
+                            invalid.append(name)
 
         return invalid
 

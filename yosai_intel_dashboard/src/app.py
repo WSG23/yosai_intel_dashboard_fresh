@@ -1,7 +1,5 @@
 """Sample Dash application wiring pages and services."""
 
-import os
-
 from dash import Dash, html
 from flask import Response
 from flask_wtf.csrf import CSRFProtect
@@ -10,6 +8,7 @@ from yosai_intel_dashboard.src.adapters.ui.pages import greetings
 from yosai_intel_dashboard.src.callbacks import register_callbacks
 
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
+from yosai_intel_dashboard.src.core.secret_manager import SecretsManager, validate_secrets
 
 try:  # pragma: no cover - allow running without full services package
     from yosai_intel_dashboard.src.services.greeting import GreetingService
@@ -25,9 +24,18 @@ def create_app() -> Dash:
     container = ServiceContainer()
     container.register("greeting_service", GreetingService())
 
+    manager = SecretsManager()
+    summary = validate_secrets(manager)
+    if not summary["valid"]:
+        missing = ", ".join(summary["missing"])
+        raise RuntimeError(f"Missing required secrets: {missing}")
+
     app = Dash(__name__)
     server = app.server
-    server.config.setdefault("SECRET_KEY", os.getenv("SECRET_KEY", "dev-secret-key"))
+    secret_key = manager.get("SECRET_KEY")
+    if not secret_key:
+        raise RuntimeError("SECRET_KEY is required")
+    server.config["SECRET_KEY"] = secret_key
     CSRFProtect(server)
 
     @server.after_request

@@ -1,0 +1,26 @@
+name: load-tests
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  locust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install locust psutil pyyaml
+      - name: Run load tests
+        run: load-tests/run_locust_ci.sh
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-results
+          path: load-tests/results

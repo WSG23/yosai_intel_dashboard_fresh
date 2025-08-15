@@ -3,9 +3,21 @@ from __future__ import annotations
 """Simple retry helper used by pooled connections.
 
 The :class:`RetryStrategy` encapsulates retry logic with exponential
-backoff.  It exposes a :meth:`run` method that executes a callable and
-will retry on failure.  Individual calls may override the configured
-``attempts`` and ``backoff`` values.
+backoff suitable for dealing with transient failures such as temporary
+network issues or database lock timeouts.  The delay doubles after each
+failed attempt which gives the remote service time to recover.  The
+strategy is intentionally lightweight – callers can override the
+default number of ``attempts`` and initial ``backoff`` delay per call to
+match the characteristics of the operation being performed.
+
+Example
+-------
+
+>>> retry = RetryStrategy(attempts=5, backoff=0.2)
+>>> retry.run(unreliable_operation)
+
+The above will attempt ``unreliable_operation`` up to five times,
+sleeping for ``0.2``, ``0.4``, ``0.8`` ... seconds between retries.
 """
 
 from dataclasses import dataclass
