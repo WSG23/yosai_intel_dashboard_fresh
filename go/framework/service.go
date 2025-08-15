@@ -46,7 +46,7 @@ func (s *BaseService) Start() {
 		if err == nil {
 			s.traceShutdown = shutdown
 		} else if s.Logger != nil {
-			s.Logger.Error("init tracing", zap.Error(err))
+			s.Logger.Error(s.ctx, "init tracing", zap.Error(err))
 		}
 	}
 	s.Health.SetStartupComplete(true)
@@ -54,11 +54,11 @@ func (s *BaseService) Start() {
 	s.Health.SetLive(true)
 	s.handleSignals()
 	if s.Logger != nil {
-		s.Logger.Info("service started")
+		s.Logger.Info(s.ctx, "service started")
 	}
 	<-s.ctx.Done()
 	if s.Logger != nil {
-		s.Logger.Info("service stopped")
+		s.Logger.Info(s.ctx, "service stopped")
 	}
 }
 
