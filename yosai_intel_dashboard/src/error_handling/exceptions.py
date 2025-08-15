@@ -31,10 +31,11 @@ class YosaiException(Exception):
         super().__init__(message)
 
     def to_dict(self) -> dict[str, Any]:
-        body = {"code": self.category.value, "message": self.message}
-        if self.details is not None:
-            body["details"] = self.details
-        return body
+        return {
+            "code": self.category.value,
+            "message": self.message,
+            "details": self.details,
+        }
 
 
 __all__ = ["ErrorCategory", "YosaiException"]

@@ -37,6 +37,7 @@ def test_yosai_base_exception_handled():
     body = resp.get_json()
     assert body["code"] == "invalid_input"
     assert body["message"] == "bad"
+    assert body["details"] == {}
 
 
 def test_service_unavailable_error():
@@ -45,7 +46,11 @@ def test_service_unavailable_error():
 
     resp = client.get("/unavail")
     assert resp.status_code == 503
-    assert resp.get_json() == {"code": "unavailable", "message": "maintenance"}
+    assert resp.get_json() == {
+        "code": "unavailable",
+        "message": "maintenance",
+        "details": {},
+    }
 
 
 def test_generic_exception_handled():
@@ -57,3 +62,4 @@ def test_generic_exception_handled():
     body = resp.get_json()
     assert body["code"] == "internal"
     assert body["message"] == "boom"
+    assert body["details"] is None

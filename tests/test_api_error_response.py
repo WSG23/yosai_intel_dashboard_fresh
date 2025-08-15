@@ -11,4 +11,8 @@ def test_api_error_response_generates_json_and_status():
             ValueError("bad"), ErrorCategory.INVALID_INPUT
         )
         assert status == 400
-        assert resp.get_json() == {"code": "invalid_input", "message": "bad"}
+        assert resp.get_json() == {
+            "code": "invalid_input",
+            "message": "bad",
+            "details": None,
+        }
