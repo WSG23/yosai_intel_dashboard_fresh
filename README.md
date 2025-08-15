@@ -154,6 +154,9 @@ This project follows a fully modular design built around a dependency injection 
 - [Deployment Guide](docs/deployment_guide.md)
 - [Troubleshooting Runbook](docs/troubleshooting_runbook.md)
 - [Disaster Recovery](docs/disaster_recovery.md)
+- [Service Ownership Guide](docs/service_ownership.md)
+- [Runbooks](docs/runbooks)
+- [Architecture Decision Records](docs/adr)
 
 <p align="center">
   <img src="docs/architecture.svg" alt="High-level architecture diagram" width="600" />
