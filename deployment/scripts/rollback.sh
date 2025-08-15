@@ -26,9 +26,10 @@ if [[ -z "$MIGRATION_STATE" || "$MIGRATION_STATE" == "null" ]]; then
   exit 1
 fi
 
-echo "Rolling back container image to $IMAGE_TAG"
+NAMESPACE="${TARGET_ENV:-default}"
+echo "Rolling back container image to $IMAGE_TAG in namespace $NAMESPACE"
 # Example rollback command for Kubernetes deployment
-kubectl set image deployment/dashboard dashboard="$IMAGE_TAG" --record || true
+kubectl -n "$NAMESPACE" set image deployment/dashboard dashboard="$IMAGE_TAG" --record || true
 
 ROLLBACK_SCRIPT="$(dirname "$0")/../../migrations/rollback.sh"
 if [[ ! -x "$ROLLBACK_SCRIPT" ]]; then
