@@ -1,6 +1,13 @@
+variables:
+  DEPLOY_ENV: "staging"
+  TRAFFIC_PERCENT: "10"
+  STATEFUL_SERVICE: "dashboard-db"
+
 stages:
   - build
   - canary
+  - traffic_shaping
+  - verify_stateful
   - blue_green
 
 build:
@@ -11,15 +18,31 @@ build:
 canary:
   stage: canary
   script:
-    - kubectl apply -f k8s/canary
+    - kubectl --context $DEPLOY_ENV apply -f k8s/canary
   when: manual
   needs:
     - build
 
-blue_green:
-  stage: blue_green
+traffic_shaping:
+  stage: traffic_shaping
   script:
-    - kubectl apply -f k8s/bluegreen
+    - deployment/scripts/traffic_shaping.sh
   when: manual
   needs:
     - canary
+
+verify_stateful:
+  stage: verify_stateful
+  script:
+    - deployment/scripts/verify_stateful.sh $STATEFUL_SERVICE
+  when: manual
+  needs:
+    - traffic_shaping
+
+blue_green:
+  stage: blue_green
+  script:
+    - kubectl --context $DEPLOY_ENV apply -f k8s/bluegreen
+  when: manual
+  needs:
+    - verify_stateful

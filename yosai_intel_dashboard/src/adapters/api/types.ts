@@ -292,7 +292,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/token/refresh": {
+  "/api/v1/token/refresh": {
     parameters: {
       query?: never;
       header?: never;
@@ -327,7 +327,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/upload": {
+  "/api/v1/upload": {
     parameters: {
       query?: never;
       header?: never;
@@ -357,7 +357,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/upload/status/{job_id}': {
+  '/api/v1/upload/status/{job_id}': {
     parameters: {
       query?: never;
       header?: never;

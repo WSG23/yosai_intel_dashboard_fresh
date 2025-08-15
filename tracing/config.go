@@ -23,10 +23,10 @@ func Init(ctx context.Context, serviceName string, sp sdktrace.SpanProcessor) (f
 		opts = append(opts, sdktrace.WithSpanProcessor(sp))
 	} else {
 		endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-		clientOpts := []otlptracehttp.Option{}
-		if endpoint != "" {
-			clientOpts = append(clientOpts, otlptracehttp.WithEndpoint(endpoint), otlptracehttp.WithInsecure())
+		if endpoint == "" {
+			endpoint = "http://localhost:4318"
 		}
+		clientOpts := []otlptracehttp.Option{otlptracehttp.WithEndpoint(endpoint), otlptracehttp.WithInsecure()}
 		exp, err := otlptrace.New(ctx, otlptracehttp.NewClient(clientOpts...))
 		if err != nil {
 			return nil, err
@@ -39,6 +39,9 @@ func Init(ctx context.Context, serviceName string, sp sdktrace.SpanProcessor) (f
 	)))
 	tp := sdktrace.NewTracerProvider(opts...)
 	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
 	return tp.Shutdown, nil
 }

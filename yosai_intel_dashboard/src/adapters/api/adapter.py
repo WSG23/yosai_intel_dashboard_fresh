@@ -41,6 +41,8 @@ from yosai_intel_dashboard.src.adapters.api.monitoring_router import (
 from yosai_intel_dashboard.src.adapters.api.routes.feature_flags import (
     router as feature_flags_router,
 )
+from yosai_intel_dashboard.src.adapters.api.model_router import create_model_router
+from yosai_intel_dashboard.src.services.model_service import ModelService
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
 from yosai_intel_dashboard.src.core.secrets_validator import validate_all_secrets
@@ -62,6 +64,8 @@ from yosai_intel_dashboard.src.core.logging import get_logger
 
 
 logger = get_logger(__name__)
+
+model_router = create_model_router(ModelService())
 
 def _configure_app(service: BaseService) -> Path:
     """Initialize the FastAPI app, base service and middleware."""
@@ -124,16 +128,11 @@ def _setup_security(service: BaseService) -> tuple[URLSafeTimedSerializer, calla
     service.app.state.secret_key = secret_key
     serializer = URLSafeTimedSerializer(secret_key)
 
-    def add_deprecation_warning(response: Response) -> None:
-        response.headers["Warning"] = (
-            "299 - Deprecated API path; please use versioned '/api/v1' routes"
-        )
-
-    return serializer, add_deprecation_warning
+    return serializer
 
 
 def _register_routes(
-    service: BaseService, build_dir: Path, add_deprecation_warning: callable
+    service: BaseService, build_dir: Path
 ) -> None:
     """Register routers and static file handlers."""
     service.app.add_event_handler("startup", init_cache_manager)
@@ -143,6 +142,7 @@ def _register_routes(
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)
     api_v1.include_router(feature_flags_router)
+    api_v1.include_router(model_router)
     service.app.include_router(api_v1, dependencies=[Depends(require_service_token)])
 
     legacy_router = APIRouter()
@@ -150,6 +150,7 @@ def _register_routes(
     legacy_router.include_router(monitoring_router)
     legacy_router.include_router(explanations_router)
     legacy_router.include_router(feature_flags_router)
+    legacy_router.include_router(model_router)
     service.app.include_router(
         legacy_router,
         dependencies=[Depends(require_service_token), Depends(add_deprecation_warning)],
@@ -189,7 +190,7 @@ def _register_routes(
 
 
 def _register_upload_endpoints(
-    service: BaseService, serializer: URLSafeTimedSerializer, add_deprecation_warning: callable
+    service: BaseService, serializer: URLSafeTimedSerializer
 ) -> None:
     """Register upload, settings and token refresh endpoints."""
     file_handler = (
@@ -218,12 +219,6 @@ def _register_upload_endpoints(
         token = serializer.dumps("csrf")
         response.set_cookie("csrf_token", token, httponly=True)
         return {"csrf_token": token}
-
-    @service.app.get(
-        "/csrf-token", dependencies=[Depends(add_deprecation_warning)], deprecated=True
-    )
-    def get_csrf_token_legacy(response: Response) -> dict:
-        return get_csrf_token(response)
 
     def verify_csrf(request: Request) -> None:
         token = (
@@ -313,19 +308,6 @@ def _register_upload_endpoints(
 
         return {"results": results}
 
-    @service.app.post(
-        "/upload",
-        response_model=UploadResponse,
-        status_code=200,
-        dependencies=[Depends(verify_csrf), Depends(add_deprecation_warning)],
-        deprecated=True,
-    )
-    async def upload_files_legacy(
-        payload: UploadRequestSchema,
-        files: list[UploadFile] = File([]),
-    ) -> dict:
-        return await upload_files(payload, files)
-
     from yosai_intel_dashboard.src.adapters.api.settings_endpoint import (
         SettingsSchema,
         _load_settings,
@@ -347,27 +329,6 @@ def _register_upload_endpoints(
             raise HTTPException(status_code=500, detail=str(exc))
         return settings_data
 
-    @service.app.get(
-        "/settings", response_model=SettingsSchema, dependencies=[Depends(add_deprecation_warning)], deprecated=True
-    )
-    def get_settings_legacy() -> dict:
-        return get_settings()
-
-    @service.app.post(
-        "/settings",
-        response_model=SettingsSchema,
-        dependencies=[Depends(add_deprecation_warning)],
-        deprecated=True,
-    )
-    @service.app.put(
-        "/settings",
-        response_model=SettingsSchema,
-        dependencies=[Depends(add_deprecation_warning)],
-        deprecated=True,
-    )
-    def update_settings_legacy(payload: SettingsSchema) -> dict:
-        return update_settings(payload)
-
     from yosai_intel_dashboard.src.services.security import refresh_access_token
     from yosai_intel_dashboard.src.services.token_endpoint import (
         AccessTokenResponse,
@@ -383,15 +344,6 @@ def _register_upload_endpoints(
             raise HTTPException(status_code=401, detail="invalid refresh token")
         return {"access_token": new_token}
 
-    @service.app.post(
-        "/token/refresh",
-        response_model=AccessTokenResponse,
-        status_code=200,
-        dependencies=[Depends(add_deprecation_warning)],
-        deprecated=True,
-    )
-    def refresh_token_legacy(payload: RefreshRequest) -> dict:
-        return refresh_token(payload)
 
 
 def create_api_app() -> "FastAPI":
@@ -399,9 +351,9 @@ def create_api_app() -> "FastAPI":
     validate_all_secrets()
     service = BaseService("api", "")
     build_dir = _configure_app(service)
-    serializer, add_deprecation_warning = _setup_security(service)
-    _register_routes(service, build_dir, add_deprecation_warning)
-    _register_upload_endpoints(service, serializer, add_deprecation_warning)
+    serializer = _setup_security(service)
+    _register_routes(service, build_dir)
+    _register_upload_endpoints(service, serializer)
     return service.app
 
 

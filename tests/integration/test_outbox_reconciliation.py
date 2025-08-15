@@ -47,6 +47,9 @@ def test_outbox_reconciliation():
 
         asyncio.run(repo.save_access_event(event))
         assert asyncio.run(repo.pending_events()) == 1
+        # unprocessed events can be retrieved for further processing
+        pending = asyncio.run(repo.unprocessed_events())
+        assert len(pending) == 1
 
         divergences = asyncio.run(reconcile_outbox(manager))
         assert divergences == 0

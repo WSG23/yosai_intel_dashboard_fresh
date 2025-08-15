@@ -31,10 +31,14 @@ scrape the metrics endpoints automatically.
 
 ## Metrics
 
-The platform tracks key decision activity and latency:
+The platform tracks key decision activity, gateway traffic, and queue processing:
 
 - `service_decisions_total{service,decision}` – counter of important decisions made by each service.
-- `service_decision_latency_seconds{service,decision}` – histogram of decision latency in seconds. Target: 95% < 500ms.
+- `service_decision_latency_seconds{service,decision}` – histogram of decision latency in seconds.
+- `gateway_http_requests_total{path,method,status}` – number of HTTP requests handled by the gateway.
+- `gateway_http_request_duration_seconds{path,method}` – latency of HTTP requests in seconds.
+- `queue_processed_messages_total{queue}` – count of messages processed successfully.
+- `queue_processing_errors_total{queue}` – count of handler errors while processing messages.
 
 Both the `gateway` and `queue` services expose `/metrics` endpoints for Prometheus scraping.
 
@@ -43,6 +47,8 @@ Both the `gateway` and `queue` services expose `/metrics` endpoints for Promethe
 | Metric | Target |
 | --- | --- |
 | Decision latency p95 | < 0.5s |
+| Gateway request latency p95 | < 0.5s |
+| Queue processing error rate | < 1% |
 | Error budget remaining | ≥ 99.9% |
 
 Dashboards and alerting rules for these SLOs live in `deploy/grafana/`.
