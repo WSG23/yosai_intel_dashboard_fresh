@@ -1,43 +1,28 @@
 from __future__ import annotations
+import os
+from typing import Any
 
-import logging
+def run_data_enhancer(*args: Any, **kwargs: Any) -> None:
+    """
+    Optional UI runner for the Data Enhancer.
 
-from yosai_intel_dashboard.src.core.logging import get_logger
-from .app import create_standalone_app
-from .config import (
-    AI_COLUMN_SERVICE_AVAILABLE,
-    AI_DOOR_SERVICE_AVAILABLE,
-    CONFIG_SERVICE_AVAILABLE,
-    CONTAINER_AVAILABLE,
-)
+    By default, does nothing in server/API contexts to avoid importing Dash.
+    Set ENABLE_DATA_ENHANCER_UI=1 to actually start the UI and import the app.
+    """
+    if os.getenv("ENABLE_DATA_ENHANCER_UI", "0") != "1":
+        # Headless/server mode: skip UI entirely.
+        return
 
-logger = get_logger(__name__)
-
-
-def run_data_enhancer() -> None:
-    """Run the standalone data enhancer Dash application."""
-    logging.basicConfig(level=logging.INFO)
-
-    logger.info("=" * 70)
-    logger.info("🚀 Starting MVP Data Enhancement Tool - Multi-Building Analysis")
-    logger.info("=" * 70)
-    logger.info(
-        "Service availability",
-        extra={
-            "ai_column_service": AI_COLUMN_SERVICE_AVAILABLE,
-            "ai_door_service": AI_DOOR_SERVICE_AVAILABLE,
-            "config_service": CONFIG_SERVICE_AVAILABLE,
-            "service_container": CONTAINER_AVAILABLE,
-        },
-    )
-    logger.info("=" * 70)
+    # Import lazily so normal imports of this package don't drag in Dash.
+    from .app import create_standalone_app  # type: ignore
 
     app = create_standalone_app()
-    from .callbacks import register_callbacks
-
-    register_callbacks(app, getattr(app, "_service_container", None))
-    logger.info(
-        "Running data enhancer server",
-        extra={"host": "0.0.0.0", "port": 5003},
-    )
-    app.run_server(debug=True, host="0.0.0.0", port=5003)
+    # If the factory returns a Dash/FastAPI-like object, prefer its own run/start.
+    # Fallback to a simple server.run if it exposes one.
+    if hasattr(app, "run"):
+        app.run()
+    elif hasattr(app, "server") and hasattr(app.server, "run"):
+        app.server.run()
+    else:
+        # Nothing to run; silently exit in UI mode (or raise if you prefer)
+        pass
