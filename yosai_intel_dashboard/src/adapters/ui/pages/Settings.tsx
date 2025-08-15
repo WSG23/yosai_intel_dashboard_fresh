@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { api, csrfHeader } from '../api/client';
+import React, { useState } from 'react';
+import { csrfHeader } from '../api/client';
+import { settingsAPI } from '../api/settings';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ChunkGroup } from '../components/layout';
 import { t } from '../i18n';
+import useSettingsData from '../hooks/useSettingsData';
 
 interface UserSettings {
   theme: string;
@@ -22,8 +24,8 @@ const Settings: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('saving');
-    api
-      .patch('/settings', settings, { headers: csrfHeader() })
+    settingsAPI
+      .update(settings, csrfHeader())
       .then(() => {
         setStatus('success');
         setError(null);

@@ -4,6 +4,7 @@ import { Shield, Menu, Sun, Moon } from 'lucide-react';
 import CenteredSpinner from './components/shared/CenteredSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useThemeStore } from './store';
+import GlobalLoading from './components/GlobalLoading';
 
 const Upload = React.lazy(() =>
   import('./components/upload').then((m) => ({ default: m.Upload })),
@@ -75,6 +76,7 @@ function App() {
           </Suspense>
         </ErrorBoundary>
       </main>
+      <GlobalLoading />
     </div>
   );
 }
