@@ -1,4 +1,5 @@
 import { toast } from 'react-hot-toast';
+import { eventBus } from '../eventBus';
 
 interface ApiError {
   message: string;
@@ -32,6 +33,8 @@ export type ApiHeaders = Record<string, string> & AuthHeaders & CsrfHeaders;
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 const TIMEOUT = 30000;
+
+let activeRequests = 0;
 
 const requestQueue: Array<() => Promise<any>> = [];
 let isOnline = navigator.onLine;
@@ -181,7 +184,10 @@ export async function apiRequest<T = any>(
   retries = 3,
 ): Promise<T> {
   let lastError: unknown;
-  for (let i = 0; i < retries; i++) {
+  activeRequests++;
+  eventBus.emit('loading', activeRequests > 0);
+  try {
+    for (let i = 0; i < retries; i++) {
     const {
       url,
       data,
@@ -278,14 +284,18 @@ export async function apiRequest<T = any>(
         );
       }
 
-      if (i < retries - 1) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, 1000 * Math.pow(2, i)),
-        );
+        if (i < retries - 1) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * Math.pow(2, i)),
+          );
+        }
       }
     }
+    throw lastError;
+  } finally {
+    activeRequests--;
+    eventBus.emit('loading', activeRequests > 0);
   }
-  throw lastError;
 }
 
 export const api = {
