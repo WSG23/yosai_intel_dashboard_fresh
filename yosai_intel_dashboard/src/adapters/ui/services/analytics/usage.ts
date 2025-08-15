@@ -1,4 +1,4 @@
-import { fetchJson } from '../../utils/fetchJson';
+import { fetchJson } from '../../../../../../public/apiClient';
 
 interface TipInteraction {
   id: string;
