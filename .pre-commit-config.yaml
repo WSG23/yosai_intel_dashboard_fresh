@@ -3,18 +3,11 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-yaml
-        files: ^\.github/workflows/
+        exclude: ^deploy/helm/
       - id: end-of-file-fixer
-        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py|requirements.txt|pyproject.toml|\.github/workflows/)
       - id: trailing-whitespace
-        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py|requirements.txt|pyproject.toml|\.github/workflows/)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.7
-    hooks:
-      - id: ruff
-        files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)
   - repo: https://github.com/psf/black
-    rev: 25.1.0
+    rev: 24.10.0
     hooks:
       - id: black
         files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)

@@ -383,15 +383,15 @@ def env_setup(monkeypatch):
 
 @pytest.fixture
 def mock_services(monkeypatch):
-    queries_stub = types.ModuleType("services.analytics_microservice.async_queries")
+    queries_stub = types.ModuleType("services.analytics.async_queries")
     queries_stub.fetch_dashboard_summary = AsyncMock(return_value={"status": "ok"})
     queries_stub.fetch_access_patterns = AsyncMock(return_value={"days": 7})
     monkeypatch.setitem(
-        sys.modules, "services.analytics_microservice.async_queries", queries_stub
+        sys.modules, "services.analytics.async_queries", queries_stub
     )
     monkeypatch.setitem(
         sys.modules,
-        "yosai_intel_dashboard.src.services.analytics_microservice.async_queries",
+        "yosai_intel_dashboard.src.services.analytics.async_queries",
         queries_stub,
     )
 
@@ -409,16 +409,16 @@ def mock_services(monkeypatch):
 
     dummy_service = DummyAnalyticsService()
     analytics_stub = types.ModuleType(
-        "services.analytics_microservice.analytics_service"
+        "services.analytics.analytics_service"
     )
     analytics_stub.AnalyticsService = DummyAnalyticsService
     analytics_stub.get_analytics_service = lambda *a, **k: dummy_service
     monkeypatch.setitem(
-        sys.modules, "services.analytics_microservice.analytics_service", analytics_stub
+        sys.modules, "services.analytics.analytics_service", analytics_stub
     )
     monkeypatch.setitem(
         sys.modules,
-        "yosai_intel_dashboard.src.services.analytics_microservice.analytics_service",
+        "yosai_intel_dashboard.src.services.analytics.analytics_service",
         analytics_stub,
     )
 
@@ -432,7 +432,7 @@ def _load_app(dummy_service, secret: str | None):
         os.environ.pop("JWT_SECRET_KEY", None)
 
     spec = importlib.util.spec_from_file_location(
-        "services.analytics_microservice.app",
+        "services.analytics.app",
         SERVICES_PATH / "analytics_microservice" / "app.py",
     )
     module = importlib.util.module_from_spec(spec)

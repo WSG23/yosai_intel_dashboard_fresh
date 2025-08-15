@@ -49,7 +49,7 @@ def test_gateway_end_to_end(tmp_path):
             .with_env("REDIS_HOST", redis_host)
             .with_env("REDIS_PORT", redis_port)
             .with_command(
-                "python -m uvicorn services.analytics_microservice.app:app --host 0.0.0.0 --port 8001"
+                "python -m uvicorn services.analytics.app:app --host 0.0.0.0 --port 8001"
             )
         )
         analytics.start()

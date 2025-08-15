@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 import pandas as pd
 import yaml
 from joblib import Parallel, delayed
+from pydantic import BaseModel, ConfigDict, ValidationError
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.inspection import permutation_importance
 
@@ -17,6 +18,35 @@ from yosai_intel_dashboard.models.ml.feature_store import FeastFeatureStore
 from yosai_intel_dashboard.models.ml.model_registry import ModelRegistry
 
 logger = logging.getLogger(__name__)
+
+
+class _EventDataFrame(BaseModel):
+    """Schema describing required columns for event data."""
+
+    timestamp: List[Any]
+    person_id: List[Any]
+    door_id: List[Any]
+    access_result: List[Any]
+
+    model_config = ConfigDict(extra="allow")
+
+
+def _validate_events(df: pd.DataFrame) -> None:
+    """Ensure *df* contains all required columns.
+
+    Raises
+    ------
+    ValueError
+        If any required column is missing.
+    """
+
+    try:
+        _EventDataFrame.model_validate(df.to_dict(orient="list"))
+    except ValidationError as exc:  # pragma: no cover - exercised via tests
+        missing = {err["loc"][0] for err in exc.errors() if err["type"] == "missing"}
+        raise ValueError(
+            f"Missing required columns: {', '.join(sorted(missing))}"
+        ) from exc
 
 
 @dataclass
@@ -71,6 +101,7 @@ class FeaturePipeline(BaseEstimator, TransformerMixin):
 
     # ------------------------------------------------------------------
     def fit(self, X: pd.DataFrame, y: Any | None = None) -> "FeaturePipeline":
+        _validate_events(X)
         df = preprocess_events(X)
         if not self.feature_list:
             self.feature_list = df.columns.tolist()
@@ -82,6 +113,7 @@ class FeaturePipeline(BaseEstimator, TransformerMixin):
 
     # ------------------------------------------------------------------
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        _validate_events(X)
         df = preprocess_events(X)
         for entry in self.transformers.values():
             transformed = entry.transformer.transform(df[entry.columns])

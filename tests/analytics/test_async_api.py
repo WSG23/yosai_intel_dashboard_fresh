@@ -24,7 +24,7 @@ def test_chart_bad_type():
 
 def test_websocket_updates():
     client = TestClient(app)
-    with client.websocket_connect("/ws/analytics") as ws:
+    with client.websocket_connect("/api/v1/ws/analytics") as ws:
         trigger_callback(CallbackType.ANALYTICS_UPDATE, {"a": 1})
         data = ws.receive_text()
         assert json.loads(data)["a"] == 1

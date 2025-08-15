@@ -16,6 +16,7 @@ interface ResponsiveImageProps
 const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
   sources,
   src,
+  alt = '',
   ...imgProps
 }) => {
   const { saveData } = usePreferencesStore();
@@ -26,7 +27,7 @@ const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
 
   if (shouldReduce) {
     const lowSrc = src ?? sources[0]?.srcSet;
-    return <img {...imgProps} src={lowSrc} />;
+    return <img alt={alt} {...imgProps} src={lowSrc} />;
   }
 
   return (
@@ -34,7 +35,7 @@ const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
       {sources.map((source, index) => (
         <source key={index} {...source} />
       ))}
-      <img {...imgProps} src={src} />
+      <img alt={alt} {...imgProps} src={src} />
     </picture>
   );
 };

@@ -1,5 +1,5 @@
 import asyncio
-from yosai_intel_dashboard.src.services.analytics_microservice import queries
+from yosai_intel_dashboard.src.services.analytics import queries
 
 
 class FakePool:

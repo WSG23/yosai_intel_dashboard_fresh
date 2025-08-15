@@ -120,15 +120,9 @@ def execute_query(
         ms = int(timeout_seconds * 1000)
         try:
             if db_type == "postgresql":
-                try:
-                    conn.execute("SET LOCAL statement_timeout = %s", (ms,))
-                except Exception:
-                    conn.execute(f"SET LOCAL statement_timeout = {int(ms)}")
+                conn.execute("SET LOCAL statement_timeout = %s", (ms,))
             elif db_type == "sqlite":
-                try:
-                    conn.execute("PRAGMA busy_timeout = ?", (ms,))
-                except Exception:
-                    conn.execute(f"PRAGMA busy_timeout = {int(ms)}")
+                conn.execute("PRAGMA busy_timeout = ?", (ms,))
         except Exception:
             pass  # pragma: no cover - best effort
     try:

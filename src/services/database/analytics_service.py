@@ -1,156 +1,87 @@
-"""Database-backed analytics service with in-memory caching.
+"""Asynchronous analytics helpers using a shared connection pool.
 
-This module provides a façade around a :class:`DatabaseManager`. The service
-validates connectivity before executing any analytics queries and keeps results
-in a simple in-memory cache with an expiration TTL. Individual queries are
-executed via private asynchronous helpers which each handle their own
-exceptions, returning fallback values instead of bubbling up errors.
+The previous implementation issued raw SQL strings directly against
+database connections which made it easy to accidentally introduce SQL
+injection vulnerabilities.  This module now relies on SQLAlchemy's
+``text`` construct and parameter binding which ensures that any dynamic
+values are safely escaped.  Connection pooling is centralised via the
+``build_async_engine`` factory so all services share the same
+``AsyncEngine`` instance.
 """
 
 from __future__ import annotations
 
 import asyncio
-import time
-from collections.abc import Mapping
 from typing import Any, Dict, List
 
-from src.infrastructure.database.manager import DatabaseManager
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from yosai_intel_dashboard.src.database.async_engine_factory import build_async_engine
 
-class ConnectionRetryExhausted(Exception):
-    """Raised when connection retry attempts are exhausted."""
+try:  # optional import to keep tests lightweight
+    from yosai_intel_dashboard.src.infrastructure.config import get_database_config
+except Exception:  # pragma: no cover - minimal stub for tests
+    def get_database_config():  # type: ignore
+        class _Cfg:
+            type = "sqlite"
+            async_pool_min_size = 1
+            async_pool_max_size = 1
+            async_connection_timeout = 30
+
+            def get_connection_string(self) -> str:
+                return "sqlite+aiosqlite:///:memory:"
+
+        return _Cfg()
 
 
 class AnalyticsService:
-    """Retrieve analytics information from the database.
-
-    Parameters
-    ----------
-    db_manager:
-        Object implementing :class:`DatabaseManagerProtocol` used to obtain
-        database connections.
-    ttl:
-        Number of seconds analytics results remain cached.  Defaults to ``60``.
-    """
+    """Retrieve analytics information using parameterised queries."""
 
     def __init__(
-        self,
-        db_manager: DatabaseManager,
-        *,
-        ttl: int = 60,
+        self, session_factory: async_sessionmaker[AsyncSession] | None = None
     ) -> None:
-        self._db_manager = db_manager
-        self._ttl = ttl
-        self._cache: Dict[str, Any] | None = None
-        self._expiry: float = 0.0
+        if session_factory is None:
+            engine: AsyncEngine = build_async_engine(get_database_config())
+            session_factory = async_sessionmaker(engine, expire_on_commit=False)
+        self._session_factory = session_factory
 
-    # ------------------------------------------------------------------
-    # Cache helpers
-    # ------------------------------------------------------------------
-    def _cache_valid(self) -> bool:
-        return self._cache is not None and time.time() < self._expiry
+    async def _fetch_user_count(self, session: AsyncSession) -> int:
+        result = await session.execute(text("SELECT COUNT(*) AS count FROM users"))
+        row = result.mappings().first()
+        return int(row["count"]) if row else 0
 
-    def _get_cached(self) -> Dict[str, Any] | None:
-        return self._cache if self._cache_valid() else None
-
-    def _set_cache(self, value: Dict[str, Any]) -> None:
-        self._cache = value
-        self._expiry = time.time() + self._ttl
-
-    # ------------------------------------------------------------------
-    # Query helpers
-    # ------------------------------------------------------------------
-    async def _fetch_user_count(self, conn: Any) -> int:
-        """Return number of users in the system.
-
-        Any exceptions are swallowed and ``0`` is returned instead.
-        """
-
-        query = "SELECT COUNT(*) as count FROM users"
-        try:
-            rows = await asyncio.to_thread(conn.execute_query, query)
-            if isinstance(rows, list) and rows:
-                first = rows[0]
-                if isinstance(first, Mapping):
-                    return int(first.get("count", 0))
-                if isinstance(first, (list, tuple)):
-                    return int(first[0])
-            return 0
-        except Exception:
-            return 0
-
-    async def _fetch_recent_events(self, conn: Any) -> List[Mapping[str, Any]]:
-        """Return recent event records.
-
-        Any exceptions are swallowed and an empty list is returned instead.
-        """
-
-        query = (
+    async def _fetch_recent_events(
+        self, session: AsyncSession, *, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        stmt = text(
             "SELECT event_type, status, timestamp "
-            "FROM access_events ORDER BY timestamp DESC LIMIT 10"
+            "FROM access_events ORDER BY timestamp DESC LIMIT :limit"
         )
-        try:
-            rows = await asyncio.to_thread(conn.execute_query, query)
-            if not rows:
-                return []
-            return list(rows)
-        except Exception:
-            return []
+        result = await session.execute(stmt, {"limit": limit})
+        return [dict(r) for r in result.mappings()]
 
-    async def _gather_analytics(self, conn: Any) -> Dict[str, Any]:
-        user_count, recent_events = await asyncio.gather(
-            self._fetch_user_count(conn),
-            self._fetch_recent_events(conn),
-        )
-        return {"user_count": user_count, "recent_events": recent_events}
+    async def get_analytics(self, *, limit: int = 10) -> Dict[str, Any]:
+        """Return basic analytics information.
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-    async def get_analytics(self) -> Dict[str, Any]:
-        """Return analytics data, using the cache when possible."""
+        Parameters
+        ----------
+        limit:
+            Maximum number of recent events to return.  Provided values are
+            bound as parameters preventing SQL injection.
+        """
 
-        cached = self._get_cached()
-        if cached is not None:
-            return cached
+        async with self._session_factory() as session:
+            user_count, recent_events = await asyncio.gather(
+                self._fetch_user_count(session),
+                self._fetch_recent_events(session, limit=limit),
+            )
 
-        if not self._db_manager.health_check():
-            return {
-                "status": "error",
-                "message": "database health check failed",
-                "error_code": "health_check_failed",
-            }
-
-        connection = None
-        try:
-            connection = self._db_manager.get_connection()
-            data = await self._gather_analytics(connection)
-            result = {"status": "success", "data": data}
-            self._set_cache(result)
-            return result
-        except (TimeoutError, ConnectionRetryExhausted) as exc:
-
-            return {
-                "status": "error",
-                "message": str(exc),
-                "error_code": "pool_timeout",
-            }
-        except Exception as exc:  # pragma: no cover - best effort
-            return {
-                "status": "error",
-                "message": str(exc),
-                "error_code": "query_failed",
-            }
-        finally:
-            if connection is not None:
-                try:
-                    self._db_manager.release_connection(connection)
-                except Exception:
-                    pass
-
-        result = {"status": "success", "data": data}
-        self._set_cache(result)
-        return result
+        return {
+            "status": "success",
+            "data": {"user_count": user_count, "recent_events": recent_events},
+        }
 
 
 __all__ = ["AnalyticsService"]
+

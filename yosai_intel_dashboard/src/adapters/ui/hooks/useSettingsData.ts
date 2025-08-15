@@ -1,12 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { settingsAPI, UserSettings } from '../api/settings';
 
-export interface UserSettings {
-  theme: string;
-  itemsPerPage: number;
-}
-
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
 const DEFAULT_SETTINGS: UserSettings = { theme: 'light', itemsPerPage: 10 };
 let cachedSettings: UserSettings | null = null;
 
@@ -27,15 +21,7 @@ export default function useSettingsData() {
       setLoading(true);
     }
     try {
-      const res = await fetch(`${API_BASE_URL}/settings`, {
-        signal: controller.signal,
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        throw new Error('Failed to fetch settings');
-      }
-      const payload = await res.json();
-      const data: UserSettings = payload.data ? payload.data : payload;
+      const data = await settingsAPI.get(controller.signal);
       cachedSettings = data;
       setSettings(data);
     } catch (err: unknown) {

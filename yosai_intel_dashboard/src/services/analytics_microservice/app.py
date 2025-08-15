@@ -61,18 +61,19 @@ async def _configure_discovery() -> None:
     if addr := _discovery.get_service("analytics-db"):
         os.environ.setdefault("DATABASE_URL", f"postgresql://{addr}/analytics")
 
+
 # Create the analytics service once on startup.  The tests provide a stub for
 # ``create_analytics_service`` so no heavy initialisation happens here.
 service = create_analytics_service()
 
 
-@app.get("/v1/analytics/dashboard-summary")
+@app.get("/api/v1/analytics/dashboard-summary")
 async def dashboard_summary(_: dict = Depends(verify_token)) -> Dict[str, object]:
     """Return a summary of analytics data."""
     return service.get_dashboard_summary()
 
 
-@app.get("/v1/analytics/access-patterns")
+@app.get("/api/v1/analytics/access-patterns")
 @rate_limit_decorator()
 async def access_patterns(
     days: int = 7,

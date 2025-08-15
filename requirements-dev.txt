@@ -37,3 +37,6 @@ prometheus_client==0.22.1
 jsonschema>=4.21.1
 hypothesis>=6.99
 uvicorn==0.34.0
+pydocstyle==6.3.0
+mkdocs>=1.5
+mkdocstrings[python]>=0.24
