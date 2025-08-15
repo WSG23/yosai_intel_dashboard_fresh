@@ -276,7 +276,7 @@ See [docs/requirements.md](docs/requirements.md) for details on installing them.
 
 5. **Set up environment:**
     ```bash
-     cp .env.example .env
+     cp .env.local.example .env  # or copy .env.production.example for production
      # Generate random development secrets
      python scripts/generate_dev_secrets.py >> .env
     # Edit .env with your configuration (e.g. set HOST and database info)
@@ -290,7 +290,7 @@ See [docs/requirements.md](docs/requirements.md) for details on installing them.
       AUTH0_AUDIENCE=https://api.example.com
     ```
 `setup_dev_mode` checks for the `DB_PASSWORD` variable. The sample
-`.env.example` includes a placeholder value. If this variable is
+`.env.local.example` includes a placeholder value. If this variable is
 missing only a warning is emitted on startup, but database features
 may not function.
 
@@ -300,7 +300,9 @@ may not function.
 ### Required Environment Variables
 
 The application reads configuration from `.env` or your shell before
-startup. Ensure the following variables are set:
+startup. Refer to [docs/configuration_reference.md](docs/configuration_reference.md)
+for a complete list of supported variables. Ensure the following
+variables are set:
 
 - `SECRET_KEY` – session signing key
 - `DB_PASSWORD` – database user password
