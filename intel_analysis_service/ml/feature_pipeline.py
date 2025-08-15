@@ -13,8 +13,10 @@ from typing import Iterable
 
 try:  # pragma: no cover - optional dependency
     import opentelemetry.trace as trace
+
     tracer = trace.get_tracer(__name__)
 except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
+
     class _DummySpan:
         def __enter__(self):
             return self
@@ -34,6 +36,7 @@ import pandas as pd
 
 try:  # pragma: no cover - optional dependency
     import pyarrow as pa
+
     _HAVE_ARROW = hasattr(pa, "Table")
 except Exception:  # pragma: no cover - pyarrow not installed or stubbed
     pa = None
@@ -58,6 +61,8 @@ def build_context_features(
     *,
     cache_path: str | Path | None = None,
     use_pyarrow: bool = True,
+    streaming: bool = True,
+    chunk_size: int | None = 100_000,
 ) -> pd.DataFrame:
     """Combine heterogeneous event streams into a single feature set.
 
@@ -66,6 +71,20 @@ def build_context_features(
     weather_events, events, transport_events, social_signals, infrastructure_events:
         DataFrames with a ``timestamp`` column.  The remaining columns represent
         features to be used for modeling.
+    cache_path:
+        Optional path where the resulting DataFrame will be cached as parquet.
+    use_pyarrow:
+        When ``True`` and pyarrow is installed the join is executed using
+        ``pyarrow.Table.join`` which is generally faster and more memory
+        efficient.
+    streaming:
+        If ``True`` (default) the pandas fallback performs a streaming/ chunked
+        join to reduce peak memory usage.  When ``False`` the previous
+        ``pandas.merge`` based implementation is used, which is useful for
+        benchmarking.
+    chunk_size:
+        Number of rows to process per chunk when ``streaming`` is enabled.  If
+        ``None`` the entire dataset is processed in one pass.
 
     Returns
     -------
@@ -90,17 +109,41 @@ def build_context_features(
             return pd.read_parquet(cache_file)
 
         if use_pyarrow and _HAVE_ARROW:
-            tables = [pa.Table.from_pandas(df, preserve_index=False) for df in normalized]
+            tables = [
+                pa.Table.from_pandas(df, preserve_index=False) for df in normalized
+            ]
             merged = reduce(
-                lambda left, right: left.join(right, keys="timestamp", join_type="full outer"),
+                lambda left, right: left.join(
+                    right, keys="timestamp", join_type="full outer"
+                ),
                 tables,
             )
             features = merged.to_pandas()
         else:
-            features = reduce(
-                lambda left, right: pd.merge(left, right, on="timestamp", how="outer"),
-                normalized,
-            )
+            if streaming:
+                frames = [df.set_index("timestamp") for df in normalized]
+                index = frames[0].index
+                for frame in frames[1:]:
+                    index = index.union(frame.index)
+                index = index.sort_values()
+                if chunk_size and len(index) > chunk_size:
+                    chunks: list[pd.DataFrame] = []
+                    for start in range(0, len(index), chunk_size):
+                        idx = index[start : start + chunk_size]
+                        chunk = pd.concat([f.reindex(idx) for f in frames], axis=1)
+                        chunks.append(chunk)
+                    merged = pd.concat(chunks)
+                else:
+                    merged = pd.concat(frames, axis=1).reindex(index)
+                merged.index.name = "timestamp"
+                features = merged.reset_index()
+            else:
+                features = reduce(
+                    lambda left, right: pd.merge(
+                        left, right, on="timestamp", how="outer"
+                    ),
+                    normalized,
+                )
 
         features = features.sort_values("timestamp").fillna(0)
 
