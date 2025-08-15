@@ -18,3 +18,17 @@ repos:
     hooks:
       - id: black
         files: ^(yosai_intel_dashboard/src/utils/dependency_checker.py|yosai_intel_dashboard/src/repository/requirements.py)
+      - id: black
+        name: black-services
+        files: ^(services/|intel_analysis_service/)
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        files: ^(services/|intel_analysis_service/)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        files: ^(services/|intel_analysis_service/)
+        args: [--ignore-missing-imports, --follow-imports=skip]
