@@ -1,6 +1,6 @@
 # Contributing to Yōsai Intel Dashboard
 
-Thank you for considering a contribution! Follow these steps to get the development environment ready.
+Thank you for considering a contribution! For a full walkthrough of the development environment using Docker or local processes, see [docs/getting-started.md](docs/getting-started.md). Follow these steps to get the development environment ready.
 
 ## Setup
 

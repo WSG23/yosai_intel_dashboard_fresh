@@ -21,7 +21,7 @@ An AI-powered modular security intelligence dashboard for physical access contro
 
 ## Setup & Deployment
 
-See [Setup and Deployment Guide](docs/setup_and_deployment.md) for development, testing, and production deployment instructions.
+See [Getting Started](docs/getting-started.md) for Docker and local development instructions.
 
 ## Interactive Visualizations
 
@@ -167,7 +167,7 @@ This project follows a fully modular design built around a dependency injection 
 - [Service Ownership Guide](docs/service_ownership.md)
 - [Runbooks](docs/runbooks)
 - [Training Overview](docs/training/overview.md)
-- [Developer Onboarding](docs/developer_onboarding.md)
+- [Getting Started](docs/getting-started.md)
 - [Architecture Decision Records](docs/adr)
 
 <p align="center">
@@ -527,10 +527,10 @@ The gateway starts a Kafka-based `EventProcessor` for publishing `AccessEvent`
 messages. Configure brokers via `KAFKA_BROKERS` (defaults to `localhost:9092`).
 The processor shuts down gracefully together with the gateway service.
 
-## Developer Onboarding
+## Getting Started
 
-For a more detailed walkthrough of the environment setup and testing workflow,
-see [developer_onboarding.md](docs/developer_onboarding.md).
+For a detailed walkthrough of the environment setup and testing workflow,
+see [getting-started.md](docs/getting-started.md).
 
 ### Troubleshooting
 
