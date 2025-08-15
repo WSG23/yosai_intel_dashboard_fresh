@@ -53,7 +53,9 @@ def main() -> None:
     if validate_configuration():
         print("Next steps:")
         print(" 1. Review the generated .env file and fill in required values.")
-        print(" 2. Start the application with `python start_api.py` (unified startup).")
+        print(
+            " 2. Start the application with `python services/api/start_api.py` (unified startup)."
+        )
     else:
         print("Please resolve configuration errors before starting the application.")
 

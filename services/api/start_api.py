@@ -18,7 +18,8 @@ from typing import Any, Callable, Type
 logger = logging.getLogger(__name__)
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# start_api.py now lives under services/api/, so the project root is two levels up
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 def _noop_loader(key: str) -> None:

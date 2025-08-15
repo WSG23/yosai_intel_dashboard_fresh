@@ -11,7 +11,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt ./
+COPY services/api/requirements.txt ./
 # hadolint ignore=SC1091
 RUN python -m venv /opt/venv \
     && grep -v '^apache-flink' requirements.txt > requirements.filtered \
@@ -37,12 +37,12 @@ RUN set -eux; \
     fi
 WORKDIR /app
 COPY . /app
-COPY ../yosai_intel_dashboard /app/yosai_intel_dashboard
-RUN chmod 0755 docker-entrypoint.sh \
+COPY yosai_intel_dashboard /app/yosai_intel_dashboard
+RUN chmod 0755 services/api/docker-entrypoint.sh \
     && find /app -type f -name '*.sh' -exec chmod 0755 {} \; \
     && find /app -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.conf' \) -exec chmod 0644 {} \; \
     && chown -R appuser:appuser /app
 USER appuser
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["start_api.py"]
+ENTRYPOINT ["/app/services/api/docker-entrypoint.sh"]
+CMD ["services/api/start_api.py"]

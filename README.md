@@ -19,6 +19,14 @@ An AI-powered modular security intelligence dashboard for physical access contro
 2. Use the navigation menu to access analytics, real-time monitoring, uploads, and settings.
 3. For tips on working with alerts and customizing your view, see the [User Guide](docs/user_guide.md).
 
+## Project Structure
+
+- `src/` – runtime Python modules shared across the platform.
+- `services/` – standalone microservices (e.g. `services/api`).
+- `tests/` – test suite.
+
+Place new Python modules under `src/` and create new microservices inside `services/<service_name>/` using lowercase names with underscores.
+
 ## Setup & Deployment
 
 See [Setup and Deployment Guide](docs/setup_and_deployment.md) for development, testing, and production deployment instructions.
@@ -390,7 +398,7 @@ actions and role assignment.
 7. **Run the application (development only):**
    The unified startup script warms the cache and loads variables from `.env` automatically.
    ```bash
-   python start_api.py  # use only for local development
+   python services/api/start_api.py  # use only for local development
    ```
    For production deployments start a WSGI server instead:
    ```bash
@@ -422,7 +430,7 @@ docker-compose \
   -f docker-compose.kafka.yml up --build
 ```
 
-`python start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python start_api.py` so the variables are loaded correctly.
+`python services/api/start_api.py` loads variables from `.env` before launching the server. Ensure the file exists or pass the required values via `--env-file` when running the container. If you override the default command in Docker Compose, run `python services/api/start_api.py` so the variables are loaded correctly.
 
 The Dockerfiles add `yosai_intel_dashboard/src` to the container `PYTHONPATH` so services load the clean architecture modules. This brings up the web UI on `http://localhost:8080` and the API gateway on `http://localhost:8081`.
 
@@ -595,7 +603,7 @@ following steps:
    plain HTTP version from loading. Use the browser's development settings to
    clear site data, including service workers and caches, and remove any HSTS
    entries before reloading the page.
-7. If `python start_api.py` fails with `NameError: name '_env_file_callback' is not defined`,
+7. If `python services/api/start_api.py` fails with `NameError: name '_env_file_callback' is not defined`,
    Flask was likely installed incorrectly. Reinstall it to restore the missing
    function:
    ```bash
@@ -611,9 +619,9 @@ Using Docker Compose to start the microservices stack:
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
-The container entrypoint runs `python start_api.py`, which loads the `.env` file before
+The container entrypoint runs `python services/api/start_api.py`, which loads the `.env` file before
 starting the server. Make sure the file exists or supply one via Docker's
-`--env-file` option. When deploying manually or via Kubernetes, run `python start_api.py` to ensure
+`--env-file` option. When deploying manually or via Kubernetes, run `python services/api/start_api.py` to ensure
 environment variables from `.env` are available to the app. The script also
 adds `yosai_intel_dashboard/src` to `PYTHONPATH` so the application can locate
 modules in the clean architecture layout.
@@ -1080,7 +1088,7 @@ DB_HOST=localhost
 DB_USER=postgres
 REDIS_HOST=localhost
 SECRET_KEY=supersecret
-python start_api.py
+python services/api/start_api.py
 ```
 
 These values override `database.host`, `database.user`, `cache.host` and
@@ -1104,10 +1112,10 @@ Set `YOSAI_SCHEMA_PATH` to override this schema location when needed.
 Example:
 
 ```bash
-YOSAI_ENV=production python start_api.py
+YOSAI_ENV=production python services/api/start_api.py
 # or
-YOSAI_CONFIG_FILE=/path/to/custom.yaml python start_api.py
-YOSAI_APP_MODE=simple python start_api.py
+YOSAI_CONFIG_FILE=/path/to/custom.yaml python services/api/start_api.py
+YOSAI_APP_MODE=simple python services/api/start_api.py
 ```
 
 #### Dynamic Constants

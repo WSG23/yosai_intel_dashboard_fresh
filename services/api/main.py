@@ -11,6 +11,7 @@ app = FastAPI()
 app.add_middleware(BodySizeLimitMiddleware, max_bytes=50 * 1024 * 1024)
 app.add_middleware(SecurityHeadersMiddleware)
 
+
 @app.route("/health")
 async def health(request: Request) -> JSONResponse:
     return JSONResponse({"status": "ok"})

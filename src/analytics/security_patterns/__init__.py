@@ -140,9 +140,7 @@ def _dispatch_security_events(prepared: pd.DataFrame, threats: List[Threat]) -> 
         manager = TrulyUnifiedCallbacks()
     if threats:
         manager.trigger_event(SecurityEvent.THREAT_DETECTED, {"threats": threats})
-    manager.trigger_event(
-        SecurityEvent.ANALYSIS_COMPLETE, {"records": len(prepared)}
-    )
+    manager.trigger_event(SecurityEvent.ANALYSIS_COMPLETE, {"records": len(prepared)})
 
 
 # ---------------------------------------------------------------------------

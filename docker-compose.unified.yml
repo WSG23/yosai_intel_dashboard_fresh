@@ -9,7 +9,7 @@ x-yosai-env: &yosai-env
 services:
   dashboard:
     build: .
-    command: ["python", "start_api.py"]
+    command: ["python", "services/api/start_api.py"]
     environment:
       <<: *yosai-env
       YOSAI_SERVICE_NAME: dashboard

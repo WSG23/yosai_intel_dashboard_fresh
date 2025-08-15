@@ -4,7 +4,7 @@ This guide covers solutions to common issues when setting up or running the dash
 
 ## Flask CLI NameError
 
-If running `python start_api.py` (the unified startup script) fails with a traceback ending in:
+If running `python services/api/start_api.py` (the unified startup script) fails with a traceback ending in:
 
 ```
 NameError: name '_env_file_callback' is not defined

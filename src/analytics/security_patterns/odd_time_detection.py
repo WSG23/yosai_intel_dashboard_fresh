@@ -59,9 +59,9 @@ def detect_odd_time(df: pd.DataFrame) -> Iterator[Threat]:
     deviations = varied[
         (varied["hour"] - varied["mean_hour"]).abs() > 2 * varied["std_hour"]
     ]
-    first_offenders = (
-        deviations.sort_index().drop_duplicates("person_id")[["person_id", "hour"]]
-    )
+    first_offenders = deviations.sort_index().drop_duplicates("person_id")[
+        ["person_id", "hour"]
+    ]
     threats.extend(
         Threat("odd_time_access", {"person_id": row.person_id, "hour": int(row.hour)})
         for row in first_offenders.itertuples(index=False)

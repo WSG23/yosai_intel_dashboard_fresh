@@ -4,8 +4,8 @@ FROM python:3.11-slim@sha256:0ce77749ac83174a31d5e107ce0cfa6b28a2fd6b0615e029d9d
 WORKDIR /app
 
 # Install system packages
-RUN apt-get update \ 
-    && apt-get install -y --no-install-recommends build-essential curl \ 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -35,7 +35,7 @@ RUN set -eux; \
 WORKDIR /app
 COPY . /app
 COPY ../docker-entrypoint.sh ./docker-entrypoint.sh
-COPY ../start_api.py ./start_api.py
+COPY ../../services/api/start_api.py ./start_api.py
 RUN chmod +x docker-entrypoint.sh \
     && rm -rf /app/yosai_intel_dashboard/tests \
     && chown -R appuser:appuser /app
