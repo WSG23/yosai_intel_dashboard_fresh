@@ -14,6 +14,9 @@ import (
 	"github.com/sony/gobreaker"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // HTTPDoer is the subset of http.Client used by this package. It enables
@@ -79,6 +82,9 @@ func NewTLSClient(certFile, keyFile, caFile string) (*Client, error) {
 func (c *Client) DoJSON(ctx context.Context, req *http.Request, dst any) (err error) {
 	ctx, cid := EnsureCorrelationID(ctx)
 	ctx, rid := EnsureRequestID(ctx)
+	ctx, span := otel.Tracer("httpx").Start(ctx, req.Method+" "+req.URL.Host,
+		trace.WithAttributes(attribute.String("http.method", req.Method)))
+	defer span.End()
 	req = req.WithContext(ctx)
 	if req.Header.Get(CorrelationIDHeader) == "" {
 		req.Header.Set(CorrelationIDHeader, cid)
@@ -101,15 +107,18 @@ func (c *Client) DoJSON(ctx context.Context, req *http.Request, dst any) (err er
 		backoff *= 2
 	}
 	if err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("do request: %w", err)
 	}
 	defer func() {
 		if cerr := resp.Body.Close(); cerr != nil && err == nil {
 			err = fmt.Errorf("close body: %w", cerr)
+			span.RecordError(err)
 		}
 	}()
 
 	if err := json.NewDecoder(resp.Body).Decode(dst); err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("decode json: %w", err)
 	}
 	return nil

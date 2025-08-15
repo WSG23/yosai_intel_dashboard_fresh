@@ -63,3 +63,31 @@ func RequireRole(role string) func(http.Handler) http.Handler {
 		})
 	}
 }
+
+// RequireRoutePermission checks roles and permissions against configured routes.
+func RequireRoutePermission(s *rbac.RBACService) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := auth.FromContext(r.Context())
+			if !ok {
+				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+				return
+			}
+			if authz.HasRouteAccess(claims.Roles, claims.Permissions, r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if s != nil {
+				perm, ok := authz.PermissionForRoute(r.URL.Path)
+				if ok {
+					allowed, err := s.HasPermission(r.Context(), claims.Subject, perm)
+					if err == nil && allowed {
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
+			}
+			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+		})
+	}
+}

@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS outbox (
     published_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_outbox_published_at ON outbox(published_at);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_outbox_published_at ON outbox(published_at);

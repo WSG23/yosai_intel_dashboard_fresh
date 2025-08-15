@@ -48,6 +48,7 @@ func TestGatewayRBACRoleAccess(t *testing.T) {
 		{"/api/v1/events/foo", "analyst", false},
 		{"/admin/foo", "admin", true},
 		{"/admin/foo", "viewer", false},
+		{"/public/foo", "", true},
 	}
 
 	for _, c := range cases {

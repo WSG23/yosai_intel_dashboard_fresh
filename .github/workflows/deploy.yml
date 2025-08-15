@@ -16,10 +16,21 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: yosai-dashboard:${{ github.sha }}
+      MIGRATION_STATE: head
     steps:
       - uses: actions/checkout@v3
       - name: Deploy
         run: echo "deploying"
+      - name: Record rollback state
+        run: |
+          mkdir -p deployment
+          echo '{"image": "'${IMAGE_TAG}'", "migration": "'${MIGRATION_STATE}'"}' > deployment/rollback_state.json
+      - uses: actions/upload-artifact@v3
+        with:
+          name: rollback-state
+          path: deployment/rollback_state.json
 
   rollback:
     if: failure()
@@ -27,5 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: rollback-state
+          path: deployment
       - name: Run rollback
         run: deployment/scripts/rollback.sh
