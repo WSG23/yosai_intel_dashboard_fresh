@@ -27,7 +27,7 @@ pytest-asyncio>=0.23
 pytest-dotenv==0.5.2
 memory-profiler>=0.61.0
 selenium>=4.20.0
-pydantic==2.9.2
+pydantic==2.11.7
 dask[distributed]==2024.4.1
 tqdm>=4.0
 aiohttp>=3.8
@@ -36,7 +36,7 @@ testcontainers[postgresql,redis]==3.7.1
 prometheus_client==0.22.1
 jsonschema>=4.21.1
 hypothesis>=6.99
-uvicorn==0.34.0
+uvicorn==0.35.0
 pydocstyle==6.3.0
 mkdocs>=1.5
 mkdocstrings[python]>=0.24
