@@ -29,3 +29,21 @@ python scripts/verify_timescale_migration.py
 ```
 
 The script checks hypertables, migrated event counts, and basic query performance. It exits with a non-zero status if the migration is incomplete.
+
+## Versioned migrations for service databases
+
+Each microservice maintains its own Alembic environment under
+`migrations/versions`. Migrations are named with a service prefix so
+they can evolve independently (for example, `analytics_0001_initial.py`).
+
+When altering a service's database schema:
+
+1. Generate a new migration using Alembic with an incremented version
+   number for that service.
+2. Commit the migration file alongside any corresponding SQL in
+   `migrations`.
+3. Run `alembic upgrade head` within the service container or via the
+   deployment pipeline to apply the change.
+
+This approach ensures each service database can be upgraded in a
+controlled, versioned manner without affecting other services.

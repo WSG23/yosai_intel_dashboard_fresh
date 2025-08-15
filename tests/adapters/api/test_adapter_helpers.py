@@ -69,7 +69,7 @@ def test_setup_security_sets_secret(monkeypatch):
     service = DummyService()
     _configure_app(service)
     monkeypatch.setenv("SECRET_KEY", "test")
-    serializer, _ = _setup_security(service)
+    serializer = _setup_security(service)
     mws = _middleware_names(service.app)
     assert "SecurityHeadersMiddleware" in mws
     assert "CORSMiddleware" in mws
@@ -81,26 +81,21 @@ def test_register_routes_adds_versioned_paths(monkeypatch):
     service = DummyService()
     build_dir = _configure_app(service)
     monkeypatch.setenv("SECRET_KEY", "test")
-    serializer, add_dep = _setup_security(service)
+    serializer = _setup_security(service)
     monkeypatch.setattr(
         "yosai_intel_dashboard.src.services.auth.require_service_token",
         lambda: None,
     )
-    _register_routes(service, build_dir, add_dep)
+    _register_routes(service, build_dir)
     paths = {r.path for r in service.app.routes}
     assert "/api/v1/analytics/patterns" in paths
-    assert "/analytics/patterns" in paths
-
-    client = TestClient(service.app)
-    resp = client.get("/analytics/patterns")
-    assert resp.headers["Warning"].startswith("299")
 
 
 def test_register_upload_endpoints(monkeypatch):
     service = DummyService()
     _configure_app(service)
     monkeypatch.setenv("SECRET_KEY", "test")
-    serializer, add_dep = _setup_security(service)
+    serializer = _setup_security(service)
 
     class DummyValidator:
         def validate_file_upload(self, filename, content):
@@ -120,7 +115,7 @@ def test_register_upload_endpoints(monkeypatch):
     monkeypatch.setattr(container, "get", lambda name: DummyFileProcessor())
     monkeypatch.setattr(container, "has", lambda name: False)
 
-    _register_upload_endpoints(service, serializer, add_dep)
+    _register_upload_endpoints(service, serializer)
 
     paths = {r.path for r in service.app.routes}
     assert "/api/v1/upload" in paths
@@ -129,5 +124,3 @@ def test_register_upload_endpoints(monkeypatch):
     resp = client.get("/api/v1/csrf-token")
     assert resp.status_code == 200
     assert "csrf_token" in resp.json()
-    legacy = client.get("/csrf-token")
-    assert legacy.headers["Warning"].startswith("299")

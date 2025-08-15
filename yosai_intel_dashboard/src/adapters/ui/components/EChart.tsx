@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import * as echarts from 'echarts';
+import type { EChartsOption } from 'echarts';
 
 export interface EChartProps {
-  option: echarts.EChartsOption;
+  option: EChartsOption;
   style?: React.CSSProperties;
 }
 
@@ -10,18 +10,26 @@ const EChart: React.FC<EChartProps> = ({ option, style }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current) return;
-    const chart = echarts.init(ref.current);
-    chart.setOption(option);
-    const handleResize = () => chart.resize();
-    window.addEventListener('resize', handleResize);
+    let chart: any;
+    let resize: (() => void) | undefined;
+    let mounted = true;
+
+    import('echarts').then((echarts) => {
+      if (!mounted || !ref.current) return;
+      chart = echarts.init(ref.current);
+      chart.setOption(option);
+      resize = () => chart.resize();
+      window.addEventListener('resize', resize);
+    });
+
     return () => {
-      window.removeEventListener('resize', handleResize);
-      chart.dispose();
+      mounted = false;
+      if (resize) window.removeEventListener('resize', resize);
+      if (chart) chart.dispose();
     };
   }, [option]);
 
   return <div ref={ref} style={{ width: '100%', height: 300, ...style }} />;
 };
 
-export default EChart;
+export default React.memo(EChart);

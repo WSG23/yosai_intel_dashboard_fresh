@@ -12,3 +12,8 @@ roles:
   service:
     - tasks.enqueue
     - tasks.dequeue
+routes:
+  /api/v1/doors: doors.control
+  /api/v1/analytics: analytics.read
+  /api/v1/events: events.write
+  /admin: admin

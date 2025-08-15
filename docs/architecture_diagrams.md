@@ -24,7 +24,7 @@ sequenceDiagram
     participant DB as Database
 
     U->>FE: Drag or select file
-    FE->>BE: POST /upload
+    FE->>BE: POST /api/v1/upload
     BE->>S: Validate and parse
     S->>DB: Store records
     S-->>BE: Processed analytics

@@ -43,31 +43,46 @@ func TestCacheInvalidation(t *testing.T) {
 	require.NoError(t, err)
 	addr := fmt.Sprintf("%s:%s", host, port.Port())
 
-	client := redis.NewClient(&redis.Options{Addr: addr})
+       client := redis.NewClient(&redis.Options{Addr: addr})
 
-	// Token cache test
-	tcache := gcache.NewTokenCache(client)
-	claims := &auth.EnhancedClaims{RegisteredClaims: jwt.RegisteredClaims{ID: "tok1"}}
-	require.NoError(t, tcache.Set(ctx, "tok1", claims, time.Minute))
-	c, err := tcache.Get(ctx, "tok1")
-	require.NoError(t, err)
-	require.NotNil(t, c)
-	require.NoError(t, tcache.Delete(ctx, "tok1"))
-	c, err = tcache.Get(ctx, "tok1")
-	require.NoError(t, err)
-	assert.Nil(t, c)
+       // Token cache test
+       tcache := gcache.NewTokenCache(client)
+       claims := &auth.EnhancedClaims{RegisteredClaims: jwt.RegisteredClaims{ID: "tok1"}}
+       require.NoError(t, tcache.Set(ctx, "tok1", claims, time.Minute))
+       c, err := tcache.Get(ctx, "tok1")
+       require.NoError(t, err)
+       require.NotNil(t, c)
+       require.NoError(t, tcache.Delete(ctx, "tok1"))
+       c, err = tcache.Get(ctx, "tok1")
+       require.NoError(t, err)
+       assert.Nil(t, c)
 
-	// Decision cache test
-	os.Setenv("REDIS_HOST", host)
-	os.Setenv("REDIS_PORT", port.Port())
-	dcache := icache.NewRedisCache()
-	decision := icache.Decision{PersonID: "p1", DoorID: "d1", Decision: "allow"}
-	require.NoError(t, dcache.SetDecision(ctx, decision))
-	d, err := dcache.GetDecision(ctx, "p1", "d1")
-	require.NoError(t, err)
-	require.NotNil(t, d)
-	require.NoError(t, dcache.InvalidateDecision(ctx, "p1", "d1"))
-	d, err = dcache.GetDecision(ctx, "p1", "d1")
-	require.NoError(t, err)
-	assert.Nil(t, d)
+       // TTL expiry for token cache
+       require.NoError(t, tcache.Set(ctx, "tok2", claims, time.Second))
+       time.Sleep(2 * time.Second)
+       c, err = tcache.Get(ctx, "tok2")
+       require.NoError(t, err)
+       assert.Nil(t, c)
+
+       // Decision cache test with TTL
+       os.Setenv("REDIS_HOST", host)
+       os.Setenv("REDIS_PORT", port.Port())
+       os.Setenv("CACHE_TTL_SECONDS", "1")
+       dcache := icache.NewRedisCache()
+       decision := icache.Decision{PersonID: "p1", DoorID: "d1", Decision: "allow"}
+       require.NoError(t, dcache.SetDecision(ctx, decision))
+       time.Sleep(2 * time.Second)
+       d, err := dcache.GetDecision(ctx, "p1", "d1")
+       require.NoError(t, err)
+       assert.Nil(t, d)
+
+       // Reset and test explicit invalidation
+       require.NoError(t, dcache.SetDecision(ctx, decision))
+       d, err = dcache.GetDecision(ctx, "p1", "d1")
+       require.NoError(t, err)
+       require.NotNil(t, d)
+       require.NoError(t, dcache.InvalidateDecision(ctx, "p1", "d1"))
+       d, err = dcache.GetDecision(ctx, "p1", "d1")
+       require.NoError(t, err)
+       assert.Nil(t, d)
 }
