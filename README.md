@@ -30,6 +30,12 @@ pytest tests/test_integration.py  # integration smoke test
 
 See the [Observability guide](docs/observability.md) and the [Testing guide](docs/testing.md) for additional details.
 
+## Repository Layout
+
+- `src/` – runtime Python packages and shared modules
+- `services/<service_name>/` – deployable microservices
+- `tests/` – shared test suite
+
 ## Interactive Visualizations
 
 The dashboard now includes interactive security maps and relationship graphs powered by **Three.js** and **D3.js**. Both components are responsive and include keyboard navigation and ARIA labels for accessibility.
@@ -64,7 +70,7 @@ Benchmark different settings with tools like `time`; keeping `NUM_WORKERS=1` ret
 
 ## Migration Status
 
-The clean architecture migration is **COMPLETE**. All source code now resides under `yosai_intel_dashboard/src/` and requires **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
+The clean architecture migration is **COMPLETE**. Runtime Python modules now live under `src/` and deployable microservices under `services/`. The project requires **Python 3.11+**. The compatibility layer exposing top-level packages has been removed; import modules directly from the canonical package, e.g. `from yosai_intel_dashboard.src.core import ...`.
 
 ## Clean Architecture Structure
 
