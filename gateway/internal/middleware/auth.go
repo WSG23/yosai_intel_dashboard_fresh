@@ -10,8 +10,8 @@ import (
 
 	xerrors "github.com/WSG23/errors"
 
-	"github.com/WSG23/yosai-gateway/internal/auth"
-	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
+        "github.com/WSG23/yosai-gateway/internal/auth"
+        xerrors "github.com/WSG23/errors"
 )
 
 func reasonFromError(err error) string {
@@ -39,13 +39,13 @@ func Auth(secret []byte) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHdr := r.Header.Get("Authorization")
 			if authHdr == "" {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
+                                xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
 				return
 			}
 
 			parts := strings.Fields(authHdr)
 			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
+                                xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
 				return
 			}
 
@@ -58,7 +58,7 @@ func Auth(secret []byte) func(http.Handler) http.Handler {
 				return secret, nil
 			})
 			if err != nil || !token.Valid {
-				sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": reasonFromError(err)})
+                                xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": reasonFromError(err)})
 				return
 			}
 

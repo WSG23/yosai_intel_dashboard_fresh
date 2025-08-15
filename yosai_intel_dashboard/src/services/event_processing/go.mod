@@ -16,7 +16,6 @@ require (
 )
 
 require (
-	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -48,6 +47,5 @@ replace github.com/WSG23/resilience => ../../resilience
 
 replace github.com/WSG23/yosai-gateway => ../../gateway
 
-replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../../shared/errors
 
 replace github.com/WSG23/errors => ../../../../pkg/errors

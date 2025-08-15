@@ -23,7 +23,6 @@ import (
 
 	"github.com/WSG23/yosai-gateway/internal/auth"
 	"github.com/WSG23/yosai-gateway/internal/tracing"
-	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
 )
 
 // JWTConfig holds configuration for JWT validation and refresh.
@@ -242,15 +241,16 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		authHdr := r.Header.Get("Authorization")
 		if authHdr == "" {
 			authFailures.Inc()
-			tracing.Logger.WithContext(r.Context()).WithField("reason", "missing").Warn("authorization failed")
-			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
+			tracing.Logger.WithField("reason", "missing").Warn("authorization failed")
+                    xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "missing"})
 			return
 		}
 		parts := strings.Fields(authHdr)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 			authFailures.Inc()
-			tracing.Logger.WithContext(r.Context()).WithField("reason", "invalid_header").Warn("authorization failed")
-			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
+			tracing.Logger.WithField("reason", "invalid_header").Warn("authorization failed")
+                    xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": "invalid_header"})
+
 			return
 		}
 		tokenStr := parts[1]
@@ -273,15 +273,16 @@ func (am *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 			reason := reasonFromError(err)
 			tracing.Logger.WithContext(ctx).WithError(err).WithField("reason", reason).Warn("invalid token")
 			authFailures.Inc()
-			sharederrors.WriteJSON(w, http.StatusUnauthorized, sharederrors.Unauthorized, "unauthorized", map[string]string{"reason": reason})
+                    xerrors.WriteJSON(w, http.StatusUnauthorized, xerrors.Unauthorized, "unauthorized", map[string]string{"reason": reason})
 			return
 		}
 		if am.cache != nil {
 			black, err := am.cache.IsBlacklisted(ctx, claims.ID)
 			if err == nil && black {
 				authFailures.Inc()
-				tracing.Logger.WithContext(ctx).WithField("reason", "blacklisted").Warn("token blacklisted")
-				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", map[string]string{"reason": "blacklisted"})
+				tracing.Logger.WithField("reason", "blacklisted").Warn("token blacklisted")
+                            xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", map[string]string{"reason": "blacklisted"})
+
 				return
 			}
 		}

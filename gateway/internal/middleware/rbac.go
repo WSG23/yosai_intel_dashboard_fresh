@@ -5,8 +5,8 @@ import (
 
 	authz "github.com/WSG23/auth"
 	"github.com/WSG23/yosai-gateway/internal/auth"
-	"github.com/WSG23/yosai-gateway/internal/rbac"
-	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
+        "github.com/WSG23/yosai-gateway/internal/rbac"
+        xerrors "github.com/WSG23/errors"
 )
 
 // RequirePermission checks that the request's subject has the given permission.
@@ -15,11 +15,11 @@ func RequirePermission(s *rbac.RBACService, perm string) func(http.Handler) http
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := auth.FromContext(r.Context())
 			if !ok {
-				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+                                xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", nil)
 				return
 			}
 			if claims.Subject == "" {
-				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+                                xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", nil)
 				return
 			}
 			for _, p := range claims.Permissions {
@@ -39,7 +39,7 @@ func RequirePermission(s *rbac.RBACService, perm string) func(http.Handler) http
 					return
 				}
 			}
-			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+                        xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", nil)
 		})
 	}
 }
@@ -50,7 +50,7 @@ func RequireRole(role string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := auth.FromContext(r.Context())
 			if !ok {
-				sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+                                xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", nil)
 				return
 			}
 			for _, rle := range claims.Roles {
@@ -59,7 +59,7 @@ func RequireRole(role string) func(http.Handler) http.Handler {
 					return
 				}
 			}
-			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+                        xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", nil)
 		})
 	}
 }

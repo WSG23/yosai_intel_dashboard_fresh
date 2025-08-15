@@ -11,7 +11,6 @@ require (
 	github.com/WSG23/httpx v0.0.0
 	github.com/WSG23/resilience v0.0.0
 	github.com/WSG23/yosai-framework v0.0.0
-	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bits-and-blooms/bloom/v3 v3.7.0
 	github.com/confluentinc/confluent-kafka-go v1.9.3-RC3
@@ -105,13 +104,12 @@ require (
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/tools v0.35.0 // indirect
+	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 replace github.com/WSG23/yosai-framework => ../go/framework
-
-replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../shared/errors
 
 replace github.com/WSG23/errors => ../pkg/errors
 
