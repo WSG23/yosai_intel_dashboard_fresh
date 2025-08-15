@@ -1,56 +1,38 @@
-import sys
-import types
+import json
+from types import SimpleNamespace
 
-import pandas as pd
+import pytest
 
-# Stub opentelemetry and trace modules so imports succeed without the real package.
-class _Span:
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
+from intel_analysis_service.ml.model_registry import ModelRegistry
 
 
-class _Tracer:
-    def start_as_current_span(self, name):
-        return _Span()
-
-
-trace_stub = types.ModuleType("trace")
-trace_stub.get_tracer = lambda name: _Tracer()
-opentelemetry_stub = types.ModuleType("opentelemetry")
-opentelemetry_stub.trace = trace_stub
-sys.modules["trace"] = trace_stub
-sys.modules["opentelemetry"] = opentelemetry_stub
-sys.modules["opentelemetry.trace"] = trace_stub
-
-from intel_analysis_service.ml import (
-    AnomalyDetector,
-    RiskScorer,
-    ModelRegistry,
-    load_anomaly_model,
-    load_risk_model,
-)
-
-
-def test_anomaly_model_round_trip(tmp_path):
+def test_model_round_trip(tmp_path):
     reg = ModelRegistry(tmp_path)
-    ts = pd.date_range("2024-01-01", periods=5, freq="D")
-    df = pd.DataFrame({"timestamp": ts, "value": 1.0})
-    model = AnomalyDetector(factor=1.0).fit(df)
-    meta = model.save(reg, version="v1")
-    loaded = load_anomaly_model(meta.version, reg)
-    preds = loaded.predict(pd.DataFrame({"timestamp": [ts[0]], "value": [1.0]}))
-    assert "is_anomaly" in preds
+    model = SimpleNamespace(value=1)
+    params = {"a": 1}
+    meta = reg.save_model("dummy", model, params, version="v1")
+    loaded_model, loaded_meta = reg.load_model("dummy", meta.version)
+    assert loaded_model.value == model.value
+    assert loaded_meta.sha256 == meta.sha256
 
 
-def test_risk_model_round_trip(tmp_path):
+def test_corrupted_model_file(tmp_path):
     reg = ModelRegistry(tmp_path)
-    ts = pd.date_range("2024-01-01", periods=5, freq="D")
-    df = pd.DataFrame({"timestamp": ts, "a": 1.0})
-    model = RiskScorer({"a": 1.0}).fit(df)
-    meta = model.save(reg, version="v1")
-    loaded = load_risk_model(meta.version, reg)
-    result = loaded.score(pd.DataFrame({"timestamp": [ts[0]], "a": [1.0]}))
-    assert "is_risky" in result
+    model = SimpleNamespace(value=1)
+    meta = reg.save_model("dummy", model, {}, version="v1")
+    model_path = tmp_path / "dummy" / meta.version / "model.pkl"
+    model_path.write_bytes(b"corrupted")
+    with pytest.raises(ValueError):
+        reg.load_model("dummy", meta.version)
+
+
+def test_corrupted_metadata_hash(tmp_path):
+    reg = ModelRegistry(tmp_path)
+    model = SimpleNamespace(value=1)
+    meta = reg.save_model("dummy", model, {}, version="v1")
+    metadata_path = tmp_path / "dummy" / meta.version / "metadata.json"
+    data = json.loads(metadata_path.read_text())
+    data["sha256"] = "0" * 64
+    metadata_path.write_text(json.dumps(data))
+    with pytest.raises(ValueError):
+        reg.load_model("dummy", meta.version)
