@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import pickle
+import hashlib
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -15,6 +16,7 @@ class ModelMetadata:
     version: str
     timestamp: str
     parameters: Dict[str, Any]
+    sha256: str
 
 
 class ModelRegistry:
@@ -37,15 +39,20 @@ class ModelRegistry:
         """Persist *model* under *name* and return its metadata."""
 
         version = version or datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        model_dir = self._model_dir(name, version)
+        model_dir.mkdir(parents=True, exist_ok=True)
+
+        data = pickle.dumps(model)
+        sha256 = hashlib.sha256(data).hexdigest()
         metadata = ModelMetadata(
             version=version,
             timestamp=datetime.utcnow().isoformat(),
             parameters=parameters,
+            sha256=sha256,
         )
-        model_dir = self._model_dir(name, version)
-        model_dir.mkdir(parents=True, exist_ok=True)
+
         with open(model_dir / "model.pkl", "wb") as fh:
-            pickle.dump(model, fh)
+            fh.write(data)
         with open(model_dir / "metadata.json", "w") as fh:
             json.dump(asdict(metadata), fh)
         return metadata
@@ -54,10 +61,15 @@ class ModelRegistry:
         """Load *name* model for *version* returning model and metadata."""
 
         model_dir = self._model_dir(name, version)
-        with open(model_dir / "model.pkl", "rb") as fh:
-            model = pickle.load(fh)
+        model_file = model_dir / "model.pkl"
+        with open(model_file, "rb") as fh:
+            data = fh.read()
+            file_hash = hashlib.sha256(data).hexdigest()
         with open(model_dir / "metadata.json") as fh:
             metadata = ModelMetadata(**json.load(fh))
+        if file_hash != metadata.sha256:
+            raise ValueError("Model artifact hash mismatch")
+        model = pickle.loads(data)
         return model, metadata
 
 
