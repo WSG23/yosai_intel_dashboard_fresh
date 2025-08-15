@@ -15,9 +15,25 @@ except Exception:  # pragma: no cover - dependency optional
     Histogram = Counter = None  # type: ignore
     CollectorRegistry = None  # type: ignore
 
-from opentelemetry import trace
+try:  # pragma: no cover - optional dependency
+    from opentelemetry import trace
+    tracer = trace.get_tracer(__name__)
+except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
+    class _DummySpan:
+        def __enter__(self):
+            return self
 
-tracer = trace.get_tracer(__name__)
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def set_attribute(self, *args, **kwargs):
+            return None
+
+    class _Tracer:
+        def start_as_current_span(self, *_a, **_k):
+            return _DummySpan()
+
+    tracer = _Tracer()
 
 if Histogram and Counter:
     if "prediction_threshold_ratio" not in REGISTRY._names_to_collectors:
