@@ -13,6 +13,7 @@ from typing import Dict
 import os
 
 from fastapi import Depends, FastAPI
+from yosai_intel_dashboard.src.services.security import requires_role
 
 from yosai_intel_dashboard.src.services.analytics_service import (
     create_analytics_service,
@@ -68,7 +69,10 @@ service = create_analytics_service()
 
 
 @app.get("/api/v1/analytics/dashboard-summary")
-async def dashboard_summary(_: dict = Depends(verify_token)) -> Dict[str, object]:
+async def dashboard_summary(
+    _: dict = Depends(verify_token),
+    __: None = Depends(requires_role("analyst")),
+) -> Dict[str, object]:
     """Return a summary of analytics data."""
     return service.get_dashboard_summary()
 
@@ -78,6 +82,7 @@ async def dashboard_summary(_: dict = Depends(verify_token)) -> Dict[str, object
 async def access_patterns(
     days: int = 7,
     _: dict = Depends(verify_token),
+    __: None = Depends(requires_role("analyst")),
 ) -> Dict[str, object]:
     """Return access pattern analytics.
 

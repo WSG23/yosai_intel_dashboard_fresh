@@ -10,7 +10,8 @@ dependency.  If the package is not installed the endpoint will raise an
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from yosai_intel_dashboard.src.services.security import requires_role
 
 try:
     import graphene
@@ -24,7 +25,7 @@ app = FastAPI(title="Intel Analysis Service")
 
 
 @app.get("/api/v1/status")
-def status() -> dict[str, str]:
+def status(_: None = Depends(requires_role("analyst"))) -> dict[str, str]:
     """Basic health endpoint for REST clients."""
 
     return {"status": "ok"}
