@@ -23,6 +23,27 @@ An AI-powered modular security intelligence dashboard for physical access contro
 
 See [Getting Started](docs/getting-started.md) for Docker and local development instructions.
 
+## Project Layout
+
+```text
+.
+├── docs/                  # Documentation and guides
+├── services/              # Backend services and microservices
+├── src/                   # Shared framework code
+├── scripts/               # Maintenance and CLI utilities
+├── tests/                 # Test suites
+└── yosai_intel_dashboard/ # Clean Architecture application modules
+```
+
+| Directory | Purpose |
+|-----------|---------|
+| `docs/` | User and developer documentation |
+| `services/` | Standalone backend services |
+| `src/` | Shared core framework and libraries |
+| `scripts/` | Automation and helper scripts |
+| `tests/` | Unit and integration tests |
+| `yosai_intel_dashboard/` | Primary application package following Clean Architecture |
+
 ## Interactive Visualizations
 
 The dashboard now includes interactive security maps and relationship graphs powered by **Three.js** and **D3.js**. Both components are responsive and include keyboard navigation and ARIA labels for accessibility.
