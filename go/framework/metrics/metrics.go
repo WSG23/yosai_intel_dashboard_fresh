@@ -49,11 +49,14 @@ func NewPrometheusCollector(addr string, hm healthHandlers, lg logging.Logger) *
 }
 
 func (p *PrometheusCollector) init() error {
-	p.registry = prometheus.NewRegistry()
-	p.reqCount = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "yosai_request_total",
-		Help: "Total HTTP requests",
-	}, []string{"method", "endpoint", "status"})
+        p.registry = prometheus.NewRegistry()
+        // Expose Go runtime and process metrics including CPU and memory usage.
+        p.registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+        p.registry.MustRegister(prometheus.NewGoCollector())
+        p.reqCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+                Name: "yosai_request_total",
+                Help: "Total HTTP requests",
+        }, []string{"method", "endpoint", "status"})
 	p.reqDur = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "yosai_request_duration_seconds",
 		Help:    "HTTP request duration in seconds",

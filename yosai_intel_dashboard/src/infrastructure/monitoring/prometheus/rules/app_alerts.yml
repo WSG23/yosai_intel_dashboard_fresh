@@ -26,6 +26,14 @@ groups:
       severity: critical
     annotations:
       summary: High database query error rate
+  - alert: ConnectionLeak
+    expr: db_pool_active_connections > db_pool_current_size * 0.9
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: Potential connection leak
+      description: Database connection pool usage above 90% for 10m
 - name: error_budget
   rules:
   - alert: ErrorBudgetExhausted

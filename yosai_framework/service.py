@@ -17,6 +17,7 @@ from prometheus_client import (
     CollectorRegistry,
     Counter,
     Histogram,
+    ProcessCollector,
     start_http_server,
 )
 
@@ -91,6 +92,8 @@ class BaseService:
 
     def _setup_metrics(self) -> None:
         """Register Prometheus metrics and expose HTTP endpoint."""
+        if "process_cpu_seconds_total" not in REGISTRY._names_to_collectors:
+            ProcessCollector(registry=REGISTRY)
         if "yosai_request_total" not in REGISTRY._names_to_collectors:
             self.request_total = Counter(
                 "yosai_request_total", "Total requests handled"
