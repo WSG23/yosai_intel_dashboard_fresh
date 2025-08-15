@@ -2,7 +2,8 @@ package monitoring
 
 import "github.com/prometheus/client_golang/prometheus"
 
-// Gauges and counters for tracking Timescale outbox synchronisation status.
+// Metrics for monitoring the synchronization between the outbox and
+// access_events table.
 var (
 	// OutboxPending reports the number of events waiting to be processed.
 	OutboxPending = prometheus.NewGauge(prometheus.GaugeOpts{

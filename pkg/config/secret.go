@@ -2,6 +2,7 @@ package config
 
 import (
 	"io/ioutil"
+	"path/filepath"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
@@ -25,14 +26,17 @@ func NewSecretWatcher(path string) (*SecretWatcher, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := watcher.Add(path); err != nil {
+	dir := filepath.Dir(path)
+	if err := watcher.Add(dir); err != nil {
 		watcher.Close()
 		return nil, err
 	}
 
 	go func() {
-		for range watcher.Events {
-			w.reload()
+		for event := range watcher.Events {
+			if filepath.Clean(event.Name) == path {
+				w.reload()
+			}
 		}
 	}()
 
