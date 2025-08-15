@@ -9,6 +9,8 @@ import logging
 from opentelemetry import trace
 import pandas as pd
 
+from .model_registry import ModelRegistry, ModelMetadata
+
 tracer = trace.get_tracer(__name__)
 
 
@@ -108,6 +110,32 @@ class AnomalyDetector:
                 result["drift_detected"] = drift
             return result
 
+    def save(
+        self,
+        registry: ModelRegistry,
+        name: str = "anomaly_detector",
+        version: str | None = None,
+    ) -> ModelMetadata:
+        """Persist the trained model using *registry* and return its metadata."""
+
+        params = {"factor": self.factor, "context_weights": self.context_weights}
+        metadata = registry.save_model(name, self, params, version)
+        self.model_version = metadata.version
+        return metadata
+
+    @classmethod
+    def load(
+        cls,
+        registry: ModelRegistry,
+        version: str,
+        name: str = "anomaly_detector",
+    ) -> "AnomalyDetector":
+        """Load a persisted model from *registry* for *version*."""
+
+        model, _ = registry.load_model(name, version)
+        assert isinstance(model, cls)
+        return model
+
 
 @dataclass
 class RiskScorer:
@@ -168,3 +196,43 @@ class RiskScorer:
                 drift = self.drift_detector.detect(result["score"], result["threshold"])
                 result["drift_detected"] = drift
             return result
+
+    def save(
+        self,
+        registry: ModelRegistry,
+        name: str = "risk_scorer",
+        version: str | None = None,
+    ) -> ModelMetadata:
+        """Persist the trained model using *registry* and return its metadata."""
+
+        params = {"weights": self.weights, "quantile": self.quantile}
+        metadata = registry.save_model(name, self, params, version)
+        self.model_version = metadata.version
+        return metadata
+
+    @classmethod
+    def load(
+        cls,
+        registry: ModelRegistry,
+        version: str,
+        name: str = "risk_scorer",
+    ) -> "RiskScorer":
+        """Load a persisted model from *registry* for *version*."""
+
+        model, _ = registry.load_model(name, version)
+        assert isinstance(model, cls)
+        return model
+
+
+def load_anomaly_model(version: str, registry: ModelRegistry | None = None) -> AnomalyDetector:
+    """Convenience loader for :class:`AnomalyDetector`."""
+
+    registry = registry or ModelRegistry()
+    return AnomalyDetector.load(registry, version)
+
+
+def load_risk_model(version: str, registry: ModelRegistry | None = None) -> RiskScorer:
+    """Convenience loader for :class:`RiskScorer`."""
+
+    registry = registry or ModelRegistry()
+    return RiskScorer.load(registry, version)
