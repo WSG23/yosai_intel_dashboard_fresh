@@ -14,7 +14,7 @@ except Exception:  # noqa: BLE001 - best effort fallback
 
 # Import core enums if available, otherwise provide dummy placeholders.
 try:  # pragma: no cover - exercised indirectly
-    from .enums import (
+    from ..core.domain.value_objects.enums import (
         AccessResult,
         AccessType,
         AnomalyType,
