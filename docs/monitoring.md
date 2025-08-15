@@ -42,6 +42,30 @@ start_model_metrics_server(port=9104)
 `model_latency_ms`, `model_throughput` and `model_drift_score` gauges will then be
 available on `/metrics`.
 
+## Kafka Trace Context Propagation
+
+`KafkaClient` automatically injects W3C `traceparent` headers when producing
+messages, enabling end-to-end tracing across services. The current trace context
+is serialized into Kafka headers so downstream consumers can continue the span
+seamlessly.
+
+```python
+from yosai_intel_dashboard.src.services.kafka_client import KafkaClient
+
+client = KafkaClient("kafka:9092")
+client.publish("jobs", "process", payload)
+```
+
+`KafkaConsumer` extracts the `traceparent` header and attaches the context before
+returning messages. Handlers can create child spans that continue the original
+trace:
+
+```python
+msg = consumer.poll()
+with tracer.start_as_current_span("handle"):
+    process(msg)
+```
+
 ## Automated Model Monitoring
 
 `ModelMonitor` evaluates active models at a fixed interval and updates Prometheus metrics.

@@ -4,14 +4,16 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from typing import Any
+from typing import Any, MutableMapping
 
 from confluent_kafka import Producer
 
-from yosai_intel_dashboard.src.services.kafka.metrics import (
-    delivery_failure_total,
-    delivery_success_total,
-)
+try:  # pragma: no cover - tracing optional
+    from tracing import propagate_context
+except Exception:  # pragma: no cover - graceful fallback when tracing missing
+
+    def propagate_context(headers: MutableMapping[str, str]) -> None:  # type: ignore
+        return None
 
 logger = logging.getLogger(__name__)
 
@@ -43,19 +45,16 @@ class KafkaClient:
             "max_retries": max_retries,
             "retry_count": 0,
         }
-        payload_str = json.dumps(message)
+        headers: MutableMapping[str, str] = {}
+        propagate_context(headers)
         try:
-            while True:
-                try:
-                    self._producer.produce(
-                        topic, payload_str, on_delivery=self._delivery_callback
-                    )
-                    break
-                except BufferError:
-                    # Local buffer is full, let the producer flush pending events
-                    self._producer.poll(0.1)
-            # Serve delivery callbacks for previously produced messages
-            self._producer.poll(0)
+            self._producer.produce(
+                topic,
+                json.dumps(message),
+                headers=list(headers.items()) or None,
+            )
+            self._producer.flush()
+
         except Exception:
             logger.exception("Failed to publish to Kafka")
             raise
