@@ -31,9 +31,31 @@ if not hasattr(pd, "date_range"):
     sys.modules.pop("pandas", None)
     pd = importlib.import_module("pandas")  # type: ignore
 
+# Minimal OpenTelemetry stub providing ``get_tracer`` and span context manager.
+from contextlib import contextmanager
+
+
+@contextmanager
+def _noop_span(*a, **k):
+    class _Span:
+        def set_attribute(self, *aa, **kk):
+            pass
+
+    yield _Span()
+
+
+otel_trace = types.SimpleNamespace(
+    get_tracer=lambda *a, **k: types.SimpleNamespace(
+        start_as_current_span=lambda *aa, **kk: _noop_span()
+    )
+)
+sys.modules["opentelemetry"] = types.SimpleNamespace(trace=otel_trace)
+sys.modules["opentelemetry.trace"] = otel_trace
+
 from intel_analysis_service.ml import AnomalyDetector, RiskScorer
 
 from yosai_intel_dashboard.src.services.monitoring.drift_monitor import DriftMonitor
+from intel_analysis_service.ml import ThresholdDriftDetector
 
 
 class DummyDriftDetector:
@@ -103,3 +125,38 @@ def test_drift_monitor_logs_and_rollback():
     history = monitor.get_recent_history()
     assert history and history[-1]["pred"]["psi"] > 0
     assert monitor.get_recent_history(limit=1) == history[-1:]
+
+
+def test_threshold_drift_detector_metrics_and_alerts():
+    class DummyHist:
+        def __init__(self):
+            self.values: list[float] = []
+
+        def observe(self, v: float) -> None:
+            self.values.append(v)
+
+    class DummyCounter:
+        def __init__(self):
+            self.count = 0
+
+        def inc(self) -> None:
+            self.count += 1
+
+    alerts: list[tuple[list[float], list[float]]] = []
+    hist = DummyHist()
+    counter = DummyCounter()
+    detector = ThresholdDriftDetector(
+        ratio_threshold=1.5,
+        metric=hist,
+        alert_counter=counter,
+        alert_func=lambda v, t: alerts.append((v, t)),
+    )
+
+    drift = detector.detect([2.0], [1.0])
+
+    assert drift
+    assert detector.values == [2.0]
+    assert detector.thresholds == [1.0]
+    assert hist.values == [2.0]
+    assert counter.count == 1
+    assert alerts and alerts[0][0] == [2.0]
