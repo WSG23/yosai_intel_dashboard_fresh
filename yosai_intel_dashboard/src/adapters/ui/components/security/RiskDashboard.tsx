@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import EChart from '../EChart';
 import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 import { usePreferencesStore } from '../../state';
@@ -16,7 +16,7 @@ interface RiskDashboardProps {
   factors: RiskFactor[];
 }
 
-const RiskDashboard: React.FC<RiskDashboardProps> = ({
+const RiskDashboardComponent: React.FC<RiskDashboardProps> = ({
   score,
   history,
   factors,
@@ -44,10 +44,17 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
     return () => clearInterval(interval);
   }, [score]);
 
-  const historyData = (
-    dataSaver ? history.filter((_, i) => i % 2 === 0) : history
-  ).map((h, index) => ({ index, score: h }));
-  const factorData = dataSaver ? factors.slice(0, 1) : factors;
+  const historyData = useMemo(
+    () =>
+      (dataSaver ? history.filter((_, i) => i % 2 === 0) : history).map(
+        (h, index) => ({ index, score: h }),
+      ),
+    [dataSaver, history],
+  );
+  const factorData = useMemo(
+    () => (dataSaver ? factors.slice(0, 1) : factors),
+    [dataSaver, factors],
+  );
 
   return (
     <div className="bg-white p-4 rounded shadow">
@@ -130,4 +137,4 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
   );
 };
 
-export default RiskDashboard;
+export default React.memo(RiskDashboardComponent);

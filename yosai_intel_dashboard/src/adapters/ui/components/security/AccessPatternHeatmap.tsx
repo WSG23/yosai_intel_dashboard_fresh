@@ -1,60 +1,67 @@
 import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
+import type mapboxgl from 'mapbox-gl';
 import { subscribeToAccessStream, AccessEvent } from '../../services/realtime';
 
 type Range = '24h' | 'week' | 'month';
 
-mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_TOKEN || '';
-
 const AccessPatternHeatmap: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapboxRef = useRef<typeof import('mapbox-gl')>();
   const [range, setRange] = useState<Range>('24h');
   const eventsRef = useRef<AccessEvent[]>([]);
 
   // initialize map and layers
   useEffect(() => {
+    let mounted = true;
     if (mapContainer.current && !mapRef.current) {
-      mapRef.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v10',
-        center: [0, 0],
-        zoom: 15,
-      });
-      mapRef.current.on('load', () => {
-        mapRef.current!.addSource('events', {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
+      import('mapbox-gl').then((m) => {
+        if (!mounted || !mapContainer.current) return;
+        const mapbox = m.default || (m as any);
+        mapboxRef.current = mapbox;
+        mapbox.accessToken = process.env.REACT_APP_MAPBOX_TOKEN || '';
+        mapRef.current = new mapbox.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/light-v10',
+          center: [0, 0],
+          zoom: 15,
         });
-        mapRef.current!.addLayer({
-          id: 'events',
-          type: 'circle',
-          source: 'events',
-          paint: {
-            'circle-radius': ['+', 4, ['get', 'count']],
-            'circle-color': 'rgba(0,123,255,0.6)',
-            'circle-stroke-color': [
-              'case',
-              ['get', 'anomaly'],
-              'red',
-              'transparent',
-            ],
-            'circle-stroke-width': 2,
-          },
+        mapRef.current.on('load', () => {
+          mapRef.current!.addSource('events', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          });
+          mapRef.current!.addLayer({
+            id: 'events',
+            type: 'circle',
+            source: 'events',
+            paint: {
+              'circle-radius': ['+', 4, ['get', 'count']],
+              'circle-color': 'rgba(0,123,255,0.6)',
+              'circle-stroke-color': [
+                'case',
+                ['get', 'anomaly'],
+                'red',
+                'transparent',
+              ],
+              'circle-stroke-width': 2,
+            },
+          });
+          mapRef.current!.on('click', 'events', (e) => {
+            const feature = e.features?.[0];
+            if (feature) {
+              new mapbox.Popup()
+                .setLngLat(feature.geometry.coordinates as mapbox.LngLatLike)
+                .setHTML(`<strong>${feature.properties?.id}</strong>`)
+                .addTo(mapRef.current!);
+            }
+          });
+          draw();
         });
-        mapRef.current!.on('click', 'events', (e) => {
-          const feature = e.features?.[0];
-          if (feature) {
-            new mapboxgl.Popup()
-              .setLngLat(feature.geometry.coordinates as mapboxgl.LngLatLike)
-              .setHTML(`<strong>${feature.properties?.id}</strong>`)
-              .addTo(mapRef.current!);
-          }
-        });
-        draw();
       });
     }
     return () => {
+      mounted = false;
       mapRef.current?.remove();
     };
   }, []);
@@ -120,4 +127,4 @@ const AccessPatternHeatmap: React.FC = () => {
   );
 };
 
-export default AccessPatternHeatmap;
+export default React.memo(AccessPatternHeatmap);

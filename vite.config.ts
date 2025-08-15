@@ -3,7 +3,7 @@ import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
   plugins: process.env.ANALYZE
-    ? [visualizer({ filename: 'bundle-stats.html', open: true })]
+    ? [visualizer({ filename: 'bundle-stats.html', json: true, open: false })]
     : [],
   build: {
     rollupOptions: {
