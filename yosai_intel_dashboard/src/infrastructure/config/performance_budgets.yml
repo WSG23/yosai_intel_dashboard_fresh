@@ -1,5 +1,5 @@
 http_req_failed_rate: 0.01
-http_req_duration_p95: 500
+http_req_duration_p95: 100
 endpoints:
   /api/v1/analytics/dashboard-summary:
     p50: 200
