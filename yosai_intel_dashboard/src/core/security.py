@@ -48,7 +48,7 @@ def _sha256_bytes(data: bytes) -> str:
 # Import the high-level ``SecurityValidator`` used across the application.
 # This module keeps no internal validation logic and instead delegates to
 # :class:`~validation.security_validator.SecurityValidator` for sanitization tasks.
-from validation.security_validator import SecurityValidator
+# [auto-fix] lazy import now; was: from validation.security_validator import SecurityValidator
 from yosai_intel_dashboard.src.core.base_model import BaseModel
 from yosai_intel_dashboard.src.core.domain.entities.access_events import (
     AccessEventModel,

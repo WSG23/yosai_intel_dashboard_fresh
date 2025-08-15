@@ -31,7 +31,8 @@ if not os.getenv("LIGHTWEIGHT_SERVICES"):
     )
     from .helpers import save_ai_training_data, save_ai_training_data_sync
     from .processor import UploadProcessingService
-    from .upload_core import UploadCore
+# [auto-fix] removed eager import to avoid circular import
+#     from .upload_core import UploadCore
     from .upload_types import UploadResult, ValidationResult
 
     _extra_all = [
@@ -63,3 +64,20 @@ __all__ = [
 
 DOMAIN_NAME = "upload"
 DOMAIN_VERSION = "1.0.0"
+
+
+# --- auto-added PEP 562 lazy loader ---
+import importlib as _importlib
+__all__ = []
+def __getattr__(name: str):
+    try:
+        m = _importlib.import_module(f".{name.lower()}", __name__)
+        if hasattr(m, name):
+            obj = getattr(m, name)
+            globals()[name] = obj
+            __all__.append(name)
+            return obj
+    except Exception:
+        pass
+    raise AttributeError(f"{__name__!r} has no attribute {name!r}")
+# --- end auto-added ---

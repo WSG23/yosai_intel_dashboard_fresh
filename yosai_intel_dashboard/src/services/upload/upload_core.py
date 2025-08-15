@@ -30,9 +30,7 @@ from yosai_intel_dashboard.src.services.upload.protocols import (
 from yosai_intel_dashboard.src.services.upload.upload_queue_manager import UploadQueueManager
 from validation.security_validator import SecurityValidator, ValidationError
 from yosai_intel_dashboard.src.utils.sanitization import sanitize_filename
-from yosai_intel_dashboard.src.core.security import validate_user_input
-
-
+# [auto-fix] deferred import of validate_user_input
 logger = logging.getLogger(__name__)
 
 
@@ -270,6 +268,12 @@ class UploadCore:
 
             learning_service.save_user_device_mappings(df, filename, user_mappings)
             from yosai_intel_dashboard.src.services.ai_mapping_store import ai_mapping_store
+
+# --- auto-fix lazy validate_user_input to avoid circular import ---
+def validate_user_input(*args, **kwargs):  # type: ignore
+    from yosai_intel_dashboard.src.core.security import validate_user_input as _real
+    return _real(*args, **kwargs)
+# --- end auto-fix ---
 
             ai_mapping_store.update(user_mappings)
 
