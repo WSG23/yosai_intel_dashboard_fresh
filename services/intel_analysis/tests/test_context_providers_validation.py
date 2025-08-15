@@ -27,7 +27,10 @@ def test_fetch_local_events_bad_content_type() -> None:
         json=lambda: {"events": []},
         raise_for_status=lambda: None,
     )
-    with patch("analytics.context_providers.requests.get", return_value=fake_resp), \
-        patch.dict("analytics.context_providers.os.environ", {"EVENTS_API_URL": "http://x"}):
+    with patch(
+        "analytics.context_providers.requests.get", return_value=fake_resp
+    ), patch.dict(
+        "analytics.context_providers.os.environ", {"EVENTS_API_URL": "http://x"}
+    ):
         with pytest.raises(ContextProviderError):
             fetch_local_events("City")

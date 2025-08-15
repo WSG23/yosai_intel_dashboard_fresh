@@ -6,10 +6,13 @@ from dataclasses import dataclass, field
 from typing import Dict, Iterable, Protocol
 
 import logging
+
 try:  # pragma: no cover - optional dependency
     import opentelemetry.trace as trace
+
     tracer = trace.get_tracer(__name__)
 except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
+
     class _DummySpan:
         def __enter__(self):
             return self
@@ -26,6 +29,7 @@ except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
 
     tracer = _Tracer()
 import pandas as pd
+
 
 class DriftDetector(Protocol):
     """Protocol describing drift detection behaviour."""
@@ -237,7 +241,9 @@ class RiskScorer:
         return model
 
 
-def load_anomaly_model(version: str, registry: ModelRegistry | None = None) -> AnomalyDetector:
+def load_anomaly_model(
+    version: str, registry: ModelRegistry | None = None
+) -> AnomalyDetector:
     """Convenience loader for :class:`AnomalyDetector`."""
 
     registry = registry or ModelRegistry()

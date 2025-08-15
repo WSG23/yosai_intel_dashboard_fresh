@@ -12,8 +12,10 @@ from typing import Iterable
 
 try:  # pragma: no cover - optional dependency
     import opentelemetry.trace as trace
+
     tracer = trace.get_tracer(__name__)
 except Exception:  # pragma: no cover - fallback when OpenTelemetry missing
+
     class _DummySpan:
         def __enter__(self):
             return self

@@ -21,4 +21,3 @@ def health_check() -> DBHealthStatus:
 
 
 __all__ = ["DBHealthStatus", "health_check"]
-

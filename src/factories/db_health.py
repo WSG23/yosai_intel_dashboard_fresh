@@ -13,4 +13,3 @@ class DBHealthStatus(BaseModel):
 
 
 __all__ = ["DBHealthStatus"]
-

@@ -77,8 +77,7 @@ class ThresholdDriftDetector:
         self.values = list(values)
         self.thresholds = list(thresholds)
         ratios = [
-            v / t if t else float("inf")
-            for v, t in zip(self.values, self.thresholds)
+            v / t if t else float("inf") for v, t in zip(self.values, self.thresholds)
         ]
 
         drift = any(r > self.ratio_threshold for r in ratios)
