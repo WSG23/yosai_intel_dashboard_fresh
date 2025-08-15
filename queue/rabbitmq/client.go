@@ -38,6 +38,31 @@ type Task struct {
 	CreatedAt  time.Time       `json:"created_at"`
 }
 
+// amqpHeadersCarrier adapts amqp.Table to satisfy propagation.TextMapCarrier.
+// Only string values are supported for trace propagation.
+type amqpHeadersCarrier amqp.Table
+
+func (c amqpHeadersCarrier) Get(key string) string {
+	if v, ok := amqp.Table(c)[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func (c amqpHeadersCarrier) Set(key, val string) {
+	amqp.Table(c)[key] = val
+}
+
+func (c amqpHeadersCarrier) Keys() []string {
+	keys := make([]string, 0, len(amqp.Table(c)))
+	for k := range amqp.Table(c) {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // NewQueueClient establishes a new AMQP connection.
 func NewQueueClient(url string) (*QueueClient, error) {
 	tlsCert := os.Getenv("TLS_CERT_FILE")
@@ -103,7 +128,8 @@ func (q *QueueClient) PublishTask(ctx context.Context, queue string, task *Task)
 	if task.Delay > 0 {
 		headers["x-delay"] = task.Delay
 	}
-	return q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
+	otel.GetTextMapPropagator().Inject(ctx, amqpHeadersCarrier(headers))
+	err = q.channel.PublishWithContext(ctx, "", queue, false, false, amqp.Publishing{
 		ContentType:  "application/json",
 		Body:         body,
 		DeliveryMode: amqp.Persistent,
@@ -137,7 +163,8 @@ func (q *QueueClient) ConsumeQueue(ctx context.Context, queue string, handler fu
 				msg.Nack(false, false)
 				continue
 			}
-			cctx, span := otel.Tracer("queue").Start(ctx, "rabbitmq.consume", trace.WithAttributes(attribute.String("queue", queue)))
+			mctx := otel.GetTextMapPropagator().Extract(ctx, amqpHeadersCarrier(msg.Headers))
+			cctx, span := otel.Tracer("queue").Start(mctx, "rabbitmq.consume", trace.WithAttributes(attribute.String("queue", queue)))
 			if err := handler(cctx, &t); err != nil {
 				span.RecordError(err)
 				msg.Nack(false, true)
