@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Activity, Users, AlertCircle } from 'lucide-react';
 import { useWebSocket } from '../hooks';
 import { useEventStream } from '../hooks/useEventStream';
+import useResponsiveChart from '../hooks/useResponsiveChart';
 import { ChunkGroup } from '../components/layout';
 import { Link } from 'react-router-dom';
 import { requestIdleCallback, type CancelablePromise } from '../utils/idleCallback';
@@ -132,6 +133,10 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
 
   const { isMobile } = useResponsiveChart();
 
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const [listVisible, setListVisible] = useState(false);
+  const [showDetails, setShowDetails] = useState(!isMobile);
+
   const [paused, setPaused] = useState(false);
   const bufferRef = useRef<AccessEvent[]>([]);
   const [pending, setPending] = useState(0);
@@ -178,28 +183,6 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
     }
   }, [polledMetrics]);
 
-  const [showDetails, setShowDetails] = useState(false);
-  const [listVisible, setListVisible] = useState(false);
-  const listRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      const [entry] = entries;
-      if (entry.isIntersecting) {
-        setListVisible(true);
-        observer.disconnect();
-      }
-    });
-    if (listRef.current) {
-      observer.observe(listRef.current);
-    }
-    return () => observer.disconnect();
-  }, []);
-
-  const { isMobile } = useResponsiveChart();
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const [listVisible, setListVisible] = useState(true);
-  const [showDetails, setShowDetails] = useState(!isMobile)
   const filterOptions = ['ALL', 'GRANTED', 'DENIED'] as const;
   const [filter, setFilter] = useState<(typeof filterOptions)[number]>('ALL');
   const filterRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -378,7 +361,7 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
               </Button>
             ))}
           </div>
-          {listVisible && (
+          {listVisible ? (
             <List
               ref={listRef}
               height={384}
