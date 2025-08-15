@@ -72,7 +72,7 @@ def _ensure_health_endpoint(app: Any) -> None:
     if any(getattr(r, "path", "") == "/health" for r in app.routes):
         return
 
-    @app.get("/health")  # type: ignore[misc]
+    @app.get("/health")  # type: ignore[misc]  # FastAPI decorator lacks type hints
     async def _health() -> dict[str, str]:
         return {"status": "ok"}
 
@@ -123,7 +123,12 @@ def main() -> None:
     logger.info(f"   Available at: http://localhost:{API_PORT}")
     logger.info(f"   Health check: http://localhost:{API_PORT}/health")
 
-    uvicorn.run(app, host="0.0.0.0", port=API_PORT)
+    # Binding to all interfaces is intentional for container deployment
+    uvicorn.run(
+        app,
+        host="0.0.0.0",  # nosec B104
+        port=API_PORT,
+    )
 
 
 if __name__ == "__main__":
