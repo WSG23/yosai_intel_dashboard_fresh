@@ -1,7 +1,13 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pathlib
+import sys
+
 import pytest
+
+# ensure repository root is importable for analytics module
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[3]))
 
 from analytics.context_providers import (
     ContextProviderError,

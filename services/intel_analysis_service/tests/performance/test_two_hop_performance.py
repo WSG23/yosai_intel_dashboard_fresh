@@ -12,8 +12,7 @@ import sys
 
 # ensure the graph_db module is importable
 SERVICE_DIR = (
-    pathlib.Path(__file__).resolve().parents[2]
-    / ".."
+    pathlib.Path(__file__).resolve().parents[4]
     / "yosai_intel_dashboard"
     / "src"
     / "services"

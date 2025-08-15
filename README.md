@@ -105,21 +105,24 @@ This separation improves testability, maintainability, and deployment flexibilit
 
 ## Repository Layout
 
-Runtime Python modules are grouped under the top-level `src/` directory.  Deployable
-microservices live in `services/`, each within its own folder named after the
-service:
+Runtime Python modules are grouped under the top-level `src/` directory.
+Deployable microservices live in `services/<service_name>/`, and each service
+keeps its runtime Python code inside a local `src/` subdirectory:
 
 ```
 project/
-├── src/                # Shared runtime code
-└── services/           # Deployable microservices
-    ├── api/
+├── src/                    # Shared runtime code
+└── services/               # Deployable microservices
+    ├── api/                # Service folder
+    │   └── src/api/        # Runtime code for API service
     ├── analytics/
-    └── ...
+    │   └── src/analytics/
+    └── intel_analysis_service/
+        └── src/intel_analysis_service/
 ```
 
 Add new shared modules under `src/` and create a `services/<service_name>/`
-directory for new microservices.
+directory with its own `src/` tree for new microservices.
 
 ### Migration Notes
 
