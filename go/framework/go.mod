@@ -5,6 +5,7 @@ go 1.23.0
 toolchain go1.23.8
 
 require (
+	github.com/WSG23/httpx v0.0.0
 	github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors v0.0.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -17,9 +18,11 @@ require (
 )
 
 require (
+	github.com/WSG23/resilience v0.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -28,9 +31,11 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/sony/gobreaker v1.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
@@ -45,3 +50,7 @@ require (
 )
 
 replace github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors => ../../shared/errors
+
+replace github.com/WSG23/resilience => ../../resilience
+
+replace github.com/WSG23/httpx => ../../pkg/httpx

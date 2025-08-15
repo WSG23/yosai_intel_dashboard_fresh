@@ -10,8 +10,8 @@ data:
         Log_Level    info
     [INPUT]
         Name         tail
-        Path         /var/log/app/*.log
-        Parser       json
+        Path         /var/log/containers/*.log
+        Parser       docker
         Tag          app
     [OUTPUT]
         Name  es
