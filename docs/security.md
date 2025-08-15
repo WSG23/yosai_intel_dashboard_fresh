@@ -65,9 +65,12 @@ Following these practices ensures that user input is passed separately from the 
 ## Secret Rotation
 
 Secrets are rotated automatically. The `k8s/cron/secret-rotate.yaml` CronJob
-invokes a Vault script to generate fresh credentials and update Kubernetes
-secrets. Services load credentials from mounted files and rely on the
-`pkg/config` `SecretWatcher` to reload values when the files change.
+invokes a Vault script to generate fresh credentials via the KMS policies in
+`vault/policies/` and then updates the Kubernetes secret objects. Running
+services read credentials from mounted files and either use the
+`deployment/reload-secrets.sh` helper (which sends `HUP` to the process) or the
+`pkg/config` `SecretWatcher` to pick up changes as Kubernetes replaces the
+files.
 
 To trigger a rotation manually, run:
 
