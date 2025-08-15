@@ -67,39 +67,37 @@ func NewRedisCache() *RedisCache {
 }
 
 func (r *RedisCache) key(person, door string) string {
-	return fmt.Sprintf("decision:%s:%s", person, door)
+        return fmt.Sprintf("decision:%s:%s", person, door)
 }
 
-const defaultDecision = "Denied"
-
-// GetDecision retrieves a decision from Redis. Missing keys and timeouts return the default decision.
+// GetDecision retrieves a decision from Redis. Missing keys and timeouts return nil with no error.
 func (r *RedisCache) GetDecision(ctx context.Context, personID, doorID string) (*Decision, error) {
 	ctx, span := otel.Tracer("redis").Start(ctx, "GetDecision")
 	defer span.End()
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
 	defer cancel()
-	var val string
-	_, err := r.breaker.Execute(func() (interface{}, error) {
-		v, e := r.client.Get(ctx, r.key(personID, doorID)).Result()
-		if e != nil {
-			if errors.Is(e, redis.Nil) {
-				return nil, nil
-			}
-			return nil, e
-		}
-		val = v
-		return nil, nil
-	})
-	if err != nil || val == "" {
-		cacheMisses.Inc()
-		return &Decision{PersonID: personID, DoorID: doorID, Decision: defaultDecision}, nil
-	}
-	cacheHits.Inc()
-	var d Decision
-	if err := json.Unmarshal([]byte(val), &d); err != nil {
-		return &Decision{PersonID: personID, DoorID: doorID, Decision: defaultDecision}, nil
-	}
-	return &d, nil
+       var val string
+       _, err := r.breaker.Execute(func() (interface{}, error) {
+               v, e := r.client.Get(ctx, r.key(personID, doorID)).Result()
+               if e != nil {
+                       if errors.Is(e, redis.Nil) {
+                               return nil, nil
+                       }
+                       return nil, e
+               }
+               val = v
+               return nil, nil
+       })
+       if err != nil || val == "" {
+               cacheMisses.Inc()
+               return nil, err
+       }
+       cacheHits.Inc()
+       var d Decision
+       if err := json.Unmarshal([]byte(val), &d); err != nil {
+               return nil, err
+       }
+       return &d, nil
 }
 
 // SetDecision stores a decision in Redis using the configured TTL. Timeouts are ignored.
