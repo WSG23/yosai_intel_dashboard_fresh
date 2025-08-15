@@ -1,5 +1,8 @@
+"""Shared error contract used across services."""
+
 from enum import Enum
-from typing import Any
+from http import HTTPStatus
+from typing import Any, Dict
 
 from pydantic import BaseModel
 
@@ -20,3 +23,16 @@ class ErrorResponse(BaseModel):
     code: ErrorCode
     message: str
     details: Any | None = None
+
+
+# Mapping of :class:`ErrorCode` values to HTTP status codes.
+CODE_TO_STATUS: Dict[ErrorCode, int] = {
+    ErrorCode.INVALID_INPUT: HTTPStatus.BAD_REQUEST,
+    ErrorCode.UNAUTHORIZED: HTTPStatus.UNAUTHORIZED,
+    ErrorCode.NOT_FOUND: HTTPStatus.NOT_FOUND,
+    ErrorCode.INTERNAL: HTTPStatus.INTERNAL_SERVER_ERROR,
+    ErrorCode.UNAVAILABLE: HTTPStatus.SERVICE_UNAVAILABLE,
+}
+
+
+__all__ = ["ErrorCode", "ErrorResponse", "CODE_TO_STATUS"]
