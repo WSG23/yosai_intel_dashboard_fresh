@@ -87,7 +87,7 @@ Tests typically create a fresh container with fakes registered:
 
 ```python
 from yosai_intel_dashboard.src.simple_di import ServiceContainer
-from tests.fakes import FakeUploadStore, FakeDeviceLearningService
+from tests.unit.fakes import FakeUploadStore, FakeDeviceLearningService
 
 @pytest.fixture
 def container():

@@ -121,7 +121,7 @@ class DummyUploadProcessor:
         self.store = store
 
 
-from tests.fakes import FakeUploadStore
+from tests.unit.fakes import FakeUploadStore
 
 
 class StoreWithSave(FakeUploadStore):
@@ -129,7 +129,7 @@ class StoreWithSave(FakeUploadStore):
         self.add_file(filename, df)
 
 
-from tests.fakes import FakeDeviceLearningService
+from tests.unit.fakes import FakeDeviceLearningService
 
 
 class DummyColumnService:

@@ -5,7 +5,7 @@ from dash import no_update
 
 from yosai_intel_dashboard.src.services.upload.processor import UploadProcessingService
 from yosai_intel_dashboard.src.services.upload.upload_core import UploadCore
-from tests.fakes import (
+from tests.unit.fakes import (
     FakeDeviceLearningService,
     FakeUploadDataService,
     FakeUploadStore,

@@ -10,7 +10,7 @@ try:
     from yosai_intel_dashboard.src.services import AnalyticsService
 except Exception:  # pragma: no cover - skip if dependencies missing
     pytest.skip("analytics dependencies missing", allow_module_level=True)
-from tests.fakes import FakeUploadDataService, FakeUploadStore
+from tests.unit.fakes import FakeUploadDataService, FakeUploadStore
 from tests.utils.builders import DataFrameBuilder, UploadFileBuilder
 import pandas as pd
 

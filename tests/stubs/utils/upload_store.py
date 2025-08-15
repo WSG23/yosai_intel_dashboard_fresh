@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tests.fakes import FakeUploadStore
+from tests.unit.fakes import FakeUploadStore
 
 _fake_store = FakeUploadStore()
 uploaded_data_store = _fake_store

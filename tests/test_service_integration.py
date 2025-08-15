@@ -1,6 +1,6 @@
 import pytest
 
-from tests.builders import TestContainerBuilder
+from tests.unit.builders import TestContainerBuilder
 
 
 class TestServiceIntegration:
