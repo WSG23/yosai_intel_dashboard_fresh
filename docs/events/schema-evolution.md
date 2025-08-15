@@ -12,5 +12,15 @@ Existing schema files **must not** be modified in place. Instead:
 - Register the new version with the schema registry.
 - Update producers and consumers to handle the new version.
 
+Developers can use `tools/schema_registry_client.py` to register and
+inspect schemas without pulling in the full Confluent tooling. For
+example, to register `schemas/avro/access_event_v1.avsc` under the
+`access-events-value` subject:
+
+```bash
+python tools/schema_registry_client.py http://localhost:8081 \
+  register access-events-value schemas/avro/access_event_v1.avsc
+```
+
 The `scripts/check_schema_versions.py` helper runs in CI and fails if any schema
 is modified without adding a new versioned file.
