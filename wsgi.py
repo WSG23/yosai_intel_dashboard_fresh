@@ -1,27 +1,21 @@
-from __future__ import annotations
-import os, sys
-try:
-    from yosai_intel_dashboard.src.infrastructure.monitoring.logging_utils import get_logger
-except Exception:
-    import logging
-    def get_logger(name: str):
-        logger = logging.getLogger(name)
-        if not logger.handlers:
-            logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-        return logger
-from fastapi import FastAPI
-app = FastAPI()
-logger = get_logger(__name__)
-@app.get("/health")
-def health():
-    return {"status": "ok"}
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app
+
+app = create_api_app()
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse("/docs")
-from fastapi.responses import RedirectResponse
 
-@app.get("/", include_in_schema=False)
-def root():
-    return RedirectResponse("/docs")
+def custom_openapi():
+    if getattr(app, "openapi_schema", None):
+        return app.openapi_schema
+    schema = get_openapi(title=getattr(app, "title", "Dashboard"), version=getattr(app, "version", "0.1.0"), routes=app.routes)
+    schema["servers"] = [{"url": "http://localhost:8050"}]
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi

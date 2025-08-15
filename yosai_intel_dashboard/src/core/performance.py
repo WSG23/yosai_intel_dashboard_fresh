@@ -814,7 +814,8 @@ class DatabaseQueryMonitor(BaseModel):
 # Global instances
 profiler = PerformanceProfiler()
 cache_monitor = CacheMonitor()
-db_monitor = DatabaseQueryMonitor()
+import os
+db_monitor = DatabaseQueryMonitor() if os.getenv("ENABLE_DB_MONITOR","0") == "1" else None
 
 
 # Context managers for easy performance tracking
