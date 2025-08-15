@@ -2,12 +2,27 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Response, jsonify, has_app_context
+from fastapi.responses import JSONResponse
+from flask import Response, jsonify
 
 from shared.errors.types import CODE_TO_STATUS, ErrorCode
 
 from .core import ErrorHandler
 from .exceptions import ErrorCategory
+
+
+def serialize_error(
+    exc: Exception,
+    category: ErrorCategory = ErrorCategory.INTERNAL,
+    *,
+    handler: ErrorHandler | None = None,
+    details: Any | None = None,
+) -> tuple[dict[str, Any], int]:
+    """Validate *exc* and return an error payload and HTTP status."""
+    h = handler or ErrorHandler()
+    err = h.handle(exc, category, details)
+    status = CODE_TO_STATUS.get(ErrorCode(err.category.value), 500)
+    return err.to_dict(), status
 
 
 def api_error_response(
@@ -16,21 +31,23 @@ def api_error_response(
     *,
     handler: ErrorHandler | None = None,
     details: Any | None = None,
-) -> tuple[Response | dict[str, Any], int]:
-    """Return a JSON error response for *exc* using ``ErrorHandler``.
+) -> tuple[Response, int]:
+    """Return a Flask ``Response`` for *exc* using ``ErrorHandler``."""
+    payload, status = serialize_error(exc, category, handler=handler, details=details)
+    return jsonify(payload), status
 
-    When called within a Flask application context the first element of the
-    returned tuple is a :class:`flask.Response` generated via ``jsonify``.  If
-    no Flask context is active (e.g. when used by FastAPI middleware) a plain
-    ``dict`` payload is returned instead.  This allows the same helper to be
-    used by both Flask and FastAPI services while preserving the response
-    format.
-    """
 
-    h = handler or ErrorHandler()
-    err = h.handle(exc, category, details)
-    status = CODE_TO_STATUS.get(ErrorCode(err.category.value), 500)
-    payload: dict[str, Any] = err.to_dict()
-    if has_app_context():
-        return jsonify(payload), status
-    return payload, status
+def fastapi_error_response(
+    exc: Exception,
+    category: ErrorCategory = ErrorCategory.INTERNAL,
+    *,
+    handler: ErrorHandler | None = None,
+    details: Any | None = None,
+) -> JSONResponse:
+    """Return a FastAPI ``JSONResponse`` for *exc* using ``ErrorHandler``."""
+    payload, status = serialize_error(exc, category, handler=handler, details=details)
+    return JSONResponse(content=payload, status_code=status)
+
+
+__all__ = ["serialize_error", "api_error_response", "fastapi_error_response"]
+
