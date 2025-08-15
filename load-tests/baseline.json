@@ -11,6 +11,12 @@
     "p95": 500,
     "p99": 800
   },
+  "/api/v1/analytics/threat_assessment": {
+    "throughput": 60,
+    "p50": 200,
+    "p95": 500,
+    "p99": 800
+  },
   "/health": {
     "throughput": 50,
     "p50": 50,

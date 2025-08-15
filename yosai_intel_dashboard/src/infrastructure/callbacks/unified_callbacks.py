@@ -30,6 +30,7 @@ from dash.dependencies import Input, Output, State
 from .callback_registry import CallbackRegistry, ComponentCallbackManager
 from .events import CallbackEvent
 from shared.events.bus import EventBus, EventPublisher
+from .helpers import safe_execute, safe_execute_async
 
 # ---------------------------------------------------------------------------
 # Type aliases
@@ -512,19 +513,24 @@ class TrulyUnifiedCallbacks(EventPublisher):
         for op in operations:
             wrapped = with_retry(max_attempts=op.retries + 1)(op.func)
             start = time.perf_counter()
-            try:
-                result = wrapped(*args, **kwargs)
-                duration = time.perf_counter() - start
-                if op.timeout and duration > op.timeout:
-                    raise TimeoutError(f"Operation {op.name} exceeded {op.timeout}s")
-                results.append(result)
-            except Exception as exc:  # pragma: no cover - log and continue
+            result, ok = safe_execute(
+                wrapped,
+                *args,
+                context={"operation": op.name, "group": group},
+                **kwargs,
+            )
+            duration = time.perf_counter() - start
+            if ok and op.timeout and duration > op.timeout:
                 error_handler.handle_error(
-                    exc,
+                    TimeoutError(
+                        f"Operation {op.name} exceeded {op.timeout}s"
+                    ),
                     severity=ErrorSeverity.HIGH,
                     context={"operation": op.name, "group": group},
                 )
                 results.append(None)
+            else:
+                results.append(result)
         return results
 
     async def execute_group_async(
@@ -539,22 +545,23 @@ class TrulyUnifiedCallbacks(EventPublisher):
         async def _run(op: Operation) -> Any:
             wrapped = with_retry(max_attempts=op.retries + 1)(op.func)
             start = time.perf_counter()
-            try:
-                if asyncio.iscoroutinefunction(wrapped):
-                    result = await wrapped(*args, **kwargs)
-                else:
-                    result = wrapped(*args, **kwargs)
-                duration = time.perf_counter() - start
-                if op.timeout and duration > op.timeout:
-                    raise TimeoutError(f"Operation {op.name} exceeded {op.timeout}s")
-                return result
-            except Exception as exc:  # pragma: no cover - log and continue
+            result, ok = await safe_execute_async(
+                wrapped,
+                *args,
+                context={"operation": op.name, "group": group},
+                **kwargs,
+            )
+            duration = time.perf_counter() - start
+            if ok and op.timeout and duration > op.timeout:
                 error_handler.handle_error(
-                    exc,
+                    TimeoutError(
+                        f"Operation {op.name} exceeded {op.timeout}s"
+                    ),
                     severity=ErrorSeverity.HIGH,
                     context={"operation": op.name, "group": group},
                 )
                 return None
+            return result
 
         with self._lock:
             operations = list(self._groups.get(group, []))

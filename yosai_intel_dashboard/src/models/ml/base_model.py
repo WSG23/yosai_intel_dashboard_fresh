@@ -142,7 +142,7 @@ class BaseModel(ABC):
         if log_prediction:
             monitor = get_model_performance_monitor()
             input_hash = self._hash_input(prepared)
-            monitor.log_prediction(input_hash, result, datetime.utcnow())
+            monitor.log_prediction(input_hash, result, self.metadata.version, datetime.utcnow())
 
         return result
 

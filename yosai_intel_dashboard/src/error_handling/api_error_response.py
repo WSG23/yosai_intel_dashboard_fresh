@@ -50,3 +50,4 @@ def fastapi_error_response(
 
 
 __all__ = ["serialize_error", "api_error_response", "fastapi_error_response"]
+

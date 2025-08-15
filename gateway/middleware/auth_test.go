@@ -311,6 +311,33 @@ func TestAuthTokenRefresh(t *testing.T) {
 	}
 }
 
+func TestAuthTokenRefreshError(t *testing.T) {
+        srv, client := newRedis(t)
+        priv, pub := genKeys(t)
+
+        refreshSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                http.Error(w, "fail", http.StatusInternalServerError)
+        }))
+        defer refreshSrv.Close()
+
+        am := newMiddleware(t, NewTokenCache(client), nil, JWTConfig{PublicKeys: []string{pub}, RefreshURL: refreshSrv.URL, RefreshBefore: time.Minute})
+        handler := am.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
+
+        oldTok := newToken(t, priv, "old", "id5", "", time.Now().Add(10*time.Second))
+        req := httptest.NewRequest(http.MethodGet, "/", nil)
+        req.Header.Set("Authorization", "Bearer "+oldTok)
+        resp, logs := serve(t, handler, req, oldTok)
+        if resp.Code != http.StatusOK {
+                t.Fatalf("expected 200 got %d", resp.Code)
+        }
+        if !strings.Contains(logs, "token refresh failed") {
+                t.Fatalf("expected refresh failure log, got %s", logs)
+        }
+        if !srv.Exists("jwt:" + oldTok) {
+                t.Fatalf("original token not cached")
+        }
+}
+
 func TestAuthRateLimitPerUser(t *testing.T) {
 	_, client := newRedis(t)
 	priv, pub := genKeys(t)

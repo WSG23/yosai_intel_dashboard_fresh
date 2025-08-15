@@ -1,6 +1,7 @@
 import React from 'react';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
+import { fetchJson } from '../utils/fetchJson';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -28,9 +29,8 @@ class ErrorBoundary extends React.Component<
   }
 
   private reportError(error: Error, info: React.ErrorInfo) {
-    fetch('/api/error-report', {
+    fetchJson('/api/error-report', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: error.message,
         stack: error.stack,
@@ -53,15 +53,14 @@ class ErrorBoundary extends React.Component<
     const { error, errorInfo } = this.state;
     if (!error) return;
     const comments = window.prompt('Please describe what happened (optional):') || '';
-    fetch('/api/error-report', {
+    fetchJson('/api/error-report', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: error.message,
         stack: error.stack,
         componentStack: errorInfo?.componentStack,
-        comments
-      })
+        comments,
+      }),
     }).catch((err) => console.error('Failed to report error', err));
   }
 

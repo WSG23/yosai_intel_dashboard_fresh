@@ -56,6 +56,7 @@ class ModelPerformanceMonitor:
         self,
         input_hash: str,
         prediction: Any,
+        model_version: str,
         timestamp: Optional[datetime] = None,
     ) -> None:
         """Emit a prediction event via the configured logger."""
@@ -66,6 +67,7 @@ class ModelPerformanceMonitor:
                 "input_hash": input_hash,
                 "prediction": prediction,
                 "timestamp": ts.isoformat(),
+                "model_version": model_version,
             },
         )
 

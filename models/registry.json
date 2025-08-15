@@ -1,8 +1,8 @@
 {
   "demo": {
     "versions": {
-      "1": {"factor": 1.0},
-      "2": {"factor": 2.0}
+      "1": {"factor": 1.0, "timestamp": "2024-01-01T00:00:00Z"},
+      "2": {"factor": 2.0, "timestamp": "2024-01-02T00:00:00Z"}
     },
     "active": "1",
     "rollout": {"1": 1.0}

@@ -6,6 +6,7 @@ from functools import wraps
 from typing import Callable
 
 from flask import jsonify, request
+from fastapi import Header, HTTPException, status
 
 from yosai_intel_dashboard.src.infrastructure.security.unicode_security_validator import (  # noqa: E501
     UnicodeSecurityValidator as SecurityValidator,
@@ -138,6 +139,25 @@ def require_role(role: str) -> Callable:
     return decorator
 
 
+def requires_role(role: str) -> Callable[[str], None]:
+    """FastAPI dependency enforcing presence of ``role`` in ``X-Roles`` header.
+
+    Parameters
+    ----------
+    role:
+        The role required to access the endpoint.
+    """
+
+    def dependency(x_roles: str = Header("")) -> None:
+        roles = {r.strip() for r in x_roles.split(",") if r.strip()}
+        if role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="forbidden"
+            )
+
+    return dependency
+
+
 __all__ = [
     "SecurityServiceProtocol",
     "AuthenticationProtocol",
@@ -156,4 +176,5 @@ __all__ = [
     "require_token",
     "require_permission",
     "require_role",
+    "requires_role",
 ]

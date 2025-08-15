@@ -12,6 +12,7 @@ import useResponsiveChart from '../hooks/useResponsiveChart';
 import { ChunkGroup } from '../components/layout';
 import { Link } from 'react-router-dom';
 import { requestIdleCallback, type CancelablePromise } from '../utils/idleCallback';
+import { fetchJson } from '../utils/fetchJson';
 
 interface AccessEvent {
   eventId: string;
@@ -146,18 +147,20 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
 
   const metricsFetcher = (url: string) => {
     const controller = new AbortController();
-    const promise = fetch(url, { signal: controller.signal }).then((res) =>
-      res.json(),
-    ) as CancelablePromise<MetricsResponse>;
+    const promise = fetchJson<MetricsResponse>(url, {
+      signal: controller.signal,
+    }) as CancelablePromise<MetricsResponse>;
     promise.cancel = () => controller.abort();
     return promise;
   };
 
-  const { data: polledMetrics } = useSWR<MetricsResponse>(
-    '/metrics',
-    metricsFetcher,
-    { refreshInterval: 5000 },
-  );
+  const {
+    data: polledMetrics,
+    error: metricsError,
+    isLoading: metricsLoading,
+  } = useSWR<MetricsResponse>('/metrics', metricsFetcher, {
+    refreshInterval: 5000,
+  });
 
   useEffect(() => {
     if (polledMetrics) {
@@ -262,6 +265,16 @@ export const RealTimeMonitoring: React.FC<{ thresholds?: Thresholds }> = ({
 
   return (
     <div className="p-6 space-y-6">
+      {metricsLoading && (
+        <p className="text-gray-500" role="status">
+          Loading metrics...
+        </p>
+      )}
+      {metricsError && (
+        <p className="text-red-600" role="alert">
+          Failed to load metrics: {(metricsError as Error).message}
+        </p>
+      )}
       <ChunkGroup className="grid grid-cols-1 md:grid-cols-4 gap-4" limit={9}>
         <MetricCard
           title="Events/Second"

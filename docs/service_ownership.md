@@ -26,4 +26,4 @@ This guide outlines expectations for owning a service in the Yosai Intel Dashboa
 
 - [Runbooks](runbooks/)
 - [Architecture Decision Records](adr/)
-- [Developer Onboarding](developer_onboarding.md)
+- [Getting Started](getting-started.md)

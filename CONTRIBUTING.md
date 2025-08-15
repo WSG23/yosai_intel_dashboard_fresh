@@ -1,6 +1,8 @@
 # Contributing to Yōsai Intel Dashboard
 
-Thank you for considering a contribution! Follow these steps to get the development environment ready.
+Thank you for considering a contribution! For a full walkthrough of the development environment using Docker or local processes, see [docs/getting-started.md](docs/getting-started.md). Follow these steps to get the development environment ready.
+
+Before you start, review the repository [Project Layout](README.md#project-layout) to orient yourself to key directories.
 
 ## Setup
 
@@ -35,15 +37,22 @@ have not already run the setup script:
 ## Running Tests
 
 After installing the dependencies (including those from
-`requirements-dev.txt`) you can run the tests and code quality checks:
+`requirements-dev.txt`) you can run the quick test suite and code quality checks:
 
 ```bash
-pytest
+pytest -m "not slow"
 mypy --strict .
 flake8 .
 isort --check .
 black --check .
 bandit -r .
+```
+
+To execute the slower tests that start Docker containers for Postgres, Kafka,
+and Redis use:
+
+```bash
+pytest -m slow
 ```
 
 Run `isort .` to automatically sort imports before committing changes.
@@ -73,6 +82,10 @@ API reference documentation is generated with [mkdocs](https://www.mkdocs.org/) 
 ```bash
 mkdocs build
 ```
+
+When creating a new module, include a module-level docstring and at least one
+usage example in public function docstrings. These examples appear in the
+generated API reference and help others understand how to use your code.
 
 ### Database Query Helpers
 
@@ -109,8 +122,8 @@ Please ensure tests and linters pass before opening a pull request.
 
 | Type | Description | Approx. runtime | Command |
 | ---- | ----------- | --------------- | ------- |
-| Unit tests | No external services, network and file I/O are mocked. | < 5 minutes | `pytest -m "not integration"` |
-| Integration tests | Spin up ephemeral services (Kafka, Postgres, Redis) via Docker. Skipped when Docker is unavailable. | ~10 minutes | `pytest -m integration` |
+| Unit tests | No external services, network and file I/O are mocked. | < 5 minutes | `pytest -m "not slow"` |
+| Slow tests | Spin up ephemeral services (Kafka, Postgres, Redis) via Docker. Skipped when Docker is unavailable. | ~10 minutes | `pytest -m slow` |
 
 ## Dependency Updates
 

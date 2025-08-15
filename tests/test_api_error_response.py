@@ -18,6 +18,10 @@ from yosai_intel_dashboard.src.error_handling import (
     register_error_handlers,
     serialize_error,
 )
+from yosai_intel_dashboard.src.error_handling import core as error_core
+
+# Disable error budget metrics during tests to avoid requiring Prometheus internals
+error_core.record_error = lambda service: None
 
 # Disable metric recording during tests to avoid Prometheus dependency
 from yosai_intel_dashboard.src.error_handling import core as err_core
@@ -49,7 +53,7 @@ def test_fastapi_middleware_returns_standard_schema():
         pytest.skip("fastapi not available")
 
     app = FastAPI()
-    app.add_middleware(ErrorHandlingMiddleware)
+    ErrorHandlingMiddleware.setup(app)
 
     @app.get("/boom")
     async def boom():  # pragma: no cover - executed by TestClient
@@ -63,7 +67,6 @@ def test_fastapi_middleware_returns_standard_schema():
             "message": "boom",
             "details": None,
         }
-
 
 def test_serialize_error_returns_payload_and_status():
     payload, status = serialize_error(ValueError("oops"), ErrorCategory.INVALID_INPUT)
