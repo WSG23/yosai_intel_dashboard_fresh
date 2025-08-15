@@ -13,7 +13,7 @@ sequenceDiagram
     participant AS as AnalyticsService
 
     U->>B: Drag or select file
-    B->>S: POST /upload
+    B->>S: POST /api/v1/upload
     S->>AS: validate_and_store()
     AS-->>S: confirmation
     S-->>B: Show upload success
