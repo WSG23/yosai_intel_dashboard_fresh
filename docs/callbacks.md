@@ -115,3 +115,36 @@ callbacks.register_event(CallbackEvent.SAVE_REQUEST, store_and_notify)
 
 The ``trigger_event_async`` API ensures event callbacks run concurrently when
 possible, making it easier to build responsive handlers.
+
+## Helper Utilities
+
+Common error handling patterns for callbacks are provided by
+`safe_execute` and `safe_execute_async` in
+`yosai_intel_dashboard.src.infrastructure.callbacks.helpers`. These helpers run a
+callable and route exceptions through the central error handler, allowing
+callbacks to remain concise:
+
+```python
+from yosai_intel_dashboard.src.infrastructure.callbacks.helpers import safe_execute
+
+def risky_operation(x):
+    return 10 / x
+
+result, ok = safe_execute(risky_operation, 0, context={"operation": "risky"})
+if not ok:
+    result = "fallback"
+```
+
+Use `safe_execute_async` for asynchronous functions:
+
+```python
+from yosai_intel_dashboard.src.infrastructure.callbacks.helpers import safe_execute_async
+
+async def fetch_data():
+    ...
+
+data, _ = await safe_execute_async(fetch_data, context={"operation": "fetch"})
+```
+
+Both helpers return a tuple of the result and a success flag, making it easy to
+share error wrapping across modules.
