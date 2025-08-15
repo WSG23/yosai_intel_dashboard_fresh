@@ -20,8 +20,26 @@ var DLQMessages = prometheus.NewCounterVec(
 	[]string{"queue"},
 )
 
+// ProcessedMessages counts successfully handled tasks.
+var ProcessedMessages = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "queue_processed_messages_total",
+		Help: "Number of messages processed successfully",
+	},
+	[]string{"queue"},
+)
+
+// ProcessingErrors counts task handler failures.
+var ProcessingErrors = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "queue_processing_errors_total",
+		Help: "Number of errors while processing messages",
+	},
+	[]string{"queue"},
+)
+
 func init() {
-	prometheus.MustRegister(DLQMessages)
+	prometheus.MustRegister(DLQMessages, ProcessedMessages, ProcessingErrors)
 }
 
 // DLQProducer publishes tasks to a dead-letter queue.
@@ -58,6 +76,7 @@ func (c *Consumer) Process(ctx context.Context, msg []byte, handler func(context
 	}
 	if err := handler(ctx, &t); err != nil {
 		t.RetryCount++
+		ProcessingErrors.WithLabelValues(c.queue).Inc()
 		if t.MaxRetries > 0 && t.RetryCount >= t.MaxRetries {
 			DLQMessages.WithLabelValues(c.queue).Inc()
 			if c.p != nil {
@@ -66,5 +85,6 @@ func (c *Consumer) Process(ctx context.Context, msg []byte, handler func(context
 		}
 		return err
 	}
+	ProcessedMessages.WithLabelValues(c.queue).Inc()
 	return nil
 }
