@@ -1,24 +1,27 @@
-"""File-based CSV storage repository with persistence"""
+"""Redis-backed CSV storage repository for session data"""
 
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from yosai_intel_dashboard.src.utils.io_helpers import read_json, write_json
-from yosai_intel_dashboard.src.utils.unicode_handler import UnicodeHandler
+import redis
+
+from yosai_intel_dashboard.src.utils.io_helpers import write_json
 
 logger = logging.getLogger(__name__)
 
 
 class CSVStorageRepository:
-    """File-based storage repository for session data persistence"""
+    """Redis-backed storage repository for session data persistence"""
 
     def __init__(self, path: str) -> None:
         self.path = Path(path)
         self.storage_dir = self.path.parent / "session_storage"
-        self.sessions: Dict[str, Any] = {}  # In-memory cache
+        redis_url = os.getenv("SESSION_REDIS_URL", "redis://localhost:6379/0")
+        self.redis = redis.Redis.from_url(redis_url, decode_responses=True)
         self._ensure_storage_directory()
 
     def _ensure_storage_directory(self) -> None:
@@ -29,73 +32,38 @@ class CSVStorageRepository:
         except Exception as e:
             logger.error(f"Failed to create storage directory: {e}")
 
-    def _get_session_file_path(self, session_id: str) -> Path:
-        """Get the file path for a session"""
-        return self.storage_dir / f"session_{session_id}.json"
-
-    def _load_session_from_file(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Load session data from file"""
-        try:
-            file_path = self._get_session_file_path(session_id)
-            if file_path.exists():
-                data = read_json(file_path)
-                self.sessions[session_id] = data
-                logger.info("Sanitized read from %s", file_path)
-                return data
-        except Exception as e:
-            logger.error(f"Failed to load session {session_id}: {e}")
-        return None
-
-    def _save_session_to_file(self, session_id: str, data: Dict[str, Any]) -> bool:
-        """Save session data to file"""
-        try:
-            file_path = self._get_session_file_path(session_id)
-
-            data_with_meta = {
-                **data,
-                "last_updated": datetime.now().isoformat(),
-                "session_id": session_id,
-            }
-
-            write_json(file_path, data_with_meta)
-            logger.info("Sanitized write to %s", file_path)
-
-            self.sessions[session_id] = data_with_meta
-            logger.info(f"Session {session_id} saved to file")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to save session {session_id}: {e}")
-            return False
+    def _session_key(self, session_id: str) -> str:
+        return f"session:{session_id}"
 
     def initialize(self) -> bool:
-        """Initialize the repository and load existing sessions"""
+        """Ensure Redis connection and storage directory"""
         try:
             self._ensure_storage_directory()
-
-            if self.storage_dir.exists():
-                for file_path in self.storage_dir.glob("session_*.json"):
-                    try:
-                        session_id = file_path.stem.replace("session_", "")
-                        self._load_session_from_file(session_id)
-                    except Exception as e:
-                        logger.warning(f"Failed to load session file {file_path}: {e}")
-
-            logger.info(f"Repository initialized with {len(self.sessions)} sessions")
+            self.redis.ping()
+            logger.info("Repository initialized with Redis backend")
             return True
         except Exception as e:
             logger.error(f"Repository initialization failed: {e}")
             return False
 
     def store_session_data(self, session_id: str, data: Dict[str, Any]) -> None:
-        """Store session data with file persistence"""
-        self.sessions[session_id] = data
-        self._save_session_to_file(session_id, data)
+        """Store session data in Redis"""
+        data_with_meta = {
+            **data,
+            "last_updated": datetime.now().isoformat(),
+            "session_id": session_id,
+        }
+        self.redis.set(self._session_key(session_id), json.dumps(data_with_meta))
 
     def get_session_data(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Get session data from memory or file"""
-        if session_id in self.sessions:
-            return self.sessions[session_id]
-        return self._load_session_from_file(session_id)
+        """Get session data from Redis"""
+        data = self.redis.get(self._session_key(session_id))
+        if data:
+            try:
+                return json.loads(data)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to decode session {session_id}: {e}")
+        return None
 
     def update_session_data(self, session_id: str, updates: Dict[str, Any]) -> None:
         """Update existing session data"""
@@ -158,40 +126,40 @@ class CSVStorageRepository:
     # Session management
     def list_sessions(self) -> List[str]:
         """List all available session IDs"""
-        return list(self.sessions.keys())
+        keys = self.redis.keys(self._session_key("*"))
+        return [k.split(":", 1)[1] for k in keys]
 
     def delete_session(self, session_id: str) -> bool:
-        """Delete a session and its file"""
+        """Delete a session from Redis"""
         try:
-            if session_id in self.sessions:
-                del self.sessions[session_id]
-
-            file_path = self._get_session_file_path(session_id)
-            if file_path.exists():
-                file_path.unlink()
-
-            logger.info(f"Session {session_id} deleted")
-            return True
+            return bool(self.redis.delete(self._session_key(session_id)))
         except Exception as e:
             logger.error(f"Failed to delete session {session_id}: {e}")
             return False
 
     def cleanup_old_sessions(self, max_age_days: int = 7) -> int:
-        """Clean up old session files"""
+        """Clean up old session keys"""
         cleaned = 0
+        cutoff = datetime.now().timestamp() - (max_age_days * 24 * 3600)
         try:
-            cutoff_time = datetime.now().timestamp() - (max_age_days * 24 * 3600)
-
-            for file_path in self.storage_dir.glob("session_*.json"):
-                if file_path.stat().st_mtime < cutoff_time:
-                    session_id = file_path.stem.replace("session_", "")
-                    if self.delete_session(session_id):
+            for key in self.redis.keys(self._session_key("*")):
+                data = self.redis.get(key)
+                if not data:
+                    continue
+                try:
+                    payload = json.loads(data)
+                    last_updated = payload.get("last_updated")
+                    if (
+                        last_updated
+                        and datetime.fromisoformat(last_updated).timestamp() < cutoff
+                    ):
+                        self.redis.delete(key)
                         cleaned += 1
-
+                except Exception:
+                    continue
             logger.info(f"Cleaned up {cleaned} old sessions")
         except Exception as e:
             logger.error(f"Session cleanup failed: {e}")
-
         return cleaned
 
     # Permanent storage
