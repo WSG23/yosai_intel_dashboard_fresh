@@ -28,15 +28,31 @@ See [Getting Started](docs/getting-started.md) for Docker and local development 
 
 ## Project Layout
 
+The repository follows a `src/`-based layout that separates reusable modules from
+deployable services.
+
 ```text
 .
 ├── docs/                  # Documentation and guides
 ├── services/              # Deployable microservices
 ├── src/                   # Runtime Python packages
 ├── scripts/               # Maintenance and CLI utilities
-├── tests/                 # Test suites
+├── tests/                 # Repository-wide test suites
 └── yosai_intel_dashboard/ # Clean Architecture application modules
 ```
+
+**Shared vs. service-specific code**
+
+- Place code intended for reuse under `src/` or `yosai_intel_dashboard/src/`.
+- Code that is only used by a single service lives under
+  `services/<service_name>/src/<service_name>/`.
+
+**Transitional shims and deprecated paths**
+
+- The root-level `wsgi_shim.py` exists for legacy deployment scripts and will be
+  removed in a future release.
+- Previous top-level packages such as `core` or `models` are deprecated. Import
+  modules via the canonical `yosai_intel_dashboard.src.*` path instead.
 
 | Directory | Purpose |
 |-----------|---------|
