@@ -152,16 +152,20 @@ func main() {
 	if err != nil {
 		tracing.Logger.Fatalf("failed to connect db: %v", err)
 	}
-        producer, err := ckafka.NewProducer(&ckafka.ConfigMap{
-                "bootstrap.servers": brokers,
-                "enable.idempotence": true,
-                "acks":              "all",
-                "transactional.id":  "gateway-outbox",
-        })
-        if err != nil {
-                tracing.Logger.Fatalf("failed to init kafka producer: %v", err)
-        }
-	defer producer.Close()
+	defer db.Close()
+	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{
+		"bootstrap.servers":  brokers,
+		"enable.idempotence": true,
+		"acks":               "all",
+		"transactional.id":   "gateway-outbox",
+	})
+	if err != nil {
+		tracing.Logger.Fatalf("failed to init kafka producer: %v", err)
+	}
+	defer func() {
+		producer.Flush(5000)
+		producer.Close()
+	}()
 	outbox := engine.NewOutbox(db)
 	dbSettings := gobreaker.Settings{
 		Name:    "rule-engine",
