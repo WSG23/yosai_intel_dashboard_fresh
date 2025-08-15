@@ -46,7 +46,7 @@ def failure(error: E) -> Failure[E]:
     return Failure(error)
 
 
-from .enums import DoorType
+from ..value_objects.enums import DoorType
 from .events import AccessEvent
 
 

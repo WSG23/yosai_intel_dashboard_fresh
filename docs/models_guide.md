@@ -20,7 +20,7 @@ is organized and consistent.
 FILE-BY-FILE BREAKDOWN
 ======================
 
-### <span aria-hidden="true">📋</span> models/enums.py - "The Dropdown Lists"
+### <span aria-hidden="true">📋</span> core/domain/value_objects/enums.py - "The Dropdown Lists"
 WHAT IT DOES:
 This file defines all the fixed choices/options used throughout the system.
 Like dropdown menus in a form - you can only pick from specific options.
@@ -36,14 +36,14 @@ CONTAINS:
 HOW OTHER MODULES USE IT:
 ```python
 # In analytics page - checking access results
-from yosai_intel_dashboard.src.models.enums import AccessResult, AnomalyType
+from yosai_intel_dashboard.src.core.domain.value_objects.enums import AccessResult, AnomalyType
 
 def analyze_failed_access(data):
     denied_events = data[data['access_result'] == AccessResult.DENIED.value]
     return f"Found {len(denied_events)} denied access attempts"
 
 # In dashboard components - showing severity colors
-from yosai_intel_dashboard.src.models.enums import SeverityLevel
+from yosai_intel_dashboard.src.core.domain.value_objects.enums import SeverityLevel
 
 def get_alert_color(severity_text):
     if severity_text == SeverityLevel.CRITICAL.value:
@@ -53,7 +53,7 @@ def get_alert_color(severity_text):
     return "yellow"
 
 # In incident response - updating ticket status
-from yosai_intel_dashboard.src.models.enums import TicketStatus
+from yosai_intel_dashboard.src.core.domain.value_objects.enums import TicketStatus
 
 def resolve_ticket(ticket_id, resolution_type):
     if resolution_type == "harmful":
@@ -92,7 +92,7 @@ def add_new_employee(emp_data):
 
 # In map panel - showing door information
 from yosai_intel_dashboard.src.models.entities import Door
-from yosai_intel_dashboard.src.models.enums import DoorType
+from yosai_intel_dashboard.src.core.domain.value_objects.enums import DoorType
 
 def create_door_for_map(door_data):
     door = Door(
@@ -137,7 +137,7 @@ HOW OTHER MODULES USE IT:
 ```python
 # In file upload processing - converting CSV to structured events
 from yosai_intel_dashboard.src.models.events import AccessEvent
-from yosai_intel_dashboard.src.models.enums import AccessResult, BadgeStatus
+from yosai_intel_dashboard.src.core.domain.value_objects.enums import AccessResult, BadgeStatus
 
 def process_access_log_csv(csv_data):
     events = []
@@ -155,7 +155,7 @@ def process_access_log_csv(csv_data):
 
 # In anomaly detection - creating anomaly records
 from yosai_intel_dashboard.src.models.events import AnomalyDetection
-from yosai_intel_dashboard.src.core.domain.entities.enums import AnomalyType, SeverityLevel
+from yosai_intel_dashboard.src.core.domain.value_objects.enums import AnomalyType, SeverityLevel
 
 def flag_odd_time_access(access_event):
     anomaly = AnomalyDetection(
@@ -171,7 +171,7 @@ def flag_odd_time_access(access_event):
 
 # In incident management - creating tickets
 from yosai_intel_dashboard.src.core.domain.entities.events import IncidentTicket
-from yosai_intel_dashboard.src.core.domain.entities.enums import TicketStatus
+from yosai_intel_dashboard.src.core.domain.value_objects.enums import TicketStatus
 
 def create_security_ticket(anomaly, threat_level):
     ticket = IncidentTicket(
