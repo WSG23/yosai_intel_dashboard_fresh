@@ -141,57 +141,25 @@ func main() {
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), dbName, dbPassword, sslMode)
-
-	dbCtx, dbCancel := context.WithTimeout(context.Background(), connectionTimeout)
-	defer dbCancel()
-	dbCh := make(chan struct{})
-	var db *sql.DB
-	var dbErr error
-	go func() {
-		db, dbErr = sql.Open("postgres", dsn)
-		close(dbCh)
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		tracing.Logger.Fatalf("failed to connect db: %v", err)
+	}
+	defer db.Close()
+	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{
+		"bootstrap.servers":  brokers,
+		"enable.idempotence": true,
+		"acks":               "all",
+		"transactional.id":   "gateway-outbox",
+	})
+	if err != nil {
+		tracing.Logger.Fatalf("failed to init kafka producer: %v", err)
+	}
+	defer func() {
+		producer.Flush(5000)
+		producer.Close()
 	}()
-	select {
-	case <-dbCtx.Done():
-		dbConnectionFailures.Inc()
-		tracing.Logger.Fatalf("db connection timeout: %v", dbCtx.Err())
-	case <-dbCh:
-		if dbErr != nil {
-			dbConnectionFailures.Inc()
-			tracing.Logger.Fatalf("failed to connect db: %v", dbErr)
-		}
-	}
-	if err := db.PingContext(dbCtx); err != nil {
-		dbConnectionFailures.Inc()
-		tracing.Logger.Fatalf("failed to ping db: %v", err)
-	}
 
-	prodCtx, prodCancel := context.WithTimeout(context.Background(), connectionTimeout)
-	defer prodCancel()
-	prodCh := make(chan struct{})
-	var producer *ckafka.Producer
-	var prodErr error
-	go func() {
-		producer, prodErr = ckafka.NewProducer(&ckafka.ConfigMap{
-			"bootstrap.servers":  brokers,
-			"enable.idempotence": true,
-			"acks":               "all",
-			"transactional.id":   "gateway-outbox",
-		})
-		close(prodCh)
-	}()
-	select {
-	case <-prodCtx.Done():
-		kafkaConnectionFailures.Inc()
-		tracing.Logger.Fatalf("kafka producer init timeout: %v", prodCtx.Err())
-	case <-prodCh:
-		if prodErr != nil {
-			kafkaConnectionFailures.Inc()
-			tracing.Logger.Fatalf("failed to init kafka producer: %v", prodErr)
-		}
-
-	}
-	defer producer.Close()
 	outbox := engine.NewOutbox(db)
 	dbSettings := gobreaker.Settings{
 		Name:    "rule-engine",

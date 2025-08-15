@@ -8,7 +8,6 @@ import (
 	"time"
 
 	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Consumer defines the subset of kafka consumer methods used by replay.
@@ -83,30 +82,20 @@ func main() {
 	}
 	defer consumer.Close()
 
-	prodCtx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
-	defer cancel()
-	prodCh := make(chan struct{})
-	var producer *ckafka.Producer
-	go func() {
-		producer, err = ckafka.NewProducer(&ckafka.ConfigMap{
-			"bootstrap.servers":  *brokers,
-			"enable.idempotence": true,
-			"acks":               "all",
-			"transactional.id":   "replay-" + *topic,
-		})
-		close(prodCh)
-	}()
-	select {
-	case <-prodCtx.Done():
-		kafkaConnectionFailures.Inc()
-		log.Fatalf("producer init timeout: %v", prodCtx.Err())
-	case <-prodCh:
-		if err != nil {
-			kafkaConnectionFailures.Inc()
-			log.Fatalf("producer init: %v", err)
-		}
+	producer, err := ckafka.NewProducer(&ckafka.ConfigMap{
+		"bootstrap.servers":  *brokers,
+		"enable.idempotence": true,
+		"acks":               "all",
+		"transactional.id":   "replay-" + *topic,
+	})
+	if err != nil {
+		log.Fatalf("producer init: %v", err)
 	}
-	defer producer.Close()
+	defer func() {
+		producer.Flush(5000)
+		producer.Close()
+	}()
+
 
 	if err := consumer.Subscribe(dlq, nil); err != nil {
 		log.Fatalf("subscribe: %v", err)
