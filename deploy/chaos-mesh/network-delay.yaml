@@ -1,0 +1,16 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: dashboard-network-delay
+  namespace: chaos-testing
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces:
+      - dashboard
+    labelSelectors:
+      app: dashboard
+  delay:
+    latency: '200ms'
+  duration: '1m'
