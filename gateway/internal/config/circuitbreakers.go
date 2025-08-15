@@ -30,9 +30,9 @@ type Config struct {
 //go:embed circuitbreakers_schema.json
 var cbSchema []byte
 
-// Load reads YAML configuration from path. If path is empty, the default
+// LoadCircuitBreakers reads YAML configuration from path. If path is empty, the default
 // "config/circuit-breakers.yaml" is used.
-func Load(path string) (*Config, error) {
+func LoadCircuitBreakers(path string) (*Config, error) {
 	if path == "" {
 		path = "config/circuit-breakers.yaml"
 	}

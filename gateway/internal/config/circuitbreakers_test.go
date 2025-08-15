@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadValidConfig(t *testing.T) {
-	cfg, err := Load("../../../config/circuit-breakers.yaml")
+	cfg, err := LoadCircuitBreakers("../../../config/circuit-breakers.yaml")
 	if err != nil {
 		t.Fatalf("load valid: %v", err)
 	}
@@ -24,7 +24,7 @@ func TestLoadInvalidConfig(t *testing.T) {
 	tmp.WriteString("database:\n  failure_threshold: 'x'\n")
 	tmp.Close()
 
-	if _, err := Load(tmp.Name()); err == nil {
+	if _, err := LoadCircuitBreakers(tmp.Name()); err == nil {
 		t.Fatal("expected error")
 	}
 }
