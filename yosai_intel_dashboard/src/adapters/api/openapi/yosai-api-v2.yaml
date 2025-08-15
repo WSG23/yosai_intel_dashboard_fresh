@@ -29,6 +29,12 @@ paths:
                 properties:
                   csrf_token:
                     type: string
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /upload:
     post:
       summary: Upload a file
@@ -190,6 +196,21 @@ paths:
         '200':
           description: Audit history
 components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum: [invalid_input, unauthorized, not_found, internal, unavailable]
+        message:
+          type: string
+        details:
+          description: Additional error details
+          nullable: true
   securitySchemes:
     jwtAuth:
       type: http

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	authz "github.com/WSG23/auth"
-	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
+        authz "github.com/WSG23/auth"
+        xerrors "github.com/WSG23/errors"
 )
 
 // RequirePermission checks the X-Permissions header for a permission value.
@@ -24,7 +24,7 @@ func RequirePermissionHeader(perm string) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+                        xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", nil)
 		})
 	}
 }
@@ -40,7 +40,7 @@ func RequireRoleHeader(role string) func(http.Handler) http.Handler {
 					return
 				}
 			}
-			sharederrors.WriteJSON(w, http.StatusForbidden, sharederrors.Unauthorized, "forbidden", nil)
+                        xerrors.WriteJSON(w, http.StatusForbidden, xerrors.Unauthorized, "forbidden", nil)
 		})
 	}
 }

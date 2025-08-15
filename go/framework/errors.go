@@ -3,7 +3,7 @@ package framework
 import (
 	"net/http"
 
-	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
+        sharederrors "github.com/WSG23/errors"
 )
 
 type ServiceError = sharederrors.Error

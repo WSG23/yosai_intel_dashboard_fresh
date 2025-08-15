@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	sharederrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
+        sharederrors "github.com/WSG23/errors"
 )
 
 type body struct {

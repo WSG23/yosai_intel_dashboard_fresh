@@ -10,7 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	gwconfig "github.com/WSG23/yosai-gateway/internal/config"
-	serrors "github.com/WSG23/yosai_intel_dashboard_fresh/shared/errors"
+        serrors "github.com/WSG23/errors"
 )
 
 type RateLimiter struct {
