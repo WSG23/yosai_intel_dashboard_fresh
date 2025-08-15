@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STATE_FILE="$(dirname "$0")/../rollback_state.json"
+STATE_FILE="${STATE_FILE:-$(dirname "$0")/../rollback_state.json}"
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required for rollback" >&2
+  exit 1
+fi
 
 if [[ ! -f "$STATE_FILE" ]]; then
   echo "State file $STATE_FILE not found" >&2
@@ -25,7 +30,13 @@ echo "Rolling back container image to $IMAGE_TAG"
 # Example rollback command for Kubernetes deployment
 kubectl set image deployment/dashboard dashboard="$IMAGE_TAG" --record || true
 
+ROLLBACK_SCRIPT="$(dirname "$0")/../../migrations/rollback.sh"
+if [[ ! -x "$ROLLBACK_SCRIPT" ]]; then
+  echo "Migration rollback script $ROLLBACK_SCRIPT not found" >&2
+  exit 1
+fi
+
 echo "Reverting database to migration $MIGRATION_STATE"
-"$(dirname "$0")/../../migrations/rollback.sh" "$MIGRATION_STATE"
+"$ROLLBACK_SCRIPT" "$MIGRATION_STATE"
 
 echo "Rollback completed"
