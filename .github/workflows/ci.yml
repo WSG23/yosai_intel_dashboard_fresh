@@ -258,6 +258,15 @@ jobs:
           name: performance-report
           path: performance-report.txt
 
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: docker/setup-buildx-action@v3
+      - name: Build images
+        run: docker compose build
+
   audits:
     name: Audits
     needs:
@@ -267,7 +276,7 @@ jobs:
       - golangci
       - shellcheck
       - hadolint
-      - build-test
+      - docker-build
       - integration
       - performance
     runs-on: ubuntu-latest

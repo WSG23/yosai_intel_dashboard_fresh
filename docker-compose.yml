@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: dashboard/Dockerfile
-
     command: ["python", "-m", "yosai_intel_dashboard.src.app"]
     ports:
       - "8050:8050"
@@ -11,13 +10,6 @@ services:
       - .:/app
     env_file:
       - ./.env
-    environment:
-      - ANALYTICS_API_KEY
-      - ANALYTICS_API_URL
-      - DB_USER
-      - DB_PASSWORD
-      - DB_HOST
-      - DB_PORT
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "true"]
@@ -29,7 +21,6 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
-
     command: ["python", "start_api.py"]
     ports:
       - "8000:8000"
@@ -37,13 +28,6 @@ services:
       - .:/app
     env_file:
       - ./.env
-    environment:
-      - ANALYTICS_API_KEY
-      - ANALYTICS_API_URL
-      - DB_USER
-      - DB_PASSWORD
-      - DB_HOST
-      - DB_PORT
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "true"]
@@ -53,14 +37,12 @@ services:
 
   db:
     image: postgres:15
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: yosai_intel
+    env_file:
+      - ./.env
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL","pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5

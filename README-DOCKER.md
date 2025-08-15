@@ -1,11 +1,12 @@
 # Docker Quickstart
 
-This guide covers common Docker workflows for the Yosai Intel Dashboard.
+This guide covers common Docker workflows for the Yosai Intel Dashboard. All
+services are defined in a single `docker-compose.yml` and configured via `.env`
+files.
 
 ## Building Images
 
-The project ships with several `Dockerfile` and `docker-compose` definitions. To
-build all images referenced in the default compose file:
+Build all images referenced in the compose file:
 
 ```bash
 docker compose build
@@ -23,6 +24,15 @@ images compatible with Intel based hosts:
 ```bash
 docker build --platform=linux/amd64 -t yosai-api -f Dockerfile .
 ```
+
+## Dockerfiles
+
+The repository contains several Dockerfiles:
+
+- `Dockerfile` – builds the analytics backend.
+- `Dockerfile.gateway` – builds the gateway service.
+- `api/Dockerfile` – builds the API service.
+- `dashboard/Dockerfile` – builds the dashboard UI.
 
 ## Running Services
 
@@ -147,4 +157,3 @@ Verify the health endpoint with pytest:
 ```bash
 pytest tests/test_health_endpoint.py
 ```
-
