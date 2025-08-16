@@ -30,7 +30,7 @@ jobs:
       image: ${{ steps.meta.outputs.image }}
       tags: ${{ steps.meta.outputs.tags }}
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
       - name: Check dockerfile exists
         id: df
         run: |
@@ -78,7 +78,7 @@ jobs:
       matrix:
         image: [backend, gateway, jobs]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Log in to registry
         uses: docker/login-action@v3
         with:

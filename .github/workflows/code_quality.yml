@@ -18,7 +18,7 @@ jobs:
   lint-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
       # --- Node toolchain for frontend lint/tests ---
       - name: Set up Node 20
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
