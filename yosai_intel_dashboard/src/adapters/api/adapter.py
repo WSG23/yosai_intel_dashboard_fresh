@@ -41,6 +41,7 @@ from yosai_intel_dashboard.src.adapters.api.routes.feature_flags import (
     router as feature_flags_router,
 )
 from yosai_intel_dashboard.src.adapters.api.model_router import create_model_router
+from yosai_intel_dashboard.src.adapters.api.analytics_extra import router as analytics_extra_router
 from yosai_intel_dashboard.src.services.model_service import ModelService
 from yosai_intel_dashboard.src.core.container import container
 from yosai_intel_dashboard.src.core.rbac import create_rbac_service
@@ -131,6 +132,7 @@ def _register_routes(service: BaseService, build_dir: Path) -> None:
     service.app.add_event_handler("startup", init_cache_manager)
 
     api_v1 = APIRouter(prefix="/api/v1")
+    api_v1.include_router(analytics_extra_router)
     api_v1.include_router(analytics_router)
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)

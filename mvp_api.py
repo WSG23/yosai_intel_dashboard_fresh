@@ -65,3 +65,32 @@ async def events(_: str = Depends(_auth_header_or_query)):
         async for item in event_stream("dev-token"):
             yield f"data: {json.dumps(item)}\n\n"
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+from mvp_api_bridge import try_mount_real_api
+_mounted = try_mount_real_api(app)
+
+from mvp_api_bridge import mount_real
+try:
+    _spec=open("mvp_api_bridge_spec.txt").read().strip()
+except Exception:
+    _spec=""
+mounted = mount_real(app, _spec)
+
+
+# BEGIN REALAPI MOUNT
+import importlib
+def _load_realapi(spec: str):
+    mod, _, attr = spec.partition(":")
+    m = importlib.import_module(mod)
+    obj = getattr(m, attr) if attr else getattr(m, "app", None)
+    return obj() if callable(obj) else obj
+try:
+    _SPEC = 'venv.lib.python3.11.site-packages.prefect.server.api.server:create_api_app'
+    if _SPEC:
+        _real = _load_realapi(_SPEC)
+        if _real:
+            app.mount("/realapi", _real)
+except Exception as _e:
+    pass
+# END REALAPI MOUNT
+
