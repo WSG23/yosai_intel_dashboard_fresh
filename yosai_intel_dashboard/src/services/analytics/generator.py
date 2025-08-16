@@ -9,7 +9,7 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 
-from analytics.core.utils import hll_count
+from .core.utils import hll_count
 
 from yosai_intel_dashboard.src.infrastructure.config import get_cache_config
 
