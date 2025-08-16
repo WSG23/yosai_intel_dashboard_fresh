@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
-from analytics.core.utils import hll_count
+from .core.utils import hll_count
 
 
 logger = logging.getLogger(__name__)
