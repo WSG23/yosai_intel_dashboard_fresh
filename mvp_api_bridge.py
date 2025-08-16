@@ -1,9 +1,15 @@
 from __future__ import annotations
-import importlib, os, traceback
+import importlib, logging, os
 from typing import Any
 from fastapi import FastAPI
 
 DEFAULT_SPEC = "yosai_intel_dashboard.src.adapters.api.adapter:create_api_app"
+
+# module status dictionary tracking mount state and errors
+_status: dict[str, Any] = {"mounted": False, "spec": None, "error": None}
+
+# logger for bridge operations
+logger = logging.getLogger("bridge")
 
 def _load_obj(spec: str) -> Any | None:
     mod, _, attr = spec.partition(":")
@@ -12,18 +18,21 @@ def _load_obj(spec: str) -> Any | None:
     return obj() if callable(obj) else obj
 
 def try_mount_real_api(app: FastAPI) -> str:
+    """Attempt to mount the real API and update status/logs."""
     spec = os.getenv("YOSAI_REALAPI_SPEC", DEFAULT_SPEC) or DEFAULT_SPEC
-    debug = os.getenv("BRIDGE_DEBUG", "0") == "1"
+    _status.update(spec=spec, mounted=False, error=None)
     try:
         real = _load_obj(spec)
         if real is None:
-            if debug: print(f"[bridge] loaded None from {spec}")
+            msg = f"loaded None from {spec}"
+            _status.update(error=msg)
+            logger.error("%s", msg)
             return ""
         app.mount("/realapi", real)
-        if debug: print(f"[bridge] mounted {spec} at /realapi")
+        _status.update(mounted=True)
+        logger.info("mounted %s at /realapi", spec)
         return spec
     except Exception as e:
-        if debug:
-            print(f"[bridge] failed to mount {spec}: {e}")
-            traceback.print_exc()
+        _status.update(error=str(e))
+        logger.exception("failed to mount %s", spec)
         return ""
