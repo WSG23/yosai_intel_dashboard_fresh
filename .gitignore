@@ -155,3 +155,5 @@ archive/
 yosai_intel_dashboard/src/**/__pycache__/
 local.env
 local.env
+scripts/open-followups.sh
+scripts/open-pr-and-issues.sh
