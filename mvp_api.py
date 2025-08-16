@@ -6,24 +6,22 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from services.enrich_service import enrich_csv_content
 from services.stream_service import event_stream
-from mvp_api_bridge import try_mount_real_api
+from mvp_api_bridge import try_mount_real_api, _status
 
 load_dotenv()
 app = FastAPI()
-try:
-    from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app as _real_factory  # wrap to enable docs
-    _real = _real_factory()
-    try:
-        if getattr(_real, "docs_url", None) is None: _real.docs_url = "/docs"
-        if getattr(_real, "openapi_url", None) is None: _real.openapi_url = "/openapi.json"
-    except Exception: pass
-    app.mount('/realapi', _real)
-    print('[bridge] mounted real API via direct import')
-except Exception as _e:
-    import traceback as _tb
-    print('[bridge] direct mount failed:', _e)
-    _tb.print_exc()
+# always attempt to mount the real API bridge at startup
 try_mount_real_api(app)
+
+@app.get("/bridge/status")
+def bridge_status():
+    if _status.get("mounted"):
+        return {
+            "mounted": True,
+            "mount_path": "/realapi",
+            "real_docs_url": "/realapi/docs",
+        }
+    return {"mounted": False, "error": _status.get("error")}
 
 @app.get("/healthz")
 def healthz():
