@@ -10,6 +10,19 @@ from mvp_api_bridge import try_mount_real_api
 
 load_dotenv()
 app = FastAPI()
+try:
+    from yosai_intel_dashboard.src.adapters.api.adapter import create_api_app as _real_factory  # wrap to enable docs
+    _real = _real_factory()
+    try:
+        if getattr(_real, "docs_url", None) is None: _real.docs_url = "/docs"
+        if getattr(_real, "openapi_url", None) is None: _real.openapi_url = "/openapi.json"
+    except Exception: pass
+    app.mount('/realapi', _real)
+    print('[bridge] mounted real API via direct import')
+except Exception as _e:
+    import traceback as _tb
+    print('[bridge] direct mount failed:', _e)
+    _tb.print_exc()
 try_mount_real_api(app)
 
 @app.get("/healthz")

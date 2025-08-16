@@ -4,21 +4,35 @@ services:
       context: .
       dockerfile: docker/Dockerfile.dev
     ports:
-      - "8000:8000"
+    - "8000:8000"
     environment:
       ENABLE_METRICS: "1"
       YOSAI_ENABLE_PROFILING: "0"
       SECRET_KEY: "dev-secret"
       PYTHONPATH: "/app"
-      YOSAI_REALAPI_SPEC: "yosai_intel_dashboard.src.adapters.api.adapter:create_api_app"
+      YOSAI_REALAPI_SPEC: "yosai_intel_dashboard.src.adapters.api.adapter:app"
+      BRIDGE_DEBUG: '1'
+      DB_HOST: postgres
+      DB_PORT: '5432'
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: yosai
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      ANALYTICS_API_KEY: dev-analytics
     volumes:
-      - .:/app
+    - .:/app
     healthcheck:
-      test: ["CMD-SHELL","curl -fsS http://localhost:8000/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/healthz || exit 1"]
       interval: 5s
       timeout: 2s
       retries: 20
 
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   ui:
     image: node:20-bullseye
     working_dir: /app/mvp-ui
@@ -27,13 +41,45 @@ services:
         condition: service_healthy
     environment:
       UI_PORT: "${UI_PORT:-5175}"
-    command: sh -lc "npm install && npm run dev -- --host --port ${UI_PORT:-5175} --strictPort"
+    command: sh -lc "npm install && npm run dev -- --host --port 
+      ${UI_PORT:-5175} --strictPort"
     volumes:
-      - .:/app
+    - .:/app
     ports:
-      - "${UI_PORT:-5175}:${UI_PORT:-5175}"
+    - "${UI_PORT:-5175}:${UI_PORT:-5175}"
     healthcheck:
-      test: ["CMD-SHELL","curl -fsS http://localhost:${UI_PORT:-5175} || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:${UI_PORT:-5175} || exit 1"]
       interval: 5s
       timeout: 2s
       retries: 12
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: yosai
+    ports:
+    - 5432:5432
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U postgres
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+    - pgdata:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    ports:
+    - 6379:6379
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  pgdata:
