@@ -1,42 +1,72 @@
-import { useEffect, useState } from 'react'
-type Summary = { total: number; trend: number[] }
+import { useEffect, useState } from "react";
+import Nav from "./components/Nav";
+import LiveBanner from "./components/LiveBanner";
+import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import Graphs from "./pages/Graphs";
+import ExportPage from "./pages/Export";
+import UploadPage from "./pages/Upload";
+import Settings from "./pages/Settings";
+import { apiLogin, getSummary, type Summary } from "./lib/api";
+
+type Tab = "dashboard" | "analytics" | "graphs" | "export" | "upload" | "settings";
+const getToken = () => localStorage.getItem("token");
 
 export default function App() {
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [token, setToken] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [tab, setTab] = useState<Tab>("dashboard");
+  const [token, setToken] = useState<string | null>(getToken());
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [err, setErr] = useState("");
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const r = await fetch('/api/analytics/summary')
-        if (!r.ok) throw new Error(`GET /api/analytics/summary -> ${r.status}`)
-        setSummary(await r.json())
-      } catch (e: any) { setError(e?.message ?? 'Failed to load summary') }
-    }
-    load()
-  }, [])
-
-  const login = async () => {
+  async function login() {
+    setErr("");
     try {
-      const r = await fetch('/api/login', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ username:'demo', password:'demo' })
-      })
-      if (!r.ok) throw new Error(`POST /api/login -> ${r.status}`)
-      const data = await r.json()
-      setToken(data.token)
-    } catch (e:any) { setError(e?.message ?? 'Login failed') }
+      const { token } = await apiLogin("demo", "x");
+      localStorage.setItem("token", token);
+      setToken(token);
+    } catch (e:any) {
+      setErr(String(e));
+    }
   }
 
+  function logout() {
+    localStorage.removeItem("token");
+    setToken(null);
+    setSummary(null);
+  }
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    (async () => {
+      setErr("");
+      setSummary(null);
+      try {
+        const s = await getSummary(token);
+        setSummary(s);
+      } catch (e:any) {
+        setErr(String(e));
+      }
+    })();
+    return () => ctrl.abort();
+  }, [token]);
+
   return (
-    <div style={{padding:24,fontFamily:'system-ui'}}>
-      <h1>Dashboard MVP</h1>
-      <button onClick={login} style={{padding:'8px 12px'}}>Login</button>
-      {token && <p>Token: {token}</p>}
-      {error && <p style={{color:'#b91c1c'}}>Error: {error}</p>}
-      {summary ? (<><p>Total: {summary.total}</p><p>Trend: {summary.trend.join(', ')}</p></>) : (<p>Loading…</p>)}
+    <div style={{ padding: 20, fontFamily: "Inter, system-ui, sans-serif" }}>
+      <header style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <h1 style={{ margin:0 }}>Yōsai Intel</h1>
+        <button onClick={login} style={{ padding:"6px 10px", border:"1px solid #ddd", borderRadius:8 }}>Login</button>
+      </header>
+      <LiveBanner token={token} />
+      <Nav tab={tab} setTab={setTab} onLogout={logout} />
+      {err && <pre style={{ background:"#fee", padding:8, border:"1px solid #fbb" }}>{err}</pre>}
+      <main style={{ marginTop:12 }}>
+        {tab === "dashboard" && <Dashboard token={token} summary={summary} />}
+        {tab === "analytics" && <Analytics summary={summary} />}
+        {tab === "graphs" && <Graphs summary={summary} />}
+        {tab === "export" && <ExportPage token={token} />}
+        {tab === "upload" && <UploadPage token={token} />}
+        {tab === "settings" && <Settings token={token} clear={logout} />}
+      </main>
     </div>
-  )
+  );
 }

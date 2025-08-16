@@ -5,7 +5,34 @@ services:
       dockerfile: docker/Dockerfile.dev
     ports:
       - "8000:8000"
+    environment:
+      ENABLE_METRICS: "1"
+      YOSAI_ENABLE_PROFILING: "0"
+      SECRET_KEY: "dev-secret-change-me"
+      PYTHONPATH: "/app"
     volumes:
       - .:/app
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:8000/healthz || exit 1"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+
+  ui:
+    image: node:20-bullseye
+    working_dir: /app/mvp-ui
+    depends_on:
+      api:
+        condition: service_healthy
     environment:
-      - PYTHONPATH=/app
+      UI_PORT: "${UI_PORT:-5175}"
+    command: sh -lc "npm install && npm run dev -- --host --port ${UI_PORT:-5175} --strictPort"
+    volumes:
+      - .:/app
+    ports:
+      - "${UI_PORT:-5175}:${UI_PORT:-5175}"
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:${UI_PORT:-5175} || exit 1"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
