@@ -45,7 +45,8 @@ hvac==2.3.0
 kafka-python==2.2.15
 hyperloglog==0.1.3
 pulsar-client==3.8.0
-dask==2024.4.1
+dask[distributed]==2024.4.1
+distributed==2024.4.1
 RapidFuzz==3.13.0
 pymemcache==4.0.0
 
