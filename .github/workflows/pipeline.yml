@@ -19,7 +19,7 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+    - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
       with:
         python-version: '3.11'
@@ -50,7 +50,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -72,7 +72,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
       with:
         python-version: '3.11'
@@ -101,7 +101,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
       with:
         python-version: '3.11'
@@ -118,7 +118,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
       with:
         python-version: '3.11'
@@ -164,7 +164,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Check SLO and rollback if needed
       env:
         SLO_METRIC_URL: ${{ secrets.SLO_METRIC_URL }}
@@ -174,7 +174,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Dependency Review
       if: ${{ github.event_name == 'pull_request' }}
       uses: actions/dependency-review-action@fa6368072a20f00d241e99c93d82db12512ca42d
@@ -204,7 +204,7 @@ jobs:
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+    - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
       if: ${{ github.event.pull_request.head.repo.fork == false }}
     - uses: snyk/actions/setup@v1
       if: ${{ github.event.pull_request.head.repo.fork == false }}
@@ -225,7 +225,7 @@ jobs:
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
       if: ${{ github.event.pull_request.head.repo.fork == false }}
     - name: OWASP ZAP baseline scan
       if: ${{ github.event.pull_request.head.repo.fork == false }}
@@ -237,7 +237,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
       with:
         python-version: '3.11'
@@ -259,7 +259,7 @@ jobs:
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
       if: ${{ github.event.pull_request.head.repo.fork == false }}
     - name: Build gateway Docker image
       if: ${{ github.event.pull_request.head.repo.fork == false }}
@@ -281,7 +281,7 @@ jobs:
       - name: Fork PR noop
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
         with:
           fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -309,7 +309,7 @@ jobs:
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Fetch secrets via ESO
       run: |
         kubectl apply -f k8s/external-secrets/dev.yaml
@@ -330,7 +330,7 @@ jobs:
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Fetch secrets via ESO
       run: |
         kubectl apply -f k8s/external-secrets/staging.yaml
@@ -351,7 +351,7 @@ jobs:
     - name: Fork PR noop
       if: ${{ github.event.pull_request.head.repo.fork }}
       run: 'echo "Fork PR: secret-protected job skipped (noop)."'
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Fetch secrets via ESO
       run: |
         kubectl apply -f k8s/external-secrets/prod.yaml
