@@ -1,2 +1,2 @@
-@import "tailwindcss";
-html, body, #root { height: 100%; }
+@import "./styles/tokens.css";
+@import "./styles/base.css";

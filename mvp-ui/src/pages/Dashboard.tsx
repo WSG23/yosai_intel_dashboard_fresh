@@ -1,26 +1,30 @@
-import type { Summary } from '../lib/api';
-type Props = { summary: Summary | null; token: string | null };
-export default function Dashboard({ summary, token }: Props) {
+import { useEffect, useState } from "react";
+import type { Summary } from "../lib/api";
+import { getSummary } from "../lib/api";
+
+export default function Dashboard({ token }: { token: string | null }) {
+  const [summary, setSummary] = useState<Summary | null>(null);
+  useEffect(() => {
+    if (!token) { setSummary(null); return; }
+    getSummary(token).then(setSummary).catch(() => setSummary(null));
+  }, [token]);
   return (
-    <section style={{ display: 'grid', gap: 12 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12 }}>
-        <div style={{ padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
-          <div style={{ fontSize: 12, color: '#666' }}>Total</div>
-          <div style={{ fontSize: 28, fontWeight: 700 }}>{summary ? summary.total : '—'}</div>
+    <section className="p-4">
+      <h2 className="text-xl font-bold mb-2">Dashboard (Realtime)</h2>
+      {!token && <p className="text-red-600">Login to view protected data.</p>}
+      {summary ? (
+        <div className="grid gap-3">
+          <div className="rounded-lg border p-4"><div className="text-sm text-gray-500">Total</div><div className="text-2xl font-semibold">{summary.total}</div></div>
+          <div className="rounded-lg border p-4">
+            <div className="text-sm text-gray-500 mb-1">Trend</div>
+            <div className="flex gap-1">
+              {summary.trend.map((v,i)=>(
+                <div key={i} title={String(v)} style={{height: 4+v*4, width:10}} className="bg-blue-500 rounded-sm" />
+              ))}
+            </div>
+          </div>
         </div>
-        <div style={{ padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
-          <div style={{ fontSize: 12, color: '#666' }}>Authed</div>
-          <div style={{ fontSize: 28, fontWeight: 700 }}>{token ? 'Yes' : 'No'}</div>
-        </div>
-        <div style={{ padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
-          <div style={{ fontSize: 12, color: '#666' }}>Trend</div>
-          <div style={{ fontSize: 18 }}>{summary ? summary.trend.join(', ') : '—'}</div>
-        </div>
-        <div style={{ padding: 16, border: '1px solid #ddd', borderRadius: 12 }}>
-          <div style={{ fontSize: 12, color: '#666' }}>Status</div>
-          <div style={{ fontSize: 18 }}>MVP wired to /api</div>
-        </div>
-      </div>
+      ) : <p className="text-gray-500">—</p>}
     </section>
   );
 }

@@ -1,36 +1,39 @@
-import { useEffect, useState } from 'react';
-import Nav from './components/Nav';
-import Dashboard from './pages/Dashboard';
-import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
-import { apiLogin, getSummary, type Summary } from './lib/api';
+import { useEffect, useMemo, useState } from "react";
+import Nav from "./components/Nav";
+import { getSummary, type Summary } from "./lib/api";
+import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import Graphs from "./pages/Graphs";
+import ExportPage from "./pages/Export";
+import Upload from "./pages/Upload";
+import Settings from "./pages/Settings";
+
+type Tab = "dashboard"|"analytics"|"graphs"|"export"|"upload"|"settings";
+
 export default function App() {
-  const [page, setPage] = useState<'dashboard'|'analytics'|'settings'>('dashboard');
-  const [token, setToken] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("dashboard");
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => { getSummary().then(setSummary).catch(() => setSummary(null)); }, []);
-  async function login() {
-    setLoading(true);
-    try { const res = await apiLogin('demo', 'x'); setToken(res.token); }
-    finally { setLoading(false); }
-  }
-  function logout(){ setToken(null); }
+
+  const authed = !!token;
+  useEffect(() => { if (token) localStorage.setItem("token", token); else localStorage.removeItem("token"); }, [token]);
+  useEffect(() => { if (!token) { setSummary(null); return; } getSummary(token).then(setSummary).catch(()=>setSummary(null)); }, [token]);
+
+  const Banner = useMemo(() => (
+    !authed ? <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-800 px-3 py-2 text-sm">401 Unauthorized — Login to access protected data.</div> : null
+  ), [authed]);
+
   return (
-    <div style={{ maxWidth: 1200, margin: '24px auto', padding: 16, display: 'grid', gap: 16 }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800 }}>Yōsai Intel</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={login} disabled={loading} className="px-3 py-2 bg-black text-white rounded">
-            {token ? 'Re-Login' : 'Login'}
-          </button>
-        </div>
-      </header>
-      <Nav page={page} onNavigate={(p) => setPage(p as any)} />
-      <main>
-        {page === 'dashboard' && <Dashboard summary={summary} token={token} />}
-        {page === 'analytics' && <Analytics summary={summary} />}
-        {page === 'settings' && <Settings token={token} onLogout={logout} />}
+    <div className="min-h-screen bg-gray-50">
+      <Nav tab={tab} onSelect={setTab} onLogout={() => setToken(null)} />
+      {Banner}
+      <main className="max-w-5xl mx-auto">
+        {tab==="dashboard" && <Dashboard token={token} />}
+        {tab==="analytics" && <Analytics summary={summary} authed={authed} />}
+        {tab==="graphs" && <Graphs summary={summary} />}
+        {tab==="export" && <ExportPage token={token} />}
+        {tab==="upload" && <Upload token={token} />}
+        {tab==="settings" && <Settings token={token} onSetToken={setToken} />}
       </main>
     </div>
   );
