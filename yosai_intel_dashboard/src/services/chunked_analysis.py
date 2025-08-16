@@ -5,9 +5,15 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-import dask
+try:
+    import dask
+    from dask.distributed import Client, LocalCluster
+except Exception:  # pragma: no cover - optional dependency
+    dask = None  # type: ignore
+    Client = None  # type: ignore
+    LocalCluster = None  # type: ignore
+
 import pandas as pd
-from dask.distributed import Client, LocalCluster
 
 from yosai_intel_dashboard.src.infrastructure.config.config import get_analytics_config
 from validation.data_validator import DataValidator
@@ -76,15 +82,20 @@ def _process_chunks(
             json.dump(json_ready, fh)
         return result
 
-    cluster = LocalCluster(n_workers=max_workers, threads_per_worker=1)
-    client = Client(cluster)
-
     chunks = list(chunked_controller._chunk_dataframe(df))
-    tasks = [dask.delayed(_process)(chunk) for chunk in chunks]
-    chunk_results = dask.compute(*tasks)
 
-    client.close()
-    cluster.close()
+    if dask is None or Client is None or LocalCluster is None:
+        logger.info(
+            "Dask not available; skipping distributed path and processing chunks sequentially"
+        )
+        chunk_results = [_process(chunk) for chunk in chunks]
+    else:
+        cluster = LocalCluster(n_workers=max_workers, threads_per_worker=1)
+        client = Client(cluster)
+        tasks = [dask.delayed(_process)(chunk) for chunk in chunks]
+        chunk_results = dask.compute(*tasks)
+        client.close()
+        cluster.close()
 
     aggregated = chunked_controller._create_empty_results()
     aggregated.update({"date_range": {"start": None, "end": None}, "rows_processed": 0})
