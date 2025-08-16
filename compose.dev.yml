@@ -5,10 +5,11 @@ services:
       dockerfile: docker/Dockerfile.dev
     ports:
       - "8000:8000"
+    command: bash -lc 'uvicorn yosai_intel_dashboard.src.adapters.api.adapter:create_api_app --factory --host 0.0.0.0 --port 8000 --reload'
     environment:
       ENABLE_METRICS: "1"
       YOSAI_ENABLE_PROFILING: "0"
-      SECRET_KEY: "dev-secret-change-me"
+      SECRET_KEY: dev-secret
       PYTHONPATH: "/app"
     volumes:
       - .:/app
@@ -26,6 +27,7 @@ services:
         condition: service_healthy
     environment:
       UI_PORT: "${UI_PORT:-5175}"
+      VITE_API_BASE: /api/v1
     command: sh -lc "npm install && npm run dev -- --host --port ${UI_PORT:-5175} --strictPort"
     volumes:
       - .:/app
