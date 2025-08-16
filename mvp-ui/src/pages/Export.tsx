@@ -1,14 +1,11 @@
-export default function Export({ token }: { token: string | null }) {
-  async function dl() {
-    if (!token) return;
-    const res = await fetch('/api/export', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) throw new Error('export failed');
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'export.csv' });
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  }
-  return <button onClick={dl} disabled={!token}>Download CSV</button>;
+import { downloadCSV } from "../lib/api";
+export default function ExportPage({ token }: { token: string | null }) {
+  async function onClick() { await downloadCSV(token); }
+  return (
+    <section>
+      <h2>Export</h2>
+      <button onClick={onClick} disabled={!token} style={{ padding:"8px 12px", border:"1px solid #ddd", borderRadius:8 }}>Download CSV</button>
+      {!token && <p style={{color:"#a00"}}>Login first to enable export.</p>}
+    </section>
+  );
 }

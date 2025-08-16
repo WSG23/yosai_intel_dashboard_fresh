@@ -1,28 +1,28 @@
-type Tab = "dashboard"|"analytics"|"graphs"|"export"|"upload"|"settings";
-export default function Nav({ tab, onSelect, onLogout }:{
-  tab: Tab; onSelect:(t:Tab)=>void; onLogout:()=>void;
-}) {
-  const item = (id:Tab, label:string) => (
+type Tab = "dashboard" | "analytics" | "graphs" | "export" | "upload" | "settings";
+export default function Nav({ tab, setTab, onLogout }: { tab: Tab; setTab: (t: Tab)=>void; onLogout: ()=>void }) {
+  const Item = ({ id, label }: { id: Tab; label: string }) => (
     <button
-      key={id}
-      onClick={()=>onSelect(id)}
-      className={"px-3 py-2 rounded-md text-sm font-medium " + (tab===id ? "bg-gray-900 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white")}
-      style={{marginRight:8}}
-    >
-      {label}
-    </button>
+      onClick={()=>setTab(id)}
+      style={{
+        padding: "8px 12px",
+        border: "1px solid #ddd",
+        borderRadius: 8,
+        background: tab === id ? "#111" : "#fff",
+        color: tab === id ? "#fff" : "#111",
+        cursor: "pointer"
+      }}
+    >{label}</button>
   );
   return (
-    <nav className="bg-gray-800" style={{padding:12, display:"flex", alignItems:"center"}}>
-      <div className="text-white font-semibold" style={{marginRight:12}}>Yōsai Intel</div>
-      {item("dashboard","Dashboard")}
-      {item("analytics","Analytics")}
-      {item("graphs","Graphs")}
-      {item("export","Export")}
-      {item("upload","Upload")}
-      {item("settings","Settings")}
-      <div style={{flex:1}} />
-      <button onClick={onLogout} className="px-3 py-2 rounded-md text-sm font-medium bg-red-600 text-white">Logout</button>
+    <nav style={{ display:"flex", gap:8, padding:"8px 0", flexWrap:"wrap" }}>
+      <Item id="dashboard" label="Dashboard" />
+      <Item id="analytics" label="Analytics" />
+      <Item id="graphs" label="Graphs" />
+      <Item id="export" label="Export" />
+      <Item id="upload" label="Upload" />
+      <Item id="settings" label="Settings" />
+      <span style={{ flex:1 }} />
+      <button onClick={onLogout} style={{ padding:"8px 12px", border:"1px solid #f33", borderRadius:8, background:"#fff", color:"#f33", cursor:"pointer" }}>Logout</button>
     </nav>
   );
 }

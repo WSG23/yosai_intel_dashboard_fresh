@@ -1,34 +1,27 @@
 import type { Summary } from "../lib/api";
-
-export default function Analytics({ summary, authed }:{ summary: Summary|null; authed: boolean }) {
+export default function Analytics({ summary }: { summary: Summary | null }) {
+  const records = [
+    { id: 1, name: "Alpha", category: "A", value: 10 },
+    { id: 2, name: "Beta", category: "B", value: 20 },
+    { id: 3, name: "Gamma", category: "A", value: 15 }
+  ];
   return (
-    <section className="p-4">
-      <div className="mb-2 rounded bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2">
-        Analytics are protected. {authed ? "You are signed in." : "Not signed in."}
-      </div>
-      <h2 className="text-xl font-bold mb-3">Analytics</h2>
-      <div className="rounded-lg border p-4 mb-4">
-        <div className="text-sm text-gray-500 mb-1">Trend</div>
-        {summary ? (
-          <div className="flex gap-1">
-            {summary.trend.map((v,i)=>(
-              <div key={i} title={String(v)} style={{height: 4+v*4, width:10}} className="bg-green-500 rounded-sm" />
+    <section>
+      <h2>Analytics</h2>
+      <p>Summary: {summary ? `${summary.total} [${summary.trend.join(", ")}]` : "—"}</p>
+      <div style={{ overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse" }}>
+          <thead>
+            <tr><th style={{textAlign:"left"}}>ID</th><th style={{textAlign:"left"}}>Name</th><th style={{textAlign:"left"}}>Category</th><th style={{textAlign:"left"}}>Value</th></tr>
+          </thead>
+          <tbody>
+            {records.map(r=>(
+              <tr key={r.id}>
+                <td>{r.id}</td><td>{r.name}</td><td>{r.category}</td><td>{r.value}</td>
+              </tr>
             ))}
-          </div>
-        ) : <p className="text-gray-500">—</p>}
-      </div>
-      <div className="rounded-lg border p-4">
-        <div className="text-sm text-gray-500 mb-2">Records (mock)</div>
-        <div className="overflow-x-auto">
-          <table className="min-w-[360px] text-sm">
-            <thead><tr className="text-left text-gray-500"><th className="pr-4">ID</th><th className="pr-4">Name</th><th className="pr-4">Category</th><th>Value</th></tr></thead>
-            <tbody>
-              {(summary?.trend ?? []).map((v,i)=>(
-                <tr key={i}><td className="pr-4">{i+1}</td><td className="pr-4">Item {i+1}</td><td className="pr-4">{v%2 ? "A":"B"}</td><td>{v}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          </tbody>
+        </table>
       </div>
     </section>
   );

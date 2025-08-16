@@ -1,39 +1,71 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Nav from "./components/Nav";
-import { getSummary, type Summary } from "./lib/api";
+import LiveBanner from "./components/LiveBanner";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Graphs from "./pages/Graphs";
 import ExportPage from "./pages/Export";
-import Upload from "./pages/Upload";
+import UploadPage from "./pages/Upload";
 import Settings from "./pages/Settings";
+import { apiLogin, getSummary, type Summary } from "./lib/api";
 
-type Tab = "dashboard"|"analytics"|"graphs"|"export"|"upload"|"settings";
+type Tab = "dashboard" | "analytics" | "graphs" | "export" | "upload" | "settings";
+const getToken = () => localStorage.getItem("token");
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const [token, setToken] = useState<string | null>(getToken());
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [err, setErr] = useState("");
 
-  const authed = !!token;
-  useEffect(() => { if (token) localStorage.setItem("token", token); else localStorage.removeItem("token"); }, [token]);
-  useEffect(() => { if (!token) { setSummary(null); return; } getSummary(token).then(setSummary).catch(()=>setSummary(null)); }, [token]);
+  async function login() {
+    setErr("");
+    try {
+      const { token } = await apiLogin("demo", "x");
+      localStorage.setItem("token", token);
+      setToken(token);
+    } catch (e:any) {
+      setErr(String(e));
+    }
+  }
 
-  const Banner = useMemo(() => (
-    !authed ? <div className="w-full bg-yellow-100 border-b border-yellow-300 text-yellow-800 px-3 py-2 text-sm">401 Unauthorized — Login to access protected data.</div> : null
-  ), [authed]);
+  function logout() {
+    localStorage.removeItem("token");
+    setToken(null);
+    setSummary(null);
+  }
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    (async () => {
+      setErr("");
+      setSummary(null);
+      try {
+        const s = await getSummary(token);
+        setSummary(s);
+      } catch (e:any) {
+        setErr(String(e));
+      }
+    })();
+    return () => ctrl.abort();
+  }, [token]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Nav tab={tab} onSelect={setTab} onLogout={() => setToken(null)} />
-      {Banner}
-      <main className="max-w-5xl mx-auto">
-        {tab==="dashboard" && <Dashboard token={token} />}
-        {tab==="analytics" && <Analytics summary={summary} authed={authed} />}
-        {tab==="graphs" && <Graphs summary={summary} />}
-        {tab==="export" && <ExportPage token={token} />}
-        {tab==="upload" && <Upload token={token} />}
-        {tab==="settings" && <Settings token={token} onSetToken={setToken} />}
+    <div style={{ padding: 20, fontFamily: "Inter, system-ui, sans-serif" }}>
+      <header style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <h1 style={{ margin:0 }}>Yōsai Intel</h1>
+        <button onClick={login} style={{ padding:"6px 10px", border:"1px solid #ddd", borderRadius:8 }}>Login</button>
+      </header>
+      <LiveBanner token={token} />
+      <Nav tab={tab} setTab={setTab} onLogout={logout} />
+      {err && <pre style={{ background:"#fee", padding:8, border:"1px solid #fbb" }}>{err}</pre>}
+      <main style={{ marginTop:12 }}>
+        {tab === "dashboard" && <Dashboard token={token} summary={summary} />}
+        {tab === "analytics" && <Analytics summary={summary} />}
+        {tab === "graphs" && <Graphs summary={summary} />}
+        {tab === "export" && <ExportPage token={token} />}
+        {tab === "upload" && <UploadPage token={token} />}
+        {tab === "settings" && <Settings token={token} clear={logout} />}
       </main>
     </div>
   );

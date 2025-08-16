@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { openEvents } from '../lib/events';
+import { API_BASE } from "../lib/api";
 export default function LiveBanner({ token }: { token: string | null }) {
-  const [tick,setTick]=useState<number|null>(null);
-  useEffect(()=>{ if(!token) return;
-    const close=openEvents(token,(d:any)=>{ if(d?.type==='tick') setTick(d.n); });
-    return close;
-  },[token]);
-  return <div className="p-2 rounded bg-yellow-100 text-yellow-900 text-sm">{token? (tick?`Realtime tick: ${tick}`:'Listening…') : 'Login to start realtime feed'}</div>;
+  return (
+    <div style={{ background:"#eef6ff", border:"1px solid #cfe3ff", padding:8, borderRadius:8, margin:"8px 0", display:"flex", gap:12, alignItems:"center" }}>
+      <span style={{ fontWeight:600 }}>Live</span>
+      <span>Authed: {token ? "Yes" : "No"}</span>
+      <span>API: {API_BASE}</span>
+    </div>
+  );
 }
