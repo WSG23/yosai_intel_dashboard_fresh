@@ -31,6 +31,9 @@ from yosai_intel_dashboard.src.adapters.api.analytics_router import (
 from yosai_intel_dashboard.src.adapters.api.analytics_router import (
     router as analytics_router,
 )
+from yosai_intel_dashboard.src.adapters.api.analytics_extra import (
+    router as analytics_extra_router,
+)
 from yosai_intel_dashboard.src.adapters.api.explanations import (
     router as explanations_router,
 )
@@ -132,6 +135,7 @@ def _register_routes(service: BaseService, build_dir: Path) -> None:
 
     api_v1 = APIRouter(prefix="/api/v1")
     api_v1.include_router(analytics_router)
+    api_v1.include_router(analytics_extra_router)
     api_v1.include_router(monitoring_router)
     api_v1.include_router(explanations_router)
     api_v1.include_router(feature_flags_router)

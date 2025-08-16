@@ -1,0 +1,26 @@
+name: realapi-smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f compose.dev.yml up -d api
+      - run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8000/healthz > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - run: curl -fsSI http://localhost:8000/realapi/docs | head -n1
+      - run: |
+          TOKEN=$(curl -s -X POST http://localhost:8000/api/login -H 'content-type: application/json' -d '{}' | jq -r '.token' || echo dev-token)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "authorization: Bearer $TOKEN" http://localhost:8000/realapi/api/v1/analytics/summary || true)
+          echo "status=$STATUS"
+      - run: docker compose -f compose.dev.yml down

@@ -6,9 +6,11 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from services.enrich_service import enrich_csv_content
 from services.stream_service import event_stream
+from mvp_api_bridge import try_mount_real_api
 
 load_dotenv()
 app = FastAPI()
+try_mount_real_api(app)
 
 @app.get("/healthz")
 def healthz():
