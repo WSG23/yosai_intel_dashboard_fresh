@@ -8,8 +8,9 @@ services:
     environment:
       ENABLE_METRICS: "1"
       YOSAI_ENABLE_PROFILING: "0"
-      SECRET_KEY: "dev-secret-change-me"
+      SECRET_KEY: "dev-secret"
       PYTHONPATH: "/app"
+      YOSAI_REALAPI_SPEC: "yosai_intel_dashboard.src.adapters.api.adapter:create_api_app"
     volumes:
       - .:/app
     healthcheck:
